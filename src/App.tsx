@@ -271,48 +271,47 @@ function App() {
 									{locationMeta.addressLines.join(" · ")}
 								</div>
 
-								<div className="mt-3">
-									<div className="flex items-baseline justify-between gap-3 text-xs">
-										<div className="text-[--muted]">
-											{signups.length} / {rosterGoal} {t(lang, "goal")}
-										</div>
-										{mySignup ? (
-											<div className="font-semibold text-[var(--gold)]">
-												{t(lang, "youAreIn")}
-											</div>
-										) : null}
-									</div>
-									<div className="mt-2 h-2 w-full rounded-full bg-white/10">
-										<div
-											className="h-2 rounded-full bg-[var(--gold)]"
-											style={{
-												width: `${Math.min(
-													100,
-													Math.round((signups.length / rosterGoal) * 100),
-												)}%`,
-											}}
-										/>
-									</div>
-								</div>
 							</div>
-							<a
-								className="shrink-0 rounded-xl border border-[var(--border)] bg-black/20 px-3 py-2 text-xs font-medium hover:bg-[var(--surface-2)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--gold)]"
-								href={locationMeta.mapsUrl}
-								target="_blank"
-								rel="noreferrer"
-							>
-								{t(lang, "openInMaps")}
-							</a>
-						</div>
-
-						<div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
-							<a
-								className="rounded-2xl border border-[var(--border)] bg-black/20 px-4 py-3 text-center text-sm font-semibold hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--gold)]"
-								href={calendarHref}
-								download={`jeffpickup-${playDate}.ics`}
-							>
-								{t(lang, "addToCalendar")}
-							</a>
+							<div className="shrink-0">
+								<a
+									className="block rounded-xl border border-[var(--border)] bg-black/20 px-3 py-2 text-xs font-medium hover:bg-[var(--surface-2)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--gold)]"
+									href={locationMeta.mapsUrl}
+									target="_blank"
+									rel="noreferrer"
+								>
+									{t(lang, "openInMaps")}
+								</a>
+								<a
+									className="mt-2 inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[var(--border)] bg-black/20 text-white/90 hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--gold)]"
+									href={calendarHref}
+									download={`jeffpickup-${playDate}.ics`}
+									aria-label={t(lang, "addToCalendar")}
+									title={t(lang, "addToCalendar")}
+								>
+									<svg
+										width="18"
+										height="18"
+										viewBox="0 0 24 24"
+										fill="none"
+										xmlns="http://www.w3.org/2000/svg"
+									>
+										<path
+											d="M8 2v3M16 2v3M3.5 9h17M6 5h12a2.5 2.5 0 0 1 2.5 2.5V19A2.5 2.5 0 0 1 18 21.5H6A2.5 2.5 0 0 1 3.5 19V7.5A2.5 2.5 0 0 1 6 5Z"
+											stroke="currentColor"
+											strokeWidth="1.8"
+											strokeLinecap="round"
+											strokeLinejoin="round"
+										/>
+										<path
+											d="M8 13h3M8 16h6"
+											stroke="currentColor"
+											strokeWidth="1.8"
+											strokeLinecap="round"
+											strokeLinejoin="round"
+										/>
+									</svg>
+								</a>
+							</div>
 						</div>
 					</section>
 
@@ -405,9 +404,11 @@ function App() {
 							emptyList: t(lang, "emptyList"),
 							unregister: t(lang, "unregister"),
 							unregisterHint: t(lang, "unregisterHint"),
+							goal: t(lang, "goal"),
 						}}
 						signups={signups}
 						loading={loading}
+						goal={rosterGoal}
 						mySignupId={mySignup?.id}
 						canUnregister={Boolean(mySignup && myDeleteToken)}
 						onUnregister={

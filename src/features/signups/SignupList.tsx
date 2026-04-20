@@ -8,13 +8,19 @@ export function SignupList(props: {
     emptyList: string
     unregister: string
     unregisterHint: string
+    goal: string
   }
   signups: Signup[]
   loading?: boolean
   mySignupId?: string
   canUnregister?: boolean
   onUnregister?: () => void
+  goal?: number
 }) {
+  const goal = props.goal ?? 0
+  const progressPct =
+    goal > 0 ? Math.min(100, Math.round((props.signups.length / goal) * 100)) : 0
+
   return (
     <section className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4">
       <div className="flex items-baseline justify-between gap-3">
@@ -62,6 +68,23 @@ export function SignupList(props: {
           </ol>
         )}
       </div>
+
+      {goal > 0 ? (
+        <div className="mt-4">
+          <div className="flex items-baseline justify-between gap-3 text-xs">
+            <div className="text-[--muted]">
+              {props.signups.length} / {goal} {props.labels.goal}
+            </div>
+            <div className="text-[--muted]">{progressPct}%</div>
+          </div>
+          <div className="mt-2 h-2 w-full rounded-full bg-white/10">
+            <div
+              className="h-2 rounded-full bg-[var(--gold)]"
+              style={{ width: `${progressPct}%` }}
+            />
+          </div>
+        </div>
+      ) : null}
     </section>
   )
 }
