@@ -147,49 +147,6 @@ function App() {
 		});
 	}, [activeLocation, cleanedName, playDate]);
 
-	const calendarHref = useMemo(() => {
-		const summary = "Jeff Pickup Soccer";
-		const description = "Pickup soccer signup";
-		const locationText = `${locationMeta.label}\\n${locationMeta.addressLines.join(
-			", ",
-		)}`;
-
-		const [y, m, d] = playDate.split("-").map((x) => Number(x));
-		const [hh, mm] = activeTime.split(":").map((x) => Number(x));
-		const start = new Date(y, (m ?? 1) - 1, d ?? 1, hh ?? 0, mm ?? 0, 0);
-		const end = new Date(start.getTime() + 2 * 60 * 60 * 1000);
-
-		function toIcsLocal(dt: Date) {
-			const pad = (n: number) => String(n).padStart(2, "0");
-			return `${dt.getFullYear()}${pad(dt.getMonth() + 1)}${pad(dt.getDate())}T${pad(dt.getHours())}${pad(dt.getMinutes())}00`;
-		}
-
-		const uid = `${playDate}-${activeLocation}@jeffpickup`;
-		const dtstamp = toIcsLocal(new Date());
-		const dtstart = toIcsLocal(start);
-		const dtend = toIcsLocal(end);
-
-		const ics = [
-			"BEGIN:VCALENDAR",
-			"VERSION:2.0",
-			"PRODID:-//JeffPickup//Pickup//EN",
-			"CALSCALE:GREGORIAN",
-			"METHOD:PUBLISH",
-			"BEGIN:VEVENT",
-			`UID:${uid}`,
-			`DTSTAMP:${dtstamp}`,
-			`DTSTART:${dtstart}`,
-			`DTEND:${dtend}`,
-			`SUMMARY:${summary}`,
-			`DESCRIPTION:${description}`,
-			`LOCATION:${locationText.replace(/\\n/g, "\\\\n")}`,
-			"END:VEVENT",
-			"END:VCALENDAR",
-		].join("\\r\\n");
-
-		return `data:text/calendar;charset=utf-8,${encodeURIComponent(ics)}`;
-	}, [activeLocation, activeTime, locationMeta, playDate]);
-
 	return (
 		<div className="min-h-dvh px-4 pb-[calc(env(safe-area-inset-bottom)+2.5rem)] pt-6 sm:px-6">
 			<div className="mx-auto w-full max-w-md">
@@ -280,36 +237,6 @@ function App() {
 									rel="noreferrer"
 								>
 									{t(lang, "openInMaps")}
-								</a>
-								<a
-									className="mt-2 inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[var(--border)] bg-black/20 text-white/90 hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--gold)]"
-									href={calendarHref}
-									download={`jeffpickup-${playDate}.ics`}
-									aria-label={t(lang, "addToCalendar")}
-									title={t(lang, "addToCalendar")}
-								>
-									<svg
-										width="18"
-										height="18"
-										viewBox="0 0 24 24"
-										fill="none"
-										xmlns="http://www.w3.org/2000/svg"
-									>
-										<path
-											d="M8 2v3M16 2v3M3.5 9h17M6 5h12a2.5 2.5 0 0 1 2.5 2.5V19A2.5 2.5 0 0 1 18 21.5H6A2.5 2.5 0 0 1 3.5 19V7.5A2.5 2.5 0 0 1 6 5Z"
-											stroke="currentColor"
-											strokeWidth="1.8"
-											strokeLinecap="round"
-											strokeLinejoin="round"
-										/>
-										<path
-											d="M8 13h3M8 16h6"
-											stroke="currentColor"
-											strokeWidth="1.8"
-											strokeLinecap="round"
-											strokeLinejoin="round"
-										/>
-									</svg>
 								</a>
 							</div>
 						</div>
