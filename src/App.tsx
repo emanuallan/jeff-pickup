@@ -23,12 +23,14 @@ import {
 	fetchActiveTime,
 	setActiveTime,
 } from "./features/settings/api";
+import { loadLang, saveLang, t, type Lang } from "./lib/i18n";
 
 const FACEBOOK_GROUP_URL = "https://www.facebook.com/share/g/18ruTArVRB/";
 const WHATSAPP_GROUP_URL =
 	"https://l.facebook.com/l.php?u=https%3A%2F%2Fchat.whatsapp.com%2FCGKl1hIhaoJ7zjIPNVcEZ1%3Fmode%3Dems_copy_c%26fbclid%3DIwZXh0bgNhZW0CMTAAYnJpZBExQW9UQlRENGxmc3hLNHN2cXNydGMGYXBwX2lkEDIyMjAzOTE3ODgyMDA4OTIAAR72867lrLGpSLAi0MElnoTyy_nIsItUv2vxSLi8zZ1QzrOi-jOLBqAl7TLzyw_aem_Wbdxa-HIEA8qr-i3utN1lQ&h=AT6N82Mu8Hu_IXFtfs4j2h9BgyMVkWAPNMTluGdsjlWeEHkJUIzGLESkkKck45Y4J0N_lT7kakBuycLRMuGQcJUU4RPHIIEvnGr2eIWlMcK2Ob66nz05nQpcq1gt-5O9jJumtd60lrTp4VVSKieYVqeH5Ni_ji-Bn1w&__tn__=-UK-R&c[0]=AT48Ry3TVtd0cmpNXdwgk7NKkTr8trEBk7XG4hQIyKE4n6ALoLtj3recVAxIuvYOQP6CyQbUq_peDSCujGrN-5CG5DLG0Ul0WZksK15eA5POJxsviovx6L9vFOshNrICAVFGImFAc2F97_b2W1cK8xzuYWXJ1GAVtWc8krnONBoJvnarZ6eh8a-syfyuaxbO6QiG2TvHJMOYXJ8S9LRKim96UFm8";
 
 function App() {
+	const [lang, setLang] = useState<Lang>(() => loadLang());
 	const [playDate, setPlayDate] = useState(() => todayLocalISODate());
 	const [playerName, setPlayerName] = useState(() => loadPlayerName());
 	const [activeLocation, setActiveLocationState] =
@@ -59,6 +61,10 @@ function App() {
 	}, [playerName]);
 
 	useEffect(() => {
+		saveLang(lang);
+	}, [lang]);
+
+	useEffect(() => {
 		let cancelled = false;
 		async function run() {
 			if (!supabase) return;
@@ -80,7 +86,7 @@ function App() {
 				const data = await fetchSignups({ playDate, location: activeLocation });
 				if (!cancelled) setSignups(data);
 			} catch (e) {
-				if (!cancelled) setError("Could not load the list. Please try again.");
+				if (!cancelled) setError(t(lang, "couldNotLoad"));
 			} finally {
 				if (!cancelled) setLoading(false);
 			}
@@ -116,18 +122,49 @@ function App() {
 	return (
 		<div className="min-h-dvh px-4 pb-[calc(env(safe-area-inset-bottom)+2.5rem)] pt-6 sm:px-6">
 			<div className="mx-auto w-full max-w-md">
-				<header className="flex items-center gap-3">
-					<img
-						src="/logo.JPG"
-						alt="Jeff Pickup FC"
-						className="h-14 w-14 rounded-2xl border border-[var(--border)] bg-[var(--surface)] object-cover shadow-sm"
-					/>
-					<div className="min-w-0">
-						<div className="text-lg font-semibold leading-tight">
-							Jeff Pickup
+				<header className="flex items-center justify-between gap-3">
+					<div className="flex min-w-0 items-center gap-3">
+						<img
+							src="/logo.JPG"
+							alt="Jeff Pickup FC"
+							className="h-14 w-14 rounded-2xl border border-[var(--border)] bg-[var(--surface)] object-cover shadow-sm"
+						/>
+						<div className="min-w-0">
+							<div className="text-lg font-semibold leading-tight">
+								Jeff Pickup
+							</div>
+							<div className="text-sm text-[--muted] leading-tight">
+								Jeffersonville Pick up Soccer
+							</div>
 						</div>
-						<div className="text-sm text-[--muted] leading-tight">
-							Jeffersonville Pick up Soccer
+					</div>
+
+					<div className="shrink-0">
+						<div className="inline-flex rounded-2xl border border-[var(--border)] bg-black/20 p-1 text-xs">
+							<button
+								type="button"
+								onClick={() => setLang("en")}
+								className={`rounded-xl px-3 py-2 font-semibold ${
+									lang === "en"
+										? "bg-white/10 text-white"
+										: "text-white/70 hover:bg-white/5"
+								}`}
+								aria-pressed={lang === "en"}
+							>
+								EN
+							</button>
+							<button
+								type="button"
+								onClick={() => setLang("es")}
+								className={`rounded-xl px-3 py-2 font-semibold ${
+									lang === "es"
+										? "bg-white/10 text-white"
+										: "text-white/70 hover:bg-white/5"
+								}`}
+								aria-pressed={lang === "es"}
+							>
+								ES
+							</button>
 						</div>
 					</div>
 				</header>
@@ -153,7 +190,7 @@ function App() {
 										});
 									}}
 								>
-									Location & Time
+									{t(lang, "locationAndTime")}
 								</button>
 								<div className="mt-0.5 text-sm text-[--muted]">
 									{formatFriendlyDate(playDate)} · {locationMeta.label} ·{" "}
@@ -169,29 +206,36 @@ function App() {
 								target="_blank"
 								rel="noreferrer"
 							>
-								Open in Maps
+								{t(lang, "openInMaps")}
 							</a>
 						</div>
 					</section>
 
 					{!supabase ? (
 						<section className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4">
-							<div className="text-sm font-semibold">Setup needed</div>
+							<div className="text-sm font-semibold">
+								{t(lang, "setupNeededTitle")}
+							</div>
 							<div className="mt-1 text-sm text-[--muted]">
-								To enable shared signups, set{" "}
-								<span className="font-mono text-xs text-[--text]">
-									VITE_SUPABASE_URL
-								</span>{" "}
-								and{" "}
-								<span className="font-mono text-xs text-[--text]">
-									VITE_SUPABASE_ANON_KEY
-								</span>
-								.
+								{t(lang, "setupNeededBody")}
 							</div>
 						</section>
 					) : null}
 
 					<SignupForm
+						labels={{
+							joinTheList: t(lang, "joinTheList"),
+							date: t(lang, "date"),
+							yourName: t(lang, "yourName"),
+							namePlaceholder: t(lang, "namePlaceholder"),
+							enterName: t(lang, "enterName"),
+							keepUnder40:
+								lang === "es"
+									? "Por favor usa menos de 40 caracteres."
+									: "Please keep it under 40 characters.",
+							joinTodaysList: t(lang, "joinTodaysList"),
+							joinList: t(lang, "joinList"),
+						}}
 						value={{ playDate, playerName }}
 						onChange={(next) => {
 							setPlayDate(next.playDate);
@@ -202,7 +246,7 @@ function App() {
 						onSubmit={async () => {
 							if (!supabase) return;
 							if (!cleanedName) {
-								setError("Please enter your name.");
+								setError(t(lang, "enterName"));
 								return;
 							}
 
@@ -235,11 +279,9 @@ function App() {
 										: "";
 								// Postgres unique violation via Supabase usually includes 23505
 								if (msg.includes("23505")) {
-									setError(
-										"You’re already on the list for this day and location.",
-									);
+									setError(t(lang, "alreadyOnList"));
 								} else {
-									setError("Could not add you. Please try again.");
+									setError(t(lang, "couldNotAdd"));
 								}
 							} finally {
 								setSubmitting(false);
@@ -248,6 +290,14 @@ function App() {
 					/>
 
 					<SignupList
+						labels={{
+							players: t(lang, "players"),
+							total: t(lang, "total"),
+							loading: t(lang, "loading"),
+							emptyList: t(lang, "emptyList"),
+							unregister: t(lang, "unregister"),
+							unregisterHint: t(lang, "unregisterHint"),
+						}}
 						signups={signups}
 						loading={loading}
 						mySignupId={mySignup?.id}
@@ -273,7 +323,7 @@ function App() {
 											});
 											setSignups(data);
 										} catch {
-											setError("Could not remove you. Please try again.");
+											setError(t(lang, "couldNotRemove"));
 										} finally {
 											setSubmitting(false);
 										}
@@ -289,7 +339,7 @@ function App() {
 							target="_blank"
 							rel="noreferrer"
 						>
-							Facebook group
+							{t(lang, "facebookGroup")}
 						</a>
 						<a
 							className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-center text-sm font-medium hover:bg-[var(--surface-2)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--gold)]"
@@ -297,13 +347,13 @@ function App() {
 							target="_blank"
 							rel="noreferrer"
 						>
-							WhatsApp group
+							{t(lang, "whatsappGroup")}
 						</a>
 					</section>
 				</main>
 
 				<footer className="mt-8 text-center text-xs text-[--muted]">
-					haha madrid
+					{t(lang, "footer")}
 				</footer>
 			</div>
 
@@ -316,9 +366,9 @@ function App() {
 					<div className="w-full max-w-md rounded-3xl border border-[var(--border)] bg-[#0b0b0e] p-4 shadow-xl">
 						<div className="flex items-start justify-between gap-3">
 							<div>
-								<div className="text-sm font-semibold">Admin</div>
+								<div className="text-sm font-semibold">{t(lang, "admin")}</div>
 								<div className="mt-0.5 text-xs text-[--muted]">
-									Set the active location and time shown to everyone.
+									{t(lang, "adminSubtitle")}
 								</div>
 							</div>
 							<button
@@ -329,7 +379,7 @@ function App() {
 									setAdminOpen(false);
 								}}
 							>
-								Close
+								{t(lang, "close")}
 							</button>
 						</div>
 
@@ -342,7 +392,7 @@ function App() {
 						<div className="mt-4 space-y-3">
 							<div className="rounded-2xl border border-[var(--border)] bg-black/20 p-3">
 								<div className="text-xs font-medium text-[--muted]">
-									Active time
+									{t(lang, "activeTime")}
 								</div>
 								<input
 									type="time"
@@ -360,21 +410,21 @@ function App() {
 										setAdminError(null);
 										try {
 											if (adminPinConfigured) {
-												const pin = window.prompt("Admin PIN");
+												const pin = window.prompt(t(lang, "adminPinPrompt"));
 												if (!pin || pin !== String(import.meta.env.VITE_ADMIN_PIN)) {
-													setAdminError("Incorrect PIN.");
+													setAdminError(t(lang, "incorrectPin"));
 													return;
 												}
 											}
 											await setActiveTime(activeTime);
 										} catch {
-											setAdminError("Could not update time.");
+											setAdminError(t(lang, "couldNotUpdateTime"));
 										} finally {
 											setAdminBusy(false);
 										}
 									}}
 								>
-									Save time
+									{t(lang, "saveTime")}
 								</button>
 							</div>
 
@@ -391,12 +441,12 @@ function App() {
 										setAdminError(null);
 										try {
 											if (adminPinConfigured) {
-												const pin = window.prompt("Admin PIN");
+												const pin = window.prompt(t(lang, "adminPinPrompt"));
 												if (
 													!pin ||
 													pin !== String(import.meta.env.VITE_ADMIN_PIN)
 												) {
-													setAdminError("Incorrect PIN.");
+													setAdminError(t(lang, "incorrectPin"));
 													return;
 												}
 											}
@@ -409,7 +459,7 @@ function App() {
 											setSignups(data);
 											setAdminOpen(false);
 										} catch {
-											setAdminError("Could not update location.");
+											setAdminError(t(lang, "couldNotUpdateLocation"));
 										} finally {
 											setAdminBusy(false);
 										}
@@ -419,7 +469,7 @@ function App() {
 										<span>{l.label}</span>
 										{l.id === activeLocation ? (
 											<span className="text-xs font-medium text-[var(--gold)]">
-												Active
+												{t(lang, "active")}
 											</span>
 										) : null}
 									</div>

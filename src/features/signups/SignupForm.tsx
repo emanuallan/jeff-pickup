@@ -6,6 +6,16 @@ export type SignupFormValue = {
 }
 
 export function SignupForm(props: {
+  labels: {
+    joinTheList: string
+    date: string
+    yourName: string
+    namePlaceholder: string
+    enterName: string
+    keepUnder40: string
+    joinTodaysList: string
+    joinList: string
+  }
   value: SignupFormValue
   onChange: (next: SignupFormValue) => void
   onSubmit: () => void
@@ -17,19 +27,19 @@ export function SignupForm(props: {
   const nameError = useMemo(() => {
     const name = props.value.playerName.trim()
     if (!touched) return null
-    if (!name) return 'Please enter your name.'
-    if (name.length > 40) return 'Please keep it under 40 characters.'
+    if (!name) return props.labels.enterName
+    if (name.length > 40) return props.labels.keepUnder40
     return null
-  }, [props.value.playerName, touched])
+  }, [props.labels, props.value.playerName, touched])
 
   const canSubmit = !props.disabled && !nameError
 
   return (
     <section className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4">
-      <div className="text-sm font-semibold">Join the list</div>
+      <div className="text-sm font-semibold">{props.labels.joinTheList}</div>
       <div className="mt-3 space-y-3">
         <label className="block">
-          <div className="text-xs font-medium text-[--muted]">Date</div>
+          <div className="text-xs font-medium text-[--muted]">{props.labels.date}</div>
           <input
             className="mt-1 w-full rounded-xl border border-[var(--border)] bg-black/20 px-3 py-2 text-sm text-[var(--text)] outline-none focus:ring-2 focus:ring-[var(--gold)]"
             type="date"
@@ -41,10 +51,12 @@ export function SignupForm(props: {
         </label>
 
         <label className="block">
-          <div className="text-xs font-medium text-[--muted]">Your name</div>
+          <div className="text-xs font-medium text-[--muted]">
+            {props.labels.yourName}
+          </div>
           <input
             className="mt-1 w-full rounded-xl border border-[var(--border)] bg-black/20 px-3 py-2 text-sm text-[var(--text)] outline-none focus:ring-2 focus:ring-[var(--gold)]"
-            placeholder="e.g. Alex"
+            placeholder={props.labels.namePlaceholder}
             autoComplete="name"
             value={props.value.playerName}
             onBlur={() => setTouched(true)}
@@ -74,8 +86,8 @@ export function SignupForm(props: {
           }}
         >
           {props.value.playDate === todayLocalISODate()
-            ? 'Join today’s list'
-            : 'Join the list'}
+            ? props.labels.joinTodaysList
+            : props.labels.joinList}
         </button>
       </div>
     </section>

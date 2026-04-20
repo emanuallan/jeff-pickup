@@ -1,6 +1,14 @@
 import type { Signup } from './types'
 
 export function SignupList(props: {
+  labels: {
+    players: string
+    total: string
+    loading: string
+    emptyList: string
+    unregister: string
+    unregisterHint: string
+  }
   signups: Signup[]
   loading?: boolean
   mySignupId?: string
@@ -10,17 +18,17 @@ export function SignupList(props: {
   return (
     <section className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4">
       <div className="flex items-baseline justify-between gap-3">
-        <div className="text-sm font-semibold">Players</div>
-        <div className="text-xs text-[--muted]">{props.signups.length} total</div>
+        <div className="text-sm font-semibold">{props.labels.players}</div>
+        <div className="text-xs text-[--muted]">
+          {props.signups.length} {props.labels.total}
+        </div>
       </div>
 
       <div className="mt-3">
         {props.loading ? (
-          <div className="text-sm text-[--muted]">Loading…</div>
+          <div className="text-sm text-[--muted]">{props.labels.loading}</div>
         ) : props.signups.length === 0 ? (
-          <div className="text-sm text-[--muted]">
-            No one yet. Be the first to join.
-          </div>
+          <div className="text-sm text-[--muted]">{props.labels.emptyList}</div>
         ) : (
           <ol className="space-y-2">
             {props.signups.map((s, idx) => (
@@ -39,8 +47,8 @@ export function SignupList(props: {
                     aria-label="Unregister"
                     title={
                       props.canUnregister
-                        ? 'Unregister'
-                        : 'Unregister works from the same device/browser you used to join'
+                        ? props.labels.unregister
+                        : props.labels.unregisterHint
                     }
                     disabled={!props.canUnregister}
                     onClick={props.onUnregister}
