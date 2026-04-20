@@ -45,6 +45,7 @@ npm run build
 2. In the Supabase **SQL Editor**, run:
    - `supabase/migrations/001_create_signups.sql`
    - `supabase/migrations/002_signups_unregister_and_settings.sql`
+   - `supabase/migrations/003_add_active_time_setting.sql`
 3. In Supabase project settings, copy:
    - **Project URL** → `VITE_SUPABASE_URL`
    - **anon public key** → `VITE_SUPABASE_ANON_KEY`
@@ -56,7 +57,7 @@ RLS is enabled:
 
 ## Admin menu (hidden)
 
-Press and hold **“Pickup roster”** for ~5 seconds to open the admin sheet and set the active location.
+Tap **“Location & Time”** quickly **5 times** to open the admin sheet and set the active location/time.
 
 If `VITE_ADMIN_PIN` is set, you’ll be prompted for the PIN before changing the location.
 

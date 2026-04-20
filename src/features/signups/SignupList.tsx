@@ -3,6 +3,9 @@ import type { Signup } from './types'
 export function SignupList(props: {
   signups: Signup[]
   loading?: boolean
+  mySignupId?: string
+  canUnregister?: boolean
+  onUnregister?: () => void
 }) {
   return (
     <section className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4">
@@ -30,6 +33,22 @@ export function SignupList(props: {
                     {idx + 1}. {s.player_name}
                   </div>
                 </div>
+                {props.mySignupId === s.id ? (
+                  <button
+                    type="button"
+                    aria-label="Unregister"
+                    title={
+                      props.canUnregister
+                        ? 'Unregister'
+                        : 'Unregister works from the same device/browser you used to join'
+                    }
+                    disabled={!props.canUnregister}
+                    onClick={props.onUnregister}
+                    className="ml-3 inline-flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border)] bg-black/30 text-white/80 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    <span className="text-lg leading-none">×</span>
+                  </button>
+                ) : null}
               </li>
             ))}
           </ol>

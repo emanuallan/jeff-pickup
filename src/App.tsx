@@ -20,6 +20,8 @@ import { SignupList } from "./features/signups/SignupList";
 import {
 	fetchActiveLocation,
 	setActiveLocation,
+	fetchActiveTime,
+	setActiveTime,
 } from "./features/settings/api";
 
 const FACEBOOK_GROUP_URL = "https://www.facebook.com/share/g/18ruTArVRB/";
@@ -31,6 +33,7 @@ function App() {
 	const [playerName, setPlayerName] = useState(() => loadPlayerName());
 	const [activeLocation, setActiveLocationState] =
 		useState<LocationId>("shirley_hall_park");
+	const [activeTime, setActiveTimeState] = useState<string>("18:00");
 
 	const [signups, setSignups] = useState<Signup[]>([]);
 	const [loading, setLoading] = useState(false);
@@ -39,6 +42,10 @@ function App() {
 	const [adminOpen, setAdminOpen] = useState(false);
 	const [adminBusy, setAdminBusy] = useState(false);
 	const [adminError, setAdminError] = useState<string | null>(null);
+	const [, setAdminTapState] = useState(() => ({
+		count: 0,
+		lastTapMs: 0,
+	}));
 
 	const locationMeta = useMemo(
 		() => LOCATIONS.find((l) => l.id === activeLocation) ?? LOCATIONS[0],
@@ -60,6 +67,12 @@ function App() {
 				if (!cancelled) setActiveLocationState(loc);
 			} catch {
 				// ignore; default location will be used
+			}
+			try {
+				const t = await fetchActiveTime();
+				if (!cancelled) setActiveTimeState(t);
+			} catch {
+				// ignore; default time will be used
 			}
 			setLoading(true);
 			setError(null);
@@ -126,33 +139,25 @@ function App() {
 								<button
 									type="button"
 									className="text-left text-sm font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--gold)] rounded-md"
-									onPointerDown={() => {
+									onClick={() => {
 										if (!supabase) return;
-										const start = Date.now();
-										const t = window.setTimeout(() => {
-											if (Date.now() - start >= 4800) setAdminOpen(true);
-										}, 5000);
-
-										const cancel = () => {
-											window.clearTimeout(t);
-											window.removeEventListener("pointerup", cancel);
-											window.removeEventListener("pointercancel", cancel);
-											window.removeEventListener("blur", cancel);
-										};
-
-										window.addEventListener("pointerup", cancel, {
-											once: true,
+										setAdminTapState((s) => {
+											const now = Date.now();
+											const reset = now - s.lastTapMs > 1200;
+											const nextCount = reset ? 1 : s.count + 1;
+											if (nextCount >= 5) {
+												setAdminOpen(true);
+												return { count: 0, lastTapMs: 0 };
+											}
+											return { count: nextCount, lastTapMs: now };
 										});
-										window.addEventListener("pointercancel", cancel, {
-											once: true,
-										});
-										window.addEventListener("blur", cancel, { once: true });
 									}}
 								>
 									Location & Time
 								</button>
 								<div className="mt-0.5 text-sm text-[--muted]">
-									{formatFriendlyDate(playDate)} · {locationMeta.label}
+									{formatFriendlyDate(playDate)} · {locationMeta.label} ·{" "}
+									{activeTime}
 								</div>
 								<div className="mt-1 text-xs text-[--muted]">
 									{locationMeta.addressLines.join(" · ")}
@@ -242,48 +247,40 @@ function App() {
 						}}
 					/>
 
-					{supabase && mySignup ? (
-						<section className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-3">
-							<button
-								type="button"
-								className="w-full rounded-2xl border border-[var(--border)] bg-black/20 px-4 py-3 text-sm font-semibold text-white/90 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
-								disabled={submitting || !myDeleteToken}
-								onClick={async () => {
-									setSubmitting(true);
-									setError(null);
-									try {
-										await unregisterSignup({
-											signupId: mySignup.id,
-											deleteToken: myDeleteToken,
-										});
-										clearDeleteToken({
-											playDate,
-											location: activeLocation,
-											playerName: cleanedName,
-										});
-										const data = await fetchSignups({
-											playDate,
-											location: activeLocation,
-										});
-										setSignups(data);
-									} catch {
-										setError("Could not remove you. Please try again.");
-									} finally {
-										setSubmitting(false);
+					<SignupList
+						signups={signups}
+						loading={loading}
+						mySignupId={mySignup?.id}
+						canUnregister={Boolean(mySignup && myDeleteToken)}
+						onUnregister={
+							mySignup && myDeleteToken
+								? async () => {
+										setSubmitting(true);
+										setError(null);
+										try {
+											await unregisterSignup({
+												signupId: mySignup.id,
+												deleteToken: myDeleteToken,
+											});
+											clearDeleteToken({
+												playDate,
+												location: activeLocation,
+												playerName: cleanedName,
+											});
+											const data = await fetchSignups({
+												playDate,
+												location: activeLocation,
+											});
+											setSignups(data);
+										} catch {
+											setError("Could not remove you. Please try again.");
+										} finally {
+											setSubmitting(false);
+										}
 									}
-								}}
-							>
-								Unregister (remove me from the list)
-							</button>
-							{!myDeleteToken ? (
-								<div className="mt-2 text-xs text-[--muted]">
-									Unregister works from the same device/browser you used to join.
-								</div>
-							) : null}
-						</section>
-					) : null}
-
-					<SignupList signups={signups} loading={loading} />
+								: undefined
+						}
+					/>
 
 					<section className="grid grid-cols-1 gap-3 sm:grid-cols-2">
 						<a
@@ -321,7 +318,7 @@ function App() {
 							<div>
 								<div className="text-sm font-semibold">Admin</div>
 								<div className="mt-0.5 text-xs text-[--muted]">
-									Set the active location shown to everyone.
+									Set the active location and time shown to everyone.
 								</div>
 							</div>
 							<button
@@ -342,7 +339,46 @@ function App() {
 							</div>
 						) : null}
 
-						<div className="mt-4 grid grid-cols-1 gap-2">
+						<div className="mt-4 space-y-3">
+							<div className="rounded-2xl border border-[var(--border)] bg-black/20 p-3">
+								<div className="text-xs font-medium text-[--muted]">
+									Active time
+								</div>
+								<input
+									type="time"
+									className="mt-2 w-full rounded-xl border border-[var(--border)] bg-black/20 px-3 py-2 text-sm text-[var(--text)] outline-none focus:ring-2 focus:ring-[var(--gold)]"
+									value={activeTime}
+									onChange={(e) => setActiveTimeState(e.target.value)}
+								/>
+								<button
+									type="button"
+									disabled={adminBusy || !supabase}
+									className="mt-2 w-full rounded-2xl bg-[var(--gold)] px-4 py-3 text-sm font-semibold text-black shadow-sm hover:bg-[var(--gold-2)] disabled:cursor-not-allowed disabled:bg-white/10 disabled:text-white/80 disabled:hover:bg-white/10"
+									onClick={async () => {
+										if (!supabase) return;
+										setAdminBusy(true);
+										setAdminError(null);
+										try {
+											if (adminPinConfigured) {
+												const pin = window.prompt("Admin PIN");
+												if (!pin || pin !== String(import.meta.env.VITE_ADMIN_PIN)) {
+													setAdminError("Incorrect PIN.");
+													return;
+												}
+											}
+											await setActiveTime(activeTime);
+										} catch {
+											setAdminError("Could not update time.");
+										} finally {
+											setAdminBusy(false);
+										}
+									}}
+								>
+									Save time
+								</button>
+							</div>
+
+							<div className="grid grid-cols-1 gap-2">
 							{LOCATIONS.map((l) => (
 								<button
 									key={l.id}
@@ -392,6 +428,7 @@ function App() {
 									</div>
 								</button>
 							))}
+							</div>
 						</div>
 					</div>
 				</div>
