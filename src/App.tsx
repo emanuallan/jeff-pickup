@@ -1,5 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
-import { todayLocalISODate, formatFriendlyDate, formatLocalTime } from "./lib/date";
+import {
+	todayLocalISODate,
+	formatFriendlyDate,
+	formatLocalTime,
+} from "./lib/date";
 import { loadPlayerName, savePlayerName } from "./lib/storage";
 import {
 	clearDeleteToken,
@@ -353,7 +357,15 @@ function App() {
 				</main>
 
 				<footer className="mt-8 text-center text-xs text-[--muted]">
-					{t(lang, "footer")}
+					Contact{" "}
+					<a
+						className="text-[#d2a34a]"
+						href="https://www.instagram.com/aeserna/"
+						target="_blank"
+						rel="noreferrer"
+					>
+						Allan
+					</a>
 				</footer>
 			</div>
 
@@ -411,7 +423,10 @@ function App() {
 										try {
 											if (adminPinConfigured) {
 												const pin = window.prompt(t(lang, "adminPinPrompt"));
-												if (!pin || pin !== String(import.meta.env.VITE_ADMIN_PIN)) {
+												if (
+													!pin ||
+													pin !== String(import.meta.env.VITE_ADMIN_PIN)
+												) {
 													setAdminError(t(lang, "incorrectPin"));
 													return;
 												}
@@ -429,55 +444,55 @@ function App() {
 							</div>
 
 							<div className="grid grid-cols-1 gap-2">
-							{LOCATIONS.map((l) => (
-								<button
-									key={l.id}
-									type="button"
-									disabled={adminBusy || !supabase}
-									className="rounded-2xl border border-[var(--border)] bg-black/20 px-4 py-3 text-left text-sm font-semibold hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
-									onClick={async () => {
-										if (!supabase) return;
-										setAdminBusy(true);
-										setAdminError(null);
-										try {
-											if (adminPinConfigured) {
-												const pin = window.prompt(t(lang, "adminPinPrompt"));
-												if (
-													!pin ||
-													pin !== String(import.meta.env.VITE_ADMIN_PIN)
-												) {
-													setAdminError(t(lang, "incorrectPin"));
-													return;
+								{LOCATIONS.map((l) => (
+									<button
+										key={l.id}
+										type="button"
+										disabled={adminBusy || !supabase}
+										className="rounded-2xl border border-[var(--border)] bg-black/20 px-4 py-3 text-left text-sm font-semibold hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
+										onClick={async () => {
+											if (!supabase) return;
+											setAdminBusy(true);
+											setAdminError(null);
+											try {
+												if (adminPinConfigured) {
+													const pin = window.prompt(t(lang, "adminPinPrompt"));
+													if (
+														!pin ||
+														pin !== String(import.meta.env.VITE_ADMIN_PIN)
+													) {
+														setAdminError(t(lang, "incorrectPin"));
+														return;
+													}
 												}
+												await setActiveLocation(l.id);
+												setActiveLocationState(l.id);
+												const data = await fetchSignups({
+													playDate,
+													location: l.id,
+												});
+												setSignups(data);
+												setAdminOpen(false);
+											} catch {
+												setAdminError(t(lang, "couldNotUpdateLocation"));
+											} finally {
+												setAdminBusy(false);
 											}
-											await setActiveLocation(l.id);
-											setActiveLocationState(l.id);
-											const data = await fetchSignups({
-												playDate,
-												location: l.id,
-											});
-											setSignups(data);
-											setAdminOpen(false);
-										} catch {
-											setAdminError(t(lang, "couldNotUpdateLocation"));
-										} finally {
-											setAdminBusy(false);
-										}
-									}}
-								>
-									<div className="flex items-center justify-between gap-3">
-										<span>{l.label}</span>
-										{l.id === activeLocation ? (
-											<span className="text-xs font-medium text-[var(--gold)]">
-												{t(lang, "active")}
-											</span>
-										) : null}
-									</div>
-									<div className="mt-1 text-xs text-[--muted]">
-										{l.addressLines.join(" · ")}
-									</div>
-								</button>
-							))}
+										}}
+									>
+										<div className="flex items-center justify-between gap-3">
+											<span>{l.label}</span>
+											{l.id === activeLocation ? (
+												<span className="text-xs font-medium text-[var(--gold)]">
+													{t(lang, "active")}
+												</span>
+											) : null}
+										</div>
+										<div className="mt-1 text-xs text-[--muted]">
+											{l.addressLines.join(" · ")}
+										</div>
+									</button>
+								))}
 							</div>
 						</div>
 					</div>
