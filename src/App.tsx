@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { todayLocalISODate, formatFriendlyDate } from "./lib/date";
+import { todayLocalISODate, formatFriendlyDate, formatLocalTime } from "./lib/date";
 import { loadPlayerName, savePlayerName } from "./lib/storage";
 import {
 	clearDeleteToken,
@@ -157,7 +157,7 @@ function App() {
 								</button>
 								<div className="mt-0.5 text-sm text-[--muted]">
 									{formatFriendlyDate(playDate)} · {locationMeta.label} ·{" "}
-									{activeTime}
+									{formatLocalTime(activeTime)}
 								</div>
 								<div className="mt-1 text-xs text-[--muted]">
 									{locationMeta.addressLines.join(" · ")}

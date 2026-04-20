@@ -16,3 +16,16 @@ export function formatFriendlyDate(isoDate: string): string {
   })
 }
 
+export function formatLocalTime(hhmm: string): string {
+  const match = /^(\d{2}):(\d{2})$/.exec(hhmm)
+  if (!match) return hhmm
+  const hours = Number(match[1])
+  const minutes = Number(match[2])
+  const dt = new Date()
+  dt.setHours(hours, minutes, 0, 0)
+  return dt.toLocaleTimeString(undefined, {
+    hour: 'numeric',
+    minute: '2-digit',
+  })
+}
+
