@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
 	todayLocalISODate,
 	formatFriendlyDate,
@@ -44,6 +44,9 @@ function App() {
 	const [signups, setSignups] = useState<Signup[]>([]);
 	const [loading, setLoading] = useState(false);
 	const [submitting, setSubmitting] = useState(false);
+	const rosterGoal = 10;
+	const autoRefreshMs = 30_000;
+	const refreshingRef = useRef(false);
 	const [error, setError] = useState<string | null>(null);
 	const [adminOpen, setAdminOpen] = useState(false);
 	const [adminBusy, setAdminBusy] = useState(false);
@@ -67,6 +70,23 @@ function App() {
 	useEffect(() => {
 		saveLang(lang);
 	}, [lang]);
+
+	async function refreshRoster(nextLocation?: LocationId) {
+		if (!supabase) return;
+		if (refreshingRef.current) return;
+		refreshingRef.current = true;
+		try {
+			const data = await fetchSignups({
+				playDate,
+				location: nextLocation ?? activeLocation,
+			});
+			setSignups(data);
+		} catch {
+			// don't spam errors during background refresh
+		} finally {
+			refreshingRef.current = false;
+		}
+	}
 
 	useEffect(() => {
 		let cancelled = false;
@@ -96,8 +116,12 @@ function App() {
 			}
 		}
 		void run();
+		const interval = window.setInterval(() => {
+			void refreshRoster();
+		}, autoRefreshMs);
 		return () => {
 			cancelled = true;
+			window.clearInterval(interval);
 		};
 	}, [playDate, activeLocation]);
 
@@ -122,6 +146,49 @@ function App() {
 			playerName: cleanedName,
 		});
 	}, [activeLocation, cleanedName, playDate]);
+
+	const calendarHref = useMemo(() => {
+		const summary = "Jeff Pickup Soccer";
+		const description = "Pickup soccer signup";
+		const locationText = `${locationMeta.label}\\n${locationMeta.addressLines.join(
+			", ",
+		)}`;
+
+		const [y, m, d] = playDate.split("-").map((x) => Number(x));
+		const [hh, mm] = activeTime.split(":").map((x) => Number(x));
+		const start = new Date(y, (m ?? 1) - 1, d ?? 1, hh ?? 0, mm ?? 0, 0);
+		const end = new Date(start.getTime() + 2 * 60 * 60 * 1000);
+
+		function toIcsLocal(dt: Date) {
+			const pad = (n: number) => String(n).padStart(2, "0");
+			return `${dt.getFullYear()}${pad(dt.getMonth() + 1)}${pad(dt.getDate())}T${pad(dt.getHours())}${pad(dt.getMinutes())}00`;
+		}
+
+		const uid = `${playDate}-${activeLocation}@jeffpickup`;
+		const dtstamp = toIcsLocal(new Date());
+		const dtstart = toIcsLocal(start);
+		const dtend = toIcsLocal(end);
+
+		const ics = [
+			"BEGIN:VCALENDAR",
+			"VERSION:2.0",
+			"PRODID:-//JeffPickup//Pickup//EN",
+			"CALSCALE:GREGORIAN",
+			"METHOD:PUBLISH",
+			"BEGIN:VEVENT",
+			`UID:${uid}`,
+			`DTSTAMP:${dtstamp}`,
+			`DTSTART:${dtstart}`,
+			`DTEND:${dtend}`,
+			`SUMMARY:${summary}`,
+			`DESCRIPTION:${description}`,
+			`LOCATION:${locationText.replace(/\\n/g, "\\\\n")}`,
+			"END:VEVENT",
+			"END:VCALENDAR",
+		].join("\\r\\n");
+
+		return `data:text/calendar;charset=utf-8,${encodeURIComponent(ics)}`;
+	}, [activeLocation, activeTime, locationMeta, playDate]);
 
 	return (
 		<div className="min-h-dvh px-4 pb-[calc(env(safe-area-inset-bottom)+2.5rem)] pt-6 sm:px-6">
@@ -203,6 +270,30 @@ function App() {
 								<div className="mt-1 text-xs text-[--muted]">
 									{locationMeta.addressLines.join(" · ")}
 								</div>
+
+								<div className="mt-3">
+									<div className="flex items-baseline justify-between gap-3 text-xs">
+										<div className="text-[--muted]">
+											{signups.length} / {rosterGoal} {t(lang, "goal")}
+										</div>
+										{mySignup ? (
+											<div className="font-semibold text-[var(--gold)]">
+												{t(lang, "youAreIn")}
+											</div>
+										) : null}
+									</div>
+									<div className="mt-2 h-2 w-full rounded-full bg-white/10">
+										<div
+											className="h-2 rounded-full bg-[var(--gold)]"
+											style={{
+												width: `${Math.min(
+													100,
+													Math.round((signups.length / rosterGoal) * 100),
+												)}%`,
+											}}
+										/>
+									</div>
+								</div>
 							</div>
 							<a
 								className="shrink-0 rounded-xl border border-[var(--border)] bg-black/20 px-3 py-2 text-xs font-medium hover:bg-[var(--surface-2)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--gold)]"
@@ -211,6 +302,16 @@ function App() {
 								rel="noreferrer"
 							>
 								{t(lang, "openInMaps")}
+							</a>
+						</div>
+
+						<div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+							<a
+								className="rounded-2xl border border-[var(--border)] bg-black/20 px-4 py-3 text-center text-sm font-semibold hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--gold)]"
+								href={calendarHref}
+								download={`jeffpickup-${playDate}.ics`}
+							>
+								{t(lang, "addToCalendar")}
 							</a>
 						</div>
 					</section>
@@ -239,6 +340,7 @@ function App() {
 									: "Please keep it under 40 characters.",
 							joinTodaysList: t(lang, "joinTodaysList"),
 							joinList: t(lang, "joinList"),
+							youAreIn: t(lang, "youAreIn"),
 						}}
 						value={{ playDate, playerName }}
 						onChange={(next) => {
@@ -246,9 +348,11 @@ function App() {
 							setPlayerName(next.playerName);
 						}}
 						disabled={!supabase || submitting}
+						joined={Boolean(mySignup)}
 						error={error ?? undefined}
 						onSubmit={async () => {
 							if (!supabase) return;
+							if (mySignup) return;
 							if (!cleanedName) {
 								setError(t(lang, "enterName"));
 								return;

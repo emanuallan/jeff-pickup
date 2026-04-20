@@ -61,6 +61,9 @@ const DICT = {
 		language: "Language",
 		english: "English",
 		spanish: "Español",
+		addToCalendar: "Add to calendar",
+		youAreIn: "You're in",
+		goal: "goal",
 	},
 	es: {
 		pickupRoster: "Lista de juego",
@@ -103,6 +106,9 @@ const DICT = {
 		language: "Idioma",
 		english: "English",
 		spanish: "Español",
+		addToCalendar: "Agregar al calendario",
+		youAreIn: "Ya estás dentro",
+		goal: "meta",
 	},
 } as const;
 

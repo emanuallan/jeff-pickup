@@ -15,12 +15,14 @@ export function SignupForm(props: {
     keepUnder40: string
     joinTodaysList: string
     joinList: string
+    youAreIn: string
   }
   value: SignupFormValue
   onChange: (next: SignupFormValue) => void
   onSubmit: () => void
   disabled?: boolean
   error?: string
+  joined?: boolean
 }) {
   const [touched, setTouched] = useState(false)
 
@@ -78,16 +80,18 @@ export function SignupForm(props: {
         <button
           type="button"
           className="mt-1 w-full rounded-2xl bg-[var(--gold)] px-4 py-3 text-sm font-semibold text-black shadow-sm hover:bg-[var(--gold-2)] disabled:cursor-not-allowed disabled:bg-white/10 disabled:text-white/80 disabled:hover:bg-white/10"
-          disabled={!canSubmit}
+          disabled={!canSubmit || props.joined}
           onClick={() => {
             setTouched(true)
             if (!canSubmit) return
             props.onSubmit()
           }}
         >
-          {props.value.playDate === todayLocalISODate()
-            ? props.labels.joinTodaysList
-            : props.labels.joinList}
+          {props.joined
+            ? props.labels.youAreIn
+            : props.value.playDate === todayLocalISODate()
+              ? props.labels.joinTodaysList
+              : props.labels.joinList}
         </button>
       </div>
     </section>
