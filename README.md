@@ -46,6 +46,8 @@ npm run build
    - `supabase/migrations/001_create_signups.sql`
    - `supabase/migrations/002_signups_unregister_and_settings.sql`
    - `supabase/migrations/003_add_active_time_setting.sql`
+   - `supabase/migrations/004_add_announcement_settings.sql`
+   - `supabase/migrations/005_decouple_location_and_admin_remove.sql`
 3. In Supabase project settings, copy:
    - **Project URL** → `VITE_SUPABASE_URL`
    - **anon public key** → `VITE_SUPABASE_ANON_KEY`
@@ -54,6 +56,7 @@ RLS is enabled:
 
 - `public.signups`: public **select + insert**; unregister is done via `public.unregister_signup(signup_id, delete_token)`
 - `public.app_settings`: public **select + update** (used for active location)
+- Admin can remove players via `public.admin_remove_signup(signup_id, pin)` after configuring the server-side PIN hash (see `supabase/README.md`).
 
 ## Admin menu (hidden)
 

@@ -16,6 +16,8 @@ export function SignupList(props: {
 	canUnregister?: boolean;
 	onUnregister?: () => void;
 	goal?: number;
+	adminCanRemove?: boolean;
+	onAdminRemove?: (signupId: string) => void;
 }) {
 	const goal = props.goal ?? 0;
 	const progressPct =
@@ -49,22 +51,36 @@ export function SignupList(props: {
 										{idx + 1}. {s.player_name}
 									</div>
 								</div>
-								{props.mySignupId === s.id ? (
-									<button
-										type="button"
-										aria-label="Unregister"
-										title={
-											props.canUnregister
-												? props.labels.unregister
-												: props.labels.unregisterHint
-										}
-										disabled={!props.canUnregister}
-										onClick={props.onUnregister}
-										className="ml-3 inline-flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border)] bg-black/30 text-white/80 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
-									>
-										<span className="text-lg leading-none">×</span>
-									</button>
-								) : null}
+								<div className="ml-3 flex items-center gap-2">
+									{props.adminCanRemove ? (
+										<button
+											type="button"
+											aria-label="Remove player (admin)"
+											title="Remove player"
+											onClick={() => props.onAdminRemove?.(s.id)}
+											className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border)] bg-black/30 text-white/80 hover:bg-white/10"
+										>
+											<span className="text-base leading-none">🗑</span>
+										</button>
+									) : null}
+
+									{props.mySignupId === s.id ? (
+										<button
+											type="button"
+											aria-label="Unregister"
+											title={
+												props.canUnregister
+													? props.labels.unregister
+													: props.labels.unregisterHint
+											}
+											disabled={!props.canUnregister}
+											onClick={props.onUnregister}
+											className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border)] bg-black/30 text-white/80 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
+										>
+											<span className="text-lg leading-none">×</span>
+										</button>
+									) : null}
+								</div>
 							</li>
 						))}
 					</ol>

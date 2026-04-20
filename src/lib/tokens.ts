@@ -1,14 +1,24 @@
-function makeKey(args: { playDate: string; location: string; playerName: string }) {
-  return `jeffpickup.deleteToken:${args.playDate}:${args.location}:${args.playerName.toLowerCase()}`
+function makeKey(args: { playDate: string; playerName: string }) {
+  return `jeffpickup.deleteToken:${args.playDate}:${args.playerName.toLowerCase()}`
 }
 
 export function loadDeleteToken(args: {
   playDate: string
-  location: string
   playerName: string
 }): string {
   try {
-    return localStorage.getItem(makeKey(args)) ?? ''
+    const v = localStorage.getItem(makeKey(args))
+    if (v) return v
+    // Back-compat: older keys included location.
+    const legacyPrefix = `jeffpickup.deleteToken:${args.playDate}:`
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i)
+      if (!k || !k.startsWith(legacyPrefix)) continue
+      if (k.endsWith(`:${args.playerName.toLowerCase()}`)) {
+        return localStorage.getItem(k) ?? ''
+      }
+    }
+    return ''
   } catch {
     return ''
   }
@@ -16,7 +26,6 @@ export function loadDeleteToken(args: {
 
 export function saveDeleteToken(args: {
   playDate: string
-  location: string
   playerName: string
   deleteToken: string
 }) {
@@ -32,7 +41,6 @@ export function saveDeleteToken(args: {
 
 export function clearDeleteToken(args: {
   playDate: string
-  location: string
   playerName: string
 }) {
   try {

@@ -3,7 +3,6 @@ import type { LocationId, Signup } from './types'
 
 export async function fetchSignups(args: {
   playDate: string
-  location: LocationId
 }): Promise<Signup[]> {
   const sb = assertSupabaseConfigured()
 
@@ -11,7 +10,6 @@ export async function fetchSignups(args: {
     .from('signups')
     .select('*')
     .eq('play_date', args.playDate)
-    .eq('location', args.location)
     .order('created_at', { ascending: true })
 
   if (error) throw error
@@ -44,6 +42,18 @@ export async function unregisterSignup(args: {
   const { error } = await sb.rpc('unregister_signup', {
     p_signup_id: args.signupId,
     p_delete_token: args.deleteToken,
+  })
+  if (error) throw error
+}
+
+export async function adminRemoveSignup(args: {
+  signupId: string
+  pin: string
+}): Promise<void> {
+  const sb = assertSupabaseConfigured()
+  const { error } = await sb.rpc('admin_remove_signup', {
+    p_signup_id: args.signupId,
+    p_pin: args.pin,
   })
   if (error) throw error
 }
