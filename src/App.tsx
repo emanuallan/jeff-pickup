@@ -26,6 +26,8 @@ import {
 	setActiveLocation,
 	fetchActiveTime,
 	setActiveTime,
+	fetchAnnouncement,
+	setAnnouncement,
 } from "./features/settings/api";
 import { loadLang, saveLang, t, type Lang } from "./lib/i18n";
 
@@ -51,6 +53,8 @@ function App() {
 	const [adminOpen, setAdminOpen] = useState(false);
 	const [adminBusy, setAdminBusy] = useState(false);
 	const [adminError, setAdminError] = useState<string | null>(null);
+	const [announcementText, setAnnouncementText] = useState("");
+	const [announcementDate, setAnnouncementDate] = useState("");
 	const [, setAdminTapState] = useState(() => ({
 		count: 0,
 		lastTapMs: 0,
@@ -103,6 +107,15 @@ function App() {
 				if (!cancelled) setActiveTimeState(t);
 			} catch {
 				// ignore; default time will be used
+			}
+			try {
+				const a = await fetchAnnouncement();
+				if (!cancelled) {
+					setAnnouncementText(a.text);
+					setAnnouncementDate(a.date);
+				}
+			} catch {
+				// ignore; announcements are optional
 			}
 			setLoading(true);
 			setError(null);
@@ -198,6 +211,13 @@ function App() {
 				</header>
 
 				<main className="mt-6 space-y-4">
+					{announcementText &&
+					(!announcementDate || announcementDate === todayLocalISODate()) ? (
+						<section className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4">
+							<div className="text-sm font-semibold">{announcementText}</div>
+						</section>
+					) : null}
+
 					<section className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4">
 						<div className="flex items-start justify-between gap-3">
 							<div>
@@ -434,6 +454,51 @@ function App() {
 						) : null}
 
 						<div className="mt-4 space-y-3">
+							<div className="rounded-2xl border border-[var(--border)] bg-black/20 p-3">
+								<div className="text-xs font-medium text-[--muted]">
+									{t(lang, "announcement")}
+								</div>
+								<textarea
+									className="mt-2 w-full resize-none rounded-xl border border-[var(--border)] bg-black/20 px-3 py-2 text-sm text-[var(--text)] outline-none focus:ring-2 focus:ring-[var(--gold)]"
+									rows={3}
+									placeholder={t(lang, "announcementPlaceholder")}
+									value={announcementText}
+									onChange={(e) => setAnnouncementText(e.target.value)}
+								/>
+								<button
+									type="button"
+									disabled={adminBusy || !supabase}
+									className="mt-2 w-full rounded-2xl bg-[var(--gold)] px-4 py-3 text-sm font-semibold text-black shadow-sm hover:bg-[var(--gold-2)] disabled:cursor-not-allowed disabled:bg-white/10 disabled:text-white/80 disabled:hover:bg-white/10"
+									onClick={async () => {
+										if (!supabase) return;
+										setAdminBusy(true);
+										setAdminError(null);
+										try {
+											if (adminPinConfigured) {
+												const pin = window.prompt(t(lang, "adminPinPrompt"));
+												if (!pin || pin !== String(import.meta.env.VITE_ADMIN_PIN)) {
+													setAdminError(t(lang, "incorrectPin"));
+													return;
+												}
+											}
+
+											const trimmed = announcementText.trim();
+											await setAnnouncement({
+												text: trimmed,
+												date: trimmed ? todayLocalISODate() : "",
+											});
+											setAnnouncementDate(trimmed ? todayLocalISODate() : "");
+										} catch {
+											setAdminError(t(lang, "couldNotUpdateAnnouncement"));
+										} finally {
+											setAdminBusy(false);
+										}
+									}}
+								>
+									{t(lang, "saveAnnouncement")}
+								</button>
+							</div>
+
 							<div className="rounded-2xl border border-[var(--border)] bg-black/20 p-3">
 								<div className="text-xs font-medium text-[--muted]">
 									{t(lang, "activeTime")}
