@@ -25,13 +25,13 @@ export function SignupForm(props: {
   const canSubmit = !props.disabled && !nameError
 
   return (
-    <section className="rounded-2xl border border-[--border] bg-[--surface] p-4">
+    <section className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4">
       <div className="text-sm font-semibold">Join the list</div>
       <div className="mt-3 space-y-3">
         <label className="block">
           <div className="text-xs font-medium text-[--muted]">Date</div>
           <input
-            className="mt-1 w-full rounded-xl border border-[--border] bg-black/20 px-3 py-2 text-sm text-[--text] outline-none focus:ring-2 focus:ring-[--gold]"
+            className="mt-1 w-full rounded-xl border border-[var(--border)] bg-black/20 px-3 py-2 text-sm text-[var(--text)] outline-none focus:ring-2 focus:ring-[var(--gold)]"
             type="date"
             value={props.value.playDate}
             onChange={(e) =>
@@ -43,7 +43,7 @@ export function SignupForm(props: {
         <label className="block">
           <div className="text-xs font-medium text-[--muted]">Your name</div>
           <input
-            className="mt-1 w-full rounded-xl border border-[--border] bg-black/20 px-3 py-2 text-sm text-[--text] outline-none focus:ring-2 focus:ring-[--gold]"
+            className="mt-1 w-full rounded-xl border border-[var(--border)] bg-black/20 px-3 py-2 text-sm text-[var(--text)] outline-none focus:ring-2 focus:ring-[var(--gold)]"
             placeholder="e.g. Alex"
             autoComplete="name"
             value={props.value.playerName}
@@ -65,7 +65,7 @@ export function SignupForm(props: {
 
         <button
           type="button"
-          className="mt-1 w-full rounded-2xl bg-[--gold] px-4 py-3 text-sm font-semibold text-black shadow-sm hover:bg-[--gold-2] disabled:cursor-not-allowed disabled:bg-white/10 disabled:text-white/70 disabled:hover:bg-white/10"
+          className="mt-1 w-full rounded-2xl bg-[var(--gold)] px-4 py-3 text-sm font-semibold text-black shadow-sm hover:bg-[var(--gold-2)] disabled:cursor-not-allowed disabled:bg-white/10 disabled:text-white/80 disabled:hover:bg-white/10"
           disabled={!canSubmit}
           onClick={() => {
             setTouched(true)
