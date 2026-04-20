@@ -1,11 +1,7 @@
 import { useMemo, useState } from 'react'
 import { todayLocalISODate } from '../../lib/date'
-import { LOCATIONS } from './locations'
-import type { LocationId } from './types'
-
 export type SignupFormValue = {
   playDate: string
-  location: LocationId
   playerName: string
 }
 
@@ -45,26 +41,6 @@ export function SignupForm(props: {
         </label>
 
         <label className="block">
-          <div className="text-xs font-medium text-[--muted]">Location</div>
-          <select
-            className="mt-1 w-full rounded-xl border border-[--border] bg-black/20 px-3 py-2 text-sm text-[--text] outline-none focus:ring-2 focus:ring-[--gold]"
-            value={props.value.location}
-            onChange={(e) =>
-              props.onChange({
-                ...props.value,
-                location: e.target.value as LocationId,
-              })
-            }
-          >
-            {LOCATIONS.map((l) => (
-              <option key={l.id} value={l.id}>
-                {l.label}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label className="block">
           <div className="text-xs font-medium text-[--muted]">Your name</div>
           <input
             className="mt-1 w-full rounded-xl border border-[--border] bg-black/20 px-3 py-2 text-sm text-[--text] outline-none focus:ring-2 focus:ring-[--gold]"
@@ -89,7 +65,7 @@ export function SignupForm(props: {
 
         <button
           type="button"
-          className="mt-1 w-full rounded-2xl bg-[--gold] px-4 py-3 text-sm font-semibold text-black shadow-sm hover:bg-[--gold-2] disabled:cursor-not-allowed disabled:opacity-60"
+          className="mt-1 w-full rounded-2xl bg-[--gold] px-4 py-3 text-sm font-semibold text-black shadow-sm hover:bg-[--gold-2] disabled:cursor-not-allowed disabled:bg-white/10 disabled:text-white/70 disabled:hover:bg-white/10"
           disabled={!canSubmit}
           onClick={() => {
             setTouched(true)

@@ -25,6 +25,7 @@ Fill in:
 
 - `VITE_SUPABASE_URL`
 - `VITE_SUPABASE_ANON_KEY`
+- (optional) `VITE_ADMIN_PIN` (used by the hidden admin menu)
 
 Run dev server:
 
@@ -43,11 +44,21 @@ npm run build
 1. Create a Supabase project.
 2. In the Supabase **SQL Editor**, run:
    - `supabase/migrations/001_create_signups.sql`
+   - `supabase/migrations/002_signups_unregister_and_settings.sql`
 3. In Supabase project settings, copy:
    - **Project URL** → `VITE_SUPABASE_URL`
    - **anon public key** → `VITE_SUPABASE_ANON_KEY`
 
-RLS is enabled and policies allow **public select + insert** on `public.signups` (no updates/deletes).
+RLS is enabled:
+
+- `public.signups`: public **select + insert**; unregister is done via `public.unregister_signup(signup_id, delete_token)`
+- `public.app_settings`: public **select + update** (used for active location)
+
+## Admin menu (hidden)
+
+Press and hold **“Pickup roster”** for ~5 seconds to open the admin sheet and set the active location.
+
+If `VITE_ADMIN_PIN` is set, you’ll be prompted for the PIN before changing the location.
 
 ## Deploy
 
@@ -55,6 +66,7 @@ Deploy the frontend to **Netlify** or **Vercel** and set the same environment va
 
 - `VITE_SUPABASE_URL`
 - `VITE_SUPABASE_ANON_KEY`
+- (optional) `VITE_ADMIN_PIN`
 
 Then redeploy.
 
