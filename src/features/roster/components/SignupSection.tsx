@@ -165,7 +165,7 @@ export function SignupSection(props: {
 
     if (new Date(latest.created_at) > new Date(seen)) {
       const fromKey = String(latest.from_player_name ?? '').trim().toLowerCase()
-      const kind = newPlayerNameKeys.has(fromKey) ? 'wave' : 'poke'
+      const kind = viewerIsNew ? 'wave' : newPlayerNameKeys.has(fromKey) ? 'wave' : 'poke'
       setPokeBanner({ from: latest.from_player_name, at: latest.created_at, kind })
     }
   }, [
@@ -177,6 +177,7 @@ export function SignupSection(props: {
     pokesQuery.data,
     pokeSeenInitialized,
     props.playDate,
+    viewerIsNew,
   ])
 
   return (
