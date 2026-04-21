@@ -1,4 +1,5 @@
 import { getSupabase } from './supabaseClient'
+import { todayLocalISODate } from '../lib/date'
 
 export type CapsLeaderboardRow = {
   displayName: string
@@ -6,12 +7,13 @@ export type CapsLeaderboardRow = {
   caps: number
 }
 
-export async function fetchCapsLeaderboard(args?: { limit?: number }): Promise<CapsLeaderboardRow[]> {
+export async function fetchCapsLeaderboard(args?: { limit?: number; asOf?: string }): Promise<CapsLeaderboardRow[]> {
   const sb = getSupabase()
   if (!sb) return []
 
   const limit = typeof args?.limit === 'number' && args.limit > 0 ? Math.min(args.limit, 500) : 150
-  const { data, error } = await sb.rpc('player_caps_leaderboard', { p_limit: limit })
+  const asOf = (args?.asOf ?? todayLocalISODate()).slice(0, 10)
+  const { data, error } = await sb.rpc('player_caps_leaderboard', { p_as_of: asOf, p_limit: limit })
   if (error) throw error
 
   const rows: CapsLeaderboardRow[] = []

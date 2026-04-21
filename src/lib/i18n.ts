@@ -46,7 +46,8 @@ const DICT = {
 		tabTodaysList: "Today",
 		tabCapsLeaderboard: "Caps",
 		capsLeaderboardTitle: "Caps leaderboard",
-		capsLeaderboardHint: "Times each name has signed up on a different pickup day.",
+		capsLeaderboardHint:
+			"Distinct pickup days each name has registered for, counting only days before today (in your time zone).",
 		capsLeaderboardEmpty: "No caps yet — join a game to get on the board.",
 		capsShort: "caps",
 		pickEmoji: "Pick an emoji",
@@ -130,7 +131,8 @@ const DICT = {
 		tabTodaysList: "Hoy",
 		tabCapsLeaderboard: "Caps",
 		capsLeaderboardTitle: "Ranking de caps",
-		capsLeaderboardHint: "Veces que cada nombre se apuntó en un día de pickup distinto.",
+		capsLeaderboardHint:
+			"Días de pickup distintos por nombre, solo los anteriores a hoy (en tu zona horaria).",
 		capsLeaderboardEmpty: "Aún no hay caps — únete a un día para entrar al ranking.",
 		capsShort: "caps",
 		pickEmoji: "Elige un emoji",

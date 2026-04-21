@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useMemo } from 'react'
 import { fetchCapsLeaderboard, fetchPlayerDistinctGameCounts } from '../../api/playerStats'
 import { createSignup, fetchSignups, unregisterSignup } from '../../api/signups'
+import { todayLocalISODate } from '../../lib/date'
 import { supabase } from '../../lib/supabase'
 import type { LocationId } from '../signups/types'
 
@@ -39,9 +40,10 @@ export function usePlayerDistinctGameCountsQuery(nameKeys: string[]) {
 }
 
 export function useCapsLeaderboardQuery() {
+  const asOf = todayLocalISODate()
   return useQuery({
-    queryKey: capsLeaderboardKeys.all,
-    queryFn: () => fetchCapsLeaderboard({ limit: 200 }),
+    queryKey: [...capsLeaderboardKeys.all, asOf] as const,
+    queryFn: () => fetchCapsLeaderboard({ limit: 200, asOf }),
     enabled: Boolean(supabase),
     staleTime: 30_000,
     refetchInterval: 60_000,
