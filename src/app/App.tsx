@@ -88,8 +88,8 @@ export default function App() {
 
     if (lang !== 'en') return normal
 
-    // 10% banter line (stable per render cycle)
-    if (Math.random() >= 0.1) return normal
+    // 20% banter line (stable per render cycle)
+    if (Math.random() >= 0.2) return normal
 
     const spicy = [
       'Ready to play today, or are you just lurking? Tap to join →',
