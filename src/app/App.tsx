@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { loadLang, saveLang, t, type Lang } from '../lib/i18n'
 import { SignupSection } from '../features/roster/components/SignupSection'
@@ -80,6 +80,27 @@ export default function App() {
     })
   }
 
+  const signupCtaText = useMemo(() => {
+    const normal =
+      lang === 'es'
+        ? '¿Listo para jugar hoy? Toca para unirte a la lista →'
+        : 'Ready to play today? Tap to join the list →'
+
+    if (lang !== 'en') return normal
+
+    // 10% banter line (stable per render cycle)
+    if (Math.random() >= 0.1) return normal
+
+    const spicy = [
+      'Ready to play today, or are you just lurking? Tap to join →',
+      "Clock’s ticking — get on the list. Tap to join →",
+      'No excuses. Tap to join the list →',
+      'Stop thinking about it. Tap to join →',
+      'Be a hero. Tap to join the list →',
+    ]
+    return spicy[Math.floor(Math.random() * spicy.length)] ?? normal
+  }, [lang])
+
   return (
     <div className="min-h-dvh px-4 pb-[calc(env(safe-area-inset-bottom)+2.5rem)] pt-6 sm:px-6">
       <div className="mx-auto w-full max-w-md">
@@ -99,7 +120,7 @@ export default function App() {
                   el?.scrollIntoView({ behavior: 'smooth', block: 'start' })
                 }}
               >
-                Ready to play today? Tap to join the list →
+                {signupCtaText}
               </button>
             </div>
           ) : null}
