@@ -22,6 +22,7 @@ export function useCreateSignupMutation(args: { playDate: string }) {
       playDate: string
       location: LocationId
       playerName: string
+      guestCount: number
       deleteToken: string
     }) => createSignup(vars),
     onSuccess: async () => {

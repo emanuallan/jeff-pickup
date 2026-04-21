@@ -11,14 +11,14 @@ function chipClasses(status: GameStatus) {
 export function GameStatusCard(props: {
   lang: Lang
   status: GameStatus
-  signupsCount: number
+  headcount: number
   minPlayers: number
   onTapTitle?: () => void
 }) {
   const effectiveStatus: GameStatus = useMemo(() => {
     if (props.status !== 'tentative') return props.status
-    return props.signupsCount >= props.minPlayers ? 'on' : 'tentative'
-  }, [props.minPlayers, props.signupsCount, props.status])
+    return props.headcount >= props.minPlayers ? 'on' : 'tentative'
+  }, [props.headcount, props.minPlayers, props.status])
 
   const headline = useMemo(() => {
     if (effectiveStatus === 'on') return t(props.lang, 'statusOn')
@@ -29,11 +29,11 @@ export function GameStatusCard(props: {
   const detail = useMemo(() => {
     if (effectiveStatus === 'cancelled') return t(props.lang, 'statusCancelledDetail')
     if (effectiveStatus === 'on') return t(props.lang, 'statusOnDetail')
-    const need = Math.max(0, props.minPlayers - props.signupsCount)
+    const need = Math.max(0, props.minPlayers - props.headcount)
     return need <= 0
       ? t(props.lang, 'statusOnDetail')
       : t(props.lang, 'statusNeedMore').replace('{n}', String(need))
-  }, [effectiveStatus, props.lang, props.minPlayers, props.signupsCount])
+  }, [effectiveStatus, props.headcount, props.lang, props.minPlayers])
 
   return (
     <section className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4">

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { loadLang, saveLang, type Lang } from '../lib/i18n'
 import { SignupSection } from '../features/roster/components/SignupSection'
@@ -23,6 +23,13 @@ export default function App() {
   const [adminMode, setAdminMode] = useState<'full' | 'gameStatus'>('full')
   const [, setAdminTapState] = useState(() => ({ count: 0, lastTapMs: 0 }))
   const [, setGameStatusTapState] = useState(() => ({ count: 0, lastTapMs: 0 }))
+  const [dateModalOpen, setDateModalOpen] = useState(false)
+  const [dateDraft, setDateDraft] = useState(playDate)
+
+  useEffect(() => {
+    if (dateModalOpen) return
+    setDateDraft(playDate)
+  }, [dateModalOpen, playDate])
 
   const onAdminUnlockTap = () => {
     if (!supabase) return
@@ -65,7 +72,23 @@ export default function App() {
           <LocationAndTimeCard
             lang={lang}
             playDate={playDate}
-            onTapTitle={onAdminUnlockTap}
+            dateModalOpen={dateModalOpen}
+            dateDraft={dateDraft}
+            onOpenDateModal={() => {
+              setDateDraft(playDate)
+              setDateModalOpen(true)
+            }}
+            onCloseDateModal={() => {
+              setDateModalOpen(false)
+            }}
+            onDateDraftChange={(next) => {
+              setDateDraft(next)
+            }}
+            onSaveDate={() => {
+              setPlayDate(dateDraft)
+              setDateModalOpen(false)
+            }}
+            onTapAdminUnlock={onAdminUnlockTap}
           />
 
           {!supabase ? (
@@ -75,7 +98,6 @@ export default function App() {
           <SignupSection
             lang={lang}
             playDate={playDate}
-            onPlayDateChange={setPlayDate}
             onTapAdminTitle={onGameStatusUnlockTap}
           />
 

@@ -11,13 +11,24 @@ export async function fetchSignups(args: { playDate: string }): Promise<Signup[]
     .order('created_at', { ascending: true })
 
   if (error) throw error
-  return (data ?? []) as Signup[]
+  return (data ?? []).map((row: any) => {
+    const guestRaw = row?.guest_count
+    const guestParsed =
+      typeof guestRaw === 'number'
+        ? guestRaw
+        : typeof guestRaw === 'string'
+          ? Number.parseInt(guestRaw, 10)
+          : 0
+    const guestCount = Number.isFinite(guestParsed) ? Math.max(0, Math.min(20, guestParsed)) : 0
+    return { ...row, guest_count: guestCount } as Signup
+  })
 }
 
 export async function createSignup(args: {
   playDate: string
   location: LocationId
   playerName: string
+  guestCount: number
   deleteToken: string
 }): Promise<void> {
   const sb = getSupabase()
@@ -26,6 +37,7 @@ export async function createSignup(args: {
     play_date: args.playDate,
     location: args.location,
     player_name: args.playerName,
+    guest_count: args.guestCount,
     delete_token: args.deleteToken,
   })
 

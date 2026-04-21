@@ -5,6 +5,7 @@ export type Signup = {
   play_date: string
   location: LocationId
   player_name: string
+  guest_count: number
   created_at: string
   delete_token?: string
 }

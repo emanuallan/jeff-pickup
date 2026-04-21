@@ -16,10 +16,10 @@ import { GameStatusCard } from './GameStatusCard'
 export function SignupSection(props: {
   lang: Lang
   playDate: string
-  onPlayDateChange: (next: string) => void
   onTapAdminTitle?: () => void
 }) {
   const [playerName, setPlayerName] = useLocalStorageState({ load: loadPlayerName, save: savePlayerName })
+  const [guestCount, setGuestCount] = useState('0')
   const [error, setError] = useState<string | null>(null)
 
   const cleanedName = useMemo(
@@ -64,73 +64,90 @@ export function SignupSection(props: {
 
   const rosterGoal = minPlayersQuery.data ?? 10
 
+  const rosterHeadcount = useMemo(() => {
+    return signups.reduce((sum, s) => sum + 1 + Math.max(0, s.guest_count ?? 0), 0)
+  }, [signups])
+
   return (
     <>
       <GameStatusCard
         lang={props.lang}
         status={gameStatusQuery.data ?? 'tentative'}
-        signupsCount={signups.length}
+        headcount={rosterHeadcount}
         minPlayers={rosterGoal}
         onTapTitle={props.onTapAdminTitle}
       />
 
-      <SignupForm
-        labels={{
-          joinTheList: t(props.lang, 'joinTheList'),
-          date: t(props.lang, 'date'),
-          yourName: t(props.lang, 'yourName'),
-          namePlaceholder: t(props.lang, 'namePlaceholder'),
-          enterName: t(props.lang, 'enterName'),
-          keepUnder40:
-            props.lang === 'es'
-              ? 'Por favor usa menos de 40 caracteres.'
-              : 'Please keep it under 40 characters.',
-          joinTodaysList: t(props.lang, 'joinTodaysList'),
-          joinList: t(props.lang, 'joinList'),
-          youAreIn: t(props.lang, 'youAreIn'),
-        }}
-        value={{ playDate: props.playDate, playerName }}
-        onChange={(next) => {
-          props.onPlayDateChange(next.playDate)
-          setPlayerName(next.playerName)
-        }}
-        disabled={disabled || submitting}
-        joined={joined}
-        error={error ?? undefined}
-        onSubmit={async () => {
-          if (!supabase) return
-          if (mySignup) return
-          if (!cleanedName) {
-            setError(t(props.lang, 'enterName'))
-            return
-          }
-
-          setError(null)
-          try {
-            const deleteToken = newUuid()
-            await createSignupMutation.mutateAsync({
-              playDate: props.playDate,
-              location: activeLocation,
-              playerName: cleanedName,
-              deleteToken,
-            })
-            void fireConfetti()
-            saveDeleteToken({
-              playDate: props.playDate,
-              playerName: cleanedName,
-              deleteToken,
-            })
-            setPlayerName(cleanedName)
-          } catch (e: unknown) {
-            const err = toAppError(e)
-            if (err.code === 'CONSTRAINT_UNIQUE') {
-              setError(t(props.lang, 'alreadyOnList'))
-            } else {
-              setError(t(props.lang, 'couldNotAdd'))
+      {!joined ? (
+        <SignupForm
+          labels={{
+            joinTheList: t(props.lang, 'joinTheList'),
+            yourName: t(props.lang, 'yourName'),
+            namePlaceholder: t(props.lang, 'namePlaceholder'),
+            enterName: t(props.lang, 'enterName'),
+            keepUnder40:
+              props.lang === 'es'
+                ? 'Por favor usa menos de 40 caracteres.'
+                : 'Please keep it under 40 characters.',
+            bringingGuests: t(props.lang, 'bringingGuests'),
+            bringingGuestsPlaceholder: t(props.lang, 'bringingGuestsPlaceholder'),
+            invalidGuests: t(props.lang, 'invalidGuests'),
+            joinTodaysList: t(props.lang, 'joinTodaysList'),
+            joinList: t(props.lang, 'joinList'),
+            youAreIn: t(props.lang, 'youAreIn'),
+          }}
+          value={{ playDate: props.playDate, playerName, guestCount }}
+          onChange={(next) => {
+            setPlayerName(next.playerName)
+            setGuestCount(next.guestCount)
+          }}
+          disabled={disabled || submitting}
+          joined={joined}
+          error={error ?? undefined}
+          onSubmit={async () => {
+            if (!supabase) return
+            if (mySignup) return
+            if (!cleanedName) {
+              setError(t(props.lang, 'enterName'))
+              return
             }
-          }
-        }}
-      />
+
+            const rawGuests = guestCount.trim()
+            const guestsParsed = rawGuests ? Number.parseInt(rawGuests, 10) : 0
+            if (!Number.isFinite(guestsParsed) || guestsParsed < 0 || guestsParsed > 20) {
+              setError(t(props.lang, 'invalidGuests'))
+              return
+            }
+
+            setError(null)
+            try {
+              const deleteToken = newUuid()
+              await createSignupMutation.mutateAsync({
+                playDate: props.playDate,
+                location: activeLocation,
+                playerName: cleanedName,
+                guestCount: guestsParsed,
+                deleteToken,
+              })
+              void fireConfetti()
+              saveDeleteToken({
+                playDate: props.playDate,
+                playerName: cleanedName,
+                deleteToken,
+              })
+              setPlayerName(cleanedName)
+              setGuestCount('0')
+            } catch (e: unknown) {
+              const err = toAppError(e)
+              if (err.code === 'CONSTRAINT_UNIQUE') {
+                setError(t(props.lang, 'alreadyOnList'))
+              } else {
+                setError(t(props.lang, 'couldNotAdd'))
+              }
+            }
+          }}
+        />
+      ) : null}
 
       <SignupList
         labels={{
@@ -142,6 +159,7 @@ export function SignupSection(props: {
           unregisterHint: t(props.lang, 'unregisterHint'),
           goal: t(props.lang, 'goal'),
           walkOnsHint: t(props.lang, 'walkOnsHint'),
+          guestsTag: t(props.lang, 'guestsTag'),
         }}
         signups={signups}
         loading={loading}

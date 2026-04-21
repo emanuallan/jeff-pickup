@@ -3,16 +3,19 @@ import { todayLocalISODate } from '../../lib/date'
 export type SignupFormValue = {
   playDate: string
   playerName: string
+  guestCount: string
 }
 
 export function SignupForm(props: {
   labels: {
     joinTheList: string
-    date: string
     yourName: string
     namePlaceholder: string
     enterName: string
     keepUnder40: string
+    bringingGuests: string
+    bringingGuestsPlaceholder: string
+    invalidGuests: string
     joinTodaysList: string
     joinList: string
     youAreIn: string
@@ -34,24 +37,21 @@ export function SignupForm(props: {
     return null
   }, [props.labels, props.value.playerName, touched])
 
-  const canSubmit = !props.disabled && !nameError
+  const guestsError = useMemo(() => {
+    if (!touched) return null
+    const raw = props.value.guestCount.trim()
+    if (!raw) return null
+    const n = Number.parseInt(raw, 10)
+    if (!Number.isFinite(n) || n < 0 || n > 20) return props.labels.invalidGuests
+    return null
+  }, [props.labels.invalidGuests, props.value.guestCount, touched])
+
+  const canSubmit = !props.disabled && !nameError && !guestsError
 
   return (
     <section className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4">
       <div className="text-sm font-semibold">{props.labels.joinTheList}</div>
       <div className="mt-3 space-y-3">
-        <label className="block">
-          <div className="text-xs font-medium text-[--muted]">{props.labels.date}</div>
-          <input
-            className="mt-1 w-full rounded-xl border border-[var(--border)] bg-black/20 px-3 py-2 text-sm text-[var(--text)] outline-none focus:ring-2 focus:ring-[var(--gold)]"
-            type="date"
-            value={props.value.playDate}
-            onChange={(e) =>
-              props.onChange({ ...props.value, playDate: e.target.value })
-            }
-          />
-        </label>
-
         <label className="block">
           <div className="text-xs font-medium text-[--muted]">
             {props.labels.yourName}
@@ -68,6 +68,23 @@ export function SignupForm(props: {
           />
           {nameError ? (
             <div className="mt-1 text-xs text-red-200">{nameError}</div>
+          ) : null}
+        </label>
+
+        <label className="block">
+          <div className="text-xs font-medium text-[--muted]">{props.labels.bringingGuests}</div>
+          <input
+            className="mt-1 w-full rounded-xl border border-[var(--border)] bg-black/20 px-3 py-2 text-sm text-[var(--text)] outline-none focus:ring-2 focus:ring-[var(--gold)]"
+            inputMode="numeric"
+            placeholder={props.labels.bringingGuestsPlaceholder}
+            value={props.value.guestCount}
+            onBlur={() => setTouched(true)}
+            onChange={(e) =>
+              props.onChange({ ...props.value, guestCount: e.target.value })
+            }
+          />
+          {guestsError ? (
+            <div className="mt-1 text-xs text-red-200">{guestsError}</div>
           ) : null}
         </label>
 

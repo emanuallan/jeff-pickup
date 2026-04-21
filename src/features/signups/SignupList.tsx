@@ -10,6 +10,7 @@ export function SignupList(props: {
 		unregisterHint: string;
 		goal: string;
 		walkOnsHint: string;
+		guestsTag: string;
 	};
 	signups: Signup[];
 	loading?: boolean;
@@ -19,9 +20,13 @@ export function SignupList(props: {
 	goal?: number;
 }) {
 	const goal = props.goal ?? 0;
+	const headcount = props.signups.reduce(
+		(sum, s) => sum + 1 + Math.max(0, s.guest_count ?? 0),
+		0,
+	);
 	const progressPct =
 		goal > 0
-			? Math.min(100, Math.round((props.signups.length / goal) * 100))
+			? Math.min(100, Math.round((headcount / goal) * 100))
 			: 0;
 
 	return (
@@ -29,7 +34,7 @@ export function SignupList(props: {
 			<div className="flex items-baseline justify-between gap-3">
 				<div className="text-sm font-semibold">{props.labels.players}</div>
 				<div className="text-xs text-[--muted]">
-					{props.signups.length} {props.labels.total}
+					{headcount} {props.labels.total}
 				</div>
 			</div>
 
@@ -42,6 +47,7 @@ export function SignupList(props: {
 					<ol className="space-y-2">
 						{props.signups.map((s, idx) => {
 							const isMe = props.mySignupId === s.id;
+							const guests = Math.max(0, s.guest_count ?? 0);
 							return (
 								<li
 									key={s.id}
@@ -54,6 +60,11 @@ export function SignupList(props: {
 									<div className="min-w-0">
 										<div className="truncate text-sm font-medium">
 											{idx + 1}. {s.player_name}
+											{guests > 0 ? (
+												<span className="ml-2 text-xs font-semibold text-[var(--gold)]">
+													{props.labels.guestsTag.replace('{n}', String(guests))}
+												</span>
+											) : null}
 										</div>
 									</div>
 									<div className="ml-3 flex items-center">
@@ -85,7 +96,7 @@ export function SignupList(props: {
 				<div className="mt-8">
 					<div className="flex items-baseline justify-between gap-3 text-xs">
 						<div className="text-[--muted]">
-							{props.signups.length} / {goal} {props.labels.goal}
+							{headcount} / {goal} {props.labels.goal}
 						</div>
 						<div className="text-[--muted]">{progressPct}%</div>
 					</div>

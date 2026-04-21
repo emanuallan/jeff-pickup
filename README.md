@@ -48,6 +48,8 @@ npm run build
    - `supabase/migrations/003_add_active_time_setting.sql`
    - `supabase/migrations/004_add_announcement_settings.sql`
    - `supabase/migrations/005_decouple_location_and_admin_remove.sql`
+   - `supabase/migrations/006_add_game_status_settings.sql`
+   - `supabase/migrations/007_add_guest_count_to_signups.sql`
 3. In Supabase project settings, copy:
    - **Project URL** → `VITE_SUPABASE_URL`
    - **anon public key** → `VITE_SUPABASE_ANON_KEY`
