@@ -1,6 +1,7 @@
 export type WeatherAtTime = {
   emoji: string
   description: string
+  tempF?: number
 }
 
 function weatherCodeToEmoji(code: number): WeatherAtTime {
@@ -37,19 +38,26 @@ export async function fetchWeatherEmojiAtGameTime(args: {
   url.searchParams.set('latitude', String(args.lat))
   url.searchParams.set('longitude', String(args.lon))
   url.searchParams.set('timezone', 'auto')
-  url.searchParams.set('hourly', 'weather_code')
+  url.searchParams.set('temperature_unit', 'fahrenheit')
+  url.searchParams.set('hourly', 'weather_code,temperature_2m')
   url.searchParams.set('start_date', day)
   url.searchParams.set('end_date', day)
 
   const res = await fetch(url.toString())
   if (!res.ok) throw new Error(`weather_fetch_failed:${res.status}`)
   const data = (await res.json()) as {
-    hourly?: { time?: string[]; weather_code?: Array<number | null> }
+    hourly?: {
+      time?: string[]
+      weather_code?: Array<number | null>
+      temperature_2m?: Array<number | null>
+    }
   }
 
   const times = data.hourly?.time ?? []
   const codes = data.hourly?.weather_code ?? []
+  const temps = data.hourly?.temperature_2m ?? []
   if (times.length === 0 || times.length !== codes.length) return null
+  if (temps.length > 0 && temps.length !== times.length) return null
 
   // Prefer exact hour match in returned timezone.
   let idx = times.indexOf(target)
@@ -75,6 +83,9 @@ export async function fetchWeatherEmojiAtGameTime(args: {
   if (idx < 0) return null
   const code = codes[idx]
   if (typeof code !== 'number' || !Number.isFinite(code)) return null
-  return weatherCodeToEmoji(code)
+  const base = weatherCodeToEmoji(code)
+  const temp = temps[idx]
+  const tempF = typeof temp === 'number' && Number.isFinite(temp) ? Math.round(temp) : undefined
+  return { ...base, tempF }
 }
 

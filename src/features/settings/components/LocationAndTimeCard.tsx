@@ -44,6 +44,7 @@ export function LocationAndTimeCard(props: {
     staleTime: 10 * 60_000,
   })
   const weather = weatherQuery.data
+  const weatherTemp = typeof weather?.tempF === 'number' ? weather.tempF : null
 
   return (
     <section className="relative rounded-2xl border border-(--border) bg-(--surface) p-4">
@@ -66,6 +67,11 @@ export function LocationAndTimeCard(props: {
             {showWeather && !weatherQuery.isLoading && weather ? (
               <span className="ml-1" title={weather.description} aria-label={weather.description}>
                 {weather.emoji}
+                {weatherTemp !== null ? (
+                  <span className="ml-1 text-xs font-semibold text-[--muted]">
+                    ({weatherTemp}°F)
+                  </span>
+                ) : null}
               </span>
             ) : null}
           </button>
