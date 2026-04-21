@@ -85,44 +85,62 @@ export function ShareFacebookPostCard(props: {
   }, [activeTime, locationMeta.addressLines, locationMeta.label, props.playDate, props.registerUrl])
 
   const [copied, setCopied] = useState(false)
+  const [open, setOpen] = useState(false)
 
   return (
     <section className="rounded-2xl border border-(--border) bg-(--surface) p-4">
-      <div className="min-w-0">
-        <div className="text-sm font-semibold">{t(props.lang, 'sharePost')}</div>
-        <div className="mt-1 text-xs text-[--muted]">{t(props.lang, 'sharePostHint')}</div>
-      </div>
-
-      <pre className="mt-3 whitespace-pre-wrap wrap-break-word rounded-2xl border border-(--border) bg-black/20 p-3 text-xs text-white/90">
-        {message}
-      </pre>
-
-      <div className="mt-3 grid grid-cols-1 gap-2">
-        <button
-          type="button"
-          className="rounded-2xl bg-(--gold) px-4 py-3 text-sm font-semibold text-black shadow-sm hover:bg-(--gold-2) focus:outline-none focus-visible:ring-2 focus-visible:ring-(--gold)"
-          onClick={async () => {
-            const ok = await copyText(message)
-            if (!ok) {
-              window.alert(t(props.lang, 'couldNotCopy'))
-              return
-            }
-            setCopied(true)
-            window.setTimeout(() => setCopied(false), 1600)
-          }}
+      <button
+        type="button"
+        className="flex w-full items-start justify-between gap-3 text-left focus:outline-none"
+        aria-expanded={open}
+        onClick={() => setOpen((v) => !v)}
+      >
+        <div className="min-w-0">
+          <div className="text-sm font-semibold">{t(props.lang, 'sharePost')}</div>
+          <div className="mt-1 text-xs text-[--muted]">{t(props.lang, 'sharePostHint')}</div>
+        </div>
+        <span
+          className="shrink-0 rounded-xl border border-(--border) bg-black/20 px-3 py-2 text-xs font-semibold text-white/90 hover:bg-white/10"
+          aria-hidden
         >
-          {copied ? t(props.lang, 'copied') : t(props.lang, 'copyPostText')}
-        </button>
+          {open ? 'Hide' : 'Show'}
+        </span>
+      </button>
 
-        <a
-          className="rounded-2xl border border-(--border) bg-black/20 px-4 py-3 text-center text-sm font-semibold hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-(--gold)"
-          href={props.facebookGroupUrl}
-          target="_blank"
-          rel="noreferrer"
-        >
-          {t(props.lang, 'openFacebookAndPaste')}
-        </a>
-      </div>
+      {open ? (
+        <>
+          <pre className="mt-3 whitespace-pre-wrap wrap-break-word rounded-2xl border border-(--border) bg-black/20 p-3 text-xs text-white/90">
+            {message}
+          </pre>
+
+          <div className="mt-3 grid grid-cols-1 gap-2">
+            <button
+              type="button"
+              className="rounded-2xl bg-(--gold) px-4 py-3 text-sm font-semibold text-black shadow-sm hover:bg-(--gold-2) focus:outline-none focus-visible:ring-2 focus-visible:ring-(--gold)"
+              onClick={async () => {
+                const ok = await copyText(message)
+                if (!ok) {
+                  window.alert(t(props.lang, 'couldNotCopy'))
+                  return
+                }
+                setCopied(true)
+                window.setTimeout(() => setCopied(false), 1600)
+              }}
+            >
+              {copied ? t(props.lang, 'copied') : t(props.lang, 'copyPostText')}
+            </button>
+
+            <a
+              className="rounded-2xl border border-(--border) bg-black/20 px-4 py-3 text-center text-sm font-semibold hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-(--gold)"
+              href={props.facebookGroupUrl}
+              target="_blank"
+              rel="noreferrer"
+            >
+              {t(props.lang, 'openFacebookAndPaste')}
+            </a>
+          </div>
+        </>
+      ) : null}
     </section>
   )
 }
