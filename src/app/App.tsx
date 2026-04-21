@@ -113,7 +113,7 @@ export default function App() {
           {savedName ? (
             <div>
               <div className="text-2xl font-semibold tracking-tight text-white">
-                Hi {savedName} <span aria-hidden>👋</span>
+                {t(lang, 'hiName').replace('{name}', savedName)} <span aria-hidden>👋</span>
               </div>
               {!isPastSession ? (
                 <button
