@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useMemo } from 'react'
-import { fetchPlayerDistinctGameCounts } from '../../api/playerStats'
+import { fetchCapsLeaderboard, fetchPlayerDistinctGameCounts } from '../../api/playerStats'
 import { createSignup, fetchSignups, unregisterSignup } from '../../api/signups'
 import { supabase } from '../../lib/supabase'
 import type { LocationId } from '../signups/types'
@@ -13,6 +13,10 @@ export const rosterKeys = {
 export const playerStatsKeys = {
   all: ['playerGameCounts'] as const,
   forNameKeys: (sortedKeysJoined: string) => [...playerStatsKeys.all, sortedKeysJoined] as const,
+}
+
+export const capsLeaderboardKeys = {
+  all: ['capsLeaderboard'] as const,
 }
 
 export function useRosterQuery(args: { playDate: string; refetchIntervalMs?: number }) {
@@ -34,6 +38,16 @@ export function usePlayerDistinctGameCountsQuery(nameKeys: string[]) {
   })
 }
 
+export function useCapsLeaderboardQuery() {
+  return useQuery({
+    queryKey: capsLeaderboardKeys.all,
+    queryFn: () => fetchCapsLeaderboard({ limit: 200 }),
+    enabled: Boolean(supabase),
+    staleTime: 30_000,
+    refetchInterval: 60_000,
+  })
+}
+
 export function useCreateSignupMutation(args: { playDate: string }) {
   const qc = useQueryClient()
   return useMutation({
@@ -47,6 +61,7 @@ export function useCreateSignupMutation(args: { playDate: string }) {
     onSuccess: async () => {
       await qc.invalidateQueries({ queryKey: rosterKeys.byDate({ playDate: args.playDate }) })
       await qc.invalidateQueries({ queryKey: playerStatsKeys.all })
+      await qc.invalidateQueries({ queryKey: capsLeaderboardKeys.all })
     },
   })
 }
@@ -58,6 +73,7 @@ export function useUnregisterSignupMutation(args: { playDate: string }) {
     onSuccess: async () => {
       await qc.invalidateQueries({ queryKey: rosterKeys.byDate({ playDate: args.playDate }) })
       await qc.invalidateQueries({ queryKey: playerStatsKeys.all })
+      await qc.invalidateQueries({ queryKey: capsLeaderboardKeys.all })
     },
   })
 }
