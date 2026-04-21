@@ -98,7 +98,7 @@ export function CapsLeaderboard(props: { lang: Lang; myNameKey: string }) {
                         {isTopStreak ? <span className="ml-1" aria-hidden>🔥</span> : null}
                       </span>
                       <span className="ml-1 text-[10px] font-semibold uppercase tracking-wide text-(--muted)">
-                        {t(props.lang, 'weeksShort')}
+                        {row.currentStreakWeeks === 1 ? t(props.lang, 'weekShort') : t(props.lang, 'weeksShort')}
                       </span>
                     </div>
                   </li>
