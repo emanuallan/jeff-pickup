@@ -9,9 +9,33 @@ import { supabase } from '../../../lib/supabase'
 import { toAppError } from '../../../api/errors'
 import { fireConfetti } from '../../../app/hooks/useConfettiOnNewSignups'
 import { useRosterQuery, useCreateSignupMutation, useUnregisterSignupMutation } from '../queries'
+import { useMyPokesQuery, useSendPokeMutation, useUpdateMyEmojiMutation } from '../funQueries'
 import { useActiveLocationQuery, useGameStatusQuery, useMinPlayersQuery } from '../../settings/queries'
 import type { LocationId } from '../../signups/types'
 import { GameStatusCard } from './GameStatusCard'
+
+const EMOJI_CHOICES = ['⚽️', '🥅', '👟', '🔥', '💪', '😤', '🧤', '⭐️', '🎯', '🏃', '🦁', '🦅', '🧃', '☀️', '🌧️']
+
+function pokeSeenKey(args: { playDate: string; signupId: string }) {
+  return `jeffpickup.pokeSeenAt:${args.playDate}:${args.signupId}`
+}
+
+function loadPokeSeenAt(key: string): string | null {
+  try {
+    const v = localStorage.getItem(key)
+    return v && v.trim() ? v : null
+  } catch {
+    return null
+  }
+}
+
+function savePokeSeenAt(key: string, iso: string) {
+  try {
+    localStorage.setItem(key, iso)
+  } catch {
+    // ignore
+  }
+}
 
 export function SignupSection(props: {
   lang: Lang
@@ -41,8 +65,14 @@ export function SignupSection(props: {
 
   const createSignupMutation = useCreateSignupMutation({ playDate: props.playDate })
   const unregisterSignupMutation = useUnregisterSignupMutation({ playDate: props.playDate })
+  const updateEmojiMutation = useUpdateMyEmojiMutation({ playDate: props.playDate })
+  const sendPokeMutation = useSendPokeMutation({ playDate: props.playDate })
 
-  const submitting = createSignupMutation.isPending || unregisterSignupMutation.isPending
+  const submitting =
+    createSignupMutation.isPending ||
+    unregisterSignupMutation.isPending ||
+    updateEmojiMutation.isPending ||
+    sendPokeMutation.isPending
   const disabled = !supabase
 
   const mySignup = useMemo(() => {
@@ -67,6 +97,48 @@ export function SignupSection(props: {
   const rosterHeadcount = useMemo(() => {
     return signups.reduce((sum, s) => sum + 1 + Math.max(0, s.guest_count ?? 0), 0)
   }, [signups])
+
+  const pokesQuery = useMyPokesQuery({
+    playDate: props.playDate,
+    signupId: mySignup?.id,
+    deleteToken: myDeleteToken || undefined,
+    refetchIntervalMs: 12_000,
+  })
+
+  const [emojiOpen, setEmojiOpen] = useState(false)
+  const [emojiDraft, setEmojiDraft] = useState('')
+  const [pokeBanner, setPokeBanner] = useState<{ from: string; at: string } | null>(null)
+  const [pokeSeenInitialized, setPokeSeenInitialized] = useState(false)
+
+  useEffect(() => {
+    if (!joined) {
+      setPokeBanner(null)
+      setPokeSeenInitialized(false)
+      return
+    }
+    if (!mySignup?.id || !myDeleteToken) return
+    if (!pokesQuery.data) return
+
+    const key = pokeSeenKey({ playDate: props.playDate, signupId: mySignup.id })
+    const latest = pokesQuery.data[0]
+
+    if (!pokeSeenInitialized) {
+      const existing = loadPokeSeenAt(key)
+      const baseline = existing ?? latest?.created_at ?? new Date(0).toISOString()
+      savePokeSeenAt(key, baseline)
+      setPokeSeenInitialized(true)
+      return
+    }
+
+    if (!latest) return
+
+    const seen = loadPokeSeenAt(key)
+    if (!seen) return
+
+    if (new Date(latest.created_at) > new Date(seen)) {
+      setPokeBanner({ from: latest.from_player_name, at: latest.created_at })
+    }
+  }, [joined, myDeleteToken, mySignup?.id, pokesQuery.data, pokeSeenInitialized, props.playDate])
 
   return (
     <>
@@ -149,6 +221,28 @@ export function SignupSection(props: {
         />
       ) : null}
 
+      {pokeBanner ? (
+        <section className="rounded-2xl border border-[var(--gold)]/40 bg-[var(--gold)]/10 p-4">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0 text-sm font-semibold text-[var(--gold-2)]">
+              {t(props.lang, 'pokeReceived').replace('{name}', pokeBanner.from)}
+            </div>
+            <button
+              type="button"
+              className="shrink-0 rounded-xl border border-[var(--border)] bg-black/20 px-3 py-2 text-xs font-medium hover:bg-white/10"
+              onClick={() => {
+                if (!mySignup?.id) return
+                const key = pokeSeenKey({ playDate: props.playDate, signupId: mySignup.id })
+                savePokeSeenAt(key, pokeBanner.at)
+                setPokeBanner(null)
+              }}
+            >
+              {t(props.lang, 'pokeDismiss')}
+            </button>
+          </div>
+        </section>
+      ) : null}
+
       <SignupList
         labels={{
           players: t(props.lang, 'players'),
@@ -160,12 +254,41 @@ export function SignupSection(props: {
           goal: t(props.lang, 'goal'),
           walkOnsHint: t(props.lang, 'walkOnsHint'),
           guestsTag: t(props.lang, 'guestsTag'),
+          emoji: t(props.lang, 'emoji'),
+          poke: t(props.lang, 'poke'),
         }}
         signups={signups}
         loading={loading}
         goal={rosterGoal}
         mySignupId={mySignup?.id}
+        myDeleteToken={myDeleteToken || undefined}
         canUnregister={canUnregister}
+        onPressEmoji={
+          mySignup && myDeleteToken
+            ? () => {
+                setEmojiDraft((mySignup.emoji ?? '').trim())
+                setEmojiOpen(true)
+              }
+            : undefined
+        }
+        onPoke={
+          mySignup && myDeleteToken
+            ? async (_toId, toName) => {
+                const ok = window.confirm(t(props.lang, 'pokeConfirm').replace('{name}', toName))
+                if (!ok) return
+                try {
+                  await sendPokeMutation.mutateAsync({
+                    fromSignupId: mySignup.id,
+                    deleteToken: myDeleteToken,
+                    toSignupId: _toId,
+                  })
+                  window.alert(t(props.lang, 'pokeSent'))
+                } catch {
+                  setError(t(props.lang, 'couldNotPoke'))
+                }
+              }
+            : undefined
+        }
         onUnregister={
           mySignup && myDeleteToken
             ? async () => {
@@ -183,6 +306,72 @@ export function SignupSection(props: {
             : undefined
         }
       />
+
+      {emojiOpen && mySignup && myDeleteToken ? (
+        <div
+          className="fixed inset-0 z-40 flex items-end justify-center bg-black/60 p-4"
+          role="dialog"
+          aria-modal="true"
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) setEmojiOpen(false)
+          }}
+        >
+          <div className="w-full max-w-md rounded-3xl border border-[var(--border)] bg-[#0b0b0e] p-4 shadow-xl">
+            <div className="flex items-start justify-between gap-3">
+              <div className="text-sm font-semibold">{t(props.lang, 'pickEmoji')}</div>
+              <button
+                type="button"
+                className="rounded-xl border border-[var(--border)] bg-black/20 px-3 py-2 text-xs font-medium hover:bg-white/10"
+                onClick={() => setEmojiOpen(false)}
+              >
+                {t(props.lang, 'close')}
+              </button>
+            </div>
+
+            <div className="mt-3 grid grid-cols-5 gap-2">
+              {EMOJI_CHOICES.map((e) => (
+                <button
+                  key={e}
+                  type="button"
+                  className="rounded-2xl border border-[var(--border)] bg-black/20 px-2 py-3 text-xl hover:bg-white/10"
+                  onClick={() => setEmojiDraft(e)}
+                >
+                  {e}
+                </button>
+              ))}
+            </div>
+
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                className="rounded-2xl border border-[var(--border)] bg-black/20 px-4 py-3 text-sm font-semibold hover:bg-white/10"
+                onClick={() => setEmojiDraft('')}
+              >
+                {t(props.lang, 'removeEmoji')}
+              </button>
+              <button
+                type="button"
+                disabled={updateEmojiMutation.isPending}
+                className="rounded-2xl bg-[var(--gold)] px-4 py-3 text-sm font-semibold text-black shadow-sm hover:bg-[var(--gold-2)] disabled:cursor-not-allowed disabled:bg-white/10 disabled:text-white/80"
+                onClick={async () => {
+                  try {
+                    await updateEmojiMutation.mutateAsync({
+                      signupId: mySignup.id,
+                      deleteToken: myDeleteToken,
+                      emoji: emojiDraft,
+                    })
+                    setEmojiOpen(false)
+                  } catch {
+                    setError(t(props.lang, 'couldNotAdd'))
+                  }
+                }}
+              >
+                {t(props.lang, 'saveEmoji')}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </>
   )
 }

@@ -20,7 +20,11 @@ export async function fetchSignups(args: { playDate: string }): Promise<Signup[]
           ? Number.parseInt(guestRaw, 10)
           : 0
     const guestCount = Number.isFinite(guestParsed) ? Math.max(0, Math.min(20, guestParsed)) : 0
-    return { ...row, guest_count: guestCount } as Signup
+
+    const emojiRaw = String(row?.emoji ?? '')
+    const emoji = emojiRaw.trim().slice(0, 8)
+
+    return { ...row, guest_count: guestCount, emoji } as Signup
   })
 }
 

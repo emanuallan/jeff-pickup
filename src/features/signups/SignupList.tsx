@@ -11,12 +11,17 @@ export function SignupList(props: {
 		goal: string;
 		walkOnsHint: string;
 		guestsTag: string;
+		emoji: string;
+		poke: string;
 	};
 	signups: Signup[];
 	loading?: boolean;
 	mySignupId?: string;
+	myDeleteToken?: string;
 	canUnregister?: boolean;
 	onUnregister?: () => void;
+	onPressEmoji?: () => void;
+	onPoke?: (toSignupId: string, toPlayerName: string) => void;
 	goal?: number;
 }) {
 	const goal = props.goal ?? 0;
@@ -59,7 +64,9 @@ export function SignupList(props: {
 								>
 									<div className="min-w-0">
 										<div className="truncate text-sm font-medium">
-											{idx + 1}. {s.player_name}
+											{idx + 1}.{" "}
+											{s.emoji?.trim() ? <span className="mr-1">{s.emoji.trim()}</span> : null}
+											{s.player_name}
 											{guests > 0 ? (
 												<span className="ml-2 text-xs font-semibold text-[var(--gold)]">
 													{props.labels.guestsTag.replace('{n}', String(guests))}
@@ -67,7 +74,27 @@ export function SignupList(props: {
 											) : null}
 										</div>
 									</div>
-									<div className="ml-3 flex items-center">
+									<div className="ml-3 flex items-center gap-2">
+										{isMe && props.myDeleteToken ? (
+											<button
+												type="button"
+												className="rounded-full border border-[var(--border)] bg-black/30 px-2 py-1 text-xs font-semibold text-white/85 hover:bg-white/10"
+												onClick={props.onPressEmoji}
+											>
+												{props.labels.emoji}
+											</button>
+										) : null}
+
+										{!isMe && props.mySignupId && props.myDeleteToken && props.onPoke ? (
+											<button
+												type="button"
+												className="rounded-full border border-[var(--border)] bg-black/30 px-2 py-1 text-xs font-semibold text-white/85 hover:bg-white/10"
+												onClick={() => props.onPoke?.(s.id, s.player_name)}
+											>
+												{props.labels.poke}
+											</button>
+										) : null}
+
 										{isMe ? (
 											<button
 												type="button"

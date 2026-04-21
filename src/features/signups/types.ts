@@ -6,6 +6,7 @@ export type Signup = {
   location: LocationId
   player_name: string
   guest_count: number
+  emoji: string
   created_at: string
   delete_token?: string
 }
