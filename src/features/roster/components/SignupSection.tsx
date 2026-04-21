@@ -333,7 +333,12 @@ export function SignupSection(props: {
                 <button
                   key={e}
                   type="button"
-                  className="rounded-2xl border border-[var(--border)] bg-black/20 px-2 py-3 text-xl hover:bg-white/10"
+                  aria-pressed={emojiDraft === e}
+                  className={
+                    emojiDraft === e
+                      ? 'rounded-2xl border border-[var(--gold)]/35 bg-[var(--gold)]/10 px-2 py-3 text-xl shadow-[0_0_0_1px_rgba(255,255,255,0.10)] ring-1 ring-white/15'
+                      : 'rounded-2xl border border-[var(--border)] bg-black/20 px-2 py-3 text-xl hover:bg-white/10'
+                  }
                   onClick={() => setEmojiDraft(e)}
                 >
                   {e}
