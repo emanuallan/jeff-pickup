@@ -3,10 +3,15 @@ import {
   fetchActiveLocation,
   fetchActiveTime,
   fetchAnnouncement,
+  fetchGameStatus,
+  fetchMinPlayers,
   setActiveLocation,
   setActiveTime,
   setAnnouncement,
+  setGameStatus,
+  setMinPlayers,
   type Announcement,
+  type GameStatus,
 } from '../../api/settings'
 import type { LocationId } from '../signups/types'
 
@@ -15,6 +20,8 @@ export const settingsKeys = {
   activeLocation: () => [...settingsKeys.all, 'activeLocation'] as const,
   activeTime: () => [...settingsKeys.all, 'activeTime'] as const,
   announcement: () => [...settingsKeys.all, 'announcement'] as const,
+  gameStatus: () => [...settingsKeys.all, 'gameStatus'] as const,
+  minPlayers: () => [...settingsKeys.all, 'minPlayers'] as const,
 }
 
 export function useActiveLocationQuery() {
@@ -37,6 +44,22 @@ export function useAnnouncementQuery() {
   return useQuery({
     queryKey: settingsKeys.announcement(),
     queryFn: fetchAnnouncement,
+    staleTime: 30_000,
+  })
+}
+
+export function useGameStatusQuery() {
+  return useQuery({
+    queryKey: settingsKeys.gameStatus(),
+    queryFn: fetchGameStatus,
+    staleTime: 30_000,
+  })
+}
+
+export function useMinPlayersQuery() {
+  return useQuery({
+    queryKey: settingsKeys.minPlayers(),
+    queryFn: fetchMinPlayers,
     staleTime: 30_000,
   })
 }
@@ -67,6 +90,26 @@ export function useSetAnnouncementMutation() {
     mutationFn: (args: Announcement) => setAnnouncement(args),
     onSuccess: async () => {
       await qc.invalidateQueries({ queryKey: settingsKeys.announcement() })
+    },
+  })
+}
+
+export function useSetGameStatusMutation() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (status: GameStatus) => setGameStatus(status),
+    onSuccess: async () => {
+      await qc.invalidateQueries({ queryKey: settingsKeys.gameStatus() })
+    },
+  })
+}
+
+export function useSetMinPlayersMutation() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (minPlayers: number) => setMinPlayers(minPlayers),
+    onSuccess: async () => {
+      await qc.invalidateQueries({ queryKey: settingsKeys.minPlayers() })
     },
   })
 }

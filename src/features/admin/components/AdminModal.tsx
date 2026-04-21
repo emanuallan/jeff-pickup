@@ -7,15 +7,21 @@ import {
   useActiveLocationQuery,
   useActiveTimeQuery,
   useAnnouncementQuery,
+  useGameStatusQuery,
+  useMinPlayersQuery,
   useSetActiveLocationMutation,
   useSetActiveTimeMutation,
   useSetAnnouncementMutation,
+  useSetGameStatusMutation,
+  useSetMinPlayersMutation,
 } from '../../settings/queries'
 import { supabase } from '../../../lib/supabase'
+import type { GameStatus } from '../../../api/settings'
 
 export function AdminModal(props: {
   open: boolean
   lang: Lang
+  mode?: 'full' | 'gameStatus'
   onClose: () => void
 }) {
   if (!props.open) return null
@@ -29,16 +35,24 @@ export function AdminModal(props: {
   const announcementQuery = useAnnouncementQuery()
   const activeLocationQuery = useActiveLocationQuery()
   const activeTimeQuery = useActiveTimeQuery()
+  const gameStatusQuery = useGameStatusQuery()
+  const minPlayersQuery = useMinPlayersQuery()
 
   const setAnnouncementMutation = useSetAnnouncementMutation()
   const setActiveLocationMutation = useSetActiveLocationMutation()
   const setActiveTimeMutation = useSetActiveTimeMutation()
+  const setGameStatusMutation = useSetGameStatusMutation()
+  const setMinPlayersMutation = useSetMinPlayersMutation()
 
   const activeLocation: LocationId = activeLocationQuery.data ?? 'shirley_hall_park'
   const activeTime: string = activeTimeQuery.data ?? '18:00'
+  const gameStatus: GameStatus = gameStatusQuery.data ?? 'tentative'
+  const minPlayers: number = minPlayersQuery.data ?? 10
 
   const [announcementText, setAnnouncementText] = useState('')
   const [activeTimeDraft, setActiveTimeDraft] = useState(activeTime)
+  const [gameStatusDraft, setGameStatusDraft] = useState<GameStatus>(gameStatus)
+  const [minPlayersDraft, setMinPlayersDraft] = useState(String(minPlayers))
 
   // Initialize drafts from server when modal opens / settings load.
   useEffect(() => {
@@ -52,9 +66,23 @@ export function AdminModal(props: {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [props.open, activeTime])
 
+  useEffect(() => {
+    if (!props.open) return
+    setGameStatusDraft(gameStatus)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [props.open, gameStatus])
+
+  useEffect(() => {
+    if (!props.open) return
+    setMinPlayersDraft(String(minPlayers))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [props.open, minPlayers])
+
   const savingAnnouncement = setAnnouncementMutation.isPending
   const savingActiveTime = setActiveTimeMutation.isPending
   const savingLocation = setActiveLocationMutation.isPending
+  const savingGameStatus = setGameStatusMutation.isPending
+  const savingMinPlayers = setMinPlayersMutation.isPending
 
   const requirePinIfConfigured = useMemo(() => {
     if (!adminPinConfigured) return async () => true
@@ -101,101 +129,162 @@ export function AdminModal(props: {
         <div className="mt-4 space-y-3">
           <div className="rounded-2xl border border-[var(--border)] bg-black/20 p-3">
             <div className="text-xs font-medium text-[--muted]">
-              {t(props.lang, 'announcement')}
+              {t(props.lang, 'gameStatus')}
             </div>
-            <textarea
-              className="mt-2 w-full resize-none rounded-xl border border-[var(--border)] bg-black/20 px-3 py-2 text-sm text-[var(--text)] outline-none focus:ring-2 focus:ring-[var(--gold)]"
-              rows={3}
-              placeholder={t(props.lang, 'announcementPlaceholder')}
-              value={announcementText}
-              onChange={(e) => setAnnouncementText(e.target.value)}
-            />
+
+            <div className="mt-2 grid grid-cols-2 gap-2">
+              <label className="block">
+                <div className="text-xs font-medium text-[--muted]">
+                  {t(props.lang, 'status')}
+                </div>
+                <select
+                  className="mt-1 w-full rounded-xl border border-[var(--border)] bg-black/20 px-3 py-2 text-sm text-[var(--text)] outline-none focus:ring-2 focus:ring-[var(--gold)]"
+                  value={gameStatusDraft}
+                  onChange={(e) => setGameStatusDraft(e.target.value as GameStatus)}
+                >
+                  <option value="tentative">{t(props.lang, 'statusTentative')}</option>
+                  <option value="on">{t(props.lang, 'statusOn')}</option>
+                  <option value="cancelled">{t(props.lang, 'statusCancelled')}</option>
+                </select>
+              </label>
+
+              <label className="block">
+                <div className="text-xs font-medium text-[--muted]">
+                  {t(props.lang, 'minPlayers')}
+                </div>
+                <input
+                  className="mt-1 w-full rounded-xl border border-[var(--border)] bg-black/20 px-3 py-2 text-sm text-[var(--text)] outline-none focus:ring-2 focus:ring-[var(--gold)]"
+                  inputMode="numeric"
+                  value={minPlayersDraft}
+                  onChange={(e) => setMinPlayersDraft(e.target.value)}
+                />
+              </label>
+            </div>
+
             <button
               type="button"
-              disabled={savingAnnouncement || !supabaseConfigured}
+              disabled={(savingGameStatus || savingMinPlayers) || !supabaseConfigured}
               className="mt-2 w-full rounded-2xl bg-[var(--gold)] px-4 py-3 text-sm font-semibold text-black shadow-sm hover:bg-[var(--gold-2)] disabled:cursor-not-allowed disabled:bg-white/10 disabled:text-white/80 disabled:hover:bg-white/10"
               onClick={async () => {
                 if (!supabaseConfigured) return
                 setError(null)
                 try {
                   if (!(await requirePinIfConfigured())) return
-
-                  const trimmed = announcementText.trim()
-                  await setAnnouncementMutation.mutateAsync({
-                    text: trimmed,
-                    date: trimmed ? todayLocalISODate() : '',
-                  })
-                } catch {
-                  setError(t(props.lang, 'couldNotUpdateAnnouncement'))
-                }
-              }}
-            >
-              {t(props.lang, 'saveAnnouncement')}
-            </button>
-          </div>
-
-          <div className="rounded-2xl border border-[var(--border)] bg-black/20 p-3">
-            <div className="text-xs font-medium text-[--muted]">
-              {t(props.lang, 'activeTime')}
-            </div>
-            <input
-              type="time"
-              className="mt-2 w-full rounded-xl border border-[var(--border)] bg-black/20 px-3 py-2 text-sm text-[var(--text)] outline-none focus:ring-2 focus:ring-[var(--gold)]"
-              value={activeTimeDraft}
-              onChange={(e) => setActiveTimeDraft(e.target.value)}
-            />
-            <button
-              type="button"
-              disabled={savingActiveTime || !supabaseConfigured}
-              className="mt-2 w-full rounded-2xl bg-[var(--gold)] px-4 py-3 text-sm font-semibold text-black shadow-sm hover:bg-[var(--gold-2)] disabled:cursor-not-allowed disabled:bg-white/10 disabled:text-white/80 disabled:hover:bg-white/10"
-              onClick={async () => {
-                if (!supabaseConfigured) return
-                setError(null)
-                try {
-                  if (!(await requirePinIfConfigured())) return
-                  await setActiveTimeMutation.mutateAsync(activeTimeDraft)
-                } catch {
-                  setError(t(props.lang, 'couldNotUpdateTime'))
-                }
-              }}
-            >
-              {t(props.lang, 'saveTime')}
-            </button>
-          </div>
-
-          <div className="grid grid-cols-1 gap-2">
-            {LOCATIONS.map((l) => (
-              <button
-                key={l.id}
-                type="button"
-                disabled={savingLocation || !supabaseConfigured}
-                className="rounded-2xl border border-[var(--border)] bg-black/20 px-4 py-3 text-left text-sm font-semibold hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
-                onClick={async () => {
-                  if (!supabaseConfigured) return
-                  setError(null)
-                  try {
-                    if (!(await requirePinIfConfigured())) return
-                    await setActiveLocationMutation.mutateAsync(l.id)
-                    props.onClose()
-                  } catch {
-                    setError(t(props.lang, 'couldNotUpdateLocation'))
+                  const parsed = Number.parseInt(minPlayersDraft.trim(), 10)
+                  await setGameStatusMutation.mutateAsync(gameStatusDraft)
+                  if (Number.isFinite(parsed)) {
+                    await setMinPlayersMutation.mutateAsync(parsed)
                   }
-                }}
-              >
-                <div className="flex items-center justify-between gap-3">
-                  <span>{l.label}</span>
-                  {l.id === activeLocation ? (
-                    <span className="text-xs font-medium text-[var(--gold)]">
-                      {t(props.lang, 'active')}
-                    </span>
-                  ) : null}
-                </div>
-                <div className="mt-1 text-xs text-[--muted]">
-                  {l.addressLines.join(' · ')}
-                </div>
-              </button>
-            ))}
+                } catch {
+                  setError(t(props.lang, 'couldNotUpdateGameStatus'))
+                }
+              }}
+            >
+              {t(props.lang, 'saveGameStatus')}
+            </button>
           </div>
+
+          {props.mode !== 'gameStatus' ? (
+            <>
+              <div className="rounded-2xl border border-[var(--border)] bg-black/20 p-3">
+                <div className="text-xs font-medium text-[--muted]">
+                  {t(props.lang, 'announcement')}
+                </div>
+                <textarea
+                  className="mt-2 w-full resize-none rounded-xl border border-[var(--border)] bg-black/20 px-3 py-2 text-sm text-[var(--text)] outline-none focus:ring-2 focus:ring-[var(--gold)]"
+                  rows={3}
+                  placeholder={t(props.lang, 'announcementPlaceholder')}
+                  value={announcementText}
+                  onChange={(e) => setAnnouncementText(e.target.value)}
+                />
+                <button
+                  type="button"
+                  disabled={savingAnnouncement || !supabaseConfigured}
+                  className="mt-2 w-full rounded-2xl bg-[var(--gold)] px-4 py-3 text-sm font-semibold text-black shadow-sm hover:bg-[var(--gold-2)] disabled:cursor-not-allowed disabled:bg-white/10 disabled:text-white/80 disabled:hover:bg-white/10"
+                  onClick={async () => {
+                    if (!supabaseConfigured) return
+                    setError(null)
+                    try {
+                      if (!(await requirePinIfConfigured())) return
+
+                      const trimmed = announcementText.trim()
+                      await setAnnouncementMutation.mutateAsync({
+                        text: trimmed,
+                        date: trimmed ? todayLocalISODate() : '',
+                      })
+                    } catch {
+                      setError(t(props.lang, 'couldNotUpdateAnnouncement'))
+                    }
+                  }}
+                >
+                  {t(props.lang, 'saveAnnouncement')}
+                </button>
+              </div>
+
+              <div className="rounded-2xl border border-[var(--border)] bg-black/20 p-3">
+                <div className="text-xs font-medium text-[--muted]">
+                  {t(props.lang, 'activeTime')}
+                </div>
+                <input
+                  type="time"
+                  className="mt-2 w-full rounded-xl border border-[var(--border)] bg-black/20 px-3 py-2 text-sm text-[var(--text)] outline-none focus:ring-2 focus:ring-[var(--gold)]"
+                  value={activeTimeDraft}
+                  onChange={(e) => setActiveTimeDraft(e.target.value)}
+                />
+                <button
+                  type="button"
+                  disabled={savingActiveTime || !supabaseConfigured}
+                  className="mt-2 w-full rounded-2xl bg-[var(--gold)] px-4 py-3 text-sm font-semibold text-black shadow-sm hover:bg-[var(--gold-2)] disabled:cursor-not-allowed disabled:bg-white/10 disabled:text-white/80 disabled:hover:bg-white/10"
+                  onClick={async () => {
+                    if (!supabaseConfigured) return
+                    setError(null)
+                    try {
+                      if (!(await requirePinIfConfigured())) return
+                      await setActiveTimeMutation.mutateAsync(activeTimeDraft)
+                    } catch {
+                      setError(t(props.lang, 'couldNotUpdateTime'))
+                    }
+                  }}
+                >
+                  {t(props.lang, 'saveTime')}
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 gap-2">
+                {LOCATIONS.map((l) => (
+                  <button
+                    key={l.id}
+                    type="button"
+                    disabled={savingLocation || !supabaseConfigured}
+                    className="rounded-2xl border border-[var(--border)] bg-black/20 px-4 py-3 text-left text-sm font-semibold hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
+                    onClick={async () => {
+                      if (!supabaseConfigured) return
+                      setError(null)
+                      try {
+                        if (!(await requirePinIfConfigured())) return
+                        await setActiveLocationMutation.mutateAsync(l.id)
+                        props.onClose()
+                      } catch {
+                        setError(t(props.lang, 'couldNotUpdateLocation'))
+                      }
+                    }}
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <span>{l.label}</span>
+                      {l.id === activeLocation ? (
+                        <span className="text-xs font-medium text-[var(--gold)]">
+                          {t(props.lang, 'active')}
+                        </span>
+                      ) : null}
+                    </div>
+                    <div className="mt-1 text-xs text-[--muted]">
+                      {l.addressLines.join(' · ')}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </>
+          ) : null}
         </div>
       </div>
     </div>

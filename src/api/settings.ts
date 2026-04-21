@@ -2,6 +2,7 @@ import type { LocationId } from '../features/signups/types'
 import { getSupabase } from './supabaseClient'
 
 export type ActiveTime = string
+export type GameStatus = 'tentative' | 'on' | 'cancelled'
 export type Announcement = {
   text: string
   date: string // YYYY-MM-DD (local) or empty
@@ -47,6 +48,53 @@ export async function setActiveTime(time: ActiveTime): Promise<void> {
   const { error } = await sb.from('app_settings').upsert({
     key: 'active_time',
     value: time,
+  })
+  if (error) throw error
+}
+
+export async function fetchGameStatus(): Promise<GameStatus> {
+  const sb = getSupabase()
+  const { data, error } = await sb
+    .from('app_settings')
+    .select('value')
+    .eq('key', 'game_status')
+    .maybeSingle()
+
+  if (error) throw error
+  const v = String(data?.value ?? 'tentative')
+  return v === 'on' || v === 'cancelled' ? v : 'tentative'
+}
+
+export async function setGameStatus(status: GameStatus): Promise<void> {
+  const sb = getSupabase()
+  const { error } = await sb.from('app_settings').upsert({
+    key: 'game_status',
+    value: status,
+  })
+  if (error) throw error
+}
+
+export async function fetchMinPlayers(): Promise<number> {
+  const sb = getSupabase()
+  const { data, error } = await sb
+    .from('app_settings')
+    .select('value')
+    .eq('key', 'min_players')
+    .maybeSingle()
+
+  if (error) throw error
+  const raw = String(data?.value ?? '10').trim()
+  const n = Number.parseInt(raw, 10)
+  if (!Number.isFinite(n)) return 10
+  return Math.max(2, Math.min(99, n))
+}
+
+export async function setMinPlayers(minPlayers: number): Promise<void> {
+  const sb = getSupabase()
+  const n = Math.max(2, Math.min(99, Math.round(minPlayers)))
+  const { error } = await sb.from('app_settings').upsert({
+    key: 'min_players',
+    value: String(n),
   })
   if (error) throw error
 }

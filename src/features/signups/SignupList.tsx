@@ -9,6 +9,7 @@ export function SignupList(props: {
 		unregister: string;
 		unregisterHint: string;
 		goal: string;
+		walkOnsHint: string;
 	};
 	signups: Signup[];
 	loading?: boolean;
@@ -87,6 +88,7 @@ export function SignupList(props: {
 							style={{ width: `${progressPct}%` }}
 						/>
 					</div>
+					<div className="mt-2 text-xs text-[--muted]">{props.labels.walkOnsHint}</div>
 				</div>
 			) : null}
 		</section>

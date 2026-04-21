@@ -9,13 +9,15 @@ import { supabase } from '../../../lib/supabase'
 import { toAppError } from '../../../api/errors'
 import { fireConfetti } from '../../../app/hooks/useConfettiOnNewSignups'
 import { useRosterQuery, useCreateSignupMutation, useUnregisterSignupMutation } from '../queries'
-import { useActiveLocationQuery } from '../../settings/queries'
+import { useActiveLocationQuery, useGameStatusQuery, useMinPlayersQuery } from '../../settings/queries'
 import type { LocationId } from '../../signups/types'
+import { GameStatusCard } from './GameStatusCard'
 
 export function SignupSection(props: {
   lang: Lang
   playDate: string
   onPlayDateChange: (next: string) => void
+  onTapAdminTitle?: () => void
 }) {
   const [playerName, setPlayerName] = useLocalStorageState({ load: loadPlayerName, save: savePlayerName })
   const [error, setError] = useState<string | null>(null)
@@ -57,10 +59,21 @@ export function SignupSection(props: {
   const joined = Boolean(mySignup)
   const canUnregister = Boolean(mySignup && myDeleteToken)
 
-  const rosterGoal = 10
+  const gameStatusQuery = useGameStatusQuery()
+  const minPlayersQuery = useMinPlayersQuery()
+
+  const rosterGoal = minPlayersQuery.data ?? 10
 
   return (
     <>
+      <GameStatusCard
+        lang={props.lang}
+        status={gameStatusQuery.data ?? 'tentative'}
+        signupsCount={signups.length}
+        minPlayers={rosterGoal}
+        onTapTitle={props.onTapAdminTitle}
+      />
+
       <SignupForm
         labels={{
           joinTheList: t(props.lang, 'joinTheList'),
@@ -128,6 +141,7 @@ export function SignupSection(props: {
           unregister: t(props.lang, 'unregister'),
           unregisterHint: t(props.lang, 'unregisterHint'),
           goal: t(props.lang, 'goal'),
+          walkOnsHint: t(props.lang, 'walkOnsHint'),
         }}
         signups={signups}
         loading={loading}

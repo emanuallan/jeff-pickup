@@ -20,7 +20,39 @@ export default function App() {
   const [lang, setLang] = useLocalStorageState<Lang>({ load: loadLang, save: saveLang })
   const [playDate, setPlayDate] = usePlayDate()
   const [adminOpen, setAdminOpen] = useState(false)
+  const [adminMode, setAdminMode] = useState<'full' | 'gameStatus'>('full')
   const [, setAdminTapState] = useState(() => ({ count: 0, lastTapMs: 0 }))
+  const [, setGameStatusTapState] = useState(() => ({ count: 0, lastTapMs: 0 }))
+
+  const onAdminUnlockTap = () => {
+    if (!supabase) return
+    setAdminTapState((s) => {
+      const now = Date.now()
+      const reset = now - s.lastTapMs > 1200
+      const nextCount = reset ? 1 : s.count + 1
+      if (nextCount >= 5) {
+        setAdminMode('full')
+        setAdminOpen(true)
+        return { count: 0, lastTapMs: 0 }
+      }
+      return { count: nextCount, lastTapMs: now }
+    })
+  }
+
+  const onGameStatusUnlockTap = () => {
+    if (!supabase) return
+    setGameStatusTapState((s) => {
+      const now = Date.now()
+      const reset = now - s.lastTapMs > 1200
+      const nextCount = reset ? 1 : s.count + 1
+      if (nextCount >= 5) {
+        setAdminMode('gameStatus')
+        setAdminOpen(true)
+        return { count: 0, lastTapMs: 0 }
+      }
+      return { count: nextCount, lastTapMs: now }
+    })
+  }
 
   return (
     <div className="min-h-dvh px-4 pb-[calc(env(safe-area-inset-bottom)+2.5rem)] pt-6 sm:px-6">
@@ -33,19 +65,7 @@ export default function App() {
           <LocationAndTimeCard
             lang={lang}
             playDate={playDate}
-            onTapTitle={() => {
-              if (!supabase) return
-              setAdminTapState((s) => {
-                const now = Date.now()
-                const reset = now - s.lastTapMs > 1200
-                const nextCount = reset ? 1 : s.count + 1
-                if (nextCount >= 5) {
-                  setAdminOpen(true)
-                  return { count: 0, lastTapMs: 0 }
-                }
-                return { count: nextCount, lastTapMs: now }
-              })
-            }}
+            onTapTitle={onAdminUnlockTap}
           />
 
           {!supabase ? (
@@ -56,6 +76,7 @@ export default function App() {
             lang={lang}
             playDate={playDate}
             onPlayDateChange={setPlayDate}
+            onTapAdminTitle={onGameStatusUnlockTap}
           />
 
           <SocialLinks
@@ -71,6 +92,7 @@ export default function App() {
       <AdminModal
         open={adminOpen}
         lang={lang}
+        mode={adminMode}
         onClose={() => {
           setAdminOpen(false)
         }}
