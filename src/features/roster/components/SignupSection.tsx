@@ -129,7 +129,11 @@ export function SignupSection(props: {
 
   const [emojiOpen, setEmojiOpen] = useState(false)
   const [emojiDraft, setEmojiDraft] = useState('')
-  const [pokeBanner, setPokeBanner] = useState<{ from: string; at: string } | null>(null)
+  const [pokeBanner, setPokeBanner] = useState<{
+    from: string
+    at: string
+    kind: 'poke' | 'wave'
+  } | null>(null)
   const [pokeSeenInitialized, setPokeSeenInitialized] = useState(false)
 
   useEffect(() => {
@@ -158,9 +162,20 @@ export function SignupSection(props: {
     if (!seen) return
 
     if (new Date(latest.created_at) > new Date(seen)) {
-      setPokeBanner({ from: latest.from_player_name, at: latest.created_at })
+      const myKey = cleanedName.trim().toLowerCase()
+      const kind = newPlayerNameKeys.has(myKey) ? 'wave' : 'poke'
+      setPokeBanner({ from: latest.from_player_name, at: latest.created_at, kind })
     }
-  }, [joined, myDeleteToken, mySignup?.id, pokesQuery.data, pokeSeenInitialized, props.playDate])
+  }, [
+    cleanedName,
+    joined,
+    myDeleteToken,
+    mySignup?.id,
+    newPlayerNameKeys,
+    pokesQuery.data,
+    pokeSeenInitialized,
+    props.playDate,
+  ])
 
   return (
     <>
@@ -244,14 +259,32 @@ export function SignupSection(props: {
       ) : null}
 
       {pokeBanner ? (
-        <section className="rounded-2xl border border-fuchsia-400/55 bg-fuchsia-500/10 p-4 shadow-[0_0_0_1px_rgba(244,114,182,0.22),0_0_28px_rgba(244,114,182,0.35)]">
+        <section
+          className={
+            pokeBanner.kind === 'wave'
+              ? 'rounded-2xl border border-cyan-400/55 bg-cyan-500/10 p-4 shadow-[0_0_0_1px_rgba(34,211,238,0.28),0_0_28px_rgba(34,211,238,0.4)]'
+              : 'rounded-2xl border border-fuchsia-400/55 bg-fuchsia-500/10 p-4 shadow-[0_0_0_1px_rgba(244,114,182,0.22),0_0_28px_rgba(244,114,182,0.35)]'
+          }
+        >
           <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0 text-sm font-semibold text-fuchsia-100 drop-shadow-[0_0_10px_rgba(244,114,182,0.55)]">
-              {t(props.lang, 'pokeReceived').replace('{name}', pokeBanner.from)}
+            <div
+              className={
+                pokeBanner.kind === 'wave'
+                  ? 'min-w-0 text-sm font-semibold text-cyan-50 drop-shadow-[0_0_12px_rgba(34,211,238,0.65)]'
+                  : 'min-w-0 text-sm font-semibold text-fuchsia-100 drop-shadow-[0_0_10px_rgba(244,114,182,0.55)]'
+              }
+            >
+              {pokeBanner.kind === 'wave'
+                ? t(props.lang, 'waveReceived').replace('{name}', pokeBanner.from)
+                : t(props.lang, 'pokeReceived').replace('{name}', pokeBanner.from)}
             </div>
             <button
               type="button"
-              className="shrink-0 rounded-xl border border-fuchsia-400/35 bg-black/25 px-3 py-2 text-xs font-medium text-fuchsia-50 hover:bg-fuchsia-500/10"
+              className={
+                pokeBanner.kind === 'wave'
+                  ? 'shrink-0 rounded-xl border border-cyan-400/40 bg-black/25 px-3 py-2 text-xs font-medium text-cyan-50 hover:bg-cyan-500/15'
+                  : 'shrink-0 rounded-xl border border-fuchsia-400/35 bg-black/25 px-3 py-2 text-xs font-medium text-fuchsia-50 hover:bg-fuchsia-500/10'
+              }
               onClick={() => {
                 if (!mySignup?.id) return
                 const key = pokeSeenKey({ playDate: props.playDate, signupId: mySignup.id })
@@ -259,7 +292,9 @@ export function SignupSection(props: {
                 setPokeBanner(null)
               }}
             >
-              {t(props.lang, 'pokeDismiss')}
+              {pokeBanner.kind === 'wave'
+                ? t(props.lang, 'waveDismiss')
+                : t(props.lang, 'pokeDismiss')}
             </button>
           </div>
         </section>
@@ -278,6 +313,7 @@ export function SignupSection(props: {
           guestsTag: t(props.lang, 'guestsTag'),
           emoji: t(props.lang, 'emoji'),
           poke: t(props.lang, 'poke'),
+          wave: t(props.lang, 'wave'),
           newPlayerBadge: t(props.lang, 'newPlayerBadge'),
           newPlayerBadgeTitle: t(props.lang, 'newPlayerBadgeTitle'),
         }}
@@ -298,8 +334,11 @@ export function SignupSection(props: {
         }
         onPoke={
           mySignup && myDeleteToken
-            ? async (_toId, toName) => {
-                const ok = window.confirm(t(props.lang, 'pokeConfirm').replace('{name}', toName))
+            ? async (_toId, toName, targetIsNew) => {
+                const confirmMsg = targetIsNew
+                  ? t(props.lang, 'waveConfirm').replace('{name}', toName)
+                  : t(props.lang, 'pokeConfirm').replace('{name}', toName)
+                const ok = window.confirm(confirmMsg)
                 if (!ok) return
                 try {
                   await sendPokeMutation.mutateAsync({
@@ -307,9 +346,9 @@ export function SignupSection(props: {
                     deleteToken: myDeleteToken,
                     toSignupId: _toId,
                   })
-                  window.alert(t(props.lang, 'pokeSent'))
+                  window.alert(targetIsNew ? t(props.lang, 'waveSent') : t(props.lang, 'pokeSent'))
                 } catch {
-                  setError(t(props.lang, 'couldNotPoke'))
+                  setError(targetIsNew ? t(props.lang, 'couldNotWave') : t(props.lang, 'couldNotPoke'))
                 }
               }
             : undefined

@@ -13,6 +13,7 @@ export function SignupList(props: {
 		guestsTag: string;
 		emoji: string;
 		poke: string;
+		wave: string;
 		newPlayerBadge: string;
 		newPlayerBadgeTitle: string;
 	};
@@ -24,7 +25,7 @@ export function SignupList(props: {
 	canUnregister?: boolean;
 	onUnregister?: () => void;
 	onPressEmoji?: () => void;
-	onPoke?: (toSignupId: string, toPlayerName: string) => void;
+	onPoke?: (toSignupId: string, toPlayerName: string, targetIsNew: boolean) => void;
 	goal?: number;
 }) {
 	const goal = props.goal ?? 0;
@@ -101,10 +102,14 @@ export function SignupList(props: {
 										{!isMe && props.mySignupId && props.myDeleteToken && props.onPoke ? (
 											<button
 												type="button"
-												className="rounded-full border border-[var(--border)] bg-black/30 px-2 py-1 text-xs font-semibold text-white/85 hover:bg-white/10"
-												onClick={() => props.onPoke?.(s.id, s.player_name)}
+												className={
+													showNewBadge
+														? "rounded-full border border-cyan-400/55 bg-cyan-500/15 px-2 py-1 text-xs font-semibold text-cyan-50 shadow-[0_0_14px_rgba(34,211,238,0.35)] hover:bg-cyan-400/20 hover:shadow-[0_0_20px_rgba(34,211,238,0.45)]"
+														: "rounded-full border border-[var(--border)] bg-black/30 px-2 py-1 text-xs font-semibold text-white/85 hover:bg-white/10"
+												}
+												onClick={() => props.onPoke?.(s.id, s.player_name, showNewBadge)}
 											>
-												{props.labels.poke}
+												{showNewBadge ? props.labels.wave : props.labels.poke}
 											</button>
 										) : null}
 
