@@ -14,6 +14,7 @@ import { AppLoadingOverlay } from '../features/shell/components/AppLoadingOverla
 import { useLocalStorageState } from './hooks/useLocalStorageState'
 import { usePlayDate } from './hooks/usePlayDate'
 import { loadPlayerName } from '../lib/storage'
+import { todayLocalISODate } from '../lib/date'
 
 const FACEBOOK_GROUP_URL = 'https://www.facebook.com/groups/3701766570121139'
 const WHATSAPP_GROUP_URL =
@@ -26,6 +27,7 @@ export default function App() {
   const savedName = loadPlayerName().trim()
   const [adminOpen, setAdminOpen] = useState(false)
   const [adminMode, setAdminMode] = useState<'full' | 'gameStatus'>('full')
+  const [, setAdminTapState] = useState(() => ({ count: 0, lastTapMs: 0 }))
   const [, setGameStatusTapState] = useState(() => ({ count: 0, lastTapMs: 0 }))
   const [dateModalOpen, setDateModalOpen] = useState(false)
   const [dateDraft, setDateDraft] = useState(playDate)
@@ -47,6 +49,21 @@ export default function App() {
 
   const leaveCapsView = () => {
     if (window.location.hash) window.location.hash = ''
+  }
+
+  const onAdminUnlockTap = () => {
+    if (!supabase) return
+    setAdminTapState((s) => {
+      const now = Date.now()
+      const reset = now - s.lastTapMs > 1200
+      const nextCount = reset ? 1 : s.count + 1
+      if (nextCount >= 5) {
+        setAdminMode('full')
+        setAdminOpen(true)
+        return { count: 0, lastTapMs: 0 }
+      }
+      return { count: nextCount, lastTapMs: now }
+    })
   }
 
   const onGameStatusUnlockTap = () => {
@@ -85,6 +102,8 @@ export default function App() {
     return spicy[Math.floor(Math.random() * spicy.length)] ?? normal
   }, [lang])
 
+  const isPastSession = playDate < todayLocalISODate()
+
   return (
     <div className="min-h-dvh px-4 pb-[calc(env(safe-area-inset-bottom)+2.5rem)] pt-6 sm:px-6">
       <div className="mx-auto w-full max-w-md">
@@ -96,16 +115,18 @@ export default function App() {
               <div className="text-2xl font-semibold tracking-tight text-white">
                 Hi {savedName} <span aria-hidden>👋</span>
               </div>
-              <button
-                type="button"
-                className="mt-1 text-left text-sm font-semibold text-(--gold) hover:text-(--gold-2) focus:outline-none focus-visible:ring-2 focus-visible:ring-(--gold)"
-                onClick={() => {
-                  const el = document.getElementById('signup')
-                  el?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-                }}
-              >
-                {signupCtaText}
-              </button>
+              {!isPastSession ? (
+                <button
+                  type="button"
+                  className="mt-1 text-left text-sm font-semibold text-(--gold) hover:text-(--gold-2) focus:outline-none focus-visible:ring-2 focus-visible:ring-(--gold)"
+                  onClick={() => {
+                    const el = document.getElementById('signup')
+                    el?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                  }}
+                >
+                  {signupCtaText}
+                </button>
+              ) : null}
             </div>
           ) : null}
           {capsView ? (
@@ -150,7 +171,7 @@ export default function App() {
                   setPlayDate(dateDraft)
                   setDateModalOpen(false)
                 }}
-                onTapAdminUnlock={onGameStatusUnlockTap}
+                onTapAdminUnlock={onAdminUnlockTap}
               />
 
               {!supabase ? (
