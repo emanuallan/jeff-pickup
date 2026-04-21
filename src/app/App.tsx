@@ -9,6 +9,7 @@ import { AppHeader } from '../features/shell/components/AppHeader'
 import { SetupNeededBanner } from '../features/shell/components/SetupNeededBanner'
 import { SocialLinks } from '../features/shell/components/SocialLinks'
 import { AppFooter } from '../features/shell/components/AppFooter'
+import { AppLoadingOverlay } from '../features/shell/components/AppLoadingOverlay'
 import { useLocalStorageState } from './hooks/useLocalStorageState'
 import { usePlayDate } from './hooks/usePlayDate'
 
@@ -119,6 +120,8 @@ export default function App() {
           setAdminOpen(false)
         }}
       />
+
+      <AppLoadingOverlay playDate={playDate} lang={lang} />
     </div>
   )
 }
