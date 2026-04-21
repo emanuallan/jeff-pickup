@@ -46,15 +46,3 @@ export async function unregisterSignup(args: {
   if (error) throw error
 }
 
-export async function adminRemoveSignup(args: {
-  signupId: string
-  pin: string
-}): Promise<void> {
-  const sb = assertSupabaseConfigured()
-  const { error } = await sb.rpc('admin_remove_signup', {
-    p_signup_id: args.signupId,
-    p_pin: args.pin,
-  })
-  if (error) throw error
-}
-

@@ -56,7 +56,7 @@ RLS is enabled:
 
 - `public.signups`: public **select + insert**; unregister is done via `public.unregister_signup(signup_id, delete_token)`
 - `public.app_settings`: public **select + update** (used for active location)
-- Admin can remove players via `public.admin_remove_signup(signup_id, pin)` after configuring the server-side PIN hash (see `supabase/README.md`).
+ 
 
 ## Admin menu (hidden)
 

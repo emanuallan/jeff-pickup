@@ -13,7 +13,6 @@ import {
 } from "./lib/tokens";
 import { supabase } from "./lib/supabase";
 import {
-	adminRemoveSignup,
 	createSignup,
 	fetchSignups,
 	unregisterSignup,
@@ -54,8 +53,6 @@ function App() {
 	const [adminOpen, setAdminOpen] = useState(false);
 	const [adminBusy, setAdminBusy] = useState(false);
 	const [adminError, setAdminError] = useState<string | null>(null);
-	const [adminPin, setAdminPin] = useState<string>("");
-	const [adminAuthed, setAdminAuthed] = useState(false);
 	const [announcementText, setAnnouncementText] = useState("");
 	const [announcementDate, setAnnouncementDate] = useState("");
 	const [, setAdminTapState] = useState(() => ({
@@ -390,34 +387,6 @@ function App() {
 						signups={signups}
 						loading={loading}
 						goal={rosterGoal}
-						adminCanRemove={adminAuthed}
-						onAdminRemove={async (signupId) => {
-							const pin =
-								adminPin ||
-								window.prompt(t(lang, "adminPinPrompt")) ||
-								"";
-							if (!pin) return;
-
-							setAdminBusy(true);
-							setAdminError(null);
-							try {
-								await adminRemoveSignup({ signupId, pin });
-								setAdminPin(pin);
-								setAdminAuthed(true);
-								const data = await fetchSignups({ playDate });
-								setSignups(data);
-							} catch (e: any) {
-								const msg = String(e?.message ?? "");
-								setAdminAuthed(false);
-								if (msg.toLowerCase().includes("incorrect")) {
-									setAdminError(t(lang, "incorrectPin"));
-								} else {
-									setAdminError(msg || "Failed to remove player.");
-								}
-							} finally {
-								setAdminBusy(false);
-							}
-						}}
 						mySignupId={mySignup?.id}
 						canUnregister={Boolean(mySignup && myDeleteToken)}
 						onUnregister={
@@ -512,24 +481,6 @@ function App() {
 								{adminError}
 							</div>
 						) : null}
-
-						<div className="mt-3 rounded-2xl border border-[var(--border)] bg-black/20 p-3">
-							<div className="text-xs font-medium text-[--muted]">
-								Admin PIN (for removing players)
-							</div>
-							<input
-								type="password"
-								inputMode="numeric"
-								className="mt-2 w-full rounded-xl border border-[var(--border)] bg-black/20 px-3 py-2 text-sm text-[var(--text)] outline-none focus:ring-2 focus:ring-[var(--gold)]"
-								placeholder="••••"
-								value={adminPin}
-								onChange={(e) => setAdminPin(e.target.value)}
-							/>
-							<div className="mt-2 text-xs text-[--muted]">
-								When set, you can tap the trash icon next to any player to remove
-								them.
-							</div>
-						</div>
 
 						<div className="mt-4 space-y-3">
 							<div className="rounded-2xl border border-[var(--border)] bg-black/20 p-3">

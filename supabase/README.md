@@ -11,6 +11,7 @@ In the Supabase SQL editor, run the migrations in order:
 - `supabase/migrations/003_add_active_time_setting.sql`
 - `supabase/migrations/004_add_announcement_settings.sql`
 - `supabase/migrations/005_decouple_location_and_admin_remove.sql`
+- `supabase/migrations/006_remove_admin_remove.sql`
 
 This creates:
 
@@ -19,17 +20,4 @@ This creates:
 - `active_time` setting (shown in header)
 - `announcement_text` + `announcement_date` settings (banner)
 - Uniqueness is now one list per day: `(play_date, lower(player_name))`
-- Admin removal RPC: `public.admin_remove_signup(signup_id, pin)` (requires server-side PIN hash)
-
-## Configure admin PIN hash
-
-Run this in the Supabase SQL editor (choose your PIN):
-
-```sql
-update public.admin_secrets
-set value = crypt('1234', gen_salt('bf'))
-where key = 'admin_pin_hash';
-```
-
-Then in the app’s Admin panel, enter the same PIN and you’ll be able to remove players.
 
