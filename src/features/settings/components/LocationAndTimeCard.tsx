@@ -4,6 +4,9 @@ import { LOCATIONS } from '../../signups/locations'
 import type { LocationId } from '../../signups/types'
 import { useActiveLocationQuery, useActiveTimeQuery } from '../queries'
 import { useMemo } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import { todayLocalISODate } from '../../../lib/date'
+import { fetchWeatherEmojiAtGameTime } from '../../../api/weather'
 
 export function LocationAndTimeCard(props: {
   lang: Lang
@@ -27,6 +30,21 @@ export function LocationAndTimeCard(props: {
     [activeLocation],
   )
 
+  const showWeather = props.playDate >= todayLocalISODate()
+  const weatherQuery = useQuery({
+    queryKey: ['weatherAtGameTime', props.playDate, activeLocation, activeTime] as const,
+    queryFn: () =>
+      fetchWeatherEmojiAtGameTime({
+        lat: locationMeta.lat,
+        lon: locationMeta.lon,
+        playDate: props.playDate,
+        hhmm: activeTime,
+      }),
+    enabled: showWeather && Boolean(locationMeta?.lat) && Boolean(locationMeta?.lon),
+    staleTime: 10 * 60_000,
+  })
+  const weather = weatherQuery.data
+
   return (
     <section className="relative rounded-2xl border border-(--border) bg-(--surface) p-4">
       <div className="flex items-start justify-between gap-3">
@@ -45,6 +63,11 @@ export function LocationAndTimeCard(props: {
           >
             {formatFriendlyDate(props.playDate)} · {locationMeta.label} ·{' '}
             {formatLocalTime(activeTime)}
+            {showWeather && !weatherQuery.isLoading && weather ? (
+              <span className="ml-1" title={weather.description} aria-label={weather.description}>
+                {weather.emoji}
+              </span>
+            ) : null}
           </button>
           <div className="mt-1 text-xs text-[--muted]">
             {locationMeta.addressLines.join(' · ')}
