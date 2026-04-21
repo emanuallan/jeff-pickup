@@ -24,6 +24,7 @@ export function SignupForm(props: {
   onChange: (next: SignupFormValue) => void
   onSubmit: () => void
   disabled?: boolean
+  blockedMessage?: string
   error?: string
   joined?: boolean
 }) {
@@ -46,10 +47,11 @@ export function SignupForm(props: {
     return null
   }, [props.labels.invalidGuests, props.value.guestCount, touched])
 
-  const canSubmit = !props.disabled && !nameError && !guestsError
+  const isBlocked = Boolean(props.blockedMessage)
+  const canSubmit = !props.disabled && !isBlocked && !nameError && !guestsError
 
   return (
-    <section className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4">
+    <section className="rounded-2xl border border-(--border) bg-(--surface) p-4">
       <div className="text-sm font-semibold">{props.labels.joinTheList}</div>
       <div className="mt-3 space-y-3">
         <label className="block">
@@ -57,7 +59,7 @@ export function SignupForm(props: {
             {props.labels.yourName}
           </div>
           <input
-            className="mt-1 w-full rounded-xl border border-[var(--border)] bg-black/20 px-3 py-2 text-sm text-[var(--text)] outline-none focus:ring-2 focus:ring-[var(--gold)]"
+            className="mt-1 w-full rounded-xl border border-(--border) bg-black/20 px-3 py-2 text-sm text-(--text) outline-none focus:ring-2 focus:ring-(--gold)"
             placeholder={props.labels.namePlaceholder}
             autoComplete="name"
             value={props.value.playerName}
@@ -74,7 +76,7 @@ export function SignupForm(props: {
         <label className="block">
           <div className="text-xs font-medium text-[--muted]">{props.labels.bringingGuests}</div>
           <input
-            className="mt-1 w-full rounded-xl border border-[var(--border)] bg-black/20 px-3 py-2 text-sm text-[var(--text)] outline-none focus:ring-2 focus:ring-[var(--gold)]"
+            className="mt-1 w-full rounded-xl border border-(--border) bg-black/20 px-3 py-2 text-sm text-(--text) outline-none focus:ring-2 focus:ring-(--gold)"
             inputMode="numeric"
             placeholder={props.labels.bringingGuestsPlaceholder}
             value={props.value.guestCount}
@@ -94,9 +96,15 @@ export function SignupForm(props: {
           </div>
         ) : null}
 
+        {props.blockedMessage ? (
+          <div className="rounded-xl border border-(--border) bg-black/20 px-3 py-2 text-xs text-(--muted)">
+            {props.blockedMessage}
+          </div>
+        ) : null}
+
         <button
           type="button"
-          className="mt-1 w-full rounded-2xl bg-[var(--gold)] px-4 py-3 text-sm font-semibold text-black shadow-sm hover:bg-[var(--gold-2)] disabled:cursor-not-allowed disabled:bg-white/10 disabled:text-white/80 disabled:hover:bg-white/10"
+          className="mt-1 w-full rounded-2xl bg-(--gold) px-4 py-3 text-sm font-semibold text-black shadow-sm hover:bg-(--gold-2) disabled:cursor-not-allowed disabled:bg-white/10 disabled:text-white/80 disabled:hover:bg-white/10"
           disabled={!canSubmit || props.joined}
           onClick={() => {
             setTouched(true)

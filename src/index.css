@@ -58,4 +58,16 @@ body {
 	a {
 		color: inherit;
 	}
+
+	/* Make native date-picker icon visible on dark UI */
+	input[type='date'] {
+		color-scheme: dark;
+	}
+
+	/* WebKit (Chrome/Safari/Edge): tint calendar icon toward theme gold */
+	input[type='date']::-webkit-calendar-picker-indicator {
+		opacity: 1;
+		filter: invert(73%) sepia(35%) saturate(526%) hue-rotate(357deg)
+			brightness(92%) contrast(92%);
+	}
 }

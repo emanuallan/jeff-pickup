@@ -8,6 +8,7 @@ import { clearDeleteToken, loadDeleteToken, newUuid, saveDeleteToken } from '../
 import { supabase } from '../../../lib/supabase'
 import { toAppError } from '../../../api/errors'
 import { fireConfetti } from '../../../app/hooks/useConfettiOnNewSignups'
+import { todayLocalISODate } from '../../../lib/date'
 import {
   useRosterQuery,
   useCreateSignupMutation,
@@ -104,6 +105,7 @@ export function SignupSection(props: {
     updateEmojiMutation.isPending ||
     sendPokeMutation.isPending
   const disabled = !supabase
+  const isPastSession = props.playDate < todayLocalISODate()
 
   const mySignup = useMemo(() => {
     const n = cleanedName.toLowerCase()
@@ -147,6 +149,13 @@ export function SignupSection(props: {
     kind: 'poke' | 'wave'
   } | null>(null)
   const [pokeSeenInitialized, setPokeSeenInitialized] = useState(false)
+
+  useEffect(() => {
+    if (isPastSession) {
+      setEmojiOpen(false)
+      setPokeBanner(null)
+    }
+  }, [isPastSession])
 
   useEffect(() => {
     if (!joined) {
@@ -222,12 +231,27 @@ export function SignupSection(props: {
             setPlayerName(next.playerName)
             setGuestCount(next.guestCount)
           }}
-          disabled={disabled || submitting}
+          disabled={disabled || submitting || isPastSession}
+          blockedMessage={
+            isPastSession
+              ? props.lang === 'es'
+                ? 'Este pickup ya pasó — no se puede registrar.'
+                : 'This pickup already happened — registration is closed.'
+              : undefined
+          }
           joined={joined}
           error={error ?? undefined}
           onSubmit={async () => {
             if (!supabase) return
             if (mySignup) return
+            if (isPastSession) {
+              setError(
+                props.lang === 'es'
+                  ? 'Este pickup ya pasó — no se puede registrar.'
+                  : 'This pickup already happened — registration is closed.',
+              )
+              return
+            }
             if (!cleanedName) {
               setError(t(props.lang, 'enterName'))
               return
@@ -271,7 +295,7 @@ export function SignupSection(props: {
         />
       ) : null}
 
-      {pokeBanner ? (
+      {!isPastSession && pokeBanner ? (
         <section
           className={
             pokeBanner.kind === 'wave'
@@ -316,7 +340,7 @@ export function SignupSection(props: {
       <SignupList
         labels={{
           players: t(props.lang, 'players'),
-          total: t(props.lang, 'total'),
+          registered: t(props.lang, 'registered'),
           loading: t(props.lang, 'loading'),
           emptyList: t(props.lang, 'emptyList'),
           unregister: t(props.lang, 'unregister'),
@@ -336,10 +360,10 @@ export function SignupSection(props: {
         loading={loading}
         goal={rosterGoal}
         mySignupId={mySignup?.id}
-        myDeleteToken={myDeleteToken || undefined}
-        canUnregister={canUnregister}
+        myDeleteToken={!isPastSession ? (myDeleteToken || undefined) : undefined}
+        canUnregister={!isPastSession ? canUnregister : false}
         onPressEmoji={
-          mySignup && myDeleteToken
+          !isPastSession && mySignup && myDeleteToken
             ? () => {
                 setEmojiDraft((mySignup.emoji ?? '').trim())
                 setEmojiOpen(true)
@@ -347,7 +371,7 @@ export function SignupSection(props: {
             : undefined
         }
         onPoke={
-          mySignup && myDeleteToken
+          !isPastSession && mySignup && myDeleteToken
             ? async (_toId, toName, kind) => {
                 const confirmMsg = kind === 'wave'
                   ? t(props.lang, 'waveConfirm').replace('{name}', toName)
@@ -355,6 +379,7 @@ export function SignupSection(props: {
                 const ok = window.confirm(confirmMsg)
                 if (!ok) return
                 try {
+                  if (isPastSession) return
                   await sendPokeMutation.mutateAsync({
                     fromSignupId: mySignup.id,
                     deleteToken: myDeleteToken,
@@ -368,10 +393,11 @@ export function SignupSection(props: {
             : undefined
         }
         onUnregister={
-          mySignup && myDeleteToken
+          !isPastSession && mySignup && myDeleteToken
             ? async () => {
                 setError(null)
                 try {
+                  if (isPastSession) return
                   await unregisterSignupMutation.mutateAsync({
                     signupId: mySignup.id,
                     deleteToken: myDeleteToken,
@@ -393,7 +419,7 @@ export function SignupSection(props: {
         registerUrl={props.registerUrl}
       />
 
-      {emojiOpen && mySignup && myDeleteToken ? (
+      {!isPastSession && emojiOpen && mySignup && myDeleteToken ? (
         <div
           className="fixed inset-0 z-40 flex items-end justify-center bg-black/60 p-4"
           role="dialog"
@@ -446,6 +472,7 @@ export function SignupSection(props: {
                 className="rounded-2xl bg-(--gold) px-4 py-3 text-sm font-semibold text-black shadow-sm hover:bg-(--gold-2) disabled:cursor-not-allowed disabled:bg-white/10 disabled:text-white/80"
                 onClick={async () => {
                   try {
+                    if (isPastSession) return
                     await updateEmojiMutation.mutateAsync({
                       signupId: mySignup.id,
                       deleteToken: myDeleteToken,

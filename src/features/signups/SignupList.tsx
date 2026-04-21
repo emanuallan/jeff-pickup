@@ -3,7 +3,7 @@ import type { Signup } from "./types";
 export function SignupList(props: {
 	labels: {
 		players: string;
-		total: string;
+		registered: string;
 		loading: string;
 		emptyList: string;
 		unregister: string;
@@ -40,11 +40,11 @@ export function SignupList(props: {
 			: 0;
 
 	return (
-		<section className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4">
+		<section className="rounded-2xl border border-(--border) bg-(--surface) p-4">
 			<div className="flex items-baseline justify-between gap-3">
 				<div className="text-sm font-semibold">{props.labels.players}</div>
 				<div className="text-xs text-[--muted]">
-					{headcount} {props.labels.total}
+					{headcount} {props.labels.registered}
 				</div>
 			</div>
 
@@ -67,8 +67,8 @@ export function SignupList(props: {
 									key={s.id}
 									className={
 										isMe
-											? "relative flex items-center justify-between rounded-xl border border-[var(--gold)]/60 bg-gradient-to-r from-[var(--gold)]/20 via-white/5 to-emerald-400/10 px-3 py-2 shadow-[0_0_0_1px_rgba(210,163,74,0.18),0_0_24px_rgba(210,163,74,0.18)]"
-											: "flex items-center justify-between rounded-xl border border-[var(--border)] bg-black/20 px-3 py-2"
+											? "relative flex items-center justify-between rounded-xl border border-(--gold)/60 bg-linear-to-r from-(--gold)/20 via-white/5 to-emerald-400/10 px-3 py-2 shadow-[0_0_0_1px_rgba(210,163,74,0.18),0_0_24px_rgba(210,163,74,0.18)]"
+											: "flex items-center justify-between rounded-xl border border-(--border) bg-black/20 px-3 py-2"
 									}
 								>
 									<div className="min-w-0">
@@ -77,7 +77,7 @@ export function SignupList(props: {
 											{s.emoji?.trim() ? <span className="mr-1">{s.emoji.trim()}</span> : null}
 											{s.player_name}
 											{guests > 0 ? (
-												<span className="ml-2 text-xs font-semibold text-[var(--gold)]">
+												<span className="ml-2 text-xs font-semibold text-(--gold)">
 													{props.labels.guestsTag.replace('{n}', String(guests))}
 												</span>
 											) : null}
@@ -92,10 +92,10 @@ export function SignupList(props: {
 										</div>
 									</div>
 									<div className="ml-3 flex items-center gap-2">
-										{isMe && props.myDeleteToken ? (
+										{isMe && props.myDeleteToken && props.onPressEmoji ? (
 											<button
 												type="button"
-												className="rounded-full border border-[var(--border)] bg-black/30 px-2 py-1 text-xs font-semibold text-white/85 hover:bg-white/10"
+												className="rounded-full border border-(--border) bg-black/30 px-2 py-1 text-xs font-semibold text-white/85 hover:bg-white/10"
 												onClick={props.onPressEmoji}
 											>
 												{props.labels.emoji}
@@ -108,7 +108,7 @@ export function SignupList(props: {
 												className={
 													actionKind === "wave"
 														? "rounded-full border border-cyan-400/55 bg-cyan-500/15 px-2 py-1 text-xs font-semibold text-cyan-50 shadow-[0_0_14px_rgba(34,211,238,0.35)] hover:bg-cyan-400/20 hover:shadow-[0_0_20px_rgba(34,211,238,0.45)]"
-														: "rounded-full border border-[var(--border)] bg-black/30 px-2 py-1 text-xs font-semibold text-white/85 hover:bg-white/10"
+														: "rounded-full border border-(--border) bg-black/30 px-2 py-1 text-xs font-semibold text-white/85 hover:bg-white/10"
 												}
 												title={actionKind === "wave" ? props.labels.wave : props.labels.poke}
 												onClick={() => props.onPoke?.(s.id, s.player_name, actionKind)}
@@ -117,7 +117,7 @@ export function SignupList(props: {
 											</button>
 										) : null}
 
-										{isMe ? (
+										{isMe && props.onUnregister ? (
 											<button
 												type="button"
 												aria-label="Unregister"
@@ -128,7 +128,7 @@ export function SignupList(props: {
 												}
 												disabled={!props.canUnregister}
 												onClick={props.onUnregister}
-												className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border)] bg-black/30 text-white/80 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
+												className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-(--border) bg-black/30 text-white/80 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
 											>
 												<span className="text-lg leading-none">×</span>
 											</button>
@@ -151,7 +151,7 @@ export function SignupList(props: {
 					</div>
 					<div className="mt-2 h-2 w-full rounded-full bg-white/10">
 						<div
-							className="h-2 rounded-full bg-[var(--gold)]"
+							className="h-2 rounded-full bg-(--gold)"
 							style={{ width: `${progressPct}%` }}
 						/>
 					</div>
