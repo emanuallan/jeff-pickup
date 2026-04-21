@@ -19,13 +19,14 @@ export function SignupList(props: {
 	};
 	signups: Signup[];
 	newPlayerNameKeys: ReadonlySet<string>;
+	viewerIsNew?: boolean;
 	loading?: boolean;
 	mySignupId?: string;
 	myDeleteToken?: string;
 	canUnregister?: boolean;
 	onUnregister?: () => void;
 	onPressEmoji?: () => void;
-	onPoke?: (toSignupId: string, toPlayerName: string, targetIsNew: boolean) => void;
+	onPoke?: (toSignupId: string, toPlayerName: string, kind: "poke" | "wave") => void;
 	goal?: number;
 }) {
 	const goal = props.goal ?? 0;
@@ -59,6 +60,8 @@ export function SignupList(props: {
 							const guests = Math.max(0, s.guest_count ?? 0);
 							const nameKey = s.player_name.trim().toLowerCase();
 							const showNewBadge = props.newPlayerNameKeys.has(nameKey);
+							const actionKind: "poke" | "wave" =
+								showNewBadge || Boolean(props.viewerIsNew) ? "wave" : "poke";
 							return (
 								<li
 									key={s.id}
@@ -103,13 +106,13 @@ export function SignupList(props: {
 											<button
 												type="button"
 												className={
-													showNewBadge
+													actionKind === "wave"
 														? "rounded-full border border-cyan-400/55 bg-cyan-500/15 px-2 py-1 text-xs font-semibold text-cyan-50 shadow-[0_0_14px_rgba(34,211,238,0.35)] hover:bg-cyan-400/20 hover:shadow-[0_0_20px_rgba(34,211,238,0.45)]"
 														: "rounded-full border border-[var(--border)] bg-black/30 px-2 py-1 text-xs font-semibold text-white/85 hover:bg-white/10"
 												}
-												onClick={() => props.onPoke?.(s.id, s.player_name, showNewBadge)}
+												onClick={() => props.onPoke?.(s.id, s.player_name, actionKind)}
 											>
-												{showNewBadge ? props.labels.wave : props.labels.poke}
+												{actionKind === "wave" ? props.labels.wave : props.labels.poke}
 											</button>
 										) : null}
 

@@ -76,6 +76,11 @@ export function SignupSection(props: {
     }
     return out
   }, [gameCountsQuery.data, gameCountsQuery.isError, rosterNameKeys])
+  const viewerIsNew = useMemo(() => {
+    const myKey = cleanedName.trim().toLowerCase()
+    if (!myKey) return false
+    return newPlayerNameKeys.has(myKey)
+  }, [cleanedName, newPlayerNameKeys])
 
   useEffect(() => {
     if (!rosterQuery.data) return
@@ -319,6 +324,7 @@ export function SignupSection(props: {
         }}
         signups={signups}
         newPlayerNameKeys={newPlayerNameKeys}
+        viewerIsNew={viewerIsNew}
         loading={loading}
         goal={rosterGoal}
         mySignupId={mySignup?.id}
@@ -334,8 +340,8 @@ export function SignupSection(props: {
         }
         onPoke={
           mySignup && myDeleteToken
-            ? async (_toId, toName, targetIsNew) => {
-                const confirmMsg = targetIsNew
+            ? async (_toId, toName, kind) => {
+                const confirmMsg = kind === 'wave'
                   ? t(props.lang, 'waveConfirm').replace('{name}', toName)
                   : t(props.lang, 'pokeConfirm').replace('{name}', toName)
                 const ok = window.confirm(confirmMsg)
@@ -346,9 +352,9 @@ export function SignupSection(props: {
                     deleteToken: myDeleteToken,
                     toSignupId: _toId,
                   })
-                  window.alert(targetIsNew ? t(props.lang, 'waveSent') : t(props.lang, 'pokeSent'))
+                  window.alert(kind === 'wave' ? t(props.lang, 'waveSent') : t(props.lang, 'pokeSent'))
                 } catch {
-                  setError(targetIsNew ? t(props.lang, 'couldNotWave') : t(props.lang, 'couldNotPoke'))
+                  setError(kind === 'wave' ? t(props.lang, 'couldNotWave') : t(props.lang, 'couldNotPoke'))
                 }
               }
             : undefined
