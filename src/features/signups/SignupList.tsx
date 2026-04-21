@@ -40,36 +40,43 @@ export function SignupList(props: {
 					<div className="text-sm text-[--muted]">{props.labels.emptyList}</div>
 				) : (
 					<ol className="space-y-2">
-						{props.signups.map((s, idx) => (
-							<li
-								key={s.id}
-								className="flex items-center justify-between rounded-xl border border-[var(--border)] bg-black/20 px-3 py-2"
-							>
-								<div className="min-w-0">
-									<div className="truncate text-sm font-medium">
-										{idx + 1}. {s.player_name}
+						{props.signups.map((s, idx) => {
+							const isMe = props.mySignupId === s.id;
+							return (
+								<li
+									key={s.id}
+									className={
+										isMe
+											? "relative flex items-center justify-between rounded-xl border border-[var(--gold)]/60 bg-gradient-to-r from-[var(--gold)]/20 via-white/5 to-emerald-400/10 px-3 py-2 shadow-[0_0_0_1px_rgba(210,163,74,0.18),0_0_24px_rgba(210,163,74,0.18)]"
+											: "flex items-center justify-between rounded-xl border border-[var(--border)] bg-black/20 px-3 py-2"
+									}
+								>
+									<div className="min-w-0">
+										<div className="truncate text-sm font-medium">
+											{idx + 1}. {s.player_name}
+										</div>
 									</div>
-								</div>
-								<div className="ml-3 flex items-center">
-									{props.mySignupId === s.id ? (
-										<button
-											type="button"
-											aria-label="Unregister"
-											title={
-												props.canUnregister
-													? props.labels.unregister
-													: props.labels.unregisterHint
-											}
-											disabled={!props.canUnregister}
-											onClick={props.onUnregister}
-											className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border)] bg-black/30 text-white/80 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
-										>
-											<span className="text-lg leading-none">×</span>
-										</button>
-									) : null}
-								</div>
-							</li>
-						))}
+									<div className="ml-3 flex items-center">
+										{isMe ? (
+											<button
+												type="button"
+												aria-label="Unregister"
+												title={
+													props.canUnregister
+														? props.labels.unregister
+														: props.labels.unregisterHint
+												}
+												disabled={!props.canUnregister}
+												onClick={props.onUnregister}
+												className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border)] bg-black/30 text-white/80 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
+											>
+												<span className="text-lg leading-none">×</span>
+											</button>
+										) : null}
+									</div>
+								</li>
+							);
+						})}
 					</ol>
 				)}
 			</div>
