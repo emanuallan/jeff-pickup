@@ -24,6 +24,8 @@ export function CapsLeaderboard(props: { lang: Lang; myNameKey: string }) {
           <ol className="max-h-[min(24rem,55dvh)] space-y-2 overflow-y-auto pr-1">
             {rows.map((row, idx) => {
               const isMe = Boolean(props.myNameKey) && row.nameKey === props.myNameKey
+              const topCaps = rows[0]?.caps ?? 0
+              const isTopCaps = row.caps > 0 && row.caps === topCaps
               const prev = rows[idx - 1]
               const prevRank = prev ? 1 + rows.slice(0, idx).filter((r) => r.caps > row.caps).length : 1
               const shownRank = !prev ? 1 : prev.caps === row.caps ? prevRank : idx + 1
@@ -41,7 +43,10 @@ export function CapsLeaderboard(props: { lang: Lang; myNameKey: string }) {
                     <span className="min-w-0 truncate text-sm font-medium">{row.displayName}</span>
                   </div>
                   <div className="shrink-0 text-right">
-                    <span className="text-sm font-semibold tabular-nums text-(--gold)">{row.caps}</span>
+                    <span className="text-sm font-semibold tabular-nums text-(--gold)">
+                      {row.caps}
+                      {isTopCaps ? <span className="ml-1" aria-hidden>🏅</span> : null}
+                    </span>
                     <span className="ml-1 text-[10px] font-semibold uppercase tracking-wide text-(--muted)">
                       {row.caps === 1 ? t(props.lang, 'capShort') : t(props.lang, 'capsShort')}
                     </span>
