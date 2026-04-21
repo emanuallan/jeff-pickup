@@ -9,7 +9,6 @@ export function CapsLeaderboard(props: { lang: Lang; myNameKey: string }) {
   return (
     <section className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4">
       <div className="text-sm font-semibold">{t(props.lang, 'capsLeaderboardTitle')}</div>
-      <p className="mt-1 text-xs text-[var(--muted)]">{t(props.lang, 'capsLeaderboardHint')}</p>
 
       <div className="mt-3">
         {loading ? (
