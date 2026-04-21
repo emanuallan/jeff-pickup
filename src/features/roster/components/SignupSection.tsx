@@ -48,6 +48,8 @@ export function SignupSection(props: {
   lang: Lang
   playDate: string
   onTapAdminTitle?: () => void
+  /** Hash / footer navigation: show caps leaderboard instead of join + list */
+  showCapsLeaderboard?: boolean
 }) {
   const [playerName, setPlayerName] = useLocalStorageState({ load: loadPlayerName, save: savePlayerName })
   const [guestCount, setGuestCount] = useState('0')
@@ -132,7 +134,6 @@ export function SignupSection(props: {
   const [emojiDraft, setEmojiDraft] = useState('')
   const [pokeBanner, setPokeBanner] = useState<{ from: string; at: string } | null>(null)
   const [pokeSeenInitialized, setPokeSeenInitialized] = useState(false)
-  const [rosterTab, setRosterTab] = useState<'today' | 'caps'>('today')
 
   useEffect(() => {
     if (!joined) {
@@ -165,44 +166,10 @@ export function SignupSection(props: {
   }, [joined, myDeleteToken, mySignup?.id, pokesQuery.data, pokeSeenInitialized, props.playDate])
 
   const myNameKey = cleanedName.trim().toLowerCase()
+  const capsOnly = Boolean(props.showCapsLeaderboard)
 
   return (
     <>
-      {supabase ? (
-        <div
-          className="mb-3 flex gap-1 rounded-2xl border border-[var(--border)] bg-black/25 p-1"
-          role="tablist"
-          aria-label={t(props.lang, 'rosterTabs')}
-        >
-          <button
-            type="button"
-            role="tab"
-            aria-selected={rosterTab === 'today'}
-            className={
-              rosterTab === 'today'
-                ? 'flex-1 rounded-xl bg-[var(--gold)]/20 px-3 py-2.5 text-sm font-semibold text-white shadow-sm ring-1 ring-[var(--gold)]/35'
-                : 'flex-1 rounded-xl px-3 py-2.5 text-sm font-medium text-white/70 hover:bg-white/5 hover:text-white'
-            }
-            onClick={() => setRosterTab('today')}
-          >
-            {t(props.lang, 'tabTodaysList')}
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={rosterTab === 'caps'}
-            className={
-              rosterTab === 'caps'
-                ? 'flex-1 rounded-xl bg-[var(--gold)]/20 px-3 py-2.5 text-sm font-semibold text-white shadow-sm ring-1 ring-[var(--gold)]/35'
-                : 'flex-1 rounded-xl px-3 py-2.5 text-sm font-medium text-white/70 hover:bg-white/5 hover:text-white'
-            }
-            onClick={() => setRosterTab('caps')}
-          >
-            {t(props.lang, 'tabCapsLeaderboard')}
-          </button>
-        </div>
-      ) : null}
-
       <GameStatusCard
         lang={props.lang}
         status={gameStatusQuery.data ?? 'tentative'}
@@ -211,11 +178,11 @@ export function SignupSection(props: {
         onTapTitle={props.onTapAdminTitle}
       />
 
-      {rosterTab === 'caps' ? (
+      {capsOnly ? (
         <CapsLeaderboard lang={props.lang} myNameKey={myNameKey} />
       ) : null}
 
-      {rosterTab === 'today' ? (
+      {!capsOnly ? (
         <>
       {!joined ? (
         <SignupForm

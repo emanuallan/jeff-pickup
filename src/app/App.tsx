@@ -26,6 +26,16 @@ export default function App() {
   const [, setGameStatusTapState] = useState(() => ({ count: 0, lastTapMs: 0 }))
   const [dateModalOpen, setDateModalOpen] = useState(false)
   const [dateDraft, setDateDraft] = useState(playDate)
+  const [capsView, setCapsView] = useState(
+    () => typeof window !== 'undefined' && window.location.hash === '#caps',
+  )
+
+  useEffect(() => {
+    const syncCapsFromHash = () => setCapsView(window.location.hash === '#caps')
+    syncCapsFromHash()
+    window.addEventListener('hashchange', syncCapsFromHash)
+    return () => window.removeEventListener('hashchange', syncCapsFromHash)
+  }, [])
 
   useEffect(() => {
     if (dateModalOpen) return
@@ -100,6 +110,7 @@ export default function App() {
             lang={lang}
             playDate={playDate}
             onTapAdminTitle={onGameStatusUnlockTap}
+            showCapsLeaderboard={capsView}
           />
 
           <SocialLinks
@@ -109,7 +120,15 @@ export default function App() {
           />
         </main>
 
-        <AppFooter instagramUrl="https://www.instagram.com/aeserna/" />
+        <AppFooter
+          instagramUrl="https://www.instagram.com/aeserna/"
+          lang={lang}
+          showCapsNav={Boolean(supabase)}
+          capsView={capsView}
+          onLeaveCaps={() => {
+            if (window.location.hash) window.location.hash = ''
+          }}
+        />
       </div>
 
       <AdminModal
