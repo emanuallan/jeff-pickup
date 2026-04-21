@@ -26,7 +26,6 @@ export default function App() {
   const savedName = loadPlayerName().trim()
   const [adminOpen, setAdminOpen] = useState(false)
   const [adminMode, setAdminMode] = useState<'full' | 'gameStatus'>('full')
-  const [, setAdminTapState] = useState(() => ({ count: 0, lastTapMs: 0 }))
   const [, setGameStatusTapState] = useState(() => ({ count: 0, lastTapMs: 0 }))
   const [dateModalOpen, setDateModalOpen] = useState(false)
   const [dateDraft, setDateDraft] = useState(playDate)
@@ -45,21 +44,6 @@ export default function App() {
     if (dateModalOpen) return
     setDateDraft(playDate)
   }, [dateModalOpen, playDate])
-
-  const onAdminUnlockTap = () => {
-    if (!supabase) return
-    setAdminTapState((s) => {
-      const now = Date.now()
-      const reset = now - s.lastTapMs > 1200
-      const nextCount = reset ? 1 : s.count + 1
-      if (nextCount >= 5) {
-        setAdminMode('full')
-        setAdminOpen(true)
-        return { count: 0, lastTapMs: 0 }
-      }
-      return { count: nextCount, lastTapMs: now }
-    })
-  }
 
   const leaveCapsView = () => {
     if (window.location.hash) window.location.hash = ''
@@ -166,7 +150,7 @@ export default function App() {
                   setPlayDate(dateDraft)
                   setDateModalOpen(false)
                 }}
-                onTapAdminUnlock={onAdminUnlockTap}
+                onTapAdminUnlock={onGameStatusUnlockTap}
               />
 
               {!supabase ? (

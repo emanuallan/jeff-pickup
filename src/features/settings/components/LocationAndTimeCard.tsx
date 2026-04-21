@@ -3,7 +3,7 @@ import { t, type Lang } from '../../../lib/i18n'
 import { LOCATIONS } from '../../signups/locations'
 import type { LocationId } from '../../signups/types'
 import { useActiveLocationQuery, useActiveTimeQuery } from '../queries'
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 
 export function LocationAndTimeCard(props: {
   lang: Lang
@@ -27,8 +27,6 @@ export function LocationAndTimeCard(props: {
     [activeLocation],
   )
 
-  const [, setAdminTapState] = useState(() => ({ count: 0, lastTapMs: 0 }))
-
   return (
     <section className="relative rounded-2xl border border-(--border) bg-(--surface) p-4">
       <div className="flex items-start justify-between gap-3">
@@ -36,18 +34,7 @@ export function LocationAndTimeCard(props: {
           <button
             type="button"
             className="rounded-md text-sm font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-(--gold)"
-            onClick={() => {
-              setAdminTapState((s) => {
-                const now = Date.now()
-                const reset = now - s.lastTapMs > 1200
-                const nextCount = reset ? 1 : s.count + 1
-                if (nextCount >= 5) {
-                  props.onTapAdminUnlock()
-                  return { count: 0, lastTapMs: 0 }
-                }
-                return { count: nextCount, lastTapMs: now }
-              })
-            }}
+            onClick={props.onTapAdminUnlock}
           >
             {t(props.lang, 'locationAndTime')}
           </button>
