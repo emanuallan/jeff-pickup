@@ -142,12 +142,12 @@ export function SignupList(props: {
 												className={
 													actionKind === "wave"
 														? "rounded-full border border-cyan-400/55 bg-cyan-500/15 px-2 py-1 text-xs font-semibold text-cyan-50 shadow-[0_0_14px_rgba(34,211,238,0.35)] hover:bg-cyan-400/20 hover:shadow-[0_0_20px_rgba(34,211,238,0.45)]"
-														: "rounded-full border border-(--border) bg-black/30 px-2 py-1 text-xs font-semibold text-white/85 hover:bg-white/10"
+														: "rounded-full border border-fuchsia-400/55 bg-fuchsia-500/15 px-2 py-1 text-xs font-semibold text-fuchsia-50 shadow-[0_0_14px_rgba(244,114,182,0.30)] hover:bg-fuchsia-400/20 hover:shadow-[0_0_20px_rgba(244,114,182,0.42)]"
 												}
 												title={actionKind === "wave" ? props.labels.wave : props.labels.poke}
 												onClick={() => props.onPoke?.(s.id, s.player_name, actionKind)}
 											>
-												{actionKind === "wave" ? props.labels.wave : "👉"}
+												{actionKind === "wave" ? props.labels.wave : props.labels.poke}
 											</button>
 										) : null}
 
