@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
-import { loadLang, saveLang, type Lang } from '../lib/i18n'
+import { loadLang, saveLang, t, type Lang } from '../lib/i18n'
 import { SignupSection } from '../features/roster/components/SignupSection'
+import { CapsLeaderboard } from '../features/roster/components/CapsLeaderboard'
 import { LocationAndTimeCard } from '../features/settings/components/LocationAndTimeCard'
 import { AdminModal } from '../features/admin/components/AdminModal'
 import { AnnouncementBanner } from '../features/announcement/components/AnnouncementBanner'
@@ -12,6 +13,7 @@ import { AppFooter } from '../features/shell/components/AppFooter'
 import { AppLoadingOverlay } from '../features/shell/components/AppLoadingOverlay'
 import { useLocalStorageState } from './hooks/useLocalStorageState'
 import { usePlayDate } from './hooks/usePlayDate'
+import { loadPlayerName } from '../lib/storage'
 
 const FACEBOOK_GROUP_URL = 'https://www.facebook.com/share/g/18ruTArVRB/'
 const WHATSAPP_GROUP_URL =
@@ -57,6 +59,10 @@ export default function App() {
     })
   }
 
+  const leaveCapsView = () => {
+    if (window.location.hash) window.location.hash = ''
+  }
+
   const onGameStatusUnlockTap = () => {
     if (!supabase) return
     setGameStatusTapState((s) => {
@@ -78,56 +84,70 @@ export default function App() {
         <AppHeader lang={lang} onLangChange={setLang} />
 
         <main className="mt-6 space-y-4">
-          <AnnouncementBanner />
+          {capsView ? (
+            <>
+              <button
+                type="button"
+                className="flex w-full items-center gap-2 rounded-2xl border border-[var(--border)] bg-black/25 px-3 py-2.5 text-left text-sm font-medium text-white/90 hover:bg-white/10"
+                onClick={leaveCapsView}
+              >
+                <span className="text-lg leading-none text-[var(--gold)]" aria-hidden>
+                  ←
+                </span>
+                {t(lang, 'backToPickup')}
+              </button>
 
-          <LocationAndTimeCard
-            lang={lang}
-            playDate={playDate}
-            dateModalOpen={dateModalOpen}
-            dateDraft={dateDraft}
-            onOpenDateModal={() => {
-              setDateDraft(playDate)
-              setDateModalOpen(true)
-            }}
-            onCloseDateModal={() => {
-              setDateModalOpen(false)
-            }}
-            onDateDraftChange={(next) => {
-              setDateDraft(next)
-            }}
-            onSaveDate={() => {
-              setPlayDate(dateDraft)
-              setDateModalOpen(false)
-            }}
-            onTapAdminUnlock={onAdminUnlockTap}
-          />
+              {supabase ? (
+                <CapsLeaderboard lang={lang} myNameKey={loadPlayerName().trim().toLowerCase()} />
+              ) : (
+                <SetupNeededBanner lang={lang} />
+              )}
+            </>
+          ) : (
+            <>
+              <AnnouncementBanner />
 
-          {!supabase ? (
-            <SetupNeededBanner lang={lang} />
-          ) : null}
+              <LocationAndTimeCard
+                lang={lang}
+                playDate={playDate}
+                dateModalOpen={dateModalOpen}
+                dateDraft={dateDraft}
+                onOpenDateModal={() => {
+                  setDateDraft(playDate)
+                  setDateModalOpen(true)
+                }}
+                onCloseDateModal={() => {
+                  setDateModalOpen(false)
+                }}
+                onDateDraftChange={(next) => {
+                  setDateDraft(next)
+                }}
+                onSaveDate={() => {
+                  setPlayDate(dateDraft)
+                  setDateModalOpen(false)
+                }}
+                onTapAdminUnlock={onAdminUnlockTap}
+              />
 
-          <SignupSection
-            lang={lang}
-            playDate={playDate}
-            onTapAdminTitle={onGameStatusUnlockTap}
-            showCapsLeaderboard={capsView}
-          />
+              {!supabase ? (
+                <SetupNeededBanner lang={lang} />
+              ) : null}
 
-          <SocialLinks
-            lang={lang}
-            facebookUrl={FACEBOOK_GROUP_URL}
-            whatsappUrl={WHATSAPP_GROUP_URL}
-          />
+              <SignupSection lang={lang} playDate={playDate} onTapAdminTitle={onGameStatusUnlockTap} />
+
+              <SocialLinks
+                lang={lang}
+                facebookUrl={FACEBOOK_GROUP_URL}
+                whatsappUrl={WHATSAPP_GROUP_URL}
+              />
+            </>
+          )}
         </main>
 
         <AppFooter
           instagramUrl="https://www.instagram.com/aeserna/"
           lang={lang}
-          showCapsNav={Boolean(supabase)}
-          capsView={capsView}
-          onLeaveCaps={() => {
-            if (window.location.hash) window.location.hash = ''
-          }}
+          showCapsLink={Boolean(supabase) && !capsView}
         />
       </div>
 

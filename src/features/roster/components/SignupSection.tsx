@@ -19,7 +19,6 @@ import { useMyPokesQuery, useSendPokeMutation, useUpdateMyEmojiMutation } from '
 import { useActiveLocationQuery, useGameStatusQuery, useMinPlayersQuery } from '../../settings/queries'
 import type { LocationId } from '../../signups/types'
 import { GameStatusCard } from './GameStatusCard'
-import { CapsLeaderboard } from './CapsLeaderboard'
 
 const EMOJI_CHOICES = ['⚽️', '🥅', '👟', '🔥', '💪', '😤', '🧤', '⭐️', '🎯', '🏃', '🦁', '🦅', '🧃', '☀️', '🌧️']
 
@@ -48,8 +47,6 @@ export function SignupSection(props: {
   lang: Lang
   playDate: string
   onTapAdminTitle?: () => void
-  /** Hash / footer navigation: show caps leaderboard instead of join + list */
-  showCapsLeaderboard?: boolean
 }) {
   const [playerName, setPlayerName] = useLocalStorageState({ load: loadPlayerName, save: savePlayerName })
   const [guestCount, setGuestCount] = useState('0')
@@ -165,9 +162,6 @@ export function SignupSection(props: {
     }
   }, [joined, myDeleteToken, mySignup?.id, pokesQuery.data, pokeSeenInitialized, props.playDate])
 
-  const myNameKey = cleanedName.trim().toLowerCase()
-  const capsOnly = Boolean(props.showCapsLeaderboard)
-
   return (
     <>
       <GameStatusCard
@@ -178,12 +172,6 @@ export function SignupSection(props: {
         onTapTitle={props.onTapAdminTitle}
       />
 
-      {capsOnly ? (
-        <CapsLeaderboard lang={props.lang} myNameKey={myNameKey} />
-      ) : null}
-
-      {!capsOnly ? (
-        <>
       {!joined ? (
         <SignupForm
           labels={{
@@ -343,8 +331,6 @@ export function SignupSection(props: {
             : undefined
         }
       />
-        </>
-      ) : null}
 
       {emojiOpen && mySignup && myDeleteToken ? (
         <div
