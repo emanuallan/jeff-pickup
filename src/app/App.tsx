@@ -43,6 +43,11 @@ export default function App() {
   }, [])
 
   useEffect(() => {
+    if (!capsView) return
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
+  }, [capsView])
+
+  useEffect(() => {
     if (dateModalOpen) return
     setDateDraft(playDate)
   }, [dateModalOpen, playDate])

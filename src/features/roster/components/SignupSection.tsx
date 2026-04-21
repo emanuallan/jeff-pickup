@@ -3,7 +3,7 @@ import { SignupForm } from '../../signups/SignupForm'
 import { SignupList } from '../../signups/SignupList'
 import { t, type Lang } from '../../../lib/i18n'
 import { useLocalStorageState } from '../../../app/hooks/useLocalStorageState'
-import { loadPlayerName, savePlayerName } from '../../../lib/storage'
+import { loadPlayerName, loadPokeSeenAt, pokeSeenAtKey, savePlayerName, savePokeSeenAt } from '../../../lib/storage'
 import { clearDeleteToken, loadDeleteToken, newUuid, saveDeleteToken } from '../../../lib/tokens'
 import { supabase } from '../../../lib/supabase'
 import { toAppError } from '../../../api/errors'
@@ -22,29 +22,8 @@ import { useActiveLocationQuery, useGameStatusQuery, useMinPlayersQuery } from '
 import type { LocationId } from '../../signups/types'
 import { GameStatusCard } from './GameStatusCard'
 import { ShareFacebookPostCard } from '../../shell/components/ShareFacebookPostCard'
-
-const EMOJI_CHOICES = ['⚽️', '🥅', '👟', '🔥', '💪', '😤', '🧤', '⭐️', '🎯', '🏃', '🦁', '🦅', '🧃', '☀️', '🌧️']
-
-function pokeSeenKey(args: { playDate: string; signupId: string }) {
-  return `jeffpickup.pokeSeenAt:${args.playDate}:${args.signupId}`
-}
-
-function loadPokeSeenAt(key: string): string | null {
-  try {
-    const v = localStorage.getItem(key)
-    return v && v.trim() ? v : null
-  } catch {
-    return null
-  }
-}
-
-function savePokeSeenAt(key: string, iso: string) {
-  try {
-    localStorage.setItem(key, iso)
-  } catch {
-    // ignore
-  }
-}
+import { EmojiPickerModal } from './EmojiPickerModal'
+import { PokeBannerCard } from './PokeBannerCard'
 
 export function SignupSection(props: {
   lang: Lang
@@ -168,7 +147,7 @@ export function SignupSection(props: {
     if (!mySignup?.id || !myDeleteToken) return
     if (!pokesQuery.data) return
 
-    const key = pokeSeenKey({ playDate: props.playDate, signupId: mySignup.id })
+    const key = pokeSeenAtKey({ playDate: props.playDate, signupId: mySignup.id })
     const latest = pokesQuery.data[0]
 
     if (!pokeSeenInitialized) {
@@ -218,10 +197,7 @@ export function SignupSection(props: {
             yourName: t(props.lang, 'yourName'),
             namePlaceholder: t(props.lang, 'namePlaceholder'),
             enterName: t(props.lang, 'enterName'),
-            keepUnder40:
-              props.lang === 'es'
-                ? 'Por favor usa menos de 40 caracteres.'
-                : 'Please keep it under 40 characters.',
+            keepUnder40: t(props.lang, 'keepUnder40'),
             bringingGuests: t(props.lang, 'bringingGuests'),
             bringingGuestsPlaceholder: t(props.lang, 'bringingGuestsPlaceholder'),
             invalidGuests: t(props.lang, 'invalidGuests'),
@@ -237,9 +213,7 @@ export function SignupSection(props: {
           disabled={disabled || submitting || isPastSession}
           blockedMessage={
             isPastSession
-              ? props.lang === 'es'
-                ? 'Este pickup ya pasó — no se puede registrar.'
-                : 'This pickup already happened — registration is closed.'
+              ? t(props.lang, 'registrationClosedPastSession')
               : undefined
           }
           joined={joined}
@@ -248,11 +222,7 @@ export function SignupSection(props: {
             if (!supabase) return
             if (mySignup) return
             if (isPastSession) {
-              setError(
-                props.lang === 'es'
-                  ? 'Este pickup ya pasó — no se puede registrar.'
-                  : 'This pickup already happened — registration is closed.',
-              )
+              setError(t(props.lang, 'registrationClosedPastSession'))
               return
             }
             if (!cleanedName) {
@@ -299,45 +269,17 @@ export function SignupSection(props: {
       ) : null}
 
       {!isPastSession && pokeBanner ? (
-        <section
-          className={
-            pokeBanner.kind === 'wave'
-              ? 'rounded-2xl border border-cyan-400/55 bg-cyan-500/10 p-4 shadow-[0_0_0_1px_rgba(34,211,238,0.28),0_0_28px_rgba(34,211,238,0.4)]'
-              : 'rounded-2xl border border-fuchsia-400/55 bg-fuchsia-500/10 p-4 shadow-[0_0_0_1px_rgba(244,114,182,0.22),0_0_28px_rgba(244,114,182,0.35)]'
-          }
-        >
-          <div className="flex items-start justify-between gap-3">
-            <div
-              className={
-                pokeBanner.kind === 'wave'
-                  ? 'min-w-0 text-sm font-semibold text-cyan-50 drop-shadow-[0_0_12px_rgba(34,211,238,0.65)]'
-                  : 'min-w-0 text-sm font-semibold text-fuchsia-100 drop-shadow-[0_0_10px_rgba(244,114,182,0.55)]'
-              }
-            >
-              {pokeBanner.kind === 'wave'
-                ? t(props.lang, 'waveReceived').replace('{name}', pokeBanner.from)
-                : t(props.lang, 'pokeReceived').replace('{name}', pokeBanner.from)}
-            </div>
-            <button
-              type="button"
-              className={
-                pokeBanner.kind === 'wave'
-                  ? 'shrink-0 rounded-xl border border-cyan-400/40 bg-black/25 px-3 py-2 text-xs font-medium text-cyan-50 hover:bg-cyan-500/15'
-                  : 'shrink-0 rounded-xl border border-fuchsia-400/35 bg-black/25 px-3 py-2 text-xs font-medium text-fuchsia-50 hover:bg-fuchsia-500/10'
-              }
-              onClick={() => {
-                if (!mySignup?.id) return
-                const key = pokeSeenKey({ playDate: props.playDate, signupId: mySignup.id })
-                savePokeSeenAt(key, pokeBanner.at)
-                setPokeBanner(null)
-              }}
-            >
-              {pokeBanner.kind === 'wave'
-                ? t(props.lang, 'waveDismiss')
-                : t(props.lang, 'pokeDismiss')}
-            </button>
-          </div>
-        </section>
+        <PokeBannerCard
+          lang={props.lang}
+          kind={pokeBanner.kind}
+          from={pokeBanner.from}
+          onDismiss={() => {
+            if (!mySignup?.id) return
+            const key = pokeSeenAtKey({ playDate: props.playDate, signupId: mySignup.id })
+            savePokeSeenAt(key, pokeBanner.at)
+            setPokeBanner(null)
+          }}
+        />
       ) : null}
 
       <SignupList
@@ -427,77 +369,28 @@ export function SignupSection(props: {
         registerUrl={props.registerUrl}
       />
 
-      {!isPastSession && emojiOpen && mySignup && myDeleteToken ? (
-        <div
-          className="fixed inset-0 z-40 flex items-end justify-center bg-black/60 p-4"
-          role="dialog"
-          aria-modal="true"
-          onMouseDown={(e) => {
-            if (e.target === e.currentTarget) setEmojiOpen(false)
-          }}
-        >
-          <div className="w-full max-w-md rounded-3xl border border-(--border) bg-[#0b0b0e] p-4 shadow-xl">
-            <div className="flex items-start justify-between gap-3">
-              <div className="text-sm font-semibold">{t(props.lang, 'pickEmoji')}</div>
-              <button
-                type="button"
-                className="rounded-xl border border-(--border) bg-black/20 px-3 py-2 text-xs font-medium hover:bg-white/10"
-                onClick={() => setEmojiOpen(false)}
-              >
-                {t(props.lang, 'close')}
-              </button>
-            </div>
-
-            <div className="mt-3 grid grid-cols-5 gap-2">
-              {EMOJI_CHOICES.map((e) => (
-                <button
-                  key={e}
-                  type="button"
-                  aria-pressed={emojiDraft === e}
-                  className={
-                    emojiDraft === e
-                      ? 'rounded-2xl border border-(--gold)/35 bg-(--gold)/10 px-2 py-3 text-xl shadow-[0_0_0_1px_rgba(255,255,255,0.10)] ring-1 ring-white/15'
-                      : 'rounded-2xl border border-(--border) bg-black/20 px-2 py-3 text-xl hover:bg-white/10'
-                  }
-                  onClick={() => setEmojiDraft(e)}
-                >
-                  {e}
-                </button>
-              ))}
-            </div>
-
-            <div className="mt-3 grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                className="rounded-2xl border border-(--border) bg-black/20 px-4 py-3 text-sm font-semibold hover:bg-white/10"
-                onClick={() => setEmojiDraft('')}
-              >
-                {t(props.lang, 'removeEmoji')}
-              </button>
-              <button
-                type="button"
-                disabled={updateEmojiMutation.isPending}
-                className="rounded-2xl bg-(--gold) px-4 py-3 text-sm font-semibold text-black shadow-sm hover:bg-(--gold-2) disabled:cursor-not-allowed disabled:bg-white/10 disabled:text-white/80"
-                onClick={async () => {
-                  try {
-                    if (isPastSession) return
-                    await updateEmojiMutation.mutateAsync({
-                      signupId: mySignup.id,
-                      deleteToken: myDeleteToken,
-                      emoji: emojiDraft,
-                    })
-                    setEmojiOpen(false)
-                  } catch {
-                    setError(t(props.lang, 'couldNotAdd'))
-                  }
-                }}
-              >
-                {t(props.lang, 'saveEmoji')}
-              </button>
-            </div>
-          </div>
-        </div>
-      ) : null}
+      <EmojiPickerModal
+        lang={props.lang}
+        open={!isPastSession && emojiOpen && Boolean(mySignup && myDeleteToken)}
+        value={emojiDraft}
+        saving={updateEmojiMutation.isPending}
+        onClose={() => setEmojiOpen(false)}
+        onChange={setEmojiDraft}
+        onSave={async () => {
+          if (isPastSession) return
+          if (!mySignup || !myDeleteToken) return
+          try {
+            await updateEmojiMutation.mutateAsync({
+              signupId: mySignup.id,
+              deleteToken: myDeleteToken,
+              emoji: emojiDraft,
+            })
+            setEmojiOpen(false)
+          } catch {
+            setError(t(props.lang, 'couldNotAdd'))
+          }
+        }}
+      />
     </>
   )
 }

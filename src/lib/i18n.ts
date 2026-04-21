@@ -96,7 +96,10 @@ const DICT = {
 		incorrectPin: "Incorrect PIN.",
 		couldNotLoad: "Could not load the list. Please try again.",
 		enterName: "Please enter your name.",
+		keepUnder40: "Please keep it under 40 characters.",
 		alreadyOnList: "You're already on the list for this day and location.",
+		registrationClosedPastSession:
+			"This pickup already happened — registration is closed.",
 		couldNotAdd: "Could not add you. Please try again.",
 		couldNotPoke: "Could not send poke. Please try again.",
 		couldNotWave: "Could not send wave. Please try again.",
@@ -204,7 +207,10 @@ const DICT = {
 		incorrectPin: "PIN incorrecto.",
 		couldNotLoad: "No se pudo cargar la lista. Inténtalo de nuevo.",
 		enterName: "Por favor escribe tu nombre.",
+		keepUnder40: "Por favor usa menos de 40 caracteres.",
 		alreadyOnList: "Ya estás en la lista para ese día y lugar.",
+		registrationClosedPastSession:
+			"Este pickup ya pasó — no se puede registrar.",
 		couldNotAdd: "No se pudo agregar. Inténtalo de nuevo.",
 		couldNotPoke: "No se pudo enviar el poke. Inténtalo de nuevo.",
 		couldNotWave: "No se pudo enviar el saludo. Inténtalo de nuevo.",

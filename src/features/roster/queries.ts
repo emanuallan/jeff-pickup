@@ -34,6 +34,24 @@ export const weeklyStreakLeaderboardKeys = {
   all: ['weeklyStreakLeaderboard'] as const,
 }
 
+function stableNameKeys(nameKeys: string[]) {
+  const out: string[] = []
+  const seen = new Set<string>()
+  for (const raw of nameKeys) {
+    const k = raw.trim()
+    if (!k) continue
+    if (seen.has(k)) continue
+    seen.add(k)
+    out.push(k)
+  }
+  out.sort()
+  return out
+}
+
+function stableNameKeyString(nameKeys: string[]) {
+  return stableNameKeys(nameKeys).join('\u0001')
+}
+
 export function useRosterQuery(args: { playDate: string; refetchIntervalMs?: number }) {
   return useQuery({
     queryKey: rosterKeys.byDate({ playDate: args.playDate }),
@@ -43,7 +61,7 @@ export function useRosterQuery(args: { playDate: string; refetchIntervalMs?: num
 }
 
 export function usePlayerDistinctGameCountsQuery(nameKeys: string[]) {
-  const sortedKey = useMemo(() => [...nameKeys].sort().join('\u0001'), [nameKeys.join('\u0001')])
+  const sortedKey = useMemo(() => stableNameKeyString(nameKeys), [nameKeys])
 
   return useQuery({
     queryKey: playerStatsKeys.forNameKeys(sortedKey),
@@ -54,11 +72,7 @@ export function usePlayerDistinctGameCountsQuery(nameKeys: string[]) {
 }
 
 export function usePlayerWeeklyStreaksQuery(args: { nameKeys: string[]; asOf: string }) {
-  const sortedKey = useMemo(
-    () => [...args.nameKeys].sort().join('\u0001'),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [args.nameKeys.join('\u0001')],
-  )
+  const sortedKey = useMemo(() => stableNameKeyString(args.nameKeys), [args.nameKeys])
 
   const asOf = args.asOf.slice(0, 10)
   return useQuery({
