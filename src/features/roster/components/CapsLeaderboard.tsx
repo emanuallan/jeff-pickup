@@ -68,7 +68,7 @@ export function CapsLeaderboard(props: { lang: Lang; myNameKey: string }) {
           ) : streakRows.length === 0 ? (
             <div className="text-sm text-(--muted)">{t(props.lang, 'weeklyStreakLeaderboardEmpty')}</div>
           ) : (
-            <ol className="max-h-[min(18rem,45dvh)] space-y-2 overflow-y-auto pr-1">
+            <ol className="space-y-2">
               {streakRows.map((row, idx) => {
                 const isMe = Boolean(props.myNameKey) && row.nameKey === props.myNameKey
                 const topValue = streakRows[0]?.currentStreakWeeks ?? 0
