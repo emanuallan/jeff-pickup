@@ -8,7 +8,13 @@ import { clearDeleteToken, loadDeleteToken, newUuid, saveDeleteToken } from '../
 import { supabase } from '../../../lib/supabase'
 import { toAppError } from '../../../api/errors'
 import { fireConfetti } from '../../../app/hooks/useConfettiOnNewSignups'
-import { useRosterQuery, useCreateSignupMutation, useUnregisterSignupMutation } from '../queries'
+import {
+  useRosterQuery,
+  useCreateSignupMutation,
+  useUnregisterSignupMutation,
+  usePlayerDistinctGameCountsQuery,
+} from '../queries'
+import { isNewPlayerDistinctDays } from '../newPlayer'
 import { useMyPokesQuery, useSendPokeMutation, useUpdateMyEmojiMutation } from '../funQueries'
 import { useActiveLocationQuery, useGameStatusQuery, useMinPlayersQuery } from '../../settings/queries'
 import type { LocationId } from '../../signups/types'
@@ -54,6 +60,22 @@ export function SignupSection(props: {
   const rosterQuery = useRosterQuery({ playDate: props.playDate, refetchIntervalMs: 30_000 })
   const signups = rosterQuery.data ?? []
   const loading = rosterQuery.isLoading && !rosterQuery.data
+
+  const rosterNameKeys = useMemo(
+    () =>
+      [...new Set((rosterQuery.data ?? []).map((s) => s.player_name.trim().toLowerCase()).filter(Boolean))],
+    [rosterQuery.data],
+  )
+  const gameCountsQuery = usePlayerDistinctGameCountsQuery(rosterNameKeys)
+  const newPlayerNameKeys = useMemo(() => {
+    if (!gameCountsQuery.data || gameCountsQuery.isError) return new Set<string>()
+    const out = new Set<string>()
+    for (const k of rosterNameKeys) {
+      const c = gameCountsQuery.data[k] ?? 0
+      if (isNewPlayerDistinctDays(c)) out.add(k)
+    }
+    return out
+  }, [gameCountsQuery.data, gameCountsQuery.isError, rosterNameKeys])
 
   useEffect(() => {
     if (!rosterQuery.data) return
@@ -256,8 +278,11 @@ export function SignupSection(props: {
           guestsTag: t(props.lang, 'guestsTag'),
           emoji: t(props.lang, 'emoji'),
           poke: t(props.lang, 'poke'),
+          newPlayerBadge: t(props.lang, 'newPlayerBadge'),
+          newPlayerBadgeTitle: t(props.lang, 'newPlayerBadgeTitle'),
         }}
         signups={signups}
+        newPlayerNameKeys={newPlayerNameKeys}
         loading={loading}
         goal={rosterGoal}
         mySignupId={mySignup?.id}

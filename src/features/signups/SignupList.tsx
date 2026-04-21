@@ -13,8 +13,11 @@ export function SignupList(props: {
 		guestsTag: string;
 		emoji: string;
 		poke: string;
+		newPlayerBadge: string;
+		newPlayerBadgeTitle: string;
 	};
 	signups: Signup[];
+	newPlayerNameKeys: ReadonlySet<string>;
 	loading?: boolean;
 	mySignupId?: string;
 	myDeleteToken?: string;
@@ -53,6 +56,8 @@ export function SignupList(props: {
 						{props.signups.map((s, idx) => {
 							const isMe = props.mySignupId === s.id;
 							const guests = Math.max(0, s.guest_count ?? 0);
+							const nameKey = s.player_name.trim().toLowerCase();
+							const showNewBadge = props.newPlayerNameKeys.has(nameKey);
 							return (
 								<li
 									key={s.id}
@@ -70,6 +75,14 @@ export function SignupList(props: {
 											{guests > 0 ? (
 												<span className="ml-2 text-xs font-semibold text-[var(--gold)]">
 													{props.labels.guestsTag.replace('{n}', String(guests))}
+												</span>
+											) : null}
+											{showNewBadge ? (
+												<span
+													className="ml-2 inline-flex items-center rounded-full border border-emerald-400/35 bg-emerald-500/15 px-2 py-0.5 align-middle text-[10px] font-semibold uppercase tracking-wide text-emerald-100/90"
+													title={props.labels.newPlayerBadgeTitle}
+												>
+													{props.labels.newPlayerBadge}
 												</span>
 											) : null}
 										</div>
