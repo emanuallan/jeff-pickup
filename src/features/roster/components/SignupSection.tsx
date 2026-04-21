@@ -202,6 +202,7 @@ export function SignupSection(props: {
 
   return (
     <>
+      <div id="signup" />
       <GameStatusCard
         lang={props.lang}
         status={gameStatusQuery.data ?? 'tentative'}

@@ -23,6 +23,7 @@ const REGISTER_URL = 'https://jeff.soccer/'
 export default function App() {
   const [lang, setLang] = useLocalStorageState<Lang>({ load: loadLang, save: saveLang })
   const [playDate, setPlayDate] = usePlayDate()
+  const savedName = loadPlayerName().trim()
   const [adminOpen, setAdminOpen] = useState(false)
   const [adminMode, setAdminMode] = useState<'full' | 'gameStatus'>('full')
   const [, setAdminTapState] = useState(() => ({ count: 0, lastTapMs: 0 }))
@@ -85,6 +86,23 @@ export default function App() {
         <AppHeader lang={lang} onLangChange={setLang} />
 
         <main className="mt-6 space-y-4">
+          {savedName ? (
+            <div>
+              <div className="text-2xl font-semibold tracking-tight text-white">
+                Hi {savedName} <span aria-hidden>👋</span>
+              </div>
+              <button
+                type="button"
+                className="mt-1 text-left text-sm font-semibold text-(--gold) hover:text-(--gold-2) focus:outline-none focus-visible:ring-2 focus-visible:ring-(--gold)"
+                onClick={() => {
+                  const el = document.getElementById('signup')
+                  el?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                }}
+              >
+                Ready to play today? Tap to join the list →
+              </button>
+            </div>
+          ) : null}
           {capsView ? (
             <>
               <button
@@ -99,7 +117,7 @@ export default function App() {
               </button>
 
               {supabase ? (
-                <CapsLeaderboard lang={lang} myNameKey={loadPlayerName().trim().toLowerCase()} />
+                <CapsLeaderboard lang={lang} myNameKey={savedName.toLowerCase()} />
               ) : (
                 <SetupNeededBanner lang={lang} />
               )}
