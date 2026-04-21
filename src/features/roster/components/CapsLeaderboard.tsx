@@ -37,7 +37,7 @@ export function CapsLeaderboard(props: { lang: Lang; myNameKey: string }) {
                   <div className="shrink-0 text-right">
                     <span className="text-sm font-semibold tabular-nums text-[var(--gold)]">{row.caps}</span>
                     <span className="ml-1 text-[10px] font-semibold uppercase tracking-wide text-[var(--muted)]">
-                      {t(props.lang, 'capsShort')}
+                      {row.caps === 1 ? t(props.lang, 'capShort') : t(props.lang, 'capsShort')}
                     </span>
                   </div>
                 </li>

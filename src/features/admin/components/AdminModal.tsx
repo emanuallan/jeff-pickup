@@ -26,6 +26,8 @@ export function AdminModal(props: {
 }) {
   if (!props.open) return null
 
+  const mode = props.mode ?? 'full'
+
   const supabaseConfigured = Boolean(supabase)
   const adminPinConfigured = Boolean(import.meta.env.VITE_ADMIN_PIN)
   const envAdminPin = String(import.meta.env.VITE_ADMIN_PIN ?? '')
@@ -102,7 +104,7 @@ export function AdminModal(props: {
       role="dialog"
       aria-modal="true"
     >
-      <div className="w-full max-w-md rounded-3xl border border-[var(--border)] bg-[#0b0b0e] p-4 shadow-xl">
+      <div className="w-full max-w-md rounded-3xl border border-(--border) bg-[#0b0b0e] p-4 shadow-xl">
         <div className="flex items-start justify-between gap-3">
           <div>
             <div className="text-sm font-semibold">{t(props.lang, 'admin')}</div>
@@ -110,7 +112,7 @@ export function AdminModal(props: {
           </div>
           <button
             type="button"
-            className="rounded-xl border border-[var(--border)] bg-black/20 px-3 py-2 text-xs font-medium hover:bg-white/10"
+            className="rounded-xl border border-(--border) bg-black/20 px-3 py-2 text-xs font-medium hover:bg-white/10"
             onClick={() => {
               setError(null)
               props.onClose()
@@ -127,71 +129,73 @@ export function AdminModal(props: {
         ) : null}
 
         <div className="mt-4 space-y-3">
-          <div className="rounded-2xl border border-[var(--border)] bg-black/20 p-3">
-            <div className="text-xs font-medium text-[--muted]">
-              {t(props.lang, 'gameStatus')}
-            </div>
+          {mode === 'gameStatus' ? (
+            <div className="rounded-2xl border border-(--border) bg-black/20 p-3">
+              <div className="text-xs font-medium text-[--muted]">
+                {t(props.lang, 'gameStatus')}
+              </div>
 
-            <div className="mt-2 grid grid-cols-2 gap-2">
-              <label className="block">
-                <div className="text-xs font-medium text-[--muted]">
-                  {t(props.lang, 'status')}
-                </div>
-                <select
-                  className="mt-1 w-full rounded-xl border border-[var(--border)] bg-black/20 px-3 py-2 text-sm text-[var(--text)] outline-none focus:ring-2 focus:ring-[var(--gold)]"
-                  value={gameStatusDraft}
-                  onChange={(e) => setGameStatusDraft(e.target.value as GameStatus)}
-                >
-                  <option value="tentative">{t(props.lang, 'statusTentative')}</option>
-                  <option value="on">{t(props.lang, 'statusOn')}</option>
-                  <option value="cancelled">{t(props.lang, 'statusCancelled')}</option>
-                </select>
-              </label>
+              <div className="mt-2 grid grid-cols-2 gap-2">
+                <label className="block">
+                  <div className="text-xs font-medium text-[--muted]">
+                    {t(props.lang, 'status')}
+                  </div>
+                  <select
+                    className="mt-1 w-full rounded-xl border border-(--border) bg-black/20 px-3 py-2 text-sm text-(--text) outline-none focus:ring-2 focus:ring-(--gold)"
+                    value={gameStatusDraft}
+                    onChange={(e) => setGameStatusDraft(e.target.value as GameStatus)}
+                  >
+                    <option value="tentative">{t(props.lang, 'statusTentative')}</option>
+                    <option value="on">{t(props.lang, 'statusOn')}</option>
+                    <option value="cancelled">{t(props.lang, 'statusCancelled')}</option>
+                  </select>
+                </label>
 
-              <label className="block">
-                <div className="text-xs font-medium text-[--muted]">
-                  {t(props.lang, 'minPlayers')}
-                </div>
-                <input
-                  className="mt-1 w-full rounded-xl border border-[var(--border)] bg-black/20 px-3 py-2 text-sm text-[var(--text)] outline-none focus:ring-2 focus:ring-[var(--gold)]"
-                  inputMode="numeric"
-                  value={minPlayersDraft}
-                  onChange={(e) => setMinPlayersDraft(e.target.value)}
-                />
-              </label>
-            </div>
+                <label className="block">
+                  <div className="text-xs font-medium text-[--muted]">
+                    {t(props.lang, 'minPlayers')}
+                  </div>
+                  <input
+                    className="mt-1 w-full rounded-xl border border-(--border) bg-black/20 px-3 py-2 text-sm text-(--text) outline-none focus:ring-2 focus:ring-(--gold)"
+                    inputMode="numeric"
+                    value={minPlayersDraft}
+                    onChange={(e) => setMinPlayersDraft(e.target.value)}
+                  />
+                </label>
+              </div>
 
-            <button
-              type="button"
-              disabled={(savingGameStatus || savingMinPlayers) || !supabaseConfigured}
-              className="mt-2 w-full rounded-2xl bg-[var(--gold)] px-4 py-3 text-sm font-semibold text-black shadow-sm hover:bg-[var(--gold-2)] disabled:cursor-not-allowed disabled:bg-white/10 disabled:text-white/80 disabled:hover:bg-white/10"
-              onClick={async () => {
-                if (!supabaseConfigured) return
-                setError(null)
-                try {
-                  if (!(await requirePinIfConfigured())) return
-                  const parsed = Number.parseInt(minPlayersDraft.trim(), 10)
-                  await setGameStatusMutation.mutateAsync(gameStatusDraft)
-                  if (Number.isFinite(parsed)) {
-                    await setMinPlayersMutation.mutateAsync(parsed)
+              <button
+                type="button"
+                disabled={(savingGameStatus || savingMinPlayers) || !supabaseConfigured}
+                className="mt-2 w-full rounded-2xl bg-(--gold) px-4 py-3 text-sm font-semibold text-black shadow-sm hover:bg-(--gold-2) disabled:cursor-not-allowed disabled:bg-white/10 disabled:text-white/80 disabled:hover:bg-white/10"
+                onClick={async () => {
+                  if (!supabaseConfigured) return
+                  setError(null)
+                  try {
+                    if (!(await requirePinIfConfigured())) return
+                    const parsed = Number.parseInt(minPlayersDraft.trim(), 10)
+                    await setGameStatusMutation.mutateAsync(gameStatusDraft)
+                    if (Number.isFinite(parsed)) {
+                      await setMinPlayersMutation.mutateAsync(parsed)
+                    }
+                  } catch {
+                    setError(t(props.lang, 'couldNotUpdateGameStatus'))
                   }
-                } catch {
-                  setError(t(props.lang, 'couldNotUpdateGameStatus'))
-                }
-              }}
-            >
-              {t(props.lang, 'saveGameStatus')}
-            </button>
-          </div>
+                }}
+              >
+                {t(props.lang, 'saveGameStatus')}
+              </button>
+            </div>
+          ) : null}
 
-          {props.mode !== 'gameStatus' ? (
+          {mode !== 'gameStatus' ? (
             <>
-              <div className="rounded-2xl border border-[var(--border)] bg-black/20 p-3">
+              <div className="rounded-2xl border border-(--border) bg-black/20 p-3">
                 <div className="text-xs font-medium text-[--muted]">
                   {t(props.lang, 'announcement')}
                 </div>
                 <textarea
-                  className="mt-2 w-full resize-none rounded-xl border border-[var(--border)] bg-black/20 px-3 py-2 text-sm text-[var(--text)] outline-none focus:ring-2 focus:ring-[var(--gold)]"
+                  className="mt-2 w-full resize-none rounded-xl border border-(--border) bg-black/20 px-3 py-2 text-sm text-(--text) outline-none focus:ring-2 focus:ring-(--gold)"
                   rows={3}
                   placeholder={t(props.lang, 'announcementPlaceholder')}
                   value={announcementText}
@@ -200,7 +204,7 @@ export function AdminModal(props: {
                 <button
                   type="button"
                   disabled={savingAnnouncement || !supabaseConfigured}
-                  className="mt-2 w-full rounded-2xl bg-[var(--gold)] px-4 py-3 text-sm font-semibold text-black shadow-sm hover:bg-[var(--gold-2)] disabled:cursor-not-allowed disabled:bg-white/10 disabled:text-white/80 disabled:hover:bg-white/10"
+                  className="mt-2 w-full rounded-2xl bg-(--gold) px-4 py-3 text-sm font-semibold text-black shadow-sm hover:bg-(--gold-2) disabled:cursor-not-allowed disabled:bg-white/10 disabled:text-white/80 disabled:hover:bg-white/10"
                   onClick={async () => {
                     if (!supabaseConfigured) return
                     setError(null)
@@ -221,20 +225,20 @@ export function AdminModal(props: {
                 </button>
               </div>
 
-              <div className="rounded-2xl border border-[var(--border)] bg-black/20 p-3">
+              <div className="rounded-2xl border border-(--border) bg-black/20 p-3">
                 <div className="text-xs font-medium text-[--muted]">
                   {t(props.lang, 'activeTime')}
                 </div>
                 <input
                   type="time"
-                  className="mt-2 w-full rounded-xl border border-[var(--border)] bg-black/20 px-3 py-2 text-sm text-[var(--text)] outline-none focus:ring-2 focus:ring-[var(--gold)]"
+                  className="mt-2 w-full rounded-xl border border-(--border) bg-black/20 px-3 py-2 text-sm text-(--text) outline-none focus:ring-2 focus:ring-(--gold)"
                   value={activeTimeDraft}
                   onChange={(e) => setActiveTimeDraft(e.target.value)}
                 />
                 <button
                   type="button"
                   disabled={savingActiveTime || !supabaseConfigured}
-                  className="mt-2 w-full rounded-2xl bg-[var(--gold)] px-4 py-3 text-sm font-semibold text-black shadow-sm hover:bg-[var(--gold-2)] disabled:cursor-not-allowed disabled:bg-white/10 disabled:text-white/80 disabled:hover:bg-white/10"
+                  className="mt-2 w-full rounded-2xl bg-(--gold) px-4 py-3 text-sm font-semibold text-black shadow-sm hover:bg-(--gold-2) disabled:cursor-not-allowed disabled:bg-white/10 disabled:text-white/80 disabled:hover:bg-white/10"
                   onClick={async () => {
                     if (!supabaseConfigured) return
                     setError(null)
@@ -256,7 +260,7 @@ export function AdminModal(props: {
                     key={l.id}
                     type="button"
                     disabled={savingLocation || !supabaseConfigured}
-                    className="rounded-2xl border border-[var(--border)] bg-black/20 px-4 py-3 text-left text-sm font-semibold hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="rounded-2xl border border-(--border) bg-black/20 px-4 py-3 text-left text-sm font-semibold hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
                     onClick={async () => {
                       if (!supabaseConfigured) return
                       setError(null)
@@ -272,7 +276,7 @@ export function AdminModal(props: {
                     <div className="flex items-center justify-between gap-3">
                       <span>{l.label}</span>
                       {l.id === activeLocation ? (
-                        <span className="text-xs font-medium text-[var(--gold)]">
+                        <span className="text-xs font-medium text-(--gold)">
                           {t(props.lang, 'active')}
                         </span>
                       ) : null}

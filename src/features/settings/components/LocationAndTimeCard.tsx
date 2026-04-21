@@ -30,31 +30,30 @@ export function LocationAndTimeCard(props: {
   const [, setAdminTapState] = useState(() => ({ count: 0, lastTapMs: 0 }))
 
   return (
-    <section className="relative rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4">
-      <button
-        type="button"
-        aria-label="Admin unlock"
-        className="absolute left-3 top-3 h-8 w-8 opacity-0"
-        onClick={() => {
-          setAdminTapState((s) => {
-            const now = Date.now()
-            const reset = now - s.lastTapMs > 1200
-            const nextCount = reset ? 1 : s.count + 1
-            if (nextCount >= 5) {
-              props.onTapAdminUnlock()
-              return { count: 0, lastTapMs: 0 }
-            }
-            return { count: nextCount, lastTapMs: now }
-          })
-        }}
-      />
-
+    <section className="relative rounded-2xl border border-(--border) bg-(--surface) p-4">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <div className="text-sm font-semibold">{t(props.lang, 'locationAndTime')}</div>
           <button
             type="button"
-            className="mt-0.5 block max-w-full text-left text-sm font-normal text-[var(--gold)] hover:text-[var(--gold-2)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--gold)] rounded-md"
+            className="rounded-md text-sm font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-(--gold)"
+            onClick={() => {
+              setAdminTapState((s) => {
+                const now = Date.now()
+                const reset = now - s.lastTapMs > 1200
+                const nextCount = reset ? 1 : s.count + 1
+                if (nextCount >= 5) {
+                  props.onTapAdminUnlock()
+                  return { count: 0, lastTapMs: 0 }
+                }
+                return { count: nextCount, lastTapMs: now }
+              })
+            }}
+          >
+            {t(props.lang, 'locationAndTime')}
+          </button>
+          <button
+            type="button"
+            className="mt-0.5 block max-w-full rounded-md text-left text-sm font-normal text-(--gold) hover:text-(--gold-2) focus:outline-none focus-visible:ring-2 focus-visible:ring-(--gold)"
             onClick={props.onOpenDateModal}
           >
             {formatFriendlyDate(props.playDate)} · {locationMeta.label} ·{' '}
@@ -66,7 +65,7 @@ export function LocationAndTimeCard(props: {
         </div>
         <div className="shrink-0">
           <a
-            className="block rounded-xl border border-[var(--border)] bg-black/20 px-3 py-2 text-xs font-medium hover:bg-[var(--surface-2)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--gold)]"
+            className="block rounded-xl border border-(--border) bg-black/20 px-3 py-2 text-xs font-medium hover:bg-(--surface-2) focus:outline-none focus-visible:ring-2 focus-visible:ring-(--gold)"
             href={locationMeta.mapsUrl}
             target="_blank"
             rel="noreferrer"
@@ -85,7 +84,7 @@ export function LocationAndTimeCard(props: {
             if (e.target === e.currentTarget) props.onCloseDateModal()
           }}
         >
-          <div className="w-full max-w-md rounded-3xl border border-[var(--border)] bg-[#0b0b0e] p-4 shadow-xl">
+          <div className="w-full max-w-md rounded-3xl border border-(--border) bg-[#0b0b0e] p-4 shadow-xl">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <div className="text-sm font-semibold">{t(props.lang, 'changeDate')}</div>
@@ -93,7 +92,7 @@ export function LocationAndTimeCard(props: {
               </div>
               <button
                 type="button"
-                className="rounded-xl border border-[var(--border)] bg-black/20 px-3 py-2 text-xs font-medium hover:bg-white/10"
+                className="rounded-xl border border-(--border) bg-black/20 px-3 py-2 text-xs font-medium hover:bg-white/10"
                 onClick={props.onCloseDateModal}
               >
                 {t(props.lang, 'close')}
@@ -102,7 +101,7 @@ export function LocationAndTimeCard(props: {
 
             <label className="mt-3 block">
               <input
-                className="mt-1 w-full rounded-xl border border-[var(--border)] bg-black/20 px-3 py-2 text-sm text-[var(--text)] outline-none focus:ring-2 focus:ring-[var(--gold)]"
+                className="mt-1 w-full rounded-xl border border-(--border) bg-black/20 px-3 py-2 text-sm text-(--text) outline-none focus:ring-2 focus:ring-(--gold)"
                 type="date"
                 value={props.dateDraft}
                 onChange={(e) => props.onDateDraftChange(e.target.value)}
@@ -111,7 +110,7 @@ export function LocationAndTimeCard(props: {
 
             <button
               type="button"
-              className="mt-3 w-full rounded-2xl bg-[var(--gold)] px-4 py-3 text-sm font-semibold text-black shadow-sm hover:bg-[var(--gold-2)]"
+              className="mt-3 w-full rounded-2xl bg-(--gold) px-4 py-3 text-sm font-semibold text-black shadow-sm hover:bg-(--gold-2)"
               onClick={props.onSaveDate}
             >
               {t(props.lang, 'saveDate')}

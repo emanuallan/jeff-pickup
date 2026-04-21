@@ -15,9 +15,10 @@ import { useLocalStorageState } from './hooks/useLocalStorageState'
 import { usePlayDate } from './hooks/usePlayDate'
 import { loadPlayerName } from '../lib/storage'
 
-const FACEBOOK_GROUP_URL = 'https://www.facebook.com/share/g/18ruTArVRB/'
+const FACEBOOK_GROUP_URL = 'https://www.facebook.com/groups/3701766570121139'
 const WHATSAPP_GROUP_URL =
   'https://l.facebook.com/l.php?u=https%3A%2F%2Fchat.whatsapp.com%2FCGKl1hIhaoJ7zjIPNVcEZ1%3Fmode%3Dems_copy_c%26fbclid%3DIwZXh0bgNhZW0CMTAAYnJpZBExQW9UQlRENGxmc3hLNHN2cXNydGMGYXBwX2lkEDIyMjAzOTE3ODgyMDA4OTIAAR72867lrLGpSLAi0MElnoTyy_nIsItUv2vxSLi8zZ1QzrOi-jOLBqAl7TLzyw_aem_Wbdxa-HIEA8qr-i3utN1lQ&h=AT6N82Mu8Hu_IXFtfs4j2h9BgyMVkWAPNMTluGdsjlWeEHkJUIzGLESkkKck45Y4J0N_lT7kakBuycLRMuGQcJUU4RPHIIEvnGr2eIWlMcK2Ob66nz05nQpcq1gt-5O9jJumtd60lrTp4VVSKieYVqeH5Ni_ji-Bn1w&__tn__=-UK-R&c[0]=AT48Ry3TVtd0cmpNXdwgk7NKkTr8trEBk7XG4hQIyKE4n6ALoLtj3recVAxIuvYOQP6CyQbUq_peDSCujGrN-5CG5DLG0Ul0WZksK15eA5POJxsviovx6L9vFOshNrICAVFGImFAc2F97_b2W1cK8xzuYWXJ1GAVtWc8krnONBoJvnarZ6eh8a-syfyuaxbO6QiG2TvHJMOYXJ8S9LRKim96UFm8'
+const REGISTER_URL = 'https://jeff.soccer/'
 
 export default function App() {
   const [lang, setLang] = useLocalStorageState<Lang>({ load: loadLang, save: saveLang })
@@ -88,10 +89,10 @@ export default function App() {
             <>
               <button
                 type="button"
-                className="flex w-full items-center gap-2 rounded-2xl border border-[var(--border)] bg-black/25 px-3 py-2.5 text-left text-sm font-medium text-white/90 hover:bg-white/10"
+                className="flex w-full items-center gap-2 rounded-2xl border border-(--border) bg-black/25 px-3 py-2.5 text-left text-sm font-medium text-white/90 hover:bg-white/10"
                 onClick={leaveCapsView}
               >
-                <span className="text-lg leading-none text-[var(--gold)]" aria-hidden>
+                <span className="text-lg leading-none text-(--gold)" aria-hidden>
                   ←
                 </span>
                 {t(lang, 'backToPickup')}
@@ -133,7 +134,13 @@ export default function App() {
                 <SetupNeededBanner lang={lang} />
               ) : null}
 
-              <SignupSection lang={lang} playDate={playDate} onTapAdminTitle={onGameStatusUnlockTap} />
+              <SignupSection
+                lang={lang}
+                playDate={playDate}
+                facebookGroupUrl={FACEBOOK_GROUP_URL}
+                registerUrl={REGISTER_URL}
+                onTapAdminTitle={onGameStatusUnlockTap}
+              />
 
               <SocialLinks
                 lang={lang}

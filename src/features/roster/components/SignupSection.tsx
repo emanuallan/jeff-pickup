@@ -19,6 +19,7 @@ import { useMyPokesQuery, useSendPokeMutation, useUpdateMyEmojiMutation } from '
 import { useActiveLocationQuery, useGameStatusQuery, useMinPlayersQuery } from '../../settings/queries'
 import type { LocationId } from '../../signups/types'
 import { GameStatusCard } from './GameStatusCard'
+import { ShareFacebookPostCard } from '../../shell/components/ShareFacebookPostCard'
 
 const EMOJI_CHOICES = ['⚽️', '🥅', '👟', '🔥', '💪', '😤', '🧤', '⭐️', '🎯', '🏃', '🦁', '🦅', '🧃', '☀️', '🌧️']
 
@@ -46,6 +47,8 @@ function savePokeSeenAt(key: string, iso: string) {
 export function SignupSection(props: {
   lang: Lang
   playDate: string
+  facebookGroupUrl: string
+  registerUrl: string
   onTapAdminTitle?: () => void
 }) {
   const [playerName, setPlayerName] = useLocalStorageState({ load: loadPlayerName, save: savePlayerName })
@@ -108,9 +111,13 @@ export function SignupSection(props: {
     return signups.find((s) => s.player_name.trim().toLowerCase() === n) ?? null
   }, [cleanedName, signups])
 
-  const myDeleteToken = useMemo(() => {
-    if (!cleanedName) return ''
-    return loadDeleteToken({ playDate: props.playDate, playerName: cleanedName })
+  const [myDeleteToken, setMyDeleteToken] = useState('')
+  useEffect(() => {
+    if (!cleanedName) {
+      setMyDeleteToken('')
+      return
+    }
+    setMyDeleteToken(loadDeleteToken({ playDate: props.playDate, playerName: cleanedName }))
   }, [cleanedName, props.playDate])
 
   const joined = Boolean(mySignup)
@@ -249,6 +256,7 @@ export function SignupSection(props: {
                 playerName: cleanedName,
                 deleteToken,
               })
+              setMyDeleteToken(deleteToken)
               setPlayerName(cleanedName)
               setGuestCount('0')
             } catch (e: unknown) {
@@ -369,12 +377,20 @@ export function SignupSection(props: {
                     deleteToken: myDeleteToken,
                   })
                   clearDeleteToken({ playDate: props.playDate, playerName: cleanedName })
+                  setMyDeleteToken('')
                 } catch {
                   setError(t(props.lang, 'couldNotRemove'))
                 }
               }
             : undefined
         }
+      />
+
+      <ShareFacebookPostCard
+        lang={props.lang}
+        playDate={props.playDate}
+        facebookGroupUrl={props.facebookGroupUrl}
+        registerUrl={props.registerUrl}
       />
 
       {emojiOpen && mySignup && myDeleteToken ? (
@@ -386,12 +402,12 @@ export function SignupSection(props: {
             if (e.target === e.currentTarget) setEmojiOpen(false)
           }}
         >
-          <div className="w-full max-w-md rounded-3xl border border-[var(--border)] bg-[#0b0b0e] p-4 shadow-xl">
+          <div className="w-full max-w-md rounded-3xl border border-(--border) bg-[#0b0b0e] p-4 shadow-xl">
             <div className="flex items-start justify-between gap-3">
               <div className="text-sm font-semibold">{t(props.lang, 'pickEmoji')}</div>
               <button
                 type="button"
-                className="rounded-xl border border-[var(--border)] bg-black/20 px-3 py-2 text-xs font-medium hover:bg-white/10"
+                className="rounded-xl border border-(--border) bg-black/20 px-3 py-2 text-xs font-medium hover:bg-white/10"
                 onClick={() => setEmojiOpen(false)}
               >
                 {t(props.lang, 'close')}
@@ -406,8 +422,8 @@ export function SignupSection(props: {
                   aria-pressed={emojiDraft === e}
                   className={
                     emojiDraft === e
-                      ? 'rounded-2xl border border-[var(--gold)]/35 bg-[var(--gold)]/10 px-2 py-3 text-xl shadow-[0_0_0_1px_rgba(255,255,255,0.10)] ring-1 ring-white/15'
-                      : 'rounded-2xl border border-[var(--border)] bg-black/20 px-2 py-3 text-xl hover:bg-white/10'
+                      ? 'rounded-2xl border border-(--gold)/35 bg-(--gold)/10 px-2 py-3 text-xl shadow-[0_0_0_1px_rgba(255,255,255,0.10)] ring-1 ring-white/15'
+                      : 'rounded-2xl border border-(--border) bg-black/20 px-2 py-3 text-xl hover:bg-white/10'
                   }
                   onClick={() => setEmojiDraft(e)}
                 >
@@ -419,7 +435,7 @@ export function SignupSection(props: {
             <div className="mt-3 grid grid-cols-2 gap-2">
               <button
                 type="button"
-                className="rounded-2xl border border-[var(--border)] bg-black/20 px-4 py-3 text-sm font-semibold hover:bg-white/10"
+                className="rounded-2xl border border-(--border) bg-black/20 px-4 py-3 text-sm font-semibold hover:bg-white/10"
                 onClick={() => setEmojiDraft('')}
               >
                 {t(props.lang, 'removeEmoji')}
@@ -427,7 +443,7 @@ export function SignupSection(props: {
               <button
                 type="button"
                 disabled={updateEmojiMutation.isPending}
-                className="rounded-2xl bg-[var(--gold)] px-4 py-3 text-sm font-semibold text-black shadow-sm hover:bg-[var(--gold-2)] disabled:cursor-not-allowed disabled:bg-white/10 disabled:text-white/80"
+                className="rounded-2xl bg-(--gold) px-4 py-3 text-sm font-semibold text-black shadow-sm hover:bg-(--gold-2) disabled:cursor-not-allowed disabled:bg-white/10 disabled:text-white/80"
                 onClick={async () => {
                   try {
                     await updateEmojiMutation.mutateAsync({

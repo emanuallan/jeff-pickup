@@ -141,7 +141,7 @@ export function SignupList(props: {
 				)}
 			</div>
 
-			{goal > 0 ? (
+			{goal > 0 && headcount > 0 ? (
 				<div className="mt-8">
 					<div className="flex items-baseline justify-between gap-3 text-xs">
 						<div className="text-[--muted]">
