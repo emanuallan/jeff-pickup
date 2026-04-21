@@ -66,6 +66,8 @@ export function CapsLeaderboard(props: { lang: Lang; myNameKey: string }) {
             <ol className="max-h-[min(18rem,45dvh)] space-y-2 overflow-y-auto pr-1">
               {streakRows.map((row, idx) => {
                 const isMe = Boolean(props.myNameKey) && row.nameKey === props.myNameKey
+                const topValue = streakRows[0]?.currentStreakWeeks ?? 0
+                const isTopStreak = row.currentStreakWeeks > 0 && row.currentStreakWeeks === topValue
                 const prev = streakRows[idx - 1]
                 const prevRank = prev
                   ? 1 + streakRows.slice(0, idx).filter((r) => r.currentStreakWeeks > row.currentStreakWeeks).length
@@ -88,6 +90,7 @@ export function CapsLeaderboard(props: { lang: Lang; myNameKey: string }) {
                     <div className="shrink-0 text-right">
                       <span className="text-sm font-semibold tabular-nums text-(--gold)">
                         {row.currentStreakWeeks}
+                        {isTopStreak ? <span className="ml-1" aria-hidden>🔥</span> : null}
                       </span>
                       <span className="ml-1 text-[10px] font-semibold uppercase tracking-wide text-(--muted)">
                         {t(props.lang, 'weeksShort')}
