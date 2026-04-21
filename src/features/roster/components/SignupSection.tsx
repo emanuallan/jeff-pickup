@@ -14,6 +14,7 @@ import {
   useCreateSignupMutation,
   useUnregisterSignupMutation,
   usePlayerDistinctGameCountsQuery,
+  usePlayerWeeklyStreaksQuery,
 } from '../queries'
 import { isNewPlayerDistinctDays } from '../newPlayer'
 import { useMyPokesQuery, useSendPokeMutation, useUpdateMyEmojiMutation } from '../funQueries'
@@ -71,6 +72,7 @@ export function SignupSection(props: {
     [rosterQuery.data],
   )
   const gameCountsQuery = usePlayerDistinctGameCountsQuery(rosterNameKeys)
+  const streaksQuery = usePlayerWeeklyStreaksQuery({ nameKeys: rosterNameKeys, asOf: props.playDate })
   const newPlayerNameKeys = useMemo(() => {
     if (!gameCountsQuery.data || gameCountsQuery.isError) return new Set<string>()
     const out = new Set<string>()
@@ -353,6 +355,9 @@ export function SignupSection(props: {
           wave: t(props.lang, 'wave'),
           newPlayerBadge: t(props.lang, 'newPlayerBadge'),
           newPlayerBadgeTitle: t(props.lang, 'newPlayerBadgeTitle'),
+          streakLabel: t(props.lang, 'streakLabel'),
+          streakTitle: t(props.lang, 'streakTitle'),
+          milestoneTitle: t(props.lang, 'milestoneTitle'),
         }}
         signups={signups}
         newPlayerNameKeys={newPlayerNameKeys}
@@ -361,6 +366,8 @@ export function SignupSection(props: {
         goal={rosterGoal}
         mySignupId={mySignup?.id}
         myDeleteToken={!isPastSession ? (myDeleteToken || undefined) : undefined}
+        gameCountsByNameKey={gameCountsQuery.data}
+        weeklyStreaksByNameKey={streaksQuery.data}
         canUnregister={!isPastSession ? canUnregister : false}
         onPressEmoji={
           !isPastSession && mySignup && myDeleteToken

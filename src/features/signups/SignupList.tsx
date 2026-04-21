@@ -16,6 +16,9 @@ export function SignupList(props: {
 		wave: string;
 		newPlayerBadge: string;
 		newPlayerBadgeTitle: string;
+		streakLabel: string;
+		streakTitle: string;
+		milestoneTitle: string;
 	};
 	signups: Signup[];
 	newPlayerNameKeys: ReadonlySet<string>;
@@ -23,6 +26,11 @@ export function SignupList(props: {
 	loading?: boolean;
 	mySignupId?: string;
 	myDeleteToken?: string;
+	gameCountsByNameKey?: Record<string, number>;
+	weeklyStreaksByNameKey?: Record<
+		string,
+		{ currentStreakWeeks: number; bestStreakWeeks: number }
+	>;
 	canUnregister?: boolean;
 	onUnregister?: () => void;
 	onPressEmoji?: () => void;
@@ -59,6 +67,14 @@ export function SignupList(props: {
 							const isMe = props.mySignupId === s.id;
 							const guests = Math.max(0, s.guest_count ?? 0);
 							const nameKey = s.player_name.trim().toLowerCase();
+							const games = props.gameCountsByNameKey?.[nameKey] ?? 0;
+							const streak = props.weeklyStreaksByNameKey?.[nameKey];
+							const currentStreak = Math.max(0, streak?.currentStreakWeeks ?? 0);
+							const bestStreak = Math.max(0, streak?.bestStreakWeeks ?? 0);
+							const milestone =
+								games === 1 || games === 5 || games === 10 || games === 25 || games === 50
+									? games
+									: null;
 							const showNewBadge = props.newPlayerNameKeys.has(nameKey);
 							const actionKind: "poke" | "wave" =
 								showNewBadge || Boolean(props.viewerIsNew) ? "wave" : "poke";
@@ -79,6 +95,24 @@ export function SignupList(props: {
 											{guests > 0 ? (
 												<span className="ml-2 text-xs font-semibold text-(--gold)">
 													{props.labels.guestsTag.replace('{n}', String(guests))}
+												</span>
+											) : null}
+											{milestone ? (
+												<span
+													className="ml-2 inline-flex items-center rounded-full border border-(--gold)/35 bg-(--gold)/10 px-2 py-0.5 align-middle text-[10px] font-semibold uppercase tracking-wide text-(--gold-2)"
+													title={props.labels.milestoneTitle.replace('{n}', String(milestone))}
+												>
+													{milestone}
+												</span>
+											) : null}
+											{currentStreak > 0 ? (
+												<span
+													className="ml-2 inline-flex items-center rounded-full border border-emerald-400/35 bg-emerald-500/15 px-2 py-0.5 align-middle text-[10px] font-semibold uppercase tracking-wide text-emerald-100/90"
+													title={props.labels.streakTitle
+														.replace('{n}', String(currentStreak))
+														.replace('{best}', String(bestStreak))}
+												>
+													{props.labels.streakLabel.replace('{n}', String(currentStreak))}
 												</span>
 											) : null}
 											{showNewBadge ? (

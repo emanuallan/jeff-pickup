@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useMemo } from 'react'
-import { fetchCapsLeaderboard, fetchPlayerDistinctGameCounts } from '../../api/playerStats'
+import { fetchCapsLeaderboard, fetchPlayerDistinctGameCounts, fetchPlayerWeeklyStreaks } from '../../api/playerStats'
 import { createSignup, fetchSignups, unregisterSignup } from '../../api/signups'
 import { todayLocalISODate } from '../../lib/date'
 import { supabase } from '../../lib/supabase'
@@ -14,6 +14,11 @@ export const rosterKeys = {
 export const playerStatsKeys = {
   all: ['playerGameCounts'] as const,
   forNameKeys: (sortedKeysJoined: string) => [...playerStatsKeys.all, sortedKeysJoined] as const,
+}
+
+export const playerStreakKeys = {
+  all: ['playerWeeklyStreaks'] as const,
+  forNameKeys: (sortedKeysJoined: string, asOf: string) => [...playerStreakKeys.all, sortedKeysJoined, asOf] as const,
 }
 
 export const capsLeaderboardKeys = {
@@ -35,6 +40,22 @@ export function usePlayerDistinctGameCountsQuery(nameKeys: string[]) {
     queryKey: playerStatsKeys.forNameKeys(sortedKey),
     queryFn: () => fetchPlayerDistinctGameCounts(nameKeys),
     enabled: Boolean(supabase) && nameKeys.length > 0,
+    staleTime: 30_000,
+  })
+}
+
+export function usePlayerWeeklyStreaksQuery(args: { nameKeys: string[]; asOf: string }) {
+  const sortedKey = useMemo(
+    () => [...args.nameKeys].sort().join('\u0001'),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [args.nameKeys.join('\u0001')],
+  )
+
+  const asOf = args.asOf.slice(0, 10)
+  return useQuery({
+    queryKey: playerStreakKeys.forNameKeys(sortedKey, asOf),
+    queryFn: () => fetchPlayerWeeklyStreaks({ nameKeys: args.nameKeys, asOf }),
+    enabled: Boolean(supabase) && args.nameKeys.length > 0,
     staleTime: 30_000,
   })
 }
@@ -63,6 +84,7 @@ export function useCreateSignupMutation(args: { playDate: string }) {
     onSuccess: async () => {
       await qc.invalidateQueries({ queryKey: rosterKeys.byDate({ playDate: args.playDate }) })
       await qc.invalidateQueries({ queryKey: playerStatsKeys.all })
+      await qc.invalidateQueries({ queryKey: playerStreakKeys.all })
       await qc.invalidateQueries({ queryKey: capsLeaderboardKeys.all })
     },
   })
@@ -75,6 +97,7 @@ export function useUnregisterSignupMutation(args: { playDate: string }) {
     onSuccess: async () => {
       await qc.invalidateQueries({ queryKey: rosterKeys.byDate({ playDate: args.playDate }) })
       await qc.invalidateQueries({ queryKey: playerStatsKeys.all })
+      await qc.invalidateQueries({ queryKey: playerStreakKeys.all })
       await qc.invalidateQueries({ queryKey: capsLeaderboardKeys.all })
     },
   })
