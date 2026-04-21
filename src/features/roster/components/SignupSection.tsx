@@ -1,79 +1,155 @@
+import { useEffect, useMemo, useState } from 'react'
 import { SignupForm } from '../../signups/SignupForm'
 import { SignupList } from '../../signups/SignupList'
-import type { Signup } from '../../signups/types'
+import { t, type Lang } from '../../../lib/i18n'
+import { useLocalStorageState } from '../../../app/hooks/useLocalStorageState'
+import { loadPlayerName, savePlayerName } from '../../../lib/storage'
+import { clearDeleteToken, loadDeleteToken, newUuid, saveDeleteToken } from '../../../lib/tokens'
+import { supabase } from '../../../lib/supabase'
+import { toAppError } from '../../../api/errors'
+import { fireConfetti } from '../../../app/hooks/useConfettiOnNewSignups'
+import { useRosterQuery, useCreateSignupMutation, useUnregisterSignupMutation } from '../queries'
+import { useActiveLocationQuery } from '../../settings/queries'
+import type { LocationId } from '../../signups/types'
 
 export function SignupSection(props: {
-  labels: {
-    joinTheList: string
-    date: string
-    yourName: string
-    namePlaceholder: string
-    enterName: string
-    keepUnder40: string
-    joinTodaysList: string
-    joinList: string
-    youAreIn: string
-
-    players: string
-    total: string
-    loading: string
-    emptyList: string
-    unregister: string
-    unregisterHint: string
-    goal: string
-  }
-  value: { playDate: string; playerName: string }
-  onChange: (next: { playDate: string; playerName: string }) => void
-  disabled?: boolean
-  submitting?: boolean
-  joined?: boolean
-  error?: string
-  signups: Signup[]
-  loading?: boolean
-  goal?: number
-  mySignupId?: string
-  canUnregister?: boolean
-  onSubmit: () => void
-  onUnregister?: () => void
+  lang: Lang
+  playDate: string
+  onPlayDateChange: (next: string) => void
 }) {
+  const [playerName, setPlayerName] = useLocalStorageState({ load: loadPlayerName, save: savePlayerName })
+  const [error, setError] = useState<string | null>(null)
+
+  const cleanedName = useMemo(
+    () => playerName.trim().replace(/\s+/g, ' '),
+    [playerName],
+  )
+
+  const rosterQuery = useRosterQuery({ playDate: props.playDate, refetchIntervalMs: 30_000 })
+  const signups = rosterQuery.data ?? []
+  const loading = rosterQuery.isLoading && !rosterQuery.data
+
+  useEffect(() => {
+    if (!rosterQuery.data) return
+    if (rosterQuery.isError) setError(t(props.lang, 'couldNotLoad'))
+  }, [props.lang, rosterQuery.data, rosterQuery.isError])
+
+  const activeLocationQuery = useActiveLocationQuery()
+  const activeLocation: LocationId = activeLocationQuery.data ?? 'shirley_hall_park'
+
+  const createSignupMutation = useCreateSignupMutation({ playDate: props.playDate })
+  const unregisterSignupMutation = useUnregisterSignupMutation({ playDate: props.playDate })
+
+  const submitting = createSignupMutation.isPending || unregisterSignupMutation.isPending
+  const disabled = !supabase
+
+  const mySignup = useMemo(() => {
+    const n = cleanedName.toLowerCase()
+    if (!n) return null
+    return signups.find((s) => s.player_name.trim().toLowerCase() === n) ?? null
+  }, [cleanedName, signups])
+
+  const myDeleteToken = useMemo(() => {
+    if (!cleanedName) return ''
+    return loadDeleteToken({ playDate: props.playDate, playerName: cleanedName })
+  }, [cleanedName, props.playDate])
+
+  const joined = Boolean(mySignup)
+  const canUnregister = Boolean(mySignup && myDeleteToken)
+
+  const rosterGoal = 10
+
   return (
     <>
       <SignupForm
         labels={{
-          joinTheList: props.labels.joinTheList,
-          date: props.labels.date,
-          yourName: props.labels.yourName,
-          namePlaceholder: props.labels.namePlaceholder,
-          enterName: props.labels.enterName,
-          keepUnder40: props.labels.keepUnder40,
-          joinTodaysList: props.labels.joinTodaysList,
-          joinList: props.labels.joinList,
-          youAreIn: props.labels.youAreIn,
+          joinTheList: t(props.lang, 'joinTheList'),
+          date: t(props.lang, 'date'),
+          yourName: t(props.lang, 'yourName'),
+          namePlaceholder: t(props.lang, 'namePlaceholder'),
+          enterName: t(props.lang, 'enterName'),
+          keepUnder40:
+            props.lang === 'es'
+              ? 'Por favor usa menos de 40 caracteres.'
+              : 'Please keep it under 40 characters.',
+          joinTodaysList: t(props.lang, 'joinTodaysList'),
+          joinList: t(props.lang, 'joinList'),
+          youAreIn: t(props.lang, 'youAreIn'),
         }}
-        value={props.value}
-        onChange={props.onChange}
-        disabled={props.disabled || props.submitting}
-        joined={props.joined}
-        error={props.error}
-        onSubmit={props.onSubmit}
+        value={{ playDate: props.playDate, playerName }}
+        onChange={(next) => {
+          props.onPlayDateChange(next.playDate)
+          setPlayerName(next.playerName)
+        }}
+        disabled={disabled || submitting}
+        joined={joined}
+        error={error ?? undefined}
+        onSubmit={async () => {
+          if (!supabase) return
+          if (mySignup) return
+          if (!cleanedName) {
+            setError(t(props.lang, 'enterName'))
+            return
+          }
+
+          setError(null)
+          try {
+            const deleteToken = newUuid()
+            await createSignupMutation.mutateAsync({
+              playDate: props.playDate,
+              location: activeLocation,
+              playerName: cleanedName,
+              deleteToken,
+            })
+            void fireConfetti()
+            saveDeleteToken({
+              playDate: props.playDate,
+              playerName: cleanedName,
+              deleteToken,
+            })
+            setPlayerName(cleanedName)
+          } catch (e: unknown) {
+            const err = toAppError(e)
+            if (err.code === 'CONSTRAINT_UNIQUE') {
+              setError(t(props.lang, 'alreadyOnList'))
+            } else {
+              setError(t(props.lang, 'couldNotAdd'))
+            }
+          }
+        }}
       />
 
       <SignupList
         labels={{
-          players: props.labels.players,
-          total: props.labels.total,
-          loading: props.labels.loading,
-          emptyList: props.labels.emptyList,
-          unregister: props.labels.unregister,
-          unregisterHint: props.labels.unregisterHint,
-          goal: props.labels.goal,
+          players: t(props.lang, 'players'),
+          total: t(props.lang, 'total'),
+          loading: t(props.lang, 'loading'),
+          emptyList: t(props.lang, 'emptyList'),
+          unregister: t(props.lang, 'unregister'),
+          unregisterHint: t(props.lang, 'unregisterHint'),
+          goal: t(props.lang, 'goal'),
         }}
-        signups={props.signups}
-        loading={props.loading}
-        goal={props.goal}
-        mySignupId={props.mySignupId}
-        canUnregister={props.canUnregister}
-        onUnregister={props.onUnregister}
+        signups={signups}
+        loading={loading}
+        goal={rosterGoal}
+        mySignupId={mySignup?.id}
+        canUnregister={canUnregister}
+        onUnregister={
+          mySignup && myDeleteToken
+            ? async () => {
+                setError(null)
+                try {
+                  await unregisterSignupMutation.mutateAsync({
+                    signupId: mySignup.id,
+                    deleteToken: myDeleteToken,
+                  })
+                  clearDeleteToken({ playDate: props.playDate, playerName: cleanedName })
+                } catch {
+                  setError(t(props.lang, 'couldNotRemove'))
+                }
+              }
+            : undefined
+        }
       />
     </>
   )

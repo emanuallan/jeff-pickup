@@ -1,8 +1,13 @@
 import { todayLocalISODate } from '../../../lib/date'
+import { useAnnouncementQuery } from '../../settings/queries'
 
-export function AnnouncementBanner(props: { text: string; date: string }) {
-  if (!props.text) return null
-  if (props.date && props.date !== todayLocalISODate()) return null
+export function AnnouncementBanner() {
+  const announcementQuery = useAnnouncementQuery()
+  const text = announcementQuery.data?.text ?? ''
+  const date = announcementQuery.data?.date ?? ''
+
+  if (!text) return null
+  if (date && date !== todayLocalISODate()) return null
 
   return (
     <section className="rounded-2xl border border-[var(--gold)]/40 bg-[var(--gold)]/10 p-4 shadow-sm">
@@ -38,7 +43,7 @@ export function AnnouncementBanner(props: { text: string; date: string }) {
         </div>
         <div className="min-w-0">
           <div className="text-sm font-semibold text-[var(--gold-2)]">
-            {props.text}
+            {text}
           </div>
         </div>
       </div>

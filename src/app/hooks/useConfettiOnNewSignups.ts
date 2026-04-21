@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 
-async function fireConfetti() {
+export async function fireConfetti() {
   // Lazy-load to keep initial bundle small.
   const mod = await import('canvas-confetti')
   const confetti = mod.default
