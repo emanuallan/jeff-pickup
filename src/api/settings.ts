@@ -1,5 +1,5 @@
-import { assertSupabaseConfigured } from '../../lib/supabase'
-import type { LocationId } from '../signups/types'
+import type { LocationId } from '../features/signups/types'
+import { getSupabase } from './supabaseClient'
 
 export type ActiveTime = string
 export type Announcement = {
@@ -8,7 +8,7 @@ export type Announcement = {
 }
 
 export async function fetchActiveLocation(): Promise<LocationId> {
-  const sb = assertSupabaseConfigured()
+  const sb = getSupabase()
   const { data, error } = await sb
     .from('app_settings')
     .select('value')
@@ -21,7 +21,7 @@ export async function fetchActiveLocation(): Promise<LocationId> {
 }
 
 export async function setActiveLocation(location: LocationId): Promise<void> {
-  const sb = assertSupabaseConfigured()
+  const sb = getSupabase()
   const { error } = await sb.from('app_settings').upsert({
     key: 'active_location',
     value: location,
@@ -30,7 +30,7 @@ export async function setActiveLocation(location: LocationId): Promise<void> {
 }
 
 export async function fetchActiveTime(): Promise<ActiveTime> {
-  const sb = assertSupabaseConfigured()
+  const sb = getSupabase()
   const { data, error } = await sb
     .from('app_settings')
     .select('value')
@@ -43,7 +43,7 @@ export async function fetchActiveTime(): Promise<ActiveTime> {
 }
 
 export async function setActiveTime(time: ActiveTime): Promise<void> {
-  const sb = assertSupabaseConfigured()
+  const sb = getSupabase()
   const { error } = await sb.from('app_settings').upsert({
     key: 'active_time',
     value: time,
@@ -52,21 +52,23 @@ export async function setActiveTime(time: ActiveTime): Promise<void> {
 }
 
 export async function fetchAnnouncement(): Promise<Announcement> {
-  const sb = assertSupabaseConfigured()
+  const sb = getSupabase()
   const { data, error } = await sb
     .from('app_settings')
     .select('key,value')
     .in('key', ['announcement_text', 'announcement_date'])
 
   if (error) throw error
-  const map = new Map<string, string>((data ?? []).map((r: any) => [r.key, r.value]))
+  const map = new Map<string, string>(
+    (data ?? []).map((r: any) => [r.key, r.value]),
+  )
   const text = String(map.get('announcement_text') ?? '').trim()
   const date = String(map.get('announcement_date') ?? '').trim()
   return { text, date }
 }
 
 export async function setAnnouncement(args: Announcement): Promise<void> {
-  const sb = assertSupabaseConfigured()
+  const sb = getSupabase()
   const { error } = await sb.from('app_settings').upsert([
     { key: 'announcement_text', value: args.text },
     { key: 'announcement_date', value: args.date },

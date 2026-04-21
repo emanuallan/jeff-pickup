@@ -1,10 +1,8 @@
-import { assertSupabaseConfigured } from '../../lib/supabase'
-import type { LocationId, Signup } from './types'
+import type { LocationId, Signup } from '../features/signups/types'
+import { getSupabase } from './supabaseClient'
 
-export async function fetchSignups(args: {
-  playDate: string
-}): Promise<Signup[]> {
-  const sb = assertSupabaseConfigured()
+export async function fetchSignups(args: { playDate: string }): Promise<Signup[]> {
+  const sb = getSupabase()
 
   const { data, error } = await sb
     .from('signups')
@@ -22,7 +20,7 @@ export async function createSignup(args: {
   playerName: string
   deleteToken: string
 }): Promise<void> {
-  const sb = assertSupabaseConfigured()
+  const sb = getSupabase()
 
   const { error } = await sb.from('signups').insert({
     play_date: args.playDate,
@@ -38,7 +36,7 @@ export async function unregisterSignup(args: {
   signupId: string
   deleteToken: string
 }): Promise<void> {
-  const sb = assertSupabaseConfigured()
+  const sb = getSupabase()
   const { error } = await sb.rpc('unregister_signup', {
     p_signup_id: args.signupId,
     p_delete_token: args.deleteToken,
