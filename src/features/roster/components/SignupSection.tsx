@@ -167,8 +167,8 @@ export function SignupSection(props: {
     if (!seen) return
 
     if (new Date(latest.created_at) > new Date(seen)) {
-      const myKey = cleanedName.trim().toLowerCase()
-      const kind = newPlayerNameKeys.has(myKey) ? 'wave' : 'poke'
+      const fromKey = String(latest.from_player_name ?? '').trim().toLowerCase()
+      const kind = newPlayerNameKeys.has(fromKey) ? 'wave' : 'poke'
       setPokeBanner({ from: latest.from_player_name, at: latest.created_at, kind })
     }
   }, [
