@@ -94,7 +94,7 @@ const DICT = {
 		minPlayers: "Min players",
 		saveGameStatus: "Save game status",
 		couldNotUpdateGameStatus: "Could not update game status.",
-		walkOnsHint: "Usually 4–5 players show up without registering.",
+		walkOnsHint: "Usually 3–5 players show up without registering.",
 	},
 	es: {
 		pickupRoster: "Lista de juego",
@@ -171,7 +171,7 @@ const DICT = {
 		minPlayers: "Mínimo",
 		saveGameStatus: "Guardar estado",
 		couldNotUpdateGameStatus: "No se pudo actualizar el estado.",
-		walkOnsHint: "Normalmente llegan 4–5 jugadores sin registrarse.",
+		walkOnsHint: "Normalmente llegan 3–5 jugadores sin registrarse.",
 	},
 } as const;
 
