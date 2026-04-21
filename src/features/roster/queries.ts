@@ -1,6 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useMemo } from 'react'
-import { fetchCapsLeaderboard, fetchPlayerDistinctGameCounts, fetchPlayerWeeklyStreaks } from '../../api/playerStats'
+import {
+  fetchCapsLeaderboard,
+  fetchPlayerDistinctGameCounts,
+  fetchPlayerWeeklyStreaks,
+  fetchWeeklyStreakLeaderboard,
+} from '../../api/playerStats'
 import { createSignup, fetchSignups, unregisterSignup } from '../../api/signups'
 import { todayLocalISODate } from '../../lib/date'
 import { supabase } from '../../lib/supabase'
@@ -23,6 +28,10 @@ export const playerStreakKeys = {
 
 export const capsLeaderboardKeys = {
   all: ['capsLeaderboard'] as const,
+}
+
+export const weeklyStreakLeaderboardKeys = {
+  all: ['weeklyStreakLeaderboard'] as const,
 }
 
 export function useRosterQuery(args: { playDate: string; refetchIntervalMs?: number }) {
@@ -71,6 +80,17 @@ export function useCapsLeaderboardQuery() {
   })
 }
 
+export function useWeeklyStreakLeaderboardQuery() {
+  const asOf = todayLocalISODate()
+  return useQuery({
+    queryKey: [...weeklyStreakLeaderboardKeys.all, asOf] as const,
+    queryFn: () => fetchWeeklyStreakLeaderboard({ limit: 200, asOf }),
+    enabled: Boolean(supabase),
+    staleTime: 30_000,
+    refetchInterval: 60_000,
+  })
+}
+
 export function useCreateSignupMutation(args: { playDate: string }) {
   const qc = useQueryClient()
   return useMutation({
@@ -86,6 +106,7 @@ export function useCreateSignupMutation(args: { playDate: string }) {
       await qc.invalidateQueries({ queryKey: playerStatsKeys.all })
       await qc.invalidateQueries({ queryKey: playerStreakKeys.all })
       await qc.invalidateQueries({ queryKey: capsLeaderboardKeys.all })
+      await qc.invalidateQueries({ queryKey: weeklyStreakLeaderboardKeys.all })
     },
   })
 }
@@ -99,6 +120,7 @@ export function useUnregisterSignupMutation(args: { playDate: string }) {
       await qc.invalidateQueries({ queryKey: playerStatsKeys.all })
       await qc.invalidateQueries({ queryKey: playerStreakKeys.all })
       await qc.invalidateQueries({ queryKey: capsLeaderboardKeys.all })
+      await qc.invalidateQueries({ queryKey: weeklyStreakLeaderboardKeys.all })
     },
   })
 }

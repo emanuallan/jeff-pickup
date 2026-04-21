@@ -6,8 +6,8 @@ export function AppHeader(props: { lang: Lang; onLangChange: (lang: Lang) => voi
       <div className="flex min-w-0 items-center gap-3">
         <img
           src="/logo.JPG"
-          alt="Jeff Pickup FC"
-          className="h-14 w-14 rounded-2xl border border-[var(--border)] bg-[var(--surface)] object-cover shadow-sm"
+          alt="Jeff Pickup Soccer"
+          className="h-14 w-14 rounded-2xl border border-(--border) bg-(--surface) object-cover shadow-sm"
         />
         <div className="min-w-0">
           <div className="text-lg font-semibold leading-tight">Jeff Pickup</div>
@@ -18,7 +18,7 @@ export function AppHeader(props: { lang: Lang; onLangChange: (lang: Lang) => voi
       </div>
 
       <div className="shrink-0">
-        <div className="inline-flex rounded-2xl border border-[var(--border)] bg-black/20 p-1 text-xs">
+        <div className="inline-flex rounded-2xl border border-(--border) bg-black/20 p-1 text-xs">
           <button
             type="button"
             onClick={() => props.onLangChange('en')}

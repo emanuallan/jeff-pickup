@@ -13,6 +13,13 @@ export type WeeklyStreakRow = {
   bestStreakWeeks: number
 }
 
+export type WeeklyStreakLeaderboardRow = {
+  displayName: string
+  nameKey: string
+  currentStreakWeeks: number
+  bestStreakWeeks: number
+}
+
 export async function fetchCapsLeaderboard(args?: { limit?: number; asOf?: string }): Promise<CapsLeaderboardRow[]> {
   const sb = getSupabase()
   if (!sb) return []
@@ -95,4 +102,48 @@ export async function fetchPlayerWeeklyStreaks(args: {
     }
   }
   return out
+}
+
+export async function fetchWeeklyStreakLeaderboard(args?: {
+  limit?: number
+  asOf?: string
+}): Promise<WeeklyStreakLeaderboardRow[]> {
+  const sb = getSupabase()
+  if (!sb) return []
+
+  const limit = typeof args?.limit === 'number' && args.limit > 0 ? Math.min(args.limit, 500) : 150
+  const asOf = (args?.asOf ?? todayLocalISODate()).slice(0, 10)
+  const { data, error } = await sb.rpc('weekly_streak_leaderboard', { p_as_of: asOf, p_limit: limit })
+  if (error) throw error
+
+  const rows: WeeklyStreakLeaderboardRow[] = []
+  for (const row of data ?? []) {
+    const r = row as {
+      display_name?: string
+      name_key?: string
+      current_streak_weeks?: number | string
+      best_streak_weeks?: number | string
+    }
+    const displayName = String(r.display_name ?? '').trim()
+    const nameKey = String(r.name_key ?? '').trim().toLowerCase()
+    const currentRaw = r.current_streak_weeks
+    const bestRaw = r.best_streak_weeks
+    const current =
+      typeof currentRaw === 'number'
+        ? currentRaw
+        : typeof currentRaw === 'string'
+          ? Number.parseInt(currentRaw, 10)
+          : 0
+    const best =
+      typeof bestRaw === 'number' ? bestRaw : typeof bestRaw === 'string' ? Number.parseInt(bestRaw, 10) : 0
+    if (!displayName || !nameKey) continue
+
+    rows.push({
+      displayName,
+      nameKey,
+      currentStreakWeeks: Number.isFinite(current) ? current : 0,
+      bestStreakWeeks: Number.isFinite(best) ? best : 0,
+    })
+  }
+  return rows
 }
