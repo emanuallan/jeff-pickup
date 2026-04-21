@@ -72,7 +72,7 @@ export function SignupList(props: {
 							const currentStreak = Math.max(0, streak?.currentStreakWeeks ?? 0);
 							const bestStreak = Math.max(0, streak?.bestStreakWeeks ?? 0);
 							const milestone =
-								games === 1 || games === 5 || games === 10 || games === 25 || games === 50
+								games === 5 || games === 10 || games === 25 || games === 50
 									? games
 									: null;
 							const showNewBadge = props.newPlayerNameKeys.has(nameKey);
@@ -105,7 +105,7 @@ export function SignupList(props: {
 													{milestone}
 												</span>
 											) : null}
-											{currentStreak > 0 ? (
+											{currentStreak > 2 ? (
 												<span
 													className="ml-2 inline-flex items-center rounded-full border border-emerald-400/35 bg-emerald-500/15 px-2 py-0.5 align-middle text-[10px] font-semibold uppercase tracking-wide text-emerald-100/90"
 													title={props.labels.streakTitle
