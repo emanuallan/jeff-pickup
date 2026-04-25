@@ -34,6 +34,8 @@ export default function App() {
   const [capsView, setCapsView] = useState(
     () => typeof window !== 'undefined' && window.location.hash === '#caps',
   )
+  const [quickJoinThanks, setQuickJoinThanks] = useState(false)
+  const [pendingQuickJoin, setPendingQuickJoin] = useState(false)
 
   useEffect(() => {
     const syncCapsFromHash = () => setCapsView(window.location.hash === '#caps')
@@ -109,6 +111,35 @@ export default function App() {
 
   const isPastSession = playDate < todayLocalISODate()
 
+  useEffect(() => {
+    if (!pendingQuickJoin) return
+    if (capsView) return
+    if (isPastSession) {
+      setPendingQuickJoin(false)
+      return
+    }
+
+    window.dispatchEvent(new CustomEvent('jeffpickup:quickJoin', { detail: { playDate } }))
+    const el = document.getElementById('signup')
+    el?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    setPendingQuickJoin(false)
+  }, [capsView, isPastSession, pendingQuickJoin, playDate])
+
+  useEffect(() => {
+    if (isPastSession) {
+      setQuickJoinThanks(false)
+      return
+    }
+    const onSuccess = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { playDate?: string } | undefined
+      if (detail?.playDate && detail.playDate !== playDate) return
+      setQuickJoinThanks(true)
+      window.setTimeout(() => setQuickJoinThanks(false), 10_000)
+    }
+    window.addEventListener('jeffpickup:quickJoinSuccess', onSuccess)
+    return () => window.removeEventListener('jeffpickup:quickJoinSuccess', onSuccess)
+  }, [isPastSession, playDate])
+
   return (
     <div className="min-h-dvh px-4 pb-[calc(env(safe-area-inset-bottom)+2.5rem)] pt-6 sm:px-6">
       <div className="mx-auto w-full max-w-md">
@@ -125,11 +156,17 @@ export default function App() {
                   type="button"
                   className="mt-1 text-left text-sm font-semibold text-(--gold) hover:text-(--gold-2) focus:outline-none focus-visible:ring-2 focus-visible:ring-(--gold)"
                   onClick={() => {
+                    if (capsView) {
+                      leaveCapsView()
+                      setPendingQuickJoin(true)
+                      return
+                    }
+                    window.dispatchEvent(new CustomEvent('jeffpickup:quickJoin', { detail: { playDate } }))
                     const el = document.getElementById('signup')
                     el?.scrollIntoView({ behavior: 'smooth', block: 'start' })
                   }}
                 >
-                  {signupCtaText}
+                  {quickJoinThanks ? t(lang, 'quickJoinThanks') : signupCtaText}
                 </button>
               ) : null}
             </div>

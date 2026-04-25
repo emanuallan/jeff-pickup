@@ -25,6 +25,9 @@ import { ShareFacebookPostCard } from '../../shell/components/ShareFacebookPostC
 import { EmojiPickerModal } from './EmojiPickerModal'
 import { PokeBannerCard } from './PokeBannerCard'
 
+const QUICK_JOIN_EVENT = 'jeffpickup:quickJoin'
+const QUICK_JOIN_SUCCESS_EVENT = 'jeffpickup:quickJoinSuccess'
+
 export function SignupSection(props: {
   lang: Lang
   playDate: string
@@ -105,6 +108,67 @@ export function SignupSection(props: {
 
   const joined = Boolean(mySignup)
   const canUnregister = Boolean(mySignup && myDeleteToken)
+
+  const joinWithGuests = async (guestsParsed: number) => {
+    if (!supabase) return
+    if (mySignup) return
+    if (isPastSession) {
+      setError(t(props.lang, 'registrationClosedPastSession'))
+      return
+    }
+    if (!cleanedName) {
+      setError(t(props.lang, 'enterName'))
+      return
+    }
+    if (!Number.isFinite(guestsParsed) || guestsParsed < 0 || guestsParsed > 20) {
+      setError(t(props.lang, 'invalidGuests'))
+      return
+    }
+
+    setError(null)
+    try {
+      const deleteToken = newUuid()
+      await createSignupMutation.mutateAsync({
+        playDate: props.playDate,
+        location: activeLocation,
+        playerName: cleanedName,
+        guestCount: guestsParsed,
+        deleteToken,
+      })
+      void fireConfetti()
+      window.dispatchEvent(
+        new CustomEvent(QUICK_JOIN_SUCCESS_EVENT, { detail: { playDate: props.playDate } }),
+      )
+      saveDeleteToken({
+        playDate: props.playDate,
+        playerName: cleanedName,
+        deleteToken,
+      })
+      setMyDeleteToken(deleteToken)
+      setPlayerName(cleanedName)
+      setGuestCount('0')
+    } catch (e: unknown) {
+      const err = toAppError(e)
+      if (err.code === 'CONSTRAINT_UNIQUE') {
+        setError(t(props.lang, 'alreadyOnList'))
+      } else {
+        setError(t(props.lang, 'couldNotAdd'))
+      }
+    }
+  }
+
+  useEffect(() => {
+    const onQuickJoin = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { playDate?: string } | undefined
+      if (detail?.playDate && detail.playDate !== props.playDate) return
+      if (isPastSession) return
+      if (submitting || disabled || joined) return
+      void joinWithGuests(0)
+    }
+
+    window.addEventListener(QUICK_JOIN_EVENT, onQuickJoin)
+    return () => window.removeEventListener(QUICK_JOIN_EVENT, onQuickJoin)
+  }, [disabled, isPastSession, joined, props.playDate, submitting])
 
   const gameStatusQuery = useGameStatusQuery()
   const minPlayersQuery = useMinPlayersQuery()
@@ -220,51 +284,9 @@ export function SignupSection(props: {
           joined={joined}
           error={error ?? undefined}
           onSubmit={async () => {
-            if (!supabase) return
-            if (mySignup) return
-            if (isPastSession) {
-              setError(t(props.lang, 'registrationClosedPastSession'))
-              return
-            }
-            if (!cleanedName) {
-              setError(t(props.lang, 'enterName'))
-              return
-            }
-
             const rawGuests = guestCount.trim()
             const guestsParsed = rawGuests ? Number.parseInt(rawGuests, 10) : 0
-            if (!Number.isFinite(guestsParsed) || guestsParsed < 0 || guestsParsed > 20) {
-              setError(t(props.lang, 'invalidGuests'))
-              return
-            }
-
-            setError(null)
-            try {
-              const deleteToken = newUuid()
-              await createSignupMutation.mutateAsync({
-                playDate: props.playDate,
-                location: activeLocation,
-                playerName: cleanedName,
-                guestCount: guestsParsed,
-                deleteToken,
-              })
-              void fireConfetti()
-              saveDeleteToken({
-                playDate: props.playDate,
-                playerName: cleanedName,
-                deleteToken,
-              })
-              setMyDeleteToken(deleteToken)
-              setPlayerName(cleanedName)
-              setGuestCount('0')
-            } catch (e: unknown) {
-              const err = toAppError(e)
-              if (err.code === 'CONSTRAINT_UNIQUE') {
-                setError(t(props.lang, 'alreadyOnList'))
-              } else {
-                setError(t(props.lang, 'couldNotAdd'))
-              }
-            }
+            await joinWithGuests(guestsParsed)
           }}
         />
       ) : null}

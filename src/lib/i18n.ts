@@ -130,6 +130,7 @@ const DICT = {
 		saveGameStatus: "Save game status",
 		couldNotUpdateGameStatus: "Could not update game status.",
 		walkOnsHint: "Usually 3–5 players show up without registering.",
+		quickJoinThanks: "Thanks for joining us 😎",
 	},
 	es: {
 		pickupRoster: "Lista de juego",
@@ -242,6 +243,7 @@ const DICT = {
 		saveGameStatus: "Guardar estado",
 		couldNotUpdateGameStatus: "No se pudo actualizar el estado.",
 		walkOnsHint: "Normalmente llegan 3–5 jugadores sin registrarse.",
+		quickJoinThanks: "Gracias por unirte 😎",
 	},
 } as const;
 
