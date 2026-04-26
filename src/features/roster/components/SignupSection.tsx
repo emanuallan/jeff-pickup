@@ -267,7 +267,7 @@ export function SignupSection(props: {
         onTapTitle={props.onTapAdminTitle}
       />
 
-      {!joined ? (
+      {!isPastSession && !joined ? (
         <SignupForm
           labels={{
             joinTheList: t(props.lang, 'joinTheList'),
@@ -287,12 +287,7 @@ export function SignupSection(props: {
             setPlayerName(next.playerName)
             setGuestCount(next.guestCount)
           }}
-          disabled={disabled || submitting || isPastSession}
-          blockedMessage={
-            isPastSession
-              ? t(props.lang, 'registrationClosedPastSession')
-              : undefined
-          }
+          disabled={disabled || submitting}
           joined={joined}
           error={error ?? undefined}
           onSubmit={async () => {
