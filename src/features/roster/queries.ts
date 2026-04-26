@@ -6,6 +6,7 @@ import {
   fetchPlayerWeeklyStreaks,
   fetchWeeklyStreakLeaderboard,
 } from '../../api/playerStats'
+import { fetchPlayerAura } from '../../api/aura'
 import { createSignup, fetchSignups, unregisterSignup } from '../../api/signups'
 import { todayLocalISODate } from '../../lib/date'
 import { supabase } from '../../lib/supabase'
@@ -32,6 +33,11 @@ export const capsLeaderboardKeys = {
 
 export const weeklyStreakLeaderboardKeys = {
   all: ['weeklyStreakLeaderboard'] as const,
+}
+
+export const playerAuraKeys = {
+  all: ['playerAura'] as const,
+  forNameKeys: (sortedKeysJoined: string) => [...playerAuraKeys.all, sortedKeysJoined] as const,
 }
 
 function stableNameKeys(nameKeys: string[]) {
@@ -105,6 +111,16 @@ export function useWeeklyStreakLeaderboardQuery() {
   })
 }
 
+export function usePlayerAuraQuery(nameKeys: string[]) {
+  const sortedKey = useMemo(() => stableNameKeyString(nameKeys), [nameKeys])
+  return useQuery({
+    queryKey: playerAuraKeys.forNameKeys(sortedKey),
+    queryFn: () => fetchPlayerAura(nameKeys),
+    enabled: Boolean(supabase) && nameKeys.length > 0,
+    staleTime: 10_000,
+  })
+}
+
 export function useCreateSignupMutation(args: { playDate: string }) {
   const qc = useQueryClient()
   return useMutation({
@@ -121,6 +137,7 @@ export function useCreateSignupMutation(args: { playDate: string }) {
       await qc.invalidateQueries({ queryKey: playerStreakKeys.all })
       await qc.invalidateQueries({ queryKey: capsLeaderboardKeys.all })
       await qc.invalidateQueries({ queryKey: weeklyStreakLeaderboardKeys.all })
+      await qc.invalidateQueries({ queryKey: playerAuraKeys.all })
     },
   })
 }
@@ -135,6 +152,7 @@ export function useUnregisterSignupMutation(args: { playDate: string }) {
       await qc.invalidateQueries({ queryKey: playerStreakKeys.all })
       await qc.invalidateQueries({ queryKey: capsLeaderboardKeys.all })
       await qc.invalidateQueries({ queryKey: weeklyStreakLeaderboardKeys.all })
+      await qc.invalidateQueries({ queryKey: playerAuraKeys.all })
     },
   })
 }

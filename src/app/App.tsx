@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { loadLang, saveLang, t, type Lang } from '../lib/i18n'
 import { SignupSection } from '../features/roster/components/SignupSection'
@@ -15,6 +15,7 @@ import { useLocalStorageState } from './hooks/useLocalStorageState'
 import { usePlayDate } from './hooks/usePlayDate'
 import { loadPlayerName } from '../lib/storage'
 import { todayLocalISODate } from '../lib/date'
+import { usePlayerAuraQuery } from '../features/roster/queries'
 
 const FACEBOOK_GROUP_URL = 'https://www.facebook.com/groups/3701766570121139'
 const WHATSAPP_GROUP_URL =
@@ -25,6 +26,7 @@ export default function App() {
   const [lang, setLang] = useLocalStorageState<Lang>({ load: loadLang, save: saveLang })
   const [playDate, setPlayDate] = usePlayDate()
   const savedName = loadPlayerName().trim()
+  const myNameKey = savedName.trim().toLowerCase()
   const [adminOpen, setAdminOpen] = useState(false)
   const [adminMode, setAdminMode] = useState<'full' | 'gameStatus'>('full')
   const [, setAdminTapState] = useState(() => ({ count: 0, lastTapMs: 0 }))
@@ -37,10 +39,26 @@ export default function App() {
   const [quickJoinThanks, setQuickJoinThanks] = useState(false)
   const [pendingQuickJoin, setPendingQuickJoin] = useState(false)
   const [isRegisteredToday, setIsRegisteredToday] = useState(false)
+  const myAuraQuery = usePlayerAuraQuery(myNameKey ? [myNameKey] : [])
+  const myAura = myNameKey ? myAuraQuery.data?.[myNameKey] : undefined
+  const lastAuraRef = useRef<number | null>(null)
+  const [auraToast, setAuraToast] = useState<{ msg: string; kind: 'pos' | 'neg' } | null>(null)
 
   useEffect(() => {
     setIsRegisteredToday(false)
   }, [playDate])
+
+  useEffect(() => {
+    if (typeof myAura !== 'number' || !Number.isFinite(myAura)) return
+    const prev = lastAuraRef.current
+    lastAuraRef.current = myAura
+    if (prev == null) return
+    const delta = Math.round(myAura - prev)
+    if (!delta) return
+    const msg = `${delta > 0 ? '+' : ''}${delta.toLocaleString()} aura`
+    setAuraToast({ msg, kind: delta > 0 ? 'pos' : 'neg' })
+    window.setTimeout(() => setAuraToast(null), 4500)
+  }, [myAura])
 
   useEffect(() => {
     const onJoinedState = (e: Event) => {
@@ -161,10 +179,35 @@ export default function App() {
         <AppHeader lang={lang} onLangChange={setLang} />
 
         <main className="mt-6 space-y-4">
+          {auraToast ? (
+            <div
+              className={
+                auraToast.kind === 'pos'
+                  ? 'sticky top-2 z-50 rounded-2xl border border-emerald-400/40 bg-emerald-500/10 px-4 py-3 text-sm font-semibold text-emerald-50 shadow-[0_0_0_1px_rgba(52,211,153,0.18),0_0_28px_rgba(52,211,153,0.22)]'
+                  : 'sticky top-2 z-50 rounded-2xl border border-red-400/40 bg-red-500/10 px-4 py-3 text-sm font-semibold text-red-50 shadow-[0_0_0_1px_rgba(248,113,113,0.18),0_0_28px_rgba(248,113,113,0.22)]'
+              }
+              role="status"
+              aria-live="polite"
+            >
+              {auraToast.msg}
+            </div>
+          ) : null}
           {savedName ? (
             <div>
-              <div className="text-2xl font-semibold tracking-tight text-white">
-                {t(lang, 'hiName').replace('{name}', savedName)} <span aria-hidden>👋</span>
+              <div className="flex items-start justify-between gap-3">
+                <div className="text-2xl font-semibold tracking-tight text-white">
+                  {t(lang, 'hiName').replace('{name}', savedName)} <span aria-hidden>👋</span>
+                </div>
+                {typeof myAura === 'number' && Number.isFinite(myAura) ? (
+                  <div className="shrink-0 rounded-2xl border border-(--gold)/45 bg-black/25 px-3 py-1.5 text-right">
+                    <div className="text-[10px] font-semibold uppercase tracking-wide text-(--muted)">
+                      Aura
+                    </div>
+                    <div className="text-sm font-semibold tabular-nums text-(--gold)">
+                      {Math.round(myAura).toLocaleString()}
+                    </div>
+                  </div>
+                ) : null}
               </div>
               {!isPastSession ? (
                 <button

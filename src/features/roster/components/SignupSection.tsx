@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { SignupForm } from '../../signups/SignupForm'
 import { SignupList } from '../../signups/SignupList'
-import { t, type Lang } from '../../../lib/i18n'
+import { t, formatMegSentMessage, type Lang } from '../../../lib/i18n'
 import { useLocalStorageState } from '../../../app/hooks/useLocalStorageState'
 import { loadPlayerName, loadPokeSeenAt, pokeSeenAtKey, savePlayerName, savePokeSeenAt } from '../../../lib/storage'
 import { clearDeleteToken, loadDeleteToken, newUuid, saveDeleteToken } from '../../../lib/tokens'
@@ -13,6 +13,7 @@ import {
   useRosterQuery,
   useCreateSignupMutation,
   useUnregisterSignupMutation,
+  usePlayerAuraQuery,
   usePlayerDistinctGameCountsQuery,
   usePlayerWeeklyStreaksQuery,
 } from '../queries'
@@ -56,6 +57,7 @@ export function SignupSection(props: {
     [rosterQuery.data],
   )
   const gameCountsQuery = usePlayerDistinctGameCountsQuery(rosterNameKeys)
+  const playerAuraQuery = usePlayerAuraQuery(rosterNameKeys)
   const streaksQuery = usePlayerWeeklyStreaksQuery({ nameKeys: rosterNameKeys, asOf: props.playDate })
   const newPlayerNameKeys = useMemo(() => {
     if (!gameCountsQuery.data || gameCountsQuery.isError) return new Set<string>()
@@ -83,7 +85,10 @@ export function SignupSection(props: {
   const createSignupMutation = useCreateSignupMutation({ playDate: props.playDate })
   const unregisterSignupMutation = useUnregisterSignupMutation({ playDate: props.playDate })
   const updateEmojiMutation = useUpdateMyEmojiMutation({ playDate: props.playDate })
-  const sendPokeMutation = useSendPokeMutation({ playDate: props.playDate })
+  const sendPokeMutation = useSendPokeMutation({
+    playDate: props.playDate,
+    clientToday: todayLocalISODate(),
+  })
 
   const submitting =
     createSignupMutation.isPending ||
@@ -197,6 +202,11 @@ export function SignupSection(props: {
     deleteToken: myDeleteToken || undefined,
     refetchIntervalMs: 12_000,
   })
+  const [pokedToToday, setPokedToToday] = useState<Set<string>>(() => new Set())
+
+  useEffect(() => {
+    setPokedToToday(new Set())
+  }, [props.playDate])
 
   const [emojiOpen, setEmojiOpen] = useState(false)
   const [emojiDraft, setEmojiDraft] = useState('')
@@ -204,6 +214,7 @@ export function SignupSection(props: {
     from: string
     at: string
     kind: 'poke' | 'wave'
+    megValue?: number | null
   } | null>(null)
   const [pokeSeenInitialized, setPokeSeenInitialized] = useState(false)
 
@@ -240,9 +251,17 @@ export function SignupSection(props: {
     if (!seen) return
 
     if (new Date(latest.created_at) > new Date(seen)) {
-      const fromKey = String(latest.from_player_name ?? '').trim().toLowerCase()
-      const kind = viewerIsNew ? 'wave' : newPlayerNameKeys.has(fromKey) ? 'wave' : 'poke'
-      setPokeBanner({ from: latest.from_player_name, at: latest.created_at, kind })
+      const k = (latest as any).kind
+      const megValue = (latest as any).meg_value
+      const kind: 'poke' | 'wave' = k === 'wave' ? 'wave' : 'poke'
+      const parsedMegValue =
+        typeof megValue === 'number' && Number.isFinite(megValue) ? megValue : null
+      setPokeBanner({
+        from: latest.from_player_name,
+        at: latest.created_at,
+        kind,
+        megValue: kind === 'poke' ? parsedMegValue : null,
+      })
     }
   }, [
     cleanedName,
@@ -303,6 +322,7 @@ export function SignupSection(props: {
           lang={props.lang}
           kind={pokeBanner.kind}
           from={pokeBanner.from}
+          megValue={pokeBanner.megValue}
           onDismiss={() => {
             if (!mySignup?.id) return
             const key = pokeSeenAtKey({ playDate: props.playDate, signupId: mySignup.id })
@@ -331,8 +351,12 @@ export function SignupSection(props: {
           streakLabel: t(props.lang, 'streakLabel'),
           streakTitle: t(props.lang, 'streakTitle'),
           milestoneTitle: t(props.lang, 'milestoneTitle'),
+          auraShort: t(props.lang, 'auraShort'),
+            oneMegPerDay: t(props.lang, 'oneMegPerDay'),
         }}
         signups={signups}
+        auraByNameKey={playerAuraQuery.data}
+        disabledPokeToSignupIds={pokedToToday}
         newPlayerNameKeys={newPlayerNameKeys}
         viewerIsNew={viewerIsNew}
         loading={loading}
@@ -360,13 +384,35 @@ export function SignupSection(props: {
                 if (!ok) return
                 try {
                   if (isPastSession) return
-                  await sendPokeMutation.mutateAsync({
+                  const res = await sendPokeMutation.mutateAsync({
                     fromSignupId: mySignup.id,
                     deleteToken: myDeleteToken,
                     toSignupId: _toId,
+                    actionKind: kind === 'wave' ? 'wave' : 'poke',
                   })
-                  window.alert(kind === 'wave' ? t(props.lang, 'waveSent') : t(props.lang, 'pokeSent'))
-                } catch {
+                  setPokedToToday((prev) => {
+                    const next = new Set(prev)
+                    next.add(_toId)
+                    return next
+                  })
+                  if (res.kind === 'wave') {
+                    window.alert(t(props.lang, 'waveSentWithAura'))
+                  } else if (res.megValue != null) {
+                    window.alert(formatMegSentMessage(props.lang, res.megValue))
+                  } else {
+                    window.alert(t(props.lang, 'pokeSent'))
+                  }
+                } catch (e: unknown) {
+                  const err = toAppError(e)
+                  if (err.message.includes('Already poked this player today')) {
+                    setPokedToToday((prev) => {
+                      const next = new Set(prev)
+                      next.add(_toId)
+                      return next
+                    })
+                    setError(t(props.lang, 'oneMegPerDay'))
+                    return
+                  }
                   setError(kind === 'wave' ? t(props.lang, 'couldNotWave') : t(props.lang, 'couldNotPoke'))
                 }
               }

@@ -5,8 +5,13 @@ export function PokeBannerCard(props: {
   lang: Lang
   kind: 'poke' | 'wave'
   from: string
+  megValue?: number | null
   onDismiss: () => void
 }): ReactNode {
+  const auraLine =
+    props.kind === 'poke' && typeof props.megValue === 'number' && Number.isFinite(props.megValue)
+      ? ` · -${Math.round(props.megValue).toLocaleString()} aura`
+      : ''
   return (
     <section
       className={
@@ -26,6 +31,7 @@ export function PokeBannerCard(props: {
           {props.kind === 'wave'
             ? t(props.lang, 'waveReceived').replace('{name}', props.from)
             : t(props.lang, 'pokeReceived').replace('{name}', props.from)}
+          {auraLine ? <span className="font-bold">{auraLine}</span> : null}
         </div>
         <button
           type="button"

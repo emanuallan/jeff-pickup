@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { fetchMyPokes, sendPoke, updateMySignupEmoji } from '../../api/rosterFun'
-import { rosterKeys } from './queries'
+import { playerAuraKeys, rosterKeys } from './queries'
 
 export const pokeKeys = {
   all: ['pokes'] as const,
@@ -38,13 +38,18 @@ export function useUpdateMyEmojiMutation(args: { playDate: string }) {
   })
 }
 
-export function useSendPokeMutation(args: { playDate: string }) {
+export function useSendPokeMutation(args: { playDate: string; clientToday: string }) {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (vars: { fromSignupId: string; deleteToken: string; toSignupId: string }) =>
-      sendPoke(vars),
+    mutationFn: (vars: {
+      fromSignupId: string
+      deleteToken: string
+      toSignupId: string
+      actionKind: 'wave' | 'poke'
+    }) => sendPoke({ ...vars, clientToday: args.clientToday }),
     onSuccess: async (_data, vars) => {
       await qc.invalidateQueries({ queryKey: rosterKeys.byDate({ playDate: args.playDate }) })
+      await qc.invalidateQueries({ queryKey: playerAuraKeys.all })
       await qc.invalidateQueries({
         queryKey: pokeKeys.mine({ playDate: args.playDate, signupId: vars.toSignupId }),
       })

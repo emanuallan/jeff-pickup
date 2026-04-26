@@ -38,12 +38,21 @@ const DICT = {
 		emoji: "Emoji",
 		poke: "Meg",
 		pokeConfirm: "Meg {name}?",
-		pokeSent: "Meg delivered. They didn't see it coming. +10 aura.",
-		pokeReceived: "{name} megged yo ahhh, better get em back. -100 aura.",
+		pokeSent: "Meg delivered. They didn't see it coming.",
+		pokeReceived: "{name} megged yo ahhh, better get em back.",
 		pokeDismiss: "Dismiss",
 		wave: "Wave",
 		waveConfirm: "Wave at {name}?",
 		waveSent: "Wave sent.",
+		waveSentWithAura: "Wave landed. +5 aura.",
+		megSent1_20: "Meg: {n} aura. A friendly love tap. They’re fine. Probably.",
+		megSent21_50: "Meg: {n} aura. That stung. Worth it.",
+		megSent51_80: "Meg: {n} aura. Vicious. You love to see it.",
+		megSent81_99:
+			"Meg: {n} aura. Legend mode. The booth reviewed the tape twice.",
+		megSent100:
+			"MYTHIC {n}. The rarest meg. They’re in another dimension of hurt.",
+		auraShort: "Aura {n}",
 		waveReceived: "{name} waved at you",
 		waveDismiss: "Dismiss",
 		newPlayerBadge: "New",
@@ -103,6 +112,7 @@ const DICT = {
 		couldNotAdd: "Could not add you. Please try again.",
 		couldNotPoke: "Could not send meg. Please try again.",
 		couldNotWave: "Could not send wave. Please try again.",
+		oneMegPerDay: "Only one wave/meg per player per game day.",
 		couldNotRemove: "Could not remove you. Please try again.",
 		unregister: "Unregister",
 		unregisterHint:
@@ -156,6 +166,13 @@ const DICT = {
 		wave: "Saludar",
 		waveConfirm: "¿Saludar a {name}?",
 		waveSent: "Saludo enviado.",
+		waveSentWithAura: "Onda enviada. +5 de aura.",
+		megSent1_20: "Tunel: {n} aura. Un toque suave. Seguro están bien.",
+		megSent21_50: "Tunel: {n} aura. Eso dolió. Valió la pena.",
+		megSent51_80: "Tunel: {n} aura. Brutal. Así se hace.",
+		megSent81_99: "Tunel: {n} aura. Leyenda. Hasta el VAR lo revisó dos veces.",
+		megSent100: "MÍTICO {n}. El tunel más raro. Destrozados.",
+		auraShort: "Aura {n}",
 		waveReceived: "{name} te saludó",
 		waveDismiss: "Cerrar",
 		newPlayerBadge: "Nuevo",
@@ -216,6 +233,7 @@ const DICT = {
 		couldNotAdd: "No se pudo agregar. Inténtalo de nuevo.",
 		couldNotPoke: "No se pudo enviar el meg. Inténtalo de nuevo.",
 		couldNotWave: "No se pudo enviar el saludo. Inténtalo de nuevo.",
+		oneMegPerDay: "Solo puedes hacer un saludo/tunel por jugador cada día.",
 		couldNotRemove: "No se pudo eliminar. Inténtalo de nuevo.",
 		unregister: "Eliminarme",
 		unregisterHint:
@@ -252,4 +270,14 @@ export type I18nKey = keyof typeof DICT.en;
 
 export function t(lang: Lang, key: I18nKey): string {
 	return (DICT[lang] as any)[key] ?? (DICT.en as any)[key] ?? key;
+}
+
+/** After a successful meg, pick snarky copy from server roll 1–100. */
+export function formatMegSentMessage(lang: Lang, roll: number): string {
+	const n = String(roll);
+	if (roll >= 100) return t(lang, "megSent100").replace("{n}", n);
+	if (roll >= 81) return t(lang, "megSent81_99").replace("{n}", n);
+	if (roll >= 51) return t(lang, "megSent51_80").replace("{n}", n);
+	if (roll >= 21) return t(lang, "megSent21_50").replace("{n}", n);
+	return t(lang, "megSent1_20").replace("{n}", n);
 }

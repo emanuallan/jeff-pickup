@@ -19,8 +19,12 @@ export function SignupList(props: {
 		streakLabel: string;
 		streakTitle: string;
 		milestoneTitle: string;
+		auraShort: string;
+		oneMegPerDay: string;
 	};
 	signups: Signup[];
+	auraByNameKey?: Record<string, number | undefined>;
+	disabledPokeToSignupIds?: ReadonlySet<string>;
 	newPlayerNameKeys: ReadonlySet<string>;
 	viewerIsNew?: boolean;
 	loading?: boolean;
@@ -67,6 +71,7 @@ export function SignupList(props: {
 							const isMe = props.mySignupId === s.id;
 							const guests = Math.max(0, s.guest_count ?? 0);
 							const nameKey = s.player_name.trim().toLowerCase();
+							const aura = props.auraByNameKey?.[nameKey];
 							const games = props.gameCountsByNameKey?.[nameKey] ?? 0;
 							const streak = props.weeklyStreaksByNameKey?.[nameKey];
 							const currentStreak = Math.max(0, streak?.currentStreakWeeks ?? 0);
@@ -92,6 +97,17 @@ export function SignupList(props: {
 											{idx + 1}.{" "}
 											{s.emoji?.trim() ? <span className="mr-1">{s.emoji.trim()}</span> : null}
 											{s.player_name}
+											{typeof aura === "number" && Number.isFinite(aura) ? (
+												<span
+													className="ml-1.5 text-xs font-medium tabular-nums text-(--muted)"
+													title={props.labels.auraShort.replace(
+														"{n}",
+														Math.round(aura).toLocaleString(),
+													)}
+												>
+													· {Math.round(aura).toLocaleString()}
+												</span>
+											) : null}
 											{guests > 0 ? (
 												<span className="ml-2 text-xs font-semibold text-(--gold)">
 													{props.labels.guestsTag.replace('{n}', String(guests))}
@@ -136,7 +152,11 @@ export function SignupList(props: {
 											</button>
 										) : null}
 
-										{!isMe && props.mySignupId && props.myDeleteToken && props.onPoke ? (
+										{!isMe &&
+										props.mySignupId &&
+										props.myDeleteToken &&
+										props.onPoke &&
+										!(props.disabledPokeToSignupIds?.has(s.id) ?? false) ? (
 											<button
 												type="button"
 												className={
@@ -149,6 +169,19 @@ export function SignupList(props: {
 											>
 												{actionKind === "wave" ? props.labels.wave : props.labels.poke}
 											</button>
+										) : null}
+
+										{!isMe &&
+										props.mySignupId &&
+										props.myDeleteToken &&
+										props.onPoke &&
+										(props.disabledPokeToSignupIds?.has(s.id) ?? false) ? (
+											<span
+												className="rounded-full border border-(--border) bg-black/20 px-2 py-1 text-xs font-semibold text-white/45"
+												title={props.labels.oneMegPerDay}
+											>
+												—
+											</span>
 										) : null}
 
 										{isMe && props.onUnregister ? (
