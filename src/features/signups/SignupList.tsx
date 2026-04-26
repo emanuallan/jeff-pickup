@@ -55,6 +55,13 @@ export function SignupList(props: {
 				return typeof a === "number" && Number.isFinite(a) ? Math.max(mx, a) : mx;
 			}, -Infinity)
 		: -Infinity;
+	const topCaps = props.gameCountsByNameKey
+		? props.signups.reduce((mx, s) => {
+				const k = s.player_name.trim().toLowerCase();
+				const c = props.gameCountsByNameKey?.[k];
+				return typeof c === "number" && Number.isFinite(c) ? Math.max(mx, c) : mx;
+			}, -Infinity)
+		: -Infinity;
 	const progressPct =
 		goal > 0
 			? Math.min(100, Math.round((headcount / goal) * 100))
@@ -87,6 +94,8 @@ export function SignupList(props: {
 								Number.isFinite(topAura) &&
 								aura === topAura;
 							const games = props.gameCountsByNameKey?.[nameKey] ?? 0;
+							const isCapsKing =
+								Number.isFinite(topCaps) && typeof games === "number" && games > 0 && games === topCaps;
 							const streak = props.weeklyStreaksByNameKey?.[nameKey];
 							const currentStreak = Math.max(0, streak?.currentStreakWeeks ?? 0);
 							const bestStreak = Math.max(0, streak?.bestStreakWeeks ?? 0);
@@ -122,6 +131,15 @@ export function SignupList(props: {
 													)}
 												>
 													· {Math.round(aura).toLocaleString()}
+												</span>
+											) : null}
+											{isCapsKing ? (
+												<span
+													className="ml-1 inline-block align-text-bottom"
+													title="Most caps"
+													aria-label="Most caps"
+												>
+													🏅
 												</span>
 											) : null}
 											{isAuraKing && typeof aura === "number" && Number.isFinite(aura) ? (
