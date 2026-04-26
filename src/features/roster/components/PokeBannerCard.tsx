@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { t, type Lang } from '../../../lib/i18n'
+import { t, formatMegReceivedMessage, type Lang } from '../../../lib/i18n'
 
 export function PokeBannerCard(props: {
   lang: Lang
@@ -12,6 +12,12 @@ export function PokeBannerCard(props: {
     props.kind === 'poke' && typeof props.megValue === 'number' && Number.isFinite(props.megValue)
       ? ` · -${Math.round(props.megValue).toLocaleString()} aura`
       : ''
+  const headline =
+    props.kind === 'wave'
+      ? t(props.lang, 'waveReceived').replace('{name}', props.from)
+      : typeof props.megValue === 'number' && Number.isFinite(props.megValue)
+        ? formatMegReceivedMessage(props.lang, props.from, props.megValue)
+        : t(props.lang, 'pokeReceived').replace('{name}', props.from)
   return (
     <section
       className={
@@ -28,9 +34,7 @@ export function PokeBannerCard(props: {
               : 'min-w-0 text-sm font-semibold text-fuchsia-100 drop-shadow-[0_0_10px_rgba(244,114,182,0.55)]'
           }
         >
-          {props.kind === 'wave'
-            ? t(props.lang, 'waveReceived').replace('{name}', props.from)
-            : t(props.lang, 'pokeReceived').replace('{name}', props.from)}
+          {headline}
           {auraLine ? <span className="font-bold">{auraLine}</span> : null}
         </div>
         <button

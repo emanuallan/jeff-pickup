@@ -286,6 +286,21 @@ export function SignupSection(props: {
         onTapTitle={props.onTapAdminTitle}
       />
 
+      {error ? (
+        <section className="rounded-2xl border border-red-200/30 bg-red-500/10 p-4 text-sm text-red-100">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">{error}</div>
+            <button
+              type="button"
+              className="shrink-0 rounded-xl border border-red-200/30 bg-black/20 px-3 py-2 text-xs font-semibold text-red-100/90 hover:bg-white/10"
+              onClick={() => setError(null)}
+            >
+              {t(props.lang, 'close')}
+            </button>
+          </div>
+        </section>
+      ) : null}
+
       {!isPastSession && !joined ? (
         <SignupForm
           labels={{
@@ -413,7 +428,13 @@ export function SignupSection(props: {
                     setError(t(props.lang, 'oneMegPerDay'))
                     return
                   }
-                  setError(kind === 'wave' ? t(props.lang, 'couldNotWave') : t(props.lang, 'couldNotPoke'))
+                  setError(
+                    err.message
+                      ? err.message
+                      : kind === 'wave'
+                        ? t(props.lang, 'couldNotWave')
+                        : t(props.lang, 'couldNotPoke'),
+                  )
                 }
               }
             : undefined

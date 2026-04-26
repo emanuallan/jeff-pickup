@@ -52,6 +52,11 @@ const DICT = {
 			"Meg: {n} aura. Legend mode. The booth reviewed the tape twice.",
 		megSent100:
 			"MYTHIC {n}. The rarest meg. They’re in another dimension of hurt.",
+		megReceived1_20: "{name} megged you for {n}. Light work.",
+		megReceived21_50: "{name} megged you for {n}. That’s disrespectful.",
+		megReceived51_80: "{name} megged you for {n}. You just got cooked.",
+		megReceived81_99: "{name} megged you for {n}. Astronomical hate crime.",
+		megReceived100: "{name} hit you with a MYTHIC {n}. It's over.",
 		auraShort: "Aura {n}",
 		waveReceived: "{name} waved at you",
 		waveDismiss: "Dismiss",
@@ -172,6 +177,11 @@ const DICT = {
 		megSent51_80: "Tunel: {n} aura. Brutal. Así se hace.",
 		megSent81_99: "Tunel: {n} aura. Leyenda. Hasta el VAR lo revisó dos veces.",
 		megSent100: "MÍTICO {n}. El tunel más raro. Destrozados.",
+		megReceived1_20: "{name} te hizo tunel por {n}. Tranqui.",
+		megReceived21_50: "{name} te hizo tunel por {n}. Falta de respeto.",
+		megReceived51_80: "{name} te hizo tunel por {n}. Te cocinaron.",
+		megReceived81_99: "{name} te hizo tunel por {n}. Violencia absoluta.",
+		megReceived100: "{name} te hizo un MÍTICO {n}. Se acabó.",
 		auraShort: "Aura {n}",
 		waveReceived: "{name} te saludó",
 		waveDismiss: "Cerrar",
@@ -280,4 +290,19 @@ export function formatMegSentMessage(lang: Lang, roll: number): string {
 	if (roll >= 51) return t(lang, "megSent51_80").replace("{n}", n);
 	if (roll >= 21) return t(lang, "megSent21_50").replace("{n}", n);
 	return t(lang, "megSent1_20").replace("{n}", n);
+}
+
+export function formatMegReceivedMessage(lang: Lang, fromName: string, roll: number): string {
+	const n = String(roll);
+	const base =
+		roll >= 100
+			? t(lang, "megReceived100")
+			: roll >= 81
+				? t(lang, "megReceived81_99")
+				: roll >= 51
+					? t(lang, "megReceived51_80")
+					: roll >= 21
+						? t(lang, "megReceived21_50")
+						: t(lang, "megReceived1_20");
+	return base.replace("{name}", fromName).replace("{n}", n);
 }
