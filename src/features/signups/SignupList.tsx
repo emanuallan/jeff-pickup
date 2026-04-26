@@ -1,3 +1,4 @@
+import { useState } from "react";
 import type { Signup } from "./types";
 
 export function SignupList(props: {
@@ -41,6 +42,7 @@ export function SignupList(props: {
 	onPoke?: (toSignupId: string, toPlayerName: string, kind: "poke" | "wave") => void;
 	goal?: number;
 }) {
+	const [auraTipForId, setAuraTipForId] = useState<string | null>(null);
 	const goal = props.goal ?? 0;
 	const headcount = props.signups.reduce(
 		(sum, s) => sum + 1 + Math.max(0, s.guest_count ?? 0),
@@ -105,10 +107,12 @@ export function SignupList(props: {
 									}
 								>
 									<div className="min-w-0">
-										<div className="truncate text-sm font-medium">
-											{idx + 1}.{" "}
-											{s.emoji?.trim() ? <span className="mr-1">{s.emoji.trim()}</span> : null}
-											{s.player_name}
+										<div className="flex min-w-0 flex-wrap items-baseline gap-x-1 text-sm font-medium overflow-visible">
+											<span className="min-w-0 truncate">
+												{idx + 1}.{" "}
+												{s.emoji?.trim() ? <span className="mr-1">{s.emoji.trim()}</span> : null}
+												{s.player_name}
+											</span>
 											{typeof aura === "number" && Number.isFinite(aura) ? (
 												<span
 													className="ml-1.5 text-xs font-medium tabular-nums text-(--muted)"
@@ -121,11 +125,31 @@ export function SignupList(props: {
 												</span>
 											) : null}
 											{isAuraKing && typeof aura === "number" && Number.isFinite(aura) ? (
-												<img
-													src="/aura_king.gif"
-													alt="Aura king"
-													className="ml-1 inline-block h-5 w-5 align-text-bottom"
-												/>
+												<span className="relative ml-1 inline-flex align-text-bottom">
+													<button
+														type="button"
+														className="inline-flex"
+														title="Current Aura King"
+														aria-label="Current Aura King"
+														onClick={() => {
+															setAuraTipForId(s.id);
+															window.setTimeout(() => {
+																setAuraTipForId((cur) => (cur === s.id ? null : cur));
+															}, 1800);
+														}}
+													>
+														<img
+															src="/aura_king.gif"
+															alt="Aura king"
+															className="h-5 w-5"
+														/>
+													</button>
+													{auraTipForId === s.id ? (
+														<span className="absolute left-1/2 top-full z-10 mt-1 -translate-x-1/2 whitespace-nowrap rounded-lg border border-(--border) bg-black/90 px-2 py-1 text-[10px] font-semibold text-white/90 shadow-lg">
+															Current Aura King
+														</span>
+													) : null}
+												</span>
 											) : null}
 											{guests > 0 ? (
 												<span className="ml-2 text-xs font-semibold text-(--gold)">
