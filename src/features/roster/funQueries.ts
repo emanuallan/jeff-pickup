@@ -34,6 +34,7 @@ export function useUpdateMyEmojiMutation(args: { playDate: string }) {
       updateMySignupEmoji(vars),
     onSuccess: async () => {
       await qc.invalidateQueries({ queryKey: rosterKeys.byDate({ playDate: args.playDate }) })
+      await qc.invalidateQueries({ queryKey: playerAuraKeys.all })
     },
   })
 }
