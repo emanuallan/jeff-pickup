@@ -28,6 +28,7 @@ import type { GameStatus } from '../../../api/settings'
 
 const QUICK_JOIN_EVENT = 'jeffpickup:quickJoin'
 const QUICK_JOIN_SUCCESS_EVENT = 'jeffpickup:quickJoinSuccess'
+const JOINED_STATE_EVENT = 'jeffpickup:joinedState'
 
 export function SignupSection(props: {
   lang: Lang
@@ -109,6 +110,12 @@ export function SignupSection(props: {
 
   const joined = Boolean(mySignup)
   const canUnregister = Boolean(mySignup && myDeleteToken)
+
+  useEffect(() => {
+    window.dispatchEvent(
+      new CustomEvent(JOINED_STATE_EVENT, { detail: { playDate: props.playDate, joined } }),
+    )
+  }, [joined, props.playDate])
 
   const joinWithGuests = async (guestsParsed: number) => {
     if (!supabase) return

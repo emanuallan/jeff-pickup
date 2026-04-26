@@ -36,6 +36,21 @@ export default function App() {
   )
   const [quickJoinThanks, setQuickJoinThanks] = useState(false)
   const [pendingQuickJoin, setPendingQuickJoin] = useState(false)
+  const [isRegisteredToday, setIsRegisteredToday] = useState(false)
+
+  useEffect(() => {
+    setIsRegisteredToday(false)
+  }, [playDate])
+
+  useEffect(() => {
+    const onJoinedState = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { playDate?: string; joined?: boolean } | undefined
+      if (!detail?.playDate || detail.playDate !== playDate) return
+      setIsRegisteredToday(Boolean(detail.joined))
+    }
+    window.addEventListener('jeffpickup:joinedState', onJoinedState)
+    return () => window.removeEventListener('jeffpickup:joinedState', onJoinedState)
+  }, [playDate])
 
   useEffect(() => {
     const syncCapsFromHash = () => setCapsView(window.location.hash === '#caps')
@@ -166,7 +181,7 @@ export default function App() {
                     el?.scrollIntoView({ behavior: 'smooth', block: 'start' })
                   }}
                 >
-                  {quickJoinThanks ? t(lang, 'quickJoinThanks') : signupCtaText}
+                  {quickJoinThanks || isRegisteredToday ? t(lang, 'quickJoinThanks') : signupCtaText}
                 </button>
               ) : null}
             </div>
