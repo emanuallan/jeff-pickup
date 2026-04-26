@@ -43,6 +43,7 @@ export default function App() {
   const myAura = myNameKey ? myAuraQuery.data?.[myNameKey] : undefined
   const lastAuraRef = useRef<number | null>(null)
   const [auraToast, setAuraToast] = useState<{ msg: string; kind: 'pos' | 'neg' } | null>(null)
+  const auraToastTimeoutRef = useRef<number | null>(null)
 
   useEffect(() => {
     setIsRegisteredToday(false)
@@ -57,7 +58,13 @@ export default function App() {
     if (!delta) return
     const msg = `${delta > 0 ? '+' : ''}${delta.toLocaleString()} aura`
     setAuraToast({ msg, kind: delta > 0 ? 'pos' : 'neg' })
-    window.setTimeout(() => setAuraToast(null), 4500)
+    if (auraToastTimeoutRef.current != null) {
+      window.clearTimeout(auraToastTimeoutRef.current)
+    }
+    auraToastTimeoutRef.current = window.setTimeout(() => {
+      setAuraToast(null)
+      auraToastTimeoutRef.current = null
+    }, 4500)
   }, [myAura])
 
   useEffect(() => {
