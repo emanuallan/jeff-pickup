@@ -46,6 +46,13 @@ export function SignupList(props: {
 		(sum, s) => sum + 1 + Math.max(0, s.guest_count ?? 0),
 		0,
 	);
+	const topAura = props.auraByNameKey
+		? props.signups.reduce((mx, s) => {
+				const k = s.player_name.trim().toLowerCase();
+				const a = props.auraByNameKey?.[k];
+				return typeof a === "number" && Number.isFinite(a) ? Math.max(mx, a) : mx;
+			}, -Infinity)
+		: -Infinity;
 	const progressPct =
 		goal > 0
 			? Math.min(100, Math.round((headcount / goal) * 100))
@@ -72,6 +79,11 @@ export function SignupList(props: {
 							const guests = Math.max(0, s.guest_count ?? 0);
 							const nameKey = s.player_name.trim().toLowerCase();
 							const aura = props.auraByNameKey?.[nameKey];
+							const isAuraKing =
+								typeof aura === "number" &&
+								Number.isFinite(aura) &&
+								Number.isFinite(topAura) &&
+								aura === topAura;
 							const games = props.gameCountsByNameKey?.[nameKey] ?? 0;
 							const streak = props.weeklyStreaksByNameKey?.[nameKey];
 							const currentStreak = Math.max(0, streak?.currentStreakWeeks ?? 0);
@@ -107,6 +119,13 @@ export function SignupList(props: {
 												>
 													· {Math.round(aura).toLocaleString()}
 												</span>
+											) : null}
+											{isAuraKing && typeof aura === "number" && Number.isFinite(aura) ? (
+												<img
+													src="/aura_king.gif"
+													alt="Aura king"
+													className="ml-1 inline-block h-5 w-5 align-text-bottom"
+												/>
 											) : null}
 											{guests > 0 ? (
 												<span className="ml-2 text-xs font-semibold text-(--gold)">
