@@ -44,6 +44,7 @@ export function SignupList(props: {
 }) {
 	const [auraTipForId, setAuraTipForId] = useState<string | null>(null);
 	const [capsTipForId, setCapsTipForId] = useState<string | null>(null);
+	const [newTipForId, setNewTipForId] = useState<string | null>(null);
 	const goal = props.goal ?? 0;
 	const headcount = props.signups.reduce(
 		(sum, s) => sum + 1 + Math.max(0, s.guest_count ?? 0),
@@ -209,11 +210,26 @@ export function SignupList(props: {
 												</span>
 											) : null}
 											{showNewBadge ? (
-												<span
-													className="ml-2 inline-flex items-center rounded-full border border-emerald-400/35 bg-emerald-500/15 px-2 py-0.5 align-middle text-[10px] font-semibold uppercase tracking-wide text-emerald-100/90"
-													title={props.labels.newPlayerBadgeTitle}
-												>
-													{props.labels.newPlayerBadge}
+												<span className="relative ml-2 inline-flex align-middle">
+													<button
+														type="button"
+														className="inline-flex items-center rounded-full border border-emerald-400/35 bg-emerald-500/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-100/90"
+														title={props.labels.newPlayerBadgeTitle}
+														aria-label={props.labels.newPlayerBadgeTitle}
+														onClick={() => {
+															setNewTipForId(s.id);
+															window.setTimeout(() => {
+																setNewTipForId((cur) => (cur === s.id ? null : cur));
+															}, 1800);
+														}}
+													>
+														{props.labels.newPlayerBadge}
+													</button>
+													{newTipForId === s.id ? (
+														<span className="absolute left-1/2 top-full z-10 mt-1 -translate-x-1/2 whitespace-nowrap rounded-lg border border-(--border) bg-black/90 px-2 py-1 text-[10px] font-semibold text-white/90 shadow-lg">
+															{props.labels.newPlayerBadgeTitle}
+														</span>
+													) : null}
 												</span>
 											) : null}
 										</div>
