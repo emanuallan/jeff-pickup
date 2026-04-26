@@ -24,6 +24,7 @@ import { GameStatusCard } from './GameStatusCard'
 import { ShareFacebookPostCard } from '../../shell/components/ShareFacebookPostCard'
 import { EmojiPickerModal } from './EmojiPickerModal'
 import { PokeBannerCard } from './PokeBannerCard'
+import type { GameStatus } from '../../../api/settings'
 
 const QUICK_JOIN_EVENT = 'jeffpickup:quickJoin'
 const QUICK_JOIN_SUCCESS_EVENT = 'jeffpickup:quickJoinSuccess'
@@ -174,10 +175,14 @@ export function SignupSection(props: {
   const minPlayersQuery = useMinPlayersQuery()
 
   const rosterGoal = minPlayersQuery.data ?? 10
-
   const rosterHeadcount = useMemo(() => {
     return signups.reduce((sum, s) => sum + 1 + Math.max(0, s.guest_count ?? 0), 0)
   }, [signups])
+  const effectiveGameStatus: GameStatus = useMemo(() => {
+    const raw = gameStatusQuery.data ?? 'tentative'
+    if (raw !== 'tentative') return raw
+    return rosterHeadcount >= rosterGoal ? 'on' : 'tentative'
+  }, [gameStatusQuery.data, rosterGoal, rosterHeadcount])
 
   const pokesQuery = useMyPokesQuery({
     playDate: props.playDate,
@@ -329,7 +334,7 @@ export function SignupSection(props: {
         newPlayerNameKeys={newPlayerNameKeys}
         viewerIsNew={viewerIsNew}
         loading={loading}
-        goal={rosterGoal}
+        goal={effectiveGameStatus === 'on' ? undefined : rosterGoal}
         mySignupId={mySignup?.id}
         myDeleteToken={!isPastSession ? (myDeleteToken || undefined) : undefined}
         gameCountsByNameKey={gameCountsQuery.data}
