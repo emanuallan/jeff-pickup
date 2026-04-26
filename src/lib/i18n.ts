@@ -61,7 +61,7 @@ const DICT = {
 		waveReceived: "{name} waved at you",
 		waveDismiss: "Dismiss",
 		newPlayerBadge: "New",
-		newPlayerBadgeTitle: "First pickup game — say hi.",
+		newPlayerBadgeTitle: "First pickup game — say hi!",
 		streakLabel: "🔥 {n}w",
 		streakTitle: "Weekly streak: {n} week(s). Best: {best}.",
 		milestoneTitle: "{n} caps milestone",
@@ -186,7 +186,7 @@ const DICT = {
 		waveReceived: "{name} te saludó",
 		waveDismiss: "Cerrar",
 		newPlayerBadge: "Nuevo",
-		newPlayerBadgeTitle: "Primer día de pickup — salúdalo.",
+		newPlayerBadgeTitle: "Primer día de pickup — salúdalo!",
 		streakLabel: "🔥 {n}sem",
 		streakTitle: "Racha semanal: {n} semana(s). Mejor: {best}.",
 		milestoneTitle: "Hito de {n} caps",
@@ -292,7 +292,11 @@ export function formatMegSentMessage(lang: Lang, roll: number): string {
 	return t(lang, "megSent1_20").replace("{n}", n);
 }
 
-export function formatMegReceivedMessage(lang: Lang, fromName: string, roll: number): string {
+export function formatMegReceivedMessage(
+	lang: Lang,
+	fromName: string,
+	roll: number,
+): string {
 	const n = String(roll);
 	const base =
 		roll >= 100
