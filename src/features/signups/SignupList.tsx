@@ -43,6 +43,7 @@ export function SignupList(props: {
 	goal?: number;
 }) {
 	const [auraTipForId, setAuraTipForId] = useState<string | null>(null);
+	const [capsTipForId, setCapsTipForId] = useState<string | null>(null);
 	const goal = props.goal ?? 0;
 	const headcount = props.signups.reduce(
 		(sum, s) => sum + 1 + Math.max(0, s.guest_count ?? 0),
@@ -62,6 +63,7 @@ export function SignupList(props: {
 				return typeof c === "number" && Number.isFinite(c) ? Math.max(mx, c) : mx;
 			}, -Infinity)
 		: -Infinity;
+	const topCapsLabel = Number.isFinite(topCaps) && topCaps > 0 ? `Most Caps (${topCaps})` : "Most Caps";
 	const progressPct =
 		goal > 0
 			? Math.min(100, Math.round((headcount / goal) * 100))
@@ -134,12 +136,26 @@ export function SignupList(props: {
 												</span>
 											) : null}
 											{isCapsKing ? (
-												<span
-													className="ml-1 inline-block align-text-bottom"
-													title="Most caps"
-													aria-label="Most caps"
-												>
-													🏅
+												<span className="relative ml-1 inline-flex align-text-bottom">
+													<button
+														type="button"
+														className="inline-flex"
+														title={topCapsLabel}
+														aria-label={topCapsLabel}
+														onClick={() => {
+															setCapsTipForId(s.id);
+															window.setTimeout(() => {
+																setCapsTipForId((cur) => (cur === s.id ? null : cur));
+															}, 1800);
+														}}
+													>
+														<span aria-hidden>🏅</span>
+													</button>
+													{capsTipForId === s.id ? (
+														<span className="absolute left-1/2 top-full z-10 mt-1 -translate-x-1/2 whitespace-nowrap rounded-lg border border-(--border) bg-black/90 px-2 py-1 text-[10px] font-semibold text-white/90 shadow-lg">
+															{topCapsLabel}
+														</span>
+													) : null}
 												</span>
 											) : null}
 											{isAuraKing && typeof aura === "number" && Number.isFinite(aura) ? (
