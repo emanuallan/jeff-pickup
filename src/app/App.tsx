@@ -11,6 +11,7 @@ import { SetupNeededBanner } from '../features/shell/components/SetupNeededBanne
 import { SocialLinks } from '../features/shell/components/SocialLinks'
 import { AppFooter } from '../features/shell/components/AppFooter'
 import { AppLoadingOverlay } from '../features/shell/components/AppLoadingOverlay'
+import { OmegaBallInterestSection } from '../features/omegaball/components/OmegaBallInterestSection'
 import { useLocalStorageState } from './hooks/useLocalStorageState'
 import { usePlayDate } from './hooks/usePlayDate'
 import { loadPlayerName } from '../lib/storage'
@@ -298,6 +299,8 @@ export default function App() {
                 facebookUrl={FACEBOOK_GROUP_URL}
                 whatsappUrl={WHATSAPP_GROUP_URL}
               />
+
+              <OmegaBallInterestSection />
             </>
           )}
         </main>
