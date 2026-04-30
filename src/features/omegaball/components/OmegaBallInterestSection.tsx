@@ -73,10 +73,6 @@ export function OmegaBallInterestSection() {
             <span className="font-semibold text-white">Where:</span> indoor turf at Silver Street Park,{' '}
             <span className="font-semibold text-white">2043 Silver St.</span>, New Albany, IN 47150
           </div>
-          <div>
-            <span className="font-semibold text-white">Cost:</span> pricing still in the works, likely around{' '}
-            <span className="font-semibold text-white">$100 per team</span> for the season
-          </div>
         </div>
 
         <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
