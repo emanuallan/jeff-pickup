@@ -19,7 +19,7 @@ export function useOmegaBallInterestQuery(args?: { refetchIntervalMs?: number })
 export function useCreateOmegaBallInterestMutation() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (vars: { name: string }) => createOmegaBallInterestSignup(vars),
+    mutationFn: (vars: { name: string; contact: string }) => createOmegaBallInterestSignup(vars),
     onSuccess: async () => {
       await qc.invalidateQueries({ queryKey: omegaBallInterestKeys.all })
     },

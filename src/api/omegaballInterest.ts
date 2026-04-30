@@ -17,10 +17,11 @@ export async function fetchOmegaBallInterestSignups(): Promise<OmegaBallInterest
   return (data ?? []) as OmegaBallInterestSignup[]
 }
 
-export async function createOmegaBallInterestSignup(args: { name: string }): Promise<void> {
+export async function createOmegaBallInterestSignup(args: { name: string; contact: string }): Promise<void> {
   const sb = getSupabase()
   const { error } = await sb.from('omegaball_interest_signups').insert({
     name: args.name,
+    contact: args.contact,
   })
   if (error) throw error
 }
