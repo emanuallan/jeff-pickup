@@ -70,7 +70,7 @@ const DICT = {
 		backToPickup: "Back to pickup",
 		linkOmegaBallInterest: "OmegaBall league interest",
 		omegaBallPromoBanner:
-			"Join the recreational OmegaBall league — tap to show interest",
+			"Join the recreational OmegaBall league — tap to learn more",
 		capsLeaderboardTitle: "Caps leaderboard",
 		capsLeaderboardEmpty: "No caps yet — join a game to get on the board.",
 		weeklyStreakLeaderboardTitle: "Weekly streaks",
@@ -198,7 +198,7 @@ const DICT = {
 		backToPickup: "Volver al pickup",
 		linkOmegaBallInterest: "Interés liga OmegaBall",
 		omegaBallPromoBanner:
-			"Únete a la liga recreativa OmegaBall — toca para mostrar interés",
+			"Únete a la liga recreativa OmegaBall — toca para saber más",
 		capsLeaderboardTitle: "Ranking de caps",
 		capsLeaderboardEmpty:
 			"Aún no hay caps — únete a un día para entrar al ranking.",
