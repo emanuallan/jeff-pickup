@@ -45,8 +45,8 @@ export function OmegaBallInterestSection() {
   const gameplayEmbed = youtubeEmbedUrl(GAMEPLAY_VIDEO_URL)
 
   return (
-    <section aria-label="OmegaBall interest signup" className="mt-8">
-      <div className="my-6 h-px w-full bg-white/10" role="separator" aria-hidden />
+    <section aria-label="OmegaBall interest signup" className="mt-2">
+      <div className="my-4 h-px w-full bg-white/10" role="separator" aria-hidden />
 
       <div className="rounded-2xl border border-(--border) bg-(--surface) p-4">
         <div className="flex items-baseline justify-between gap-3">

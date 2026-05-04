@@ -11,7 +11,9 @@ import { SetupNeededBanner } from '../features/shell/components/SetupNeededBanne
 import { SocialLinks } from '../features/shell/components/SocialLinks'
 import { AppFooter } from '../features/shell/components/AppFooter'
 import { AppLoadingOverlay } from '../features/shell/components/AppLoadingOverlay'
+import { PickupCommunityPhoto, PickupHero } from '../features/shell/components/PickupHero'
 import { OmegaBallInterestSection } from '../features/omegaball/components/OmegaBallInterestSection'
+import { OmegaBallPromoBanner } from '../features/omegaball/components/OmegaBallPromoBanner'
 import { useLocalStorageState } from './hooks/useLocalStorageState'
 import { usePlayDate } from './hooks/usePlayDate'
 import { loadPlayerName } from '../lib/storage'
@@ -36,6 +38,9 @@ export default function App() {
   const [dateDraft, setDateDraft] = useState(playDate)
   const [capsView, setCapsView] = useState(
     () => typeof window !== 'undefined' && window.location.hash === '#caps',
+  )
+  const [omegaBallView, setOmegaBallView] = useState(
+    () => typeof window !== 'undefined' && window.location.hash === '#omegaball',
   )
   const [quickJoinThanks, setQuickJoinThanks] = useState(false)
   const [pendingQuickJoin, setPendingQuickJoin] = useState(false)
@@ -79,23 +84,27 @@ export default function App() {
   }, [playDate])
 
   useEffect(() => {
-    const syncCapsFromHash = () => setCapsView(window.location.hash === '#caps')
-    syncCapsFromHash()
-    window.addEventListener('hashchange', syncCapsFromHash)
-    return () => window.removeEventListener('hashchange', syncCapsFromHash)
+    const syncHashViews = () => {
+      const h = window.location.hash
+      setCapsView(h === '#caps')
+      setOmegaBallView(h === '#omegaball')
+    }
+    syncHashViews()
+    window.addEventListener('hashchange', syncHashViews)
+    return () => window.removeEventListener('hashchange', syncHashViews)
   }, [])
 
   useEffect(() => {
-    if (!capsView) return
+    if (!capsView && !omegaBallView) return
     window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
-  }, [capsView])
+  }, [capsView, omegaBallView])
 
   useEffect(() => {
     if (dateModalOpen) return
     setDateDraft(playDate)
   }, [dateModalOpen, playDate])
 
-  const leaveCapsView = () => {
+  const leaveHashView = () => {
     if (window.location.hash) window.location.hash = ''
   }
 
@@ -154,7 +163,7 @@ export default function App() {
 
   useEffect(() => {
     if (!pendingQuickJoin) return
-    if (capsView) return
+    if (capsView || omegaBallView) return
     if (isPastSession) {
       setPendingQuickJoin(false)
       return
@@ -164,7 +173,7 @@ export default function App() {
     const el = document.getElementById('signup')
     el?.scrollIntoView({ behavior: 'smooth', block: 'start' })
     setPendingQuickJoin(false)
-  }, [capsView, isPastSession, pendingQuickJoin, playDate])
+  }, [capsView, omegaBallView, isPastSession, pendingQuickJoin, playDate])
 
   useEffect(() => {
     if (isPastSession) {
@@ -182,9 +191,15 @@ export default function App() {
   }, [isPastSession, playDate])
 
   return (
-    <div className="min-h-dvh px-4 pb-[calc(env(safe-area-inset-bottom)+2.5rem)] pt-6 sm:px-6">
+    <div className="min-h-dvh overflow-x-hidden px-4 pb-[calc(env(safe-area-inset-bottom)+2.5rem)] pt-6 sm:px-6">
       <div className="mx-auto w-full max-w-md">
         <AppHeader lang={lang} onLangChange={setLang} />
+
+        {!omegaBallView ? (
+          <div className="mt-4">
+            <OmegaBallPromoBanner lang={lang} />
+          </div>
+        ) : null}
 
         <main className="mt-6 space-y-4">
           {auraToast ? (
@@ -222,8 +237,8 @@ export default function App() {
                   type="button"
                   className="mt-1 text-left text-sm font-semibold text-(--gold) hover:text-(--gold-2) focus:outline-none focus-visible:ring-2 focus-visible:ring-(--gold)"
                   onClick={() => {
-                    if (capsView) {
-                      leaveCapsView()
+                    if (capsView || omegaBallView) {
+                      leaveHashView()
                       setPendingQuickJoin(true)
                       return
                     }
@@ -237,12 +252,27 @@ export default function App() {
               ) : null}
             </div>
           ) : null}
-          {capsView ? (
+          {omegaBallView ? (
             <>
               <button
                 type="button"
                 className="flex w-full items-center gap-2 rounded-2xl border border-(--border) bg-black/25 px-3 py-2.5 text-left text-sm font-medium text-white/90 hover:bg-white/10"
-                onClick={leaveCapsView}
+                onClick={leaveHashView}
+              >
+                <span className="text-lg leading-none text-(--gold)" aria-hidden>
+                  ←
+                </span>
+                {t(lang, 'backToPickup')}
+              </button>
+
+              <OmegaBallInterestSection />
+            </>
+          ) : capsView ? (
+            <>
+              <button
+                type="button"
+                className="flex w-full items-center gap-2 rounded-2xl border border-(--border) bg-black/25 px-3 py-2.5 text-left text-sm font-medium text-white/90 hover:bg-white/10"
+                onClick={leaveHashView}
               >
                 <span className="text-lg leading-none text-(--gold)" aria-hidden>
                   ←
@@ -258,6 +288,8 @@ export default function App() {
             </>
           ) : (
             <>
+              <PickupCommunityPhoto />
+
               <AnnouncementBanner />
 
               <LocationAndTimeCard
@@ -300,7 +332,7 @@ export default function App() {
                 whatsappUrl={WHATSAPP_GROUP_URL}
               />
 
-              <OmegaBallInterestSection />
+              <PickupHero />
             </>
           )}
         </main>
@@ -308,7 +340,8 @@ export default function App() {
         <AppFooter
           instagramUrl="https://www.instagram.com/aeserna/"
           lang={lang}
-          showCapsLink={Boolean(supabase) && !capsView}
+          showCapsLink={Boolean(supabase) && !capsView && !omegaBallView}
+          showOmegaBallLink={!capsView && !omegaBallView}
         />
       </div>
 

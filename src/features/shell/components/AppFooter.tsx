@@ -5,6 +5,8 @@ export function AppFooter(props: {
   lang: Lang
   /** When true, show "· Caps leaderboard" link (hidden on caps view — use top back instead). */
   showCapsLink?: boolean
+  /** When true, show "· OmegaBall league interest" link (hidden on dedicated views). */
+  showOmegaBallLink?: boolean
 }) {
   return (
     <footer className="mt-8 text-center text-xs text-[--muted]">
@@ -22,6 +24,14 @@ export function AppFooter(props: {
           {' · '}
           <a className="text-[#d2a34a] hover:underline" href="#caps">
             {t(props.lang, 'tabCapsLeaderboard')}
+          </a>
+        </>
+      ) : null}
+      {props.showOmegaBallLink ? (
+        <>
+          {' · '}
+          <a className="text-[#d2a34a] hover:underline" href="#omegaball">
+            {t(props.lang, 'linkOmegaBallInterest')}
           </a>
         </>
       ) : null}
