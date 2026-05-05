@@ -16,6 +16,7 @@ import {
   usePlayerAuraQuery,
   usePlayerDistinctGameCountsQuery,
   usePlayerWeeklyStreaksQuery,
+  useAuraLedgerForDayQuery,
 } from '../queries'
 import { isNewPlayerDistinctDays } from '../newPlayer'
 import { useMyPokesQuery, useSendPokeMutation, useUpdateMyEmojiMutation } from '../funQueries'
@@ -25,6 +26,7 @@ import { GameStatusCard } from './GameStatusCard'
 import { ShareFacebookPostCard } from '../../shell/components/ShareFacebookPostCard'
 import { EmojiPickerModal } from './EmojiPickerModal'
 import { PokeBannerCard } from './PokeBannerCard'
+import { AuraLedgerCard } from './AuraLedgerCard'
 import type { GameStatus } from '../../../api/settings'
 
 const QUICK_JOIN_EVENT = 'jeffpickup:quickJoin'
@@ -115,6 +117,13 @@ export function SignupSection(props: {
 
   const joined = Boolean(mySignup)
   const canUnregister = Boolean(mySignup && myDeleteToken)
+
+  const auraLedgerQuery = useAuraLedgerForDayQuery({
+    playDate: props.playDate,
+    signupId: mySignup?.id,
+    deleteToken: myDeleteToken || undefined,
+    refetchIntervalMs: 20_000,
+  })
 
   useEffect(() => {
     window.dispatchEvent(
@@ -458,6 +467,16 @@ export function SignupSection(props: {
             : undefined
         }
       />
+
+      {!isPastSession && joined && mySignup?.id && myDeleteToken ? (
+        <AuraLedgerCard
+          lang={props.lang}
+          playDate={props.playDate}
+          rows={auraLedgerQuery.data ?? []}
+          loading={auraLedgerQuery.isLoading && !auraLedgerQuery.data}
+          error={auraLedgerQuery.isError}
+        />
+      ) : null}
 
       <ShareFacebookPostCard
         lang={props.lang}

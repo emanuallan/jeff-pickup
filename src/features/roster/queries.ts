@@ -7,6 +7,7 @@ import {
   fetchWeeklyStreakLeaderboard,
 } from '../../api/playerStats'
 import { fetchPlayerAura } from '../../api/aura'
+import { fetchAuraLedgerForDay } from '../../api/auraLedger'
 import { createSignup, fetchSignups, unregisterSignup } from '../../api/signups'
 import { todayLocalISODate } from '../../lib/date'
 import { supabase } from '../../lib/supabase'
@@ -38,6 +39,11 @@ export const weeklyStreakLeaderboardKeys = {
 export const playerAuraKeys = {
   all: ['playerAura'] as const,
   forNameKeys: (sortedKeysJoined: string) => [...playerAuraKeys.all, sortedKeysJoined] as const,
+}
+
+export const auraLedgerKeys = {
+  all: ['auraLedger'] as const,
+  byDay: (args: { playDate: string; signupId: string }) => [...auraLedgerKeys.all, args] as const,
 }
 
 function stableNameKeys(nameKeys: string[]) {
@@ -121,6 +127,27 @@ export function usePlayerAuraQuery(nameKeys: string[]) {
   })
 }
 
+export function useAuraLedgerForDayQuery(args: {
+  playDate: string
+  signupId?: string
+  deleteToken?: string
+  refetchIntervalMs?: number
+}) {
+  const enabled = Boolean(supabase) && Boolean(args.signupId && args.deleteToken)
+  return useQuery({
+    queryKey: auraLedgerKeys.byDay({ playDate: args.playDate, signupId: args.signupId ?? '' }),
+    enabled,
+    queryFn: () =>
+      fetchAuraLedgerForDay({
+        playDate: args.playDate,
+        signupId: String(args.signupId),
+        deleteToken: String(args.deleteToken),
+      }),
+    staleTime: 5_000,
+    refetchInterval: args.refetchIntervalMs ?? 20_000,
+  })
+}
+
 export function useCreateSignupMutation(args: { playDate: string }) {
   const qc = useQueryClient()
   return useMutation({
@@ -138,6 +165,7 @@ export function useCreateSignupMutation(args: { playDate: string }) {
       await qc.invalidateQueries({ queryKey: capsLeaderboardKeys.all })
       await qc.invalidateQueries({ queryKey: weeklyStreakLeaderboardKeys.all })
       await qc.invalidateQueries({ queryKey: playerAuraKeys.all })
+      await qc.invalidateQueries({ queryKey: auraLedgerKeys.all })
     },
   })
 }
@@ -153,6 +181,7 @@ export function useUnregisterSignupMutation(args: { playDate: string }) {
       await qc.invalidateQueries({ queryKey: capsLeaderboardKeys.all })
       await qc.invalidateQueries({ queryKey: weeklyStreakLeaderboardKeys.all })
       await qc.invalidateQueries({ queryKey: playerAuraKeys.all })
+      await qc.invalidateQueries({ queryKey: auraLedgerKeys.all })
     },
   })
 }
