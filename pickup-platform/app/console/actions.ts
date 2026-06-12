@@ -1,0 +1,264 @@
+'use server'
+
+import { revalidatePath } from 'next/cache'
+import { redirect } from 'next/navigation'
+import { createClient } from '@/lib/supabase/server'
+import { materializeEvents } from '@/lib/materializer'
+import { geocodeAddress } from '@/lib/geocode'
+import { getOrgForMember } from '@/lib/orgs'
+import { isValidSlug, normalizeSlug } from '@/lib/tenancy/reserved-slugs'
+
+async function requireOrgAdmin(slug: string) {
+  const org = await getOrgForMember(slug)
+  if (!org) {
+    throw new Error('Not authorized')
+  }
+  return org
+}
+
+/** Returns null when the field is blank/invalid (capacity = "no limit"). */
+function parseOptionalInt(value: FormDataEntryValue | null): number | null {
+  const raw = String(value ?? '').trim()
+  if (!raw) return null
+  const n = Number.parseInt(raw, 10)
+  return Number.isFinite(n) ? n : null
+}
+
+export async function createOrg(formData: FormData) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    redirect('/login?next=/console/new')
+  }
+
+  const name = String(formData.get('name') ?? '').trim()
+  const activity = String(formData.get('activity') ?? '').trim()
+  const slug = normalizeSlug(String(formData.get('slug') ?? ''))
+  const defaultLocale = String(formData.get('default_locale') ?? 'en')
+
+  if (!name || !slug) {
+    return { error: 'Name and slug are required.' }
+  }
+  if (!isValidSlug(slug)) {
+    return { error: 'Slug must be 3–32 characters, lowercase letters, numbers, and hyphens only.' }
+  }
+
+  const { error } = await supabase.from('orgs').insert({
+    slug,
+    name,
+    activity,
+    default_locale: defaultLocale === 'es' ? 'es' : 'en',
+    created_by: user.id,
+  })
+
+  if (error) {
+    if (error.code === '23505') {
+      return { error: 'That slug is already taken.' }
+    }
+    return { error: error.message }
+  }
+
+  revalidatePath('/console')
+  redirect(`/console/${slug}`)
+}
+
+export async function createLocation(orgSlug: string, formData: FormData): Promise<void> {
+  const org = await requireOrgAdmin(orgSlug)
+  const supabase = await createClient()
+
+  const label = String(formData.get('label') ?? '').trim()
+  const address = String(formData.get('address') ?? '').trim()
+  const mapsUrl = String(formData.get('maps_url') ?? '').trim()
+
+  if (!label) {
+    return
+  }
+
+  // Best-effort geocode so weather can be shown. Never blocks creation.
+  const geo = address ? await geocodeAddress(address) : null
+
+  const { error } = await supabase.from('locations').insert({
+    org_id: org.id,
+    label,
+    address,
+    maps_url: mapsUrl,
+    lat: geo?.lat ?? 0,
+    lon: geo?.lon ?? 0,
+  })
+
+  if (error) {
+    return
+  }
+
+  revalidatePath(`/console/${orgSlug}`)
+}
+
+export async function createSchedule(orgSlug: string, formData: FormData) {
+  const org = await requireOrgAdmin(orgSlug)
+  const supabase = await createClient()
+
+  const locationId = String(formData.get('location_id') ?? '')
+  const title = String(formData.get('title') ?? 'Weekly session').trim()
+  const startTime = String(formData.get('start_time') ?? '18:00')
+  const timezone = String(formData.get('timezone') ?? 'UTC').trim()
+  const capacity = parseOptionalInt(formData.get('capacity'))
+  const minPlayers = Number.parseInt(String(formData.get('min_players') ?? '10'), 10)
+  const durationMin = Number.parseInt(String(formData.get('duration_min') ?? '90'), 10)
+  const byweekday = formData
+    .getAll('byweekday')
+    .map((v) => Number.parseInt(String(v), 10))
+    .filter((n) => n >= 0 && n <= 6)
+
+  if (!locationId) {
+    return { error: 'Pick a location.' }
+  }
+  if (byweekday.length === 0) {
+    return { error: 'Pick at least one day of the week.' }
+  }
+  if (!/^\d{2}:\d{2}$/.test(startTime)) {
+    return { error: 'Invalid start time.' }
+  }
+
+  const { error } = await supabase.from('schedules').insert({
+    org_id: org.id,
+    location_id: locationId,
+    title,
+    byweekday,
+    start_time: startTime,
+    timezone,
+    capacity,
+    min_players: minPlayers,
+    duration_min: durationMin,
+  })
+
+  if (error) {
+    return { error: error.message }
+  }
+
+  // TODO: auto-materialize on schedule create (for now, organizer clicks Generate)
+  revalidatePath(`/console/${orgSlug}`)
+  return { ok: true }
+}
+
+export async function createOneOffEvent(orgSlug: string, formData: FormData): Promise<void> {
+  const org = await requireOrgAdmin(orgSlug)
+  const supabase = await createClient()
+
+  const locationId = String(formData.get('location_id') ?? '')
+  const startsAtLocal = String(formData.get('starts_at') ?? '')
+  const capacity = parseOptionalInt(formData.get('capacity'))
+  const minPlayers = Number.parseInt(String(formData.get('min_players') ?? '10'), 10)
+  const announcement = String(formData.get('announcement') ?? '').trim()
+
+  if (!locationId || !startsAtLocal) {
+    return
+  }
+
+  const startsAt = new Date(startsAtLocal)
+  if (Number.isNaN(startsAt.getTime())) {
+    return
+  }
+
+  const { error } = await supabase.from('events').insert({
+    org_id: org.id,
+    schedule_id: null,
+    location_id: locationId,
+    starts_at: startsAt.toISOString(),
+    capacity,
+    min_players: minPlayers,
+    announcement,
+    status: 'tentative',
+  })
+
+  if (error) {
+    return
+  }
+
+  revalidatePath(`/console/${orgSlug}`)
+  revalidatePath(`/org/${orgSlug}`)
+}
+
+export async function cancelEvent(orgSlug: string, eventId: string): Promise<void> {
+  const org = await requireOrgAdmin(orgSlug)
+  const supabase = await createClient()
+
+  const { error } = await supabase
+    .from('events')
+    .update({ status: 'cancelled' })
+    .eq('id', eventId)
+    .eq('org_id', org.id)
+
+  if (error) {
+    return
+  }
+
+  revalidatePath(`/console/${orgSlug}`)
+  revalidatePath(`/org/${orgSlug}`)
+}
+
+export async function materializeOrgEvents(orgSlug: string) {
+  const org = await requireOrgAdmin(orgSlug)
+
+  try {
+    const count = await materializeEvents({ orgId: org.id })
+    revalidatePath(`/console/${orgSlug}`)
+    revalidatePath(`/org/${orgSlug}`)
+    return { ok: true, count }
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : 'Materialization failed'
+    if (msg.includes('SUPABASE_SERVICE_ROLE_KEY')) {
+      return {
+        error: 'Add SUPABASE_SERVICE_ROLE_KEY to .env.local to generate events.',
+      }
+    }
+    return { error: msg }
+  }
+}
+
+export async function updateBranding(orgSlug: string, formData: FormData) {
+  const org = await requireOrgAdmin(orgSlug)
+  const supabase = await createClient()
+
+  const logoUrl = String(formData.get('logo_url') ?? '').trim()
+  const accentColor = String(formData.get('accent_color') ?? '').trim()
+
+  const accent = /^#[0-9a-fA-F]{6}$/.test(accentColor) ? accentColor : '#2563eb'
+
+  const { error } = await supabase
+    .from('orgs')
+    .update({
+      branding: { logo_url: logoUrl || null, accent_color: accent },
+    })
+    .eq('id', org.id)
+
+  if (error) {
+    return { error: error.message }
+  }
+
+  revalidatePath(`/console/${orgSlug}`)
+  revalidatePath(`/org/${orgSlug}`)
+  return { ok: true }
+}
+
+/** Live availability check for the org-creation form. */
+export async function checkSlugAvailability(
+  slug: string,
+): Promise<{ available: boolean; reason?: string }> {
+  const normalized = normalizeSlug(slug)
+
+  if (!normalized) {
+    return { available: false, reason: 'empty' }
+  }
+  if (!isValidSlug(normalized)) {
+    return { available: false, reason: 'invalid' }
+  }
+
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from('orgs')
+    .select('id')
+    .eq('slug', normalized)
+    .maybeSingle()
+
+  return { available: !data }
+}
