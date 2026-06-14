@@ -1,12 +1,37 @@
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { getOrgBySlug } from '@/lib/orgs'
 import { getUpcomingEventsForOrg, formatEventDateTime, statusLabel } from '@/lib/events'
 import { getRootDomain } from '@/lib/tenancy/parse-host'
+import { buildOrgMetadata, getOrgBaseUrl } from '@/lib/og-metadata'
 import { ShareButton } from '../share-button'
 
 type Props = {
   params: Promise<{ slug: string }>
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { slug } = await params
+  const org = await getOrgBySlug(slug)
+  if (!org || org.status !== 'active') {
+    return {}
+  }
+
+  const events = await getUpcomingEventsForOrg(org.id, 1)
+  const nextEvent = events[0]
+  const title = org.name
+  const description = nextEvent
+    ? `${org.activity || 'Upcoming sessions'} — next up ${formatEventDateTime(nextEvent.starts_at)} at ${nextEvent.location_label}. See who's coming and join.`
+    : `${org.activity || 'Group sessions'} on ${org.name}. See upcoming sessions and join.`
+
+  return buildOrgMetadata({
+    baseUrl: await getOrgBaseUrl(slug),
+    path: '/events',
+    title,
+    description,
+    siteName: org.name,
+  })
 }
 
 export default async function EventsPage({ params }: Props) {

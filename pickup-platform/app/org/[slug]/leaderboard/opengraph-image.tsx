@@ -1,0 +1,40 @@
+import { getOrgBySlug } from '@/lib/orgs'
+import { getOrgCapsLeaderboard, getOrgStreakLeaderboard } from '@/lib/engagement'
+import { ogImageContentType, ogImageSize, renderOrgOgImage } from '@/lib/og-image'
+
+export const alt = 'Leaderboard'
+export const size = ogImageSize
+export const contentType = ogImageContentType
+
+type Props = {
+  params: Promise<{ slug: string }>
+}
+
+export default async function Image({ params }: Props) {
+  const { slug } = await params
+  const org = await getOrgBySlug(slug)
+  const [capsRows, streakRows] = org
+    ? await Promise.all([getOrgCapsLeaderboard(org.id), getOrgStreakLeaderboard(org.id)])
+    : [[], []]
+
+  const topCaps = capsRows[0]
+  const topStreak = streakRows[0]
+
+  let headline = 'Leaderboard'
+  let subline = 'Caps and weekly streaks'
+  if (topCaps) {
+    headline = `${topCaps.display_name} · ${topCaps.caps} caps`
+    subline = topStreak
+      ? `🔥 ${topStreak.display_name} on a ${topStreak.current_streak_weeks}-week streak`
+      : 'Most sessions played'
+  }
+
+  return renderOrgOgImage({
+    slug,
+    orgName: org?.name ?? 'Headcount',
+    accent: org?.branding.accent_color ?? '#2563eb',
+    headline,
+    subline,
+    footer: 'See the full leaderboard',
+  })
+}

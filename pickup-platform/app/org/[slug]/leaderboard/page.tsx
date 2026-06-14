@@ -1,10 +1,35 @@
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { getOrgBySlug } from '@/lib/orgs'
 import { getOrgCapsLeaderboard, getOrgStreakLeaderboard } from '@/lib/engagement'
+import { buildOrgMetadata, getOrgBaseUrl } from '@/lib/og-metadata'
 
 type Props = {
   params: Promise<{ slug: string }>
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { slug } = await params
+  const org = await getOrgBySlug(slug)
+  if (!org || org.status !== 'active') {
+    return {}
+  }
+
+  const capsRows = await getOrgCapsLeaderboard(org.id)
+  const top = capsRows[0]
+  const title = `Leaderboard · ${org.name}`
+  const description = top
+    ? `${top.display_name} leads with ${top.caps} ${top.caps === 1 ? 'cap' : 'caps'}. See caps and weekly streaks for ${org.name}.`
+    : `Caps and weekly streaks for ${org.name}. See who's been showing up.`
+
+  return buildOrgMetadata({
+    baseUrl: await getOrgBaseUrl(slug),
+    path: '/leaderboard',
+    title,
+    description,
+    siteName: org.name,
+  })
 }
 
 export default async function LeaderboardPage({ params }: Props) {

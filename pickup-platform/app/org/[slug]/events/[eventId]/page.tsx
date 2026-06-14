@@ -1,7 +1,9 @@
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { getOrgBySlug } from '@/lib/orgs'
 import { getEventById, formatEventDateTime, statusLabel } from '@/lib/events'
+import { buildOrgMetadata, getOrgBaseUrl } from '@/lib/og-metadata'
 import { getPublicRoster, rosterHeadcount } from '@/lib/signups'
 import { getSessionToken } from '@/lib/participant-session'
 import { getWeatherForEvent } from '@/lib/weather'
@@ -13,6 +15,36 @@ import { ShareButton } from '../../share-button'
 
 type Props = {
   params: Promise<{ slug: string; eventId: string }>
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { slug, eventId } = await params
+  const org = await getOrgBySlug(slug)
+  if (!org || org.status !== 'active') {
+    return {}
+  }
+
+  const event = await getEventById(eventId, org.id)
+  if (!event || event.status === 'cancelled') {
+    return {}
+  }
+
+  const when = formatEventDateTime(event.starts_at)
+  const title = `${when} · ${org.name}`
+  const descriptionParts = [
+    org.activity || 'Session',
+    event.location_label ? `at ${event.location_label}` : null,
+    '— see who\'s coming and join.',
+  ].filter(Boolean)
+  const description = descriptionParts.join(' ')
+
+  return buildOrgMetadata({
+    baseUrl: await getOrgBaseUrl(slug),
+    path: `/events/${eventId}`,
+    title,
+    description,
+    siteName: org.name,
+  })
 }
 
 export default async function EventPage({ params }: Props) {
