@@ -36,8 +36,8 @@ In the Supabase **SQL Editor**, run in order:
 Under **Authentication → URL configuration**, add redirect URLs:
 
 - `http://localhost:3000/auth/callback` (local)
-- `https://headcount.club/auth/callback` (production)
-- `https://www.headcount.club/auth/callback` (production)
+- `https://organizr.co/auth/callback` (production)
+- `https://www.organizr.co/auth/callback` (production)
 
 Enable **Email** provider (magic link). Password auth is not needed.
 

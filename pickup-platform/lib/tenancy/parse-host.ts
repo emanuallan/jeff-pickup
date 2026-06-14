@@ -1,15 +1,15 @@
 import { RESERVED_SLUGS } from './reserved-slugs'
 
-const ROOT_DOMAIN = process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? 'headcount.club'
+const ROOT_DOMAIN = process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? 'organizr.co'
 
 /**
  * Extract org slug from the request host.
- * e.g. jeffsoccer.headcount.club → "jeffsoccer"
+ * e.g. jeffsoccer.organizr.co → "jeffsoccer"
  *      jeffsoccer.localhost → "jeffsoccer" (local dev)
  */
 export function parseOrgSlugFromHost(host: string): string | null {
   const hostname = host.split(':')[0]?.toLowerCase() ?? ''
-  const root = ROOT_DOMAIN.split(':')[0]?.toLowerCase() ?? 'headcount.club'
+  const root = ROOT_DOMAIN.split(':')[0]?.toLowerCase() ?? 'organizr.co'
 
   // Apex / www — no org slug
   if (hostname === root || hostname === `www.${root}`) {

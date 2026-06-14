@@ -1,9 +1,9 @@
 # Headcount
 
-**`headcount.club`** — a multi-tenant, activity-agnostic platform for organizing recurring group
+**`organizr.co`** — a multi-tenant, activity-agnostic platform for organizing recurring group
 activities and tracking who's coming.
 
-Each organization gets its own subdomain, e.g. `jeffsoccer.headcount.club`.
+Each organization gets its own subdomain, e.g. `jeffsoccer.organizr.co`.
 
 > The original PoC lives in the repo root (`../`). **Do not build new product features there.**
 

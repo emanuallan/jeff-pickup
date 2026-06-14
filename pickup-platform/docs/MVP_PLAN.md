@@ -2,7 +2,7 @@
 
 **Status:** Plan of record · **Author:** engineering · **Last updated:** 2026-06-10
 
-**Platform:** Headcount (`headcount.club`). Orgs live on subdomains, e.g. `jeffsoccer.headcount.club`.
+**Platform:** Headcount (`organizr.co`). Orgs live on subdomains, e.g. `jeffsoccer.organizr.co`.
 
 This document defines the MVP for **Headcount**, a multi-tenant platform for organizing recurring
 group activities and tracking who's coming. It's derived from the single-org proof of concept in
@@ -41,7 +41,7 @@ These were decided up front and drive the rest of the plan:
 | Area | Decision |
 | --- | --- |
 | **Stack** | Next.js (App Router) on Vercel + Supabase (Postgres, Auth, RLS) + Vercel Cron. Lighter alternative noted in §11. |
-| **Domain / tenancy** | `headcount.club`; subdomain per org (`<slug>.headcount.club`, e.g. `jeffsoccer.headcount.club`); every tenant-owned row carries `org_id`; isolation enforced by Postgres RLS. |
+| **Domain / tenancy** | `organizr.co`; subdomain per org (`<slug>.organizr.co`, e.g. `jeffsoccer.organizr.co`); every tenant-owned row carries `org_id`; isolation enforced by Postgres RLS. |
 | **Activity-agnostic** | No sport-specific logic or copy. Each org sets its own activity; the product speaks in generic terms (session, who's coming, headcount). |
 | **Participant identity** | Phone-as-identity, frictionless. `first_name` + `last_name` + optional `display_name`. Device-bound session token. SMS OTP verification is **scaffolded but dormant** — built into the schema/UI seams, not wired up, until an org actually needs it. |
 | **Organizer onboarding** | Fully self-serve, gated by an `org.status` flag so we can still hand-seed/approve the first orgs. |
@@ -84,7 +84,7 @@ These are the validated, high-value features. They are reframed around **org →
 ## 5. Architecture overview
 
 ```
-                      <slug>.headcount.club
+                      <slug>.organizr.co
                                 │
                     ┌───────────▼────────────┐
                     │  Next.js (App Router)   │   Vercel
@@ -109,7 +109,7 @@ These are the validated, high-value features. They are reframed around **org →
                          SMS provider (OTP) — not wired up yet
 ```
 
-**Request flow:** Vercel wildcard domain (`*.headcount.club`) → Next.js `middleware.ts` reads the
+**Request flow:** Vercel wildcard domain (`*.organizr.co`) → Next.js `middleware.ts` reads the
 host, extracts the org `slug`, looks it up (cached) → injects `org_id` into request context →
 pages/handlers query Supabase. RLS guarantees a request can only read/write rows for orgs the
 caller is allowed to touch.
@@ -122,7 +122,7 @@ recurring-event generator (cron route) and the OTP/identity endpoints, and it sc
 
 ## 6. Multi-tenancy model
 
-- **Org resolution:** `slug` (subdomain of `headcount.club`) → `orgs.id`. Cache slug→id (in-memory LRU + short TTL) to avoid a DB hit per request.
+- **Org resolution:** `slug` (subdomain of `organizr.co`) → `orgs.id`. Cache slug→id (in-memory LRU + short TTL) to avoid a DB hit per request.
 - **Reserved subdomains:** `www`, `app`, `api`, `admin`, `auth`, `assets`, `static`, `help`, `status`, `mail`, `blog` — cannot be claimed as org slugs.
 - **Isolation:** every tenant table has `org_id uuid not null references orgs(id)`. RLS policies join through `org_members` for writes and allow public read only where the org has opted into a public roster.
 - **No cross-tenant leakage:** the anon/public key is still used client-side, but RLS — not the app — is the security boundary. Settings are never publicly writable.
@@ -268,7 +268,7 @@ audit_log (optional MVP+): who changed what, per org
 
 ## 9. Core features (MVP scope)
 
-1. **Org public page** (`<slug>.headcount.club`): branding, activity label, next upcoming event(s), and a prominent "Join" CTA. SSR for good link previews.
+1. **Org public page** (`<slug>.organizr.co`): branding, activity label, next upcoming event(s), and a prominent "Join" CTA. SSR for good link previews.
 2. **Event roster:** live list of who's coming, headcount vs capacity, guest counts, each person's **arrival status** (§9.1), session status, weather, location + map link.
 3. **Frictionless join / unregister:** name + phone, recognized on return, self-unregister.
 4. **Recurring schedules + auto-materialization:** organizer defines cadence; cron generates upcoming `events` in a **rolling 30-day window** that continuously rolls forward, so participants can sign up to any session within the active recurring schedule.
@@ -306,22 +306,22 @@ from a fixed, app-defined set — useful info for organizers and other players. 
 
 ### 10.1 Organizer onboarding (self-serve)
 
-1. Land on marketing/root (`headcount.club` / `www`), click **Create your group**.
+1. Land on marketing/root (`organizr.co` / `www`), click **Create your group**.
 2. **Sign in** (passwordless email magic link) → creates an `auth.user`.
-3. **Create org:** name + **activity** label + desired **slug** (live availability check against reserved + taken list) → `<slug>.headcount.club`.
+3. **Create org:** name + **activity** label + desired **slug** (live availability check against reserved + taken list) → `<slug>.organizr.co`.
    - Org created with `status = 'active'` by default; we can flip the default to `'pending'`
      to hand-approve the first cohort without code changes.
 4. **Add a location** (label, address → geocode lat/lon, maps link).
 5. **Create a recurring schedule** (days, time, duration, capacity, min players, timezone).
    - Cron immediately materializes the next instances so the page isn't empty.
 6. **Customize** (optional): logo, color, default language, announcement.
-7. **Publish & share:** copy `<slug>.headcount.club` + auto-generated WhatsApp/FB share text.
+7. **Publish & share:** copy `<slug>.organizr.co` + auto-generated WhatsApp/FB share text.
 
 Result: a working public page with upcoming sessions, in minutes, with zero help from us.
 
 ### 10.2 Participant onboarding (frictionless)
 
-1. Open the org link (`<slug>.headcount.club`) — sees the **next session** and current roster.
+1. Open the org link (`<slug>.organizr.co`) — sees the **next session** and current roster.
 2. Tap **Join**.
 3. First time: enter **first name, last name, phone** (optional `display_name`). Submit.
    - (Dormant seam: a "Verify number" OTP step lives here but is off until an org needs it.)
@@ -402,7 +402,7 @@ pickup-platform/
 Sequenced so each phase is shippable/testable. Fundamentals first; engagement features come only
 after the core loop works.
 
-- **Phase 0 — Foundation:** Next.js app, Supabase project, Tailwind, organizer auth (email magic link), base schema (`orgs`, `org_members`), subdomain (`*.headcount.club`) middleware + reserved slugs, RLS scaffolding.
+- **Phase 0 — Foundation:** Next.js app, Supabase project, Tailwind, organizer auth (email magic link), base schema (`orgs`, `org_members`), subdomain (`*.organizr.co`) middleware + reserved slugs, RLS scaffolding.
 - **Phase 1 — Org + events core:** activity-agnostic org profile, locations, schedules, event materializer cron, organizer console to create them, public org page rendering upcoming events.
 - **Phase 2 — Participant identity + roster (the core loop):** phone-keyed participants, device sessions, frictionless join/unregister, guest counts, **arrival statuses** (§9.1), capacity + auto status promotion, announcements. OTP seams present but **dormant** (`require_phone_verification` flag, verify step stubbed, no SMS provider).
 - **Phase 3 — Lightweight polish:** weather, i18n (EN/ES), share text, branding, and the end-to-end self-serve org-creation wizard with slug availability UX. Create the Jeff org as the first real tenant.
@@ -414,7 +414,7 @@ after the core loop works.
 
 ## 16. Decisions resolved
 
-- **Name + domain:** Headcount, `headcount.club`; orgs at `<slug>.headcount.club` (e.g. `jeffsoccer.headcount.club`). ✅
+- **Name + domain:** Headcount, `organizr.co`; orgs at `<slug>.organizr.co` (e.g. `jeffsoccer.organizr.co`). ✅
 - **OTP:** scaffolded but dormant — no SMS provider wired up until a real org needs it. ✅
 - **Waitlist:** out of MVP. ✅
 - **Phone privacy regs:** not a design concern for MVP. ✅

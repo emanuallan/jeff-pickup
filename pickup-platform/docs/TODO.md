@@ -6,9 +6,9 @@ Track deferred work and known simplifications. Prefer shipping simple, refine la
 
 - [x] Next.js app scaffold
 - [x] Supabase migration: `orgs`, `org_members`, RLS
-- [x] Subdomain middleware (`*.headcount.club`, `*.localhost`)
+- [x] Subdomain middleware (`*.organizr.co`, `*.localhost`)
 - [x] Organizer email magic-link auth
-- [ ] Deploy to Vercel with wildcard domain `*.headcount.club`
+- [ ] Deploy to Vercel with wildcard domain `*.organizr.co`
 - [ ] Session refresh on subdomain routes (middleware currently skips `updateSession` on rewrites)
 
 ## Phase 1 — Org + events core
@@ -68,7 +68,7 @@ Track deferred work and known simplifications. Prefer shipping simple, refine la
 - Join/leave/status changes go through security-definer RPCs (not direct table writes)
 - Phone stored as normalized digits only (no E.164 library yet)
 - New session token created on each join (old sessions remain valid until expiry)
-- Console links use `slug.localhost:3000` in dev, `https://slug.headcount.club` in prod
+- Console links use `slug.localhost:3000` in dev, `https://slug.organizr.co` in prod
 - Public org-page links are subdomain-relative (`/events/X`) — middleware adds the org prefix
 - Weather only shows within ~15-day forecast horizon; needs a geocoded location
 - Geocoding is best-effort (Nominatim); failures leave lat/lon at 0 (no weather)
