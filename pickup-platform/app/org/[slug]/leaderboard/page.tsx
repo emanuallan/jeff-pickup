@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { getOrgBySlug } from '@/lib/orgs'
 import { getOrgCapsLeaderboard, getOrgStreakLeaderboard } from '@/lib/engagement'
-import { buildOrgMetadata, getOrgBaseUrl } from '@/lib/og-metadata'
+import { buildOrgMetadata } from '@/lib/og-metadata'
 
 type Props = {
   params: Promise<{ slug: string }>
@@ -24,8 +24,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     : `Caps and weekly streaks for ${org.name}. See who's been showing up.`
 
   return buildOrgMetadata({
-    baseUrl: await getOrgBaseUrl(slug),
+    slug,
     path: '/leaderboard',
+    imagePath: '/leaderboard/og-image',
     title,
     description,
     siteName: org.name,

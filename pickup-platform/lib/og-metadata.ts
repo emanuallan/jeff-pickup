@@ -1,30 +1,43 @@
 import type { Metadata } from 'next'
-import { headers } from 'next/headers'
 
-export async function getOrgBaseUrl(slug: string): Promise<string> {
-  const h = await headers()
-  const host = h.get('host')
-  if (host) {
-    const proto = host.includes('localhost') ? 'http' : 'https'
-    return `${proto}://${host}`
+/**
+ * Canonical public base URL for an org's subdomain.
+ * Built deterministically from the slug so it never leaks the internal
+ * /org/[slug] rewrite path or an unreliable header-derived host.
+ */
+export function orgBaseUrl(slug: string): string {
+  const root = process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? 'organizr.co'
+  if (process.env.NODE_ENV === 'development') {
+    return `http://${slug}.localhost:3000`
   }
-  return `https://${slug}.${process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? 'organizr.co'}`
+  return `https://${slug}.${root}`
 }
 
 export function buildOrgMetadata({
-  baseUrl,
+  slug,
   path,
+  imagePath,
   title,
   description,
   siteName,
+  imageAlt,
 }: {
-  baseUrl: string
+  slug: string
   path: string
+  imagePath: string
   title: string
   description: string
   siteName: string
+  imageAlt?: string
 }): Metadata {
+  const baseUrl = orgBaseUrl(slug)
   const url = `${baseUrl}${path}`
+  const image = {
+    url: `${baseUrl}${imagePath}`,
+    width: 1200,
+    height: 630,
+    alt: imageAlt ?? title,
+  }
 
   return {
     metadataBase: new URL(baseUrl),
@@ -36,11 +49,13 @@ export function buildOrgMetadata({
       siteName,
       title,
       description,
+      images: [image],
     },
     twitter: {
       card: 'summary_large_image',
       title,
       description,
+      images: [image.url],
     },
   }
 }

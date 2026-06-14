@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { getOrgBySlug } from '@/lib/orgs'
 import { getEventById, formatEventDateTime, statusLabel } from '@/lib/events'
-import { buildOrgMetadata, getOrgBaseUrl } from '@/lib/og-metadata'
+import { buildOrgMetadata } from '@/lib/og-metadata'
 import { getPublicRoster, rosterHeadcount } from '@/lib/signups'
 import { getSessionToken } from '@/lib/participant-session'
 import { getWeatherForEvent } from '@/lib/weather'
@@ -39,8 +39,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const description = descriptionParts.join(' ')
 
   return buildOrgMetadata({
-    baseUrl: await getOrgBaseUrl(slug),
+    slug,
     path: `/events/${eventId}`,
+    imagePath: `/events/${eventId}/og-image`,
     title,
     description,
     siteName: org.name,

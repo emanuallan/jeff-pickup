@@ -4,7 +4,7 @@ import { notFound } from 'next/navigation'
 import { getOrgBySlug } from '@/lib/orgs'
 import { getUpcomingEventsForOrg, formatEventDateTime, statusLabel } from '@/lib/events'
 import { getRootDomain } from '@/lib/tenancy/parse-host'
-import { buildOrgMetadata, getOrgBaseUrl } from '@/lib/og-metadata'
+import { buildOrgMetadata } from '@/lib/og-metadata'
 import { ShareButton } from '../share-button'
 
 type Props = {
@@ -26,8 +26,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     : `${org.activity || 'Group sessions'} on ${org.name}. See upcoming sessions and join.`
 
   return buildOrgMetadata({
-    baseUrl: await getOrgBaseUrl(slug),
+    slug,
     path: '/events',
+    imagePath: '/events/og-image',
     title,
     description,
     siteName: org.name,

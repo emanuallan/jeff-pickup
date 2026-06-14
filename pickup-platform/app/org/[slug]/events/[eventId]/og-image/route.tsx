@@ -1,16 +1,12 @@
 import { getOrgBySlug } from '@/lib/orgs'
 import { getEventById, formatEventDateTime } from '@/lib/events'
-import { ogImageContentType, ogImageSize, renderOrgOgImage } from '@/lib/og-image'
+import { renderOrgOgImage } from '@/lib/og-image'
 
-export const alt = 'Event details'
-export const size = ogImageSize
-export const contentType = ogImageContentType
-
-type Props = {
+type Context = {
   params: Promise<{ slug: string; eventId: string }>
 }
 
-export default async function Image({ params }: Props) {
+export async function GET(_request: Request, { params }: Context) {
   const { slug, eventId } = await params
   const org = await getOrgBySlug(slug)
   const event = org ? await getEventById(eventId, org.id) : null
