@@ -14,6 +14,7 @@ import {
 import { MaterializeButton } from './materialize-button'
 import { ScheduleForm } from './schedule-form'
 import { BrandingForm } from './branding-form'
+import { DeleteLocationButton } from './delete-location-button'
 
 type Props = {
   params: Promise<{ orgSlug: string }>
@@ -84,10 +85,19 @@ export default async function OrgConsolePage({ params }: Props) {
                 key={loc.id}
                 className="rounded-xl border border-zinc-800 bg-zinc-900/50 px-4 py-3 text-sm"
               >
-                <div className="font-medium">{loc.label}</div>
-                {loc.address ? (
-                  <div className="mt-0.5 text-xs text-zinc-500">{loc.address}</div>
-                ) : null}
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <div className="font-medium">{loc.label}</div>
+                    {loc.address ? (
+                      <div className="mt-0.5 text-xs text-zinc-500">{loc.address}</div>
+                    ) : null}
+                  </div>
+                  <DeleteLocationButton
+                    orgSlug={orgSlug}
+                    locationId={loc.id}
+                    locationLabel={loc.label}
+                  />
+                </div>
               </li>
             ))}
           </ul>

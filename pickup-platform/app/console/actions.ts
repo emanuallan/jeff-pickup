@@ -93,6 +93,49 @@ export async function createLocation(orgSlug: string, formData: FormData): Promi
   revalidatePath(`/console/${orgSlug}`)
 }
 
+export async function deleteLocation(
+  orgSlug: string,
+  locationId: string,
+): Promise<{ ok: true } | { error: string }> {
+  const org = await requireOrgAdmin(orgSlug)
+  const supabase = await createClient()
+
+  // location_id has on-delete-restrict FKs from schedules and events,
+  // so check for dependents and explain rather than fail with a raw FK error.
+  const [{ count: scheduleCount }, { count: eventCount }] = await Promise.all([
+    supabase
+      .from('schedules')
+      .select('id', { count: 'exact', head: true })
+      .eq('org_id', org.id)
+      .eq('location_id', locationId),
+    supabase
+      .from('events')
+      .select('id', { count: 'exact', head: true })
+      .eq('org_id', org.id)
+      .eq('location_id', locationId),
+  ])
+
+  if ((scheduleCount ?? 0) > 0) {
+    return { error: 'Remove the recurring schedule that uses this location first.' }
+  }
+  if ((eventCount ?? 0) > 0) {
+    return { error: 'This location is used by existing sessions. Remove those first.' }
+  }
+
+  const { error } = await supabase
+    .from('locations')
+    .delete()
+    .eq('id', locationId)
+    .eq('org_id', org.id)
+
+  if (error) {
+    return { error: error.message }
+  }
+
+  revalidatePath(`/console/${orgSlug}`)
+  return { ok: true }
+}
+
 export async function createSchedule(orgSlug: string, formData: FormData) {
   const org = await requireOrgAdmin(orgSlug)
   const supabase = await createClient()
