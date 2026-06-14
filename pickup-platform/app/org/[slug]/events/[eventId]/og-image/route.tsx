@@ -15,6 +15,7 @@ export async function GET(_request: Request, { params }: Context) {
     slug,
     orgName: org?.name ?? 'Headcount',
     accent: org?.branding.accent_color ?? '#2563eb',
+    logoUrl: org?.branding.logo_url,
     headline: event ? formatEventDateTime(event.starts_at) : '',
     subline: event?.location_label,
     footer: org?.activity || 'See who\'s coming',

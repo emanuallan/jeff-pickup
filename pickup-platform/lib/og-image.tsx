@@ -11,6 +11,7 @@ type OrgOgCardProps = {
   headline: string
   subline?: string
   footer?: string
+  logoUrl?: string | null
 }
 
 export function OrgOgCard({
@@ -20,6 +21,7 @@ export function OrgOgCard({
   headline,
   subline,
   footer,
+  logoUrl,
 }: OrgOgCardProps) {
   return (
     <div
@@ -36,22 +38,38 @@ export function OrgOgCard({
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: '72px',
-            height: '72px',
-            borderRadius: '20px',
-            backgroundColor: accent,
-            fontSize: '40px',
-            fontWeight: 700,
-            color: '#ffffff',
-          }}
-        >
-          {orgName.charAt(0).toUpperCase()}
-        </div>
+        {logoUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={logoUrl}
+            alt=""
+            width={72}
+            height={72}
+            style={{
+              width: '72px',
+              height: '72px',
+              borderRadius: '20px',
+              objectFit: 'cover',
+            }}
+          />
+        ) : (
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: '72px',
+              height: '72px',
+              borderRadius: '20px',
+              backgroundColor: accent,
+              fontSize: '40px',
+              fontWeight: 700,
+              color: '#ffffff',
+            }}
+          >
+            {orgName.charAt(0).toUpperCase()}
+          </div>
+        )}
         <div style={{ display: 'flex', fontSize: '36px', fontWeight: 600 }}>{orgName}</div>
       </div>
 
