@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { getOrgBySlug } from '@/lib/orgs'
-import { getUpcomingEventsForOrg, formatEventDateTime, statusLabel } from '@/lib/events'
+import { getUpcomingEventsForOrg, formatEventTime, statusLabel } from '@/lib/events'
 import { getRootDomain } from '@/lib/tenancy/parse-host'
 import { buildOrgMetadata } from '@/lib/og-metadata'
 import { ShareButton } from '../share-button'
@@ -22,7 +22,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const nextEvent = events[0]
   const title = org.name
   const description = nextEvent
-    ? `${org.activity || 'Upcoming sessions'} — next up ${formatEventDateTime(nextEvent.starts_at)} at ${nextEvent.location_label}. See who's coming and join.`
+    ? `${org.activity || 'Upcoming sessions'} — next up ${formatEventTime(nextEvent)} at ${nextEvent.location_label}. See who's coming and join.`
     : `${org.activity || 'Group sessions'} on ${org.name}. See upcoming sessions and join.`
 
   return buildOrgMetadata({
@@ -92,7 +92,7 @@ export default async function EventsPage({ params }: Props) {
                   <div className="flex items-start justify-between gap-2">
                     <div>
                       <div className="text-sm font-medium">
-                        {formatEventDateTime(ev.starts_at)}
+                        {formatEventTime(ev)}
                       </div>
                       <div className="mt-0.5 text-xs text-zinc-500">{ev.location_label}</div>
                     </div>

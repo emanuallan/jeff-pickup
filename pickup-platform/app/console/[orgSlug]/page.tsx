@@ -3,7 +3,7 @@ import { notFound, redirect } from 'next/navigation'
 import { getOrgForMember } from '@/lib/orgs'
 import { getLocationsForOrg } from '@/lib/locations'
 import { getSchedulesForOrg, formatWeekdays, formatTime } from '@/lib/schedules'
-import { getEventsForOrgConsole, formatEventDateTime, statusLabel } from '@/lib/events'
+import { getEventsForOrgConsole, formatEventTime, statusLabel } from '@/lib/events'
 import { getRootDomain } from '@/lib/tenancy/parse-host'
 import {
   cancelEvent,
@@ -15,6 +15,7 @@ import { MaterializeButton } from './materialize-button'
 import { ScheduleForm } from './schedule-form'
 import { BrandingForm } from './branding-form'
 import { DeleteLocationButton } from './delete-location-button'
+import { OneOffEventForm } from './one-off-event-form'
 
 type Props = {
   params: Promise<{ orgSlug: string }>
@@ -41,7 +42,6 @@ export default async function OrgConsolePage({ params }: Props) {
       : `https://${org.slug}.${rootDomain}`
 
   const addLocation = createLocation.bind(null, orgSlug)
-  const addOneOff = createOneOffEvent.bind(null, orgSlug)
 
   return (
     <main className="mx-auto min-h-dvh max-w-lg px-6 py-10">
@@ -181,7 +181,7 @@ export default async function OrgConsolePage({ params }: Props) {
               >
                 <div className="flex items-start justify-between gap-2">
                   <div>
-                    <div className="font-medium">{formatEventDateTime(ev.starts_at)}</div>
+                    <div className="font-medium">{formatEventTime(ev)}</div>
                     <div className="mt-0.5 text-xs text-zinc-500">{ev.location_label}</div>
                   </div>
                   <span
@@ -224,57 +224,10 @@ export default async function OrgConsolePage({ params }: Props) {
         )}
 
         {locations.length > 0 ? (
-          <form action={addOneOff} className="mt-4 space-y-3 rounded-2xl border border-zinc-800 bg-zinc-900/30 p-4">
-            <p className="text-xs font-medium text-zinc-400">Add one-off session</p>
-            <select
-              name="location_id"
-              required
-              className="w-full rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
-              defaultValue={locations[0]?.id}
-            >
-              {locations.map((loc) => (
-                <option key={loc.id} value={loc.id}>
-                  {loc.label}
-                </option>
-              ))}
-            </select>
-            <input
-              name="starts_at"
-              type="datetime-local"
-              required
-              className="w-full rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            <div className="grid grid-cols-2 gap-3">
-              <label className="block">
-                <span className="text-xs text-zinc-500">Capacity (optional)</span>
-                <input
-                  name="capacity"
-                  type="number"
-                  min={2}
-                  max={999}
-                  placeholder="No limit"
-                  className="mt-1 w-full rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </label>
-              <label className="block">
-                <span className="text-xs text-zinc-500">Min players</span>
-                <input
-                  name="min_players"
-                  type="number"
-                  min={2}
-                  max={999}
-                  defaultValue={10}
-                  className="mt-1 w-full rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </label>
-            </div>
-            <button
-              type="submit"
-              className="rounded-xl bg-zinc-800 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700"
-            >
-              Add session
-            </button>
-          </form>
+          <OneOffEventForm
+            locations={locations}
+            createOneOff={createOneOffEvent.bind(null, orgSlug)}
+          />
         ) : null}
       </section>
     </main>

@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { materializeEvents } from '@/lib/materializer'
 import { geocodeAddress } from '@/lib/geocode'
+import { localDateTimeInZoneToUtcIso } from '@/lib/datetime'
 import { getOrgForMember } from '@/lib/orgs'
 import { isValidSlug, normalizeSlug } from '@/lib/tenancy/reserved-slugs'
 
@@ -189,6 +190,7 @@ export async function createOneOffEvent(orgSlug: string, formData: FormData): Pr
 
   const locationId = String(formData.get('location_id') ?? '')
   const startsAtLocal = String(formData.get('starts_at') ?? '')
+  const timezone = String(formData.get('timezone') ?? 'UTC').trim()
   const capacity = parseOptionalInt(formData.get('capacity'))
   const minPlayers = Number.parseInt(String(formData.get('min_players') ?? '10'), 10)
   const announcement = String(formData.get('announcement') ?? '').trim()
@@ -197,8 +199,10 @@ export async function createOneOffEvent(orgSlug: string, formData: FormData): Pr
     return
   }
 
-  const startsAt = new Date(startsAtLocal)
-  if (Number.isNaN(startsAt.getTime())) {
+  let startsAtIso: string
+  try {
+    startsAtIso = localDateTimeInZoneToUtcIso(startsAtLocal, timezone)
+  } catch {
     return
   }
 
@@ -206,7 +210,8 @@ export async function createOneOffEvent(orgSlug: string, formData: FormData): Pr
     org_id: org.id,
     schedule_id: null,
     location_id: locationId,
-    starts_at: startsAt.toISOString(),
+    starts_at: startsAtIso,
+    timezone,
     capacity,
     min_players: minPlayers,
     announcement,

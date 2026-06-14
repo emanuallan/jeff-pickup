@@ -8,6 +8,7 @@ export type Event = {
   schedule_id: string | null
   location_id: string
   starts_at: string
+  timezone: string
   capacity: number | null
   min_players: number
   status: EventStatus
@@ -30,6 +31,7 @@ function mapEventRow(row: Record<string, unknown>): EventWithLocation {
   const { locations: _locations, ...event } = row
   return {
     ...(event as Event),
+    timezone: String(event.timezone ?? 'UTC'),
     location_label: loc?.label ?? 'Location',
     location_lat: loc?.lat ?? 0,
     location_lon: loc?.lon ?? 0,
@@ -102,14 +104,19 @@ export async function getEventsForOrgConsole(orgId: string): Promise<EventWithLo
 
 export function formatEventDateTime(iso: string, timeZone?: string): string {
   const d = new Date(iso)
-  return d.toLocaleString(undefined, {
+  return d.toLocaleString('en-US', {
     weekday: 'short',
     month: 'short',
     day: 'numeric',
     hour: 'numeric',
     minute: '2-digit',
-    timeZone: timeZone || undefined,
+    timeZone: timeZone || 'UTC',
   })
+}
+
+/** Format an event's starts_at in its stored timezone. */
+export function formatEventTime(event: Pick<Event, 'starts_at' | 'timezone'>): string {
+  return formatEventDateTime(event.starts_at, event.timezone)
 }
 
 export function statusLabel(status: EventStatus): string {

@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { getOrgBySlug } from '@/lib/orgs'
-import { getEventById, formatEventDateTime, statusLabel } from '@/lib/events'
+import { getEventById, formatEventTime, statusLabel } from '@/lib/events'
 import { buildOrgMetadata } from '@/lib/og-metadata'
 import { getPublicRoster, rosterHeadcount } from '@/lib/signups'
 import { getSessionToken } from '@/lib/participant-session'
@@ -29,7 +29,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     return {}
   }
 
-  const when = formatEventDateTime(event.starts_at)
+  const when = formatEventTime(event)
   const title = `${when} · ${org.name}`
   const descriptionParts = [
     org.activity || 'Session',
@@ -83,7 +83,7 @@ export default async function EventPage({ params }: Props) {
     event.location_lon,
     event.starts_at,
   )
-  const shareText = `${org.name}: ${formatEventDateTime(event.starts_at)} at ${event.location_label}. Join us!`
+  const shareText = `${org.name}: ${formatEventTime(event)} at ${event.location_label}. Join us!`
 
   const token = await getSessionToken()
   let participant = null
@@ -112,7 +112,7 @@ export default async function EventPage({ params }: Props) {
 
       <header className="mt-6">
         <div className="flex items-start justify-between gap-3">
-          <h1 className="text-2xl font-semibold">{formatEventDateTime(event.starts_at)}</h1>
+          <h1 className="text-2xl font-semibold">{formatEventTime(event)}</h1>
           <ShareButton title={org.name} text={shareText} />
         </div>
         <p className="mt-1 text-sm text-zinc-400">

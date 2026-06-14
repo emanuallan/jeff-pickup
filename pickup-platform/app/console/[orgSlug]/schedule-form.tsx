@@ -36,6 +36,7 @@ export function ScheduleForm({ orgSlug, locations, createSchedule }: Props) {
 
   async function handleSubmit(formData: FormData) {
     setError(null)
+    formData.set('timezone', Intl.DateTimeFormat().resolvedOptions().timeZone)
     const result = await createSchedule(orgSlug, formData)
     if (result?.error) {
       setError(result.error)

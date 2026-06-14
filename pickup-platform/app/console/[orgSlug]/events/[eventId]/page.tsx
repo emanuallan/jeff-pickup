@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { getOrgForMember } from '@/lib/orgs'
-import { getEventById, formatEventDateTime, statusLabel } from '@/lib/events'
+import { getEventById, formatEventTime, statusLabel } from '@/lib/events'
 import { getRosterWithContact, rosterHeadcount } from '@/lib/signups'
 import { arrivalStatusEmoji } from '@/lib/arrival-status'
 
@@ -31,7 +31,7 @@ export default async function ConsoleEventRosterPage({ params }: Props) {
         ← {org.name}
       </Link>
 
-      <h1 className="mt-6 text-xl font-semibold">{formatEventDateTime(event.starts_at)}</h1>
+      <h1 className="mt-6 text-xl font-semibold">{formatEventTime(event)}</h1>
       <p className="mt-1 text-sm text-zinc-400">{event.location_label}</p>
       <p className="mt-2 text-xs text-zinc-500">
         {statusLabel(event.status)} · {headcount}
