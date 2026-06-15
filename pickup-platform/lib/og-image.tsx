@@ -33,7 +33,7 @@ export function OrgOgCard({
   subline,
   footer,
   logoUrl,
-  cta = "I'm going!",
+  cta = 'Count me in',
 }: OrgOgCardProps) {
   return (
     <div

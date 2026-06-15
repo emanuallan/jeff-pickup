@@ -14,11 +14,11 @@ export function orgBaseUrl(slug: string): string {
 }
 
 /**
- * Trim a description to a target max length on a word boundary, so social
- * previews (~125 chars) and search snippets (~150-160 chars) don't hard-truncate
- * mid-word. Defaults to 150 to stay under the common truncation thresholds.
+ * Trim a description to a target max length on a word boundary. Social previews
+ * truncate around ~125 chars, so we cap there; that still clears the ~120 lower
+ * bound search snippets prefer, landing in the narrow overlap that satisfies both.
  */
-export function clampDescription(text: string, max = 150): string {
+export function clampDescription(text: string, max = 125): string {
   const trimmed = text.trim()
   if (trimmed.length <= max) {
     return trimmed

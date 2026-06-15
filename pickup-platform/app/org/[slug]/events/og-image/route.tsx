@@ -20,6 +20,6 @@ export async function GET(_request: Request, { params }: Context) {
     headline: nextEvent ? formatEventTime(nextEvent) : 'Upcoming sessions',
     subline: nextEvent?.location_label ?? org?.activity,
     footer: nextEvent ? 'Join this session' : org?.activity || 'See who\'s coming',
-    cta: nextEvent ? "I'm going!" : 'See sessions',
+    cta: nextEvent ? 'Count me in' : 'See sessions',
   })
 }
