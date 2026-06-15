@@ -179,8 +179,18 @@ export async function createSchedule(orgSlug: string, formData: FormData) {
     return { error: error.message }
   }
 
-  // TODO: auto-materialize on schedule create (for now, organizer clicks Generate)
+  // Populate sessions immediately so the organizer never has to "generate" by
+  // hand; the nightly cron keeps the rolling 30-day window topped up afterward.
+  // A materialize failure must not fail schedule creation — sessions will still
+  // be filled in on the next cron run.
+  try {
+    await materializeEvents({ orgId: org.id })
+  } catch {
+    // swallow — schedule was created successfully
+  }
+
   revalidatePath(`/console/${orgSlug}`)
+  revalidatePath(`/org/${orgSlug}`)
   return { ok: true }
 }
 
