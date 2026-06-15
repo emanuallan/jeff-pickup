@@ -20,11 +20,20 @@ export type EventWithLocation = Event & {
   location_lat: number
   location_lon: number
   location_maps_url: string
+  location_is_online: boolean
+  location_meeting_url: string
 }
 
-const LOCATION_SELECT = '*, locations(label, lat, lon, maps_url)'
+const LOCATION_SELECT = '*, locations(label, lat, lon, maps_url, is_online, meeting_url)'
 
-type LocationJoin = { label: string; lat: number; lon: number; maps_url: string } | null
+type LocationJoin = {
+  label: string
+  lat: number
+  lon: number
+  maps_url: string
+  is_online: boolean
+  meeting_url: string
+} | null
 
 function mapEventRow(row: Record<string, unknown>): EventWithLocation {
   const loc = row.locations as LocationJoin
@@ -36,6 +45,8 @@ function mapEventRow(row: Record<string, unknown>): EventWithLocation {
     location_lat: loc?.lat ?? 0,
     location_lon: loc?.lon ?? 0,
     location_maps_url: loc?.maps_url ?? '',
+    location_is_online: loc?.is_online ?? false,
+    location_meeting_url: loc?.meeting_url ?? '',
   }
 }
 

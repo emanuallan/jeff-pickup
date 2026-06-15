@@ -18,6 +18,7 @@ import {
   createSchedule,
 } from '../actions'
 import { ScheduleForm } from './schedule-form'
+import { AddLocationForm } from './add-location-form'
 import { DeleteLocationButton } from './delete-location-button'
 import { DeleteEventButton } from './delete-event-button'
 import { OneOffEventForm } from './one-off-event-form'
@@ -64,7 +65,11 @@ export default async function OrgConsolePage({ params }: Props) {
             <div className="flex items-start justify-between gap-2">
               <div>
                 <div className="font-medium">{loc.label}</div>
-                {loc.address ? (
+                {loc.is_online ? (
+                  <div className="mt-0.5 text-xs text-zinc-500">
+                    Online{loc.meeting_url ? ' · meeting link set' : ''}
+                  </div>
+                ) : loc.address ? (
                   <div className="mt-0.5 text-xs text-zinc-500">{loc.address}</div>
                 ) : null}
               </div>
@@ -79,33 +84,7 @@ export default async function OrgConsolePage({ params }: Props) {
       </ul>
     ) : null
 
-  const addLocationForm = (
-    <form action={addLocation} className="space-y-3 rounded-2xl border border-zinc-800 bg-zinc-900/30 p-4">
-      <p className="text-xs font-medium text-zinc-400">Add location</p>
-      <input
-        name="label"
-        required
-        placeholder="Park name"
-        className="w-full rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
-      />
-      <input
-        name="address"
-        placeholder="Street address (optional)"
-        className="w-full rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
-      />
-      <input
-        name="maps_url"
-        placeholder="Google Maps link (optional)"
-        className="w-full rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
-      />
-      <button
-        type="submit"
-        className="rounded-xl bg-zinc-800 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700"
-      >
-        Add location
-      </button>
-    </form>
-  )
+  const addLocationForm = <AddLocationForm addLocation={addLocation} />
 
   const scheduleList =
     schedules.length > 0 ? (

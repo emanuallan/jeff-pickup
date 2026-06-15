@@ -68,21 +68,26 @@ export async function createLocation(orgSlug: string, formData: FormData): Promi
   const supabase = await createClient()
 
   const label = String(formData.get('label') ?? '').trim()
+  const isOnline = formData.get('is_online') === 'on' || formData.get('is_online') === 'true'
   const address = String(formData.get('address') ?? '').trim()
   const mapsUrl = String(formData.get('maps_url') ?? '').trim()
+  const meetingUrl = String(formData.get('meeting_url') ?? '').trim()
 
   if (!label) {
     return
   }
 
-  // Best-effort geocode so weather can be shown. Never blocks creation.
-  const geo = address ? await geocodeAddress(address) : null
+  // Online locations carry a meeting link instead of a physical address; skip
+  // geocoding (no map/weather for online sessions).
+  const geo = !isOnline && address ? await geocodeAddress(address) : null
 
   const { error } = await supabase.from('locations').insert({
     org_id: org.id,
     label,
-    address,
-    maps_url: mapsUrl,
+    is_online: isOnline,
+    meeting_url: isOnline ? meetingUrl : '',
+    address: isOnline ? '' : address,
+    maps_url: isOnline ? '' : mapsUrl,
     lat: geo?.lat ?? 0,
     lon: geo?.lon ?? 0,
   })

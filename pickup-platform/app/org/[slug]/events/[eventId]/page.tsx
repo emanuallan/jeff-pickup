@@ -113,7 +113,20 @@ export default async function EventPage({ params }: Props) {
           <ShareButton title={org.name} text={shareText} />
         </div>
         <p className="mt-1 text-sm text-zinc-400">
-          {event.location_maps_url ? (
+          {event.location_is_online ? (
+            event.location_meeting_url ? (
+              <a
+                href={event.location_meeting_url}
+                target="_blank"
+                rel="noreferrer"
+                className="hover:text-zinc-200"
+              >
+                {event.location_label} · Join online ↗
+              </a>
+            ) : (
+              <>{event.location_label} · Online</>
+            )
+          ) : event.location_maps_url ? (
             <a
               href={event.location_maps_url}
               target="_blank"

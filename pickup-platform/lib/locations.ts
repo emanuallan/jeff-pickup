@@ -8,6 +8,8 @@ export type Location = {
   maps_url: string
   lat: number
   lon: number
+  is_online: boolean
+  meeting_url: string
   is_active: boolean
 }
 
