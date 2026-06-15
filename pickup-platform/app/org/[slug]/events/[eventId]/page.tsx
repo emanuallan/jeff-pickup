@@ -32,7 +32,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const when = formatEventTime(event)
   const title = `${when} · ${org.name}`
   const activity = org.activity || 'a session'
-  const where = event.location_label ? ` at ${event.location_label}` : ''
+  const locationPreposition = event.location_is_online ? 'on' : 'at'
+  const where = event.location_label ? ` ${locationPreposition} ${event.location_label}` : ''
   const description = `Join ${org.name} for ${activity} on ${when}${where}. See who's coming and confirm you're in — it only takes a few seconds.`
 
   return buildOrgMetadata({
@@ -80,7 +81,7 @@ export default async function EventPage({ params }: Props) {
     event.location_lon,
     event.starts_at,
   )
-  const shareText = `${org.name}: ${formatEventTime(event)} at ${event.location_label}. Join us!`
+  const shareText = `${org.name}: ${formatEventTime(event)} ${event.location_is_online ? 'on' : 'at'} ${event.location_label}. Join us!`
 
   const token = await getSessionToken()
   let participant = null
