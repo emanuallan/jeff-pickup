@@ -6,7 +6,7 @@ export default function HomePage() {
 
   return (
     <main className="mx-auto flex min-h-dvh max-w-lg flex-col justify-center px-6 py-16">
-      <p className="text-sm font-medium uppercase tracking-wide text-zinc-400">Headcount</p>
+      <p className="text-sm font-medium uppercase tracking-wide text-zinc-400">Organizr</p>
       <h1 className="mt-2 text-4xl font-semibold tracking-tight">
         Know who&apos;s coming.
       </h1>

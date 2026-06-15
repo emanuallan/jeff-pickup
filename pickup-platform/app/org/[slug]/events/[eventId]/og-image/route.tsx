@@ -13,7 +13,7 @@ export async function GET(_request: Request, { params }: Context) {
 
   return renderOrgOgImage({
     slug,
-    orgName: org?.name ?? 'Headcount',
+    orgName: org?.name ?? 'Organizr',
     accent: org?.branding.accent_color ?? '#2563eb',
     logoUrl: org?.branding.logo_url,
     headline: event ? formatEventTime(event) : '',

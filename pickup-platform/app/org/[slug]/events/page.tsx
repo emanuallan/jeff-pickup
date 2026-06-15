@@ -73,7 +73,7 @@ export default async function EventsPage({ params }: Props) {
               <p className="mt-1 text-sm text-zinc-400">{org.activity}</p>
             ) : null}
           </div>
-          <ShareButton title={org.name} text={`Join ${org.name} on Headcount`} />
+          <ShareButton title={org.name} text={`Join ${org.name} on Organizr`} />
         </div>
       </header>
 

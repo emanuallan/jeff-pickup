@@ -17,7 +17,7 @@ export async function geocodeAddress(address: string): Promise<GeoResult | null>
     const res = await fetch(url, {
       headers: {
         // Nominatim usage policy requires identifying the app
-        'User-Agent': 'Headcount/0.1 (organizr.co)',
+        'User-Agent': 'Organizr/0.1 (organizr.co)',
       },
       next: { revalidate: 86_400 },
     })

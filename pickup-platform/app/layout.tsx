@@ -2,8 +2,12 @@ import type { Metadata } from 'next'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'Headcount',
-  description: 'Track who\'s coming to your recurring group activities',
+  title: {
+    default: 'Organizr',
+    template: '%s · Organizr',
+  },
+  description:
+    'Organizr is the easy headcount for recurring group activities — share a link, see who\'s coming, and run your sessions.',
 }
 
 export default function RootLayout({

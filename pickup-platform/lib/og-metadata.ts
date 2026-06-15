@@ -58,7 +58,8 @@ export function buildOrgMetadata({
 
   return {
     metadataBase: new URL(baseUrl),
-    title,
+    // Absolute so the root "%s · Organizr" template doesn't suffix tenant pages.
+    title: { absolute: title },
     description: desc,
     openGraph: {
       type: 'website',
