@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { getOrgBySlug, getOrgForMember } from '@/lib/orgs'
+import { getOrgBySlug } from '@/lib/orgs'
 import { getUpcomingEventsForOrg, formatEventTime, statusLabel } from '@/lib/events'
 import { getRootDomain } from '@/lib/tenancy/parse-host'
 import { buildOrgMetadata } from '@/lib/og-metadata'
@@ -47,24 +47,8 @@ export default async function EventsPage({ params }: Props) {
   const events = await getUpcomingEventsForOrg(org.id)
   const accent = org.branding.accent_color
 
-  // Only members/admins of this org get the link back to their console.
-  const memberOrg = await getOrgForMember(slug)
-  const consoleUrl =
-    process.env.NODE_ENV === 'development'
-      ? `http://localhost:3000/console/${slug}`
-      : `https://${getRootDomain()}/console/${slug}`
-
   return (
     <main className="mx-auto min-h-dvh max-w-lg px-6 py-10">
-      {memberOrg ? (
-        <a
-          href={consoleUrl}
-          className="mb-6 inline-flex items-center gap-1 text-sm text-zinc-400 hover:text-zinc-200"
-        >
-          ← Back to console
-        </a>
-      ) : null}
-
       <header>
         {org.branding.logo_url ? (
           // eslint-disable-next-line @next/next/no-img-element

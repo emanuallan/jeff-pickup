@@ -9,7 +9,7 @@ Track deferred work and known simplifications. Prefer shipping simple, refine la
 - [x] Subdomain middleware (`*.organizr.co`, `*.localhost`)
 - [x] Organizer email magic-link auth
 - [ ] Deploy to Vercel with wildcard domain `*.organizr.co`
-- [x] Session refresh on subdomain routes (middleware refreshes on apex + subdomains; auth cookie shared across `*.organizr.co` so organizers are recognized on their public pages)
+- [ ] Session refresh on subdomain routes (middleware currently skips `updateSession` on rewrites)
 
 ## Phase 1 — Org + events core
 
