@@ -65,7 +65,7 @@ export default async function ConsoleEventRosterPage({ params }: Props) {
                 <div className="flex items-start justify-between gap-2">
                   <div>
                     <div className="font-medium">
-                      {arrivalStatusEmoji(e.arrival_status)} {e.display_name}
+                      {arrivalStatusEmoji(e.arrival_status, event.location_is_online)} {e.display_name}
                       {e.guest_count > 0 ? ` +${e.guest_count}` : ''}
                     </div>
                     <div className="mt-0.5 text-xs text-zinc-500">

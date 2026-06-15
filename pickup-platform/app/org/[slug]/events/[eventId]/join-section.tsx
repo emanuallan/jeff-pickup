@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { joinEvent, leaveEvent, quickJoinEvent, updateArrivalStatus } from './actions'
-import { ARRIVAL_STATUSES, arrivalStatusEmoji, type ArrivalStatus } from '@/lib/arrival-status'
+import { arrivalStatuses, arrivalStatusEmoji, type ArrivalStatus } from '@/lib/arrival-status'
 
 type Participant = {
   first_name: string
@@ -24,6 +24,7 @@ type Props = {
   eventId: string
   isPast: boolean
   isFull: boolean
+  isOnline: boolean
   participant: Participant | null
   mySignup: MySignup | null
 }
@@ -51,7 +52,7 @@ export function JoinSection(props: Props) {
         <div>
           <p className="text-xs font-medium text-zinc-400">Your status</p>
           <div className="mt-2 flex flex-wrap gap-2">
-            {ARRIVAL_STATUSES.map((s) => (
+            {arrivalStatuses(props.isOnline).map((s) => (
               <button
                 key={s.value}
                 type="button"
@@ -264,6 +265,7 @@ export function RosterList(props: {
     arrival_status: string
   }[]
   badgesByParticipantId?: Record<string, RosterBadgeInfo>
+  isOnline?: boolean
 }) {
   if (props.entries.length === 0) {
     return <p className="text-sm text-zinc-500">No one signed up yet. Be the first!</p>
@@ -277,7 +279,7 @@ export function RosterList(props: {
           className="flex items-center justify-between gap-2 rounded-xl border border-zinc-800 bg-black/20 px-3 py-2 text-sm"
         >
           <span className="min-w-0">
-            {arrivalStatusEmoji(e.arrival_status)} {e.display_name}
+            {arrivalStatusEmoji(e.arrival_status, props.isOnline)} {e.display_name}
             <RosterBadges badges={props.badgesByParticipantId?.[e.participant_id]} />
             {e.guest_count > 0 ? (
               <span className="text-zinc-500"> +{e.guest_count}</span>

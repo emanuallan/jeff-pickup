@@ -171,6 +171,7 @@ export default async function EventPage({ params }: Props) {
             eventId={eventId}
             isPast={isPast}
             isFull={isFull}
+            isOnline={event.location_is_online}
             participant={participant}
             mySignup={mySignup}
           />
@@ -182,7 +183,11 @@ export default async function EventPage({ params }: Props) {
           Who&apos;s coming ({headcount})
         </h2>
         <div className="mt-4">
-          <RosterList entries={roster} badgesByParticipantId={badgesByParticipantId} />
+          <RosterList
+            entries={roster}
+            badgesByParticipantId={badgesByParticipantId}
+            isOnline={event.location_is_online}
+          />
         </div>
       </section>
     </main>
