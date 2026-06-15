@@ -20,10 +20,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   const events = await getUpcomingEventsForOrg(org.id, 1)
   const nextEvent = events[0]
+  const activity = org.activity || 'group sessions'
   const title = org.name
   const description = nextEvent
-    ? `${org.activity || 'Upcoming sessions'} — next up ${formatEventTime(nextEvent)} at ${nextEvent.location_label}. See who's coming and join.`
-    : `${org.activity || 'Group sessions'} on ${org.name}. See upcoming sessions and join.`
+    ? `See upcoming ${activity} with ${org.name}. Next up ${formatEventTime(nextEvent)} at ${nextEvent.location_label} — see who's coming, RSVP in seconds, and bring guests.`
+    : `See upcoming ${activity} with ${org.name}. RSVP in seconds, bring guests, and check who's coming to each session — tap to view the full schedule.`
 
   return buildOrgMetadata({
     slug,

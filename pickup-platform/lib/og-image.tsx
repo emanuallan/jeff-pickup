@@ -12,6 +12,17 @@ type OrgOgCardProps = {
   subline?: string
   footer?: string
   logoUrl?: string | null
+  cta?: string
+}
+
+function readableTextColor(hex: string): string {
+  const m = /^#?([0-9a-fA-F]{6})$/.exec(hex)
+  if (!m) return '#ffffff'
+  const r = parseInt(m[1].slice(0, 2), 16)
+  const g = parseInt(m[1].slice(2, 4), 16)
+  const b = parseInt(m[1].slice(4, 6), 16)
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
+  return luminance > 0.6 ? '#09090b' : '#ffffff'
 }
 
 export function OrgOgCard({
@@ -22,6 +33,7 @@ export function OrgOgCard({
   subline,
   footer,
   logoUrl,
+  cta = 'Tap to RSVP',
 }: OrgOgCardProps) {
   return (
     <div
@@ -79,6 +91,24 @@ export function OrgOgCard({
         </div>
         {subline ? (
           <div style={{ display: 'flex', fontSize: '40px', color: '#a1a1aa' }}>{subline}</div>
+        ) : null}
+        {cta ? (
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              alignSelf: 'flex-start',
+              marginTop: '12px',
+              padding: '16px 36px',
+              borderRadius: '9999px',
+              backgroundColor: accent,
+              color: readableTextColor(accent),
+              fontSize: '36px',
+              fontWeight: 700,
+            }}
+          >
+            {cta}
+          </div>
         ) : null}
       </div>
 

@@ -20,8 +20,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const top = capsRows[0]
   const title = `Leaderboard · ${org.name}`
   const description = top
-    ? `${top.display_name} leads with ${top.caps} ${top.caps === 1 ? 'cap' : 'caps'}. See caps and weekly streaks for ${org.name}.`
-    : `Caps and weekly streaks for ${org.name}. See who's been showing up.`
+    ? `${top.display_name} leads ${org.name} with ${top.caps} ${top.caps === 1 ? 'cap' : 'caps'}. See the full caps ranking and weekly streaks, then join a session to climb the board.`
+    : `See caps and weekly streaks for ${org.name}. Track who shows up most, build your streak, and join a session to climb the leaderboard yourself.`
 
   return buildOrgMetadata({
     slug,

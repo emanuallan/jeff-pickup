@@ -19,5 +19,6 @@ export async function GET(_request: Request, { params }: Context) {
     headline: event ? formatEventTime(event) : '',
     subline: event?.location_label,
     footer: org?.activity || 'See who\'s coming',
+    cta: 'Tap to RSVP',
   })
 }
