@@ -2,17 +2,16 @@ import { type NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 import {
   parseOrgSlugFromHost,
-  getAuthCookieDomain,
+  withAuthCookieOptions,
 } from '@/lib/tenancy/parse-host'
 
 export async function middleware(request: NextRequest) {
   const host = request.headers.get('host') ?? ''
   const orgSlug = parseOrgSlugFromHost(host)
 
-  // Refresh the auth session on every request (apex AND subdomains) and write
-  // the refreshed cookies with a shared domain so the organizer's session is
-  // recognized on their org's public subdomain too.
-  const cookieDomain = getAuthCookieDomain(host)
+  // Refresh the auth session on every request (apex AND subdomains). When on
+  // organizr.co, write cookies with a shared domain so organizers are recognized
+  // on org subdomains too.
   const pendingCookies: {
     name: string
     value: string
@@ -31,7 +30,7 @@ export async function middleware(request: NextRequest) {
         setAll(cookiesToSet: { name: string; value: string; options?: Record<string, unknown> }[]) {
           cookiesToSet.forEach(({ name, value, options }) => {
             request.cookies.set(name, value)
-            pendingCookies.push({ name, value, options: { ...options, domain: cookieDomain } })
+            pendingCookies.push({ name, value, options: withAuthCookieOptions(host, options) })
           })
         },
       },
