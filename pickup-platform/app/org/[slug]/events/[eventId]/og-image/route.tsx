@@ -18,6 +18,7 @@ export async function GET(_request: Request, { params }: Context) {
     logoUrl: org?.branding.logo_url,
     headline: event ? formatEventTime(event) : '',
     subline: event?.location_label,
+    sublineEmoji: event ? (event.location_is_online ? '💻' : '📍') : undefined,
     footer: org?.activity || 'See who\'s coming',
     cta: 'Count me in',
   })

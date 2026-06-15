@@ -19,6 +19,7 @@ export async function GET(_request: Request, { params }: Context) {
     logoUrl: org?.branding.logo_url,
     headline: nextEvent ? formatEventTime(nextEvent) : 'Upcoming sessions',
     subline: nextEvent?.location_label ?? org?.activity,
+    sublineEmoji: nextEvent ? (nextEvent.location_is_online ? '💻' : '📍') : undefined,
     footer: nextEvent ? 'Join this session' : org?.activity || 'See who\'s coming',
     cta: nextEvent ? 'Count me in' : 'See sessions',
   })
