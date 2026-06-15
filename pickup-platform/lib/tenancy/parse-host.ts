@@ -40,3 +40,21 @@ export function parseOrgSlugFromHost(host: string): string | null {
 export function getRootDomain(): string {
   return ROOT_DOMAIN
 }
+
+/**
+ * Cookie `domain` that shares the auth session across the apex and every org
+ * subdomain. Organizers sign in on the apex (`organizr.co`) but browse public
+ * pages on `<slug>.organizr.co`; a leading-dot domain makes the session cookie
+ * visible on both so we can recognize them there.
+ *
+ * `localhost` is special-cased: a `Domain=localhost` cookie is shared across
+ * `*.localhost` in browsers, which covers `<slug>.localhost:3000` in dev.
+ */
+export function getAuthCookieDomain(host: string): string {
+  const hostname = host.split(':')[0]?.toLowerCase() ?? ''
+  if (hostname === 'localhost' || hostname.endsWith('.localhost')) {
+    return 'localhost'
+  }
+  const root = ROOT_DOMAIN.split(':')[0]?.toLowerCase() || 'organizr.co'
+  return `.${root}`
+}
