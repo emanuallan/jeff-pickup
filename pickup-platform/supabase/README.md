@@ -31,6 +31,7 @@ In the Supabase **SQL Editor**, run in order:
 4. `supabase/migrations/004_participants_signups.sql`
 5. `supabase/migrations/005_engagement_leaderboards.sql`
 6. `supabase/migrations/006_event_timezone.sql`
+7. `supabase/migrations/007_schedule_event_skips.sql`
 
 ## 3. Auth settings
 

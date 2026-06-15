@@ -82,18 +82,44 @@ export async function getUpcomingEventsForOrg(
   return data.map(mapEventRow)
 }
 
-export async function getEventsForOrgConsole(orgId: string): Promise<EventWithLocation[]> {
+/** Upcoming sessions for the organizer console (all statuses), soonest first. */
+export async function getUpcomingEventsForConsole(
+  orgId: string,
+  limit = 50,
+): Promise<EventWithLocation[]> {
   const supabase = await createClient()
-  const since = new Date()
-  since.setDate(since.getDate() - 7)
+  const now = new Date().toISOString()
 
   const { data, error } = await supabase
     .from('events')
     .select(LOCATION_SELECT)
     .eq('org_id', orgId)
-    .gte('starts_at', since.toISOString())
+    .gte('starts_at', now)
     .order('starts_at', { ascending: true })
-    .limit(50)
+    .limit(limit)
+
+  if (error || !data) {
+    return []
+  }
+
+  return data.map(mapEventRow)
+}
+
+/** Past sessions for the organizer console (all statuses), most recent first. */
+export async function getPastEventsForConsole(
+  orgId: string,
+  limit = 30,
+): Promise<EventWithLocation[]> {
+  const supabase = await createClient()
+  const now = new Date().toISOString()
+
+  const { data, error } = await supabase
+    .from('events')
+    .select(LOCATION_SELECT)
+    .eq('org_id', orgId)
+    .lt('starts_at', now)
+    .order('starts_at', { ascending: false })
+    .limit(limit)
 
   if (error || !data) {
     return []
@@ -104,14 +130,20 @@ export async function getEventsForOrgConsole(orgId: string): Promise<EventWithLo
 
 export function formatEventDateTime(iso: string, timeZone?: string): string {
   const d = new Date(iso)
-  return d.toLocaleString('en-US', {
-    weekday: 'short',
+  const zone = timeZone || 'UTC'
+  // "Weekday, Day @ Time" — e.g. "Monday, Jun 15 @ 6:00 PM"
+  const date = d.toLocaleString('en-US', {
+    weekday: 'long',
     month: 'short',
     day: 'numeric',
+    timeZone: zone,
+  })
+  const time = d.toLocaleString('en-US', {
     hour: 'numeric',
     minute: '2-digit',
-    timeZone: timeZone || 'UTC',
+    timeZone: zone,
   })
+  return `${date} @ ${time}`
 }
 
 /** Format an event's starts_at in its stored timezone. */

@@ -3,7 +3,13 @@ import { notFound } from 'next/navigation'
 import { getOrgForMember } from '@/lib/orgs'
 import { getLocationsForOrg } from '@/lib/locations'
 import { getSchedulesForOrg, formatWeekdays, formatTime } from '@/lib/schedules'
-import { getEventsForOrgConsole, formatEventTime, statusLabel } from '@/lib/events'
+import {
+  getUpcomingEventsForConsole,
+  getPastEventsForConsole,
+  formatEventTime,
+  statusLabel,
+  type EventWithLocation,
+} from '@/lib/events'
 import { getRootDomain } from '@/lib/tenancy/parse-host'
 import {
   cancelEvent,
@@ -13,6 +19,7 @@ import {
 } from '../actions'
 import { ScheduleForm } from './schedule-form'
 import { DeleteLocationButton } from './delete-location-button'
+import { DeleteEventButton } from './delete-event-button'
 import { OneOffEventForm } from './one-off-event-form'
 
 type Props = {
@@ -27,10 +34,11 @@ export default async function OrgConsolePage({ params }: Props) {
     notFound()
   }
 
-  const [locations, schedules, events] = await Promise.all([
+  const [locations, schedules, upcomingEvents, pastEvents] = await Promise.all([
     getLocationsForOrg(org.id),
     getSchedulesForOrg(org.id),
-    getEventsForOrgConsole(org.id),
+    getUpcomingEventsForConsole(org.id),
+    getPastEventsForConsole(org.id),
   ])
 
   const rootDomain = getRootDomain()
@@ -123,57 +131,65 @@ export default async function OrgConsolePage({ params }: Props) {
     <ScheduleForm orgSlug={orgSlug} locations={locations} createSchedule={createSchedule} />
   )
 
+  const renderEventItem = (ev: EventWithLocation, opts?: { past?: boolean }) => (
+    <li
+      key={ev.id}
+      className="rounded-xl border border-zinc-800 bg-zinc-900/50 px-4 py-3 text-sm"
+    >
+      <div className="flex items-start justify-between gap-2">
+        <div>
+          <div className="font-medium">{formatEventTime(ev)}</div>
+          <div className="mt-0.5 text-xs text-zinc-500">{ev.location_label}</div>
+        </div>
+        <span
+          className={
+            ev.status === 'cancelled'
+              ? 'text-xs text-red-400'
+              : ev.status === 'on'
+                ? 'text-xs text-emerald-400'
+                : 'text-xs text-zinc-500'
+          }
+        >
+          {statusLabel(ev.status)}
+        </span>
+      </div>
+      <div className="mt-2 flex items-center gap-3">
+        <Link
+          href={`/console/${orgSlug}/events/${ev.id}`}
+          className="text-xs font-medium text-blue-400 hover:text-blue-300"
+        >
+          View roster →
+        </Link>
+        {!opts?.past && ev.status !== 'cancelled' ? (
+          <form action={cancelEvent.bind(null, orgSlug, ev.id)}>
+            <button type="submit" className="text-xs text-zinc-500 hover:text-red-300">
+              Cancel session
+            </button>
+          </form>
+        ) : null}
+        <DeleteEventButton
+          orgSlug={orgSlug}
+          eventId={ev.id}
+          eventLabel={formatEventTime(ev)}
+          recurring={!opts?.past && ev.schedule_id != null}
+        />
+      </div>
+    </li>
+  )
+
   const sessionsBlock = (
     <>
       <p className="text-xs text-zinc-500">
         Sessions are generated automatically from your recurring schedule for the next 30
         days — a new one rolls in each day, so you never have to add them by hand.
       </p>
-      {events.length > 0 ? (
+      {upcomingEvents.length > 0 ? (
         <ul className="mt-3 space-y-2">
-          {events.map((ev) => (
-            <li
-              key={ev.id}
-              className="rounded-xl border border-zinc-800 bg-zinc-900/50 px-4 py-3 text-sm"
-            >
-              <div className="flex items-start justify-between gap-2">
-                <div>
-                  <div className="font-medium">{formatEventTime(ev)}</div>
-                  <div className="mt-0.5 text-xs text-zinc-500">{ev.location_label}</div>
-                </div>
-                <span
-                  className={
-                    ev.status === 'cancelled'
-                      ? 'text-xs text-red-400'
-                      : ev.status === 'on'
-                        ? 'text-xs text-emerald-400'
-                        : 'text-xs text-zinc-500'
-                  }
-                >
-                  {statusLabel(ev.status)}
-                </span>
-              </div>
-              <div className="mt-2 flex items-center gap-3">
-                <Link
-                  href={`/console/${orgSlug}/events/${ev.id}`}
-                  className="text-xs font-medium text-blue-400 hover:text-blue-300"
-                >
-                  View roster →
-                </Link>
-                {ev.status !== 'cancelled' ? (
-                  <form action={cancelEvent.bind(null, orgSlug, ev.id)}>
-                    <button type="submit" className="text-xs text-zinc-500 hover:text-red-300">
-                      Cancel session
-                    </button>
-                  </form>
-                ) : null}
-              </div>
-            </li>
-          ))}
+          {upcomingEvents.map((ev) => renderEventItem(ev))}
         </ul>
       ) : (
         <p className="mt-3 text-sm text-zinc-500">
-          No sessions yet — they&apos;ll appear here automatically once your schedule has
+          No upcoming sessions — they&apos;ll appear here automatically once your schedule has
           upcoming dates. You can also add a one-off below.
         </p>
       )}
@@ -189,6 +205,19 @@ export default async function OrgConsolePage({ params }: Props) {
           />
         </div>
       </details>
+
+      {pastEvents.length > 0 ? (
+        <details className="mt-4 rounded-2xl border border-zinc-800 bg-zinc-900/30">
+          <summary className="cursor-pointer px-4 py-3 text-xs font-medium text-zinc-400 hover:text-zinc-200">
+            Past sessions ({pastEvents.length})
+          </summary>
+          <div className="px-4 pb-4">
+            <ul className="space-y-2">
+              {pastEvents.map((ev) => renderEventItem(ev, { past: true }))}
+            </ul>
+          </div>
+        </details>
+      ) : null}
     </>
   )
 

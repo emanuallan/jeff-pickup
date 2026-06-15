@@ -254,6 +254,59 @@ export async function cancelEvent(orgSlug: string, eventId: string): Promise<voi
   revalidatePath(`/org/${orgSlug}`)
 }
 
+export async function deleteEvent(
+  orgSlug: string,
+  eventId: string,
+): Promise<{ ok: true } | { error: string }> {
+  const org = await requireOrgAdmin(orgSlug)
+  const supabase = await createClient()
+
+  const { data: event, error: fetchError } = await supabase
+    .from('events')
+    .select('schedule_id, starts_at')
+    .eq('id', eventId)
+    .eq('org_id', org.id)
+    .maybeSingle()
+
+  if (fetchError) {
+    return { error: fetchError.message }
+  }
+  if (!event) {
+    return { error: 'Session not found.' }
+  }
+
+  // Recurring future sessions: record a skip before deleting so the nightly
+  // materializer never recreates this occurrence.
+  if (event.schedule_id && new Date(event.starts_at) >= new Date()) {
+    const { error: skipError } = await supabase.from('schedule_event_skips').upsert(
+      {
+        org_id: org.id,
+        schedule_id: event.schedule_id,
+        starts_at: event.starts_at,
+      },
+      { onConflict: 'schedule_id,starts_at', ignoreDuplicates: true },
+    )
+
+    if (skipError) {
+      return { error: skipError.message }
+    }
+  }
+
+  const { error } = await supabase
+    .from('events')
+    .delete()
+    .eq('id', eventId)
+    .eq('org_id', org.id)
+
+  if (error) {
+    return { error: error.message }
+  }
+
+  revalidatePath(`/console/${orgSlug}`)
+  revalidatePath(`/org/${orgSlug}`)
+  return { ok: true }
+}
+
 export async function materializeOrgEvents(orgSlug: string) {
   const org = await requireOrgAdmin(orgSlug)
 
