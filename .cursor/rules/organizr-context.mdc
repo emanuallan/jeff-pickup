@@ -1,0 +1,31 @@
+---
+description: Organizr project context and where to work
+alwaysApply: true
+---
+
+# Organizr — project context
+
+This repo builds **Organizr** (organizr.co), a multi-tenant SaaS for organizing recurring
+group activities and tracking who's coming.
+
+## Where to work (critical)
+
+- **All product work happens in `pickup-platform/`.** This is the real Next.js 15 + Supabase app.
+- The **repo root** (`src/`, `bot/`, `vite.config.ts`, etc.) is the original **"Jeff Pickup"
+  proof-of-concept** (single-org, soccer-specific, Vite). It is **inspiration/reference only** —
+  do NOT build product features there. It also holds deferred experiments (aura, omegaball,
+  WhatsApp bot) that are out of scope.
+
+## Restore full context
+
+Before non-trivial work, read these (authoritative over any summary):
+
+- `pickup-platform/docs/CONTEXT.md` — full session-restore brief (architecture, conventions, gotchas)
+- `pickup-platform/docs/MVP_PLAN.md` — plan of record
+- `pickup-platform/docs/TODO.md` — live task list
+
+## Working agreements
+
+- Verify with `npm run build` in `pickup-platform/` after substantive changes.
+- Only commit/push when explicitly asked; push to `main` with concise messages.
+- When using shell globs, quote paths containing `[brackets]`.
