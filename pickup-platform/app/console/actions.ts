@@ -326,6 +326,32 @@ export async function materializeOrgEvents(orgSlug: string) {
   }
 }
 
+export async function updateOrgProfile(orgSlug: string, formData: FormData) {
+  const org = await requireOrgAdmin(orgSlug)
+  const supabase = await createClient()
+
+  const name = String(formData.get('name') ?? '').trim()
+  const activity = String(formData.get('activity') ?? '').trim()
+
+  if (!name) {
+    return { error: 'Group name is required.' }
+  }
+
+  const { error } = await supabase
+    .from('orgs')
+    .update({ name, activity })
+    .eq('id', org.id)
+
+  if (error) {
+    return { error: error.message }
+  }
+
+  revalidatePath(`/console/${orgSlug}`)
+  revalidatePath(`/console/${orgSlug}/settings`)
+  revalidatePath(`/org/${orgSlug}`)
+  return { ok: true }
+}
+
 export async function updateBranding(orgSlug: string, formData: FormData) {
   const org = await requireOrgAdmin(orgSlug)
   const supabase = await createClient()

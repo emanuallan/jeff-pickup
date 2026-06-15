@@ -177,6 +177,20 @@ export default async function OrgConsolePage({ params }: Props) {
     </li>
   )
 
+  const oneOffBlock = (
+    <details className="rounded-2xl border border-zinc-800 bg-zinc-900/30">
+      <summary className="cursor-pointer px-4 py-3 text-xs font-medium text-zinc-400 hover:text-zinc-200">
+        + Add a one-off session
+      </summary>
+      <div className="px-4 pb-4">
+        <OneOffEventForm
+          locations={locations}
+          createOneOff={createOneOffEvent.bind(null, orgSlug)}
+        />
+      </div>
+    </details>
+  )
+
   const sessionsBlock = (
     <>
       <p className="text-xs text-zinc-500">
@@ -190,21 +204,9 @@ export default async function OrgConsolePage({ params }: Props) {
       ) : (
         <p className="mt-3 text-sm text-zinc-500">
           No upcoming sessions — they&apos;ll appear here automatically once your schedule has
-          upcoming dates. You can also add a one-off below.
+          upcoming dates. You can add a one-off above.
         </p>
       )}
-
-      <details className="mt-4 rounded-2xl border border-zinc-800 bg-zinc-900/30">
-        <summary className="cursor-pointer px-4 py-3 text-xs font-medium text-zinc-400 hover:text-zinc-200">
-          + Add a one-off session
-        </summary>
-        <div className="px-4 pb-4">
-          <OneOffEventForm
-            locations={locations}
-            createOneOff={createOneOffEvent.bind(null, orgSlug)}
-          />
-        </div>
-      </details>
 
       {pastEvents.length > 0 ? (
         <details className="mt-4 rounded-2xl border border-zinc-800 bg-zinc-900/30">
@@ -237,7 +239,7 @@ export default async function OrgConsolePage({ params }: Props) {
             href={`/console/${orgSlug}/settings`}
             className="rounded-xl border border-zinc-700 px-3 py-2 text-xs font-medium text-zinc-200 hover:bg-zinc-900"
           >
-            Settings
+            Personalize
           </Link>
           <a
             href={orgUrl}
@@ -250,13 +252,7 @@ export default async function OrgConsolePage({ params }: Props) {
 
       {isSetup ? (
         <>
-          {/* Sessions — the day-to-day view once setup is complete */}
-          <section className="mt-10">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-400">Sessions</h2>
-            <div className="mt-3">{sessionsBlock}</div>
-          </section>
-
-          {/* Setup management, tucked away once it's done */}
+          {/* Setup management — locations & schedule first */}
           <details className="mt-10 rounded-2xl border border-zinc-800 bg-zinc-900/30">
             <summary className="cursor-pointer px-4 py-3 text-sm font-medium text-zinc-200 hover:text-white">
               Locations &amp; schedule
@@ -282,6 +278,15 @@ export default async function OrgConsolePage({ params }: Props) {
               </div>
             </div>
           </details>
+
+          {/* One-off sessions — above the generated sessions list */}
+          <section className="mt-6">{oneOffBlock}</section>
+
+          {/* Sessions — the day-to-day view */}
+          <section className="mt-10">
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-400">Sessions</h2>
+            <div className="mt-3">{sessionsBlock}</div>
+          </section>
         </>
       ) : (
         <>

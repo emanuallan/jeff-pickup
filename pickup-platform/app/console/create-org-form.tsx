@@ -9,6 +9,7 @@ type SlugState = 'idle' | 'checking' | 'available' | 'taken' | 'invalid'
 export function CreateOrgForm() {
   const [error, setError] = useState<string | null>(null)
   const [slug, setSlug] = useState('')
+  const [slugEdited, setSlugEdited] = useState(false)
   const [timezone, setTimezone] = useState('UTC')
   const [slugState, setSlugState] = useState<SlugState>('idle')
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -61,7 +62,8 @@ export function CreateOrgForm() {
           className="mt-1 w-full rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500"
           placeholder="Jeff Soccer"
           onChange={(e) => {
-            if (!slug) {
+            // Mirror the name into the slug until the user edits the slug directly.
+            if (!slugEdited) {
               onSlugChange(e.target.value)
             }
           }}
@@ -83,7 +85,10 @@ export function CreateOrgForm() {
           name="slug"
           required
           value={slug}
-          onChange={(e) => onSlugChange(e.target.value)}
+          onChange={(e) => {
+            setSlugEdited(true)
+            onSlugChange(e.target.value)
+          }}
           className="mt-1 w-full rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500"
           placeholder="jeffsoccer"
         />
@@ -102,17 +107,8 @@ export function CreateOrgForm() {
         )}
       </label>
 
-      <label className="block">
-        <span className="text-xs font-medium text-zinc-400">Default language</span>
-        <select
-          name="default_locale"
-          className="mt-1 w-full rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500"
-          defaultValue="en"
-        >
-          <option value="en">English</option>
-          <option value="es">Spanish</option>
-        </select>
-      </label>
+      {/* Language defaults to English for now; selector hidden until i18n ships. */}
+      <input type="hidden" name="default_locale" value="en" />
 
       {error ? <p className="text-sm text-red-300">{error}</p> : null}
 

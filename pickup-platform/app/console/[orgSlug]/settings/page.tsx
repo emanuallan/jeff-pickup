@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { getOrgForMember } from '@/lib/orgs'
+import { ProfileForm } from '../profile-form'
 import { BrandingForm } from '../branding-form'
 import { MaterializeButton } from '../materialize-button'
 
@@ -25,7 +26,15 @@ export default async function OrgSettingsPage({ params }: Props) {
         ← {org.name}
       </Link>
 
-      <h1 className="mt-6 text-2xl font-semibold">Settings</h1>
+      <h1 className="mt-6 text-2xl font-semibold">Personalize</h1>
+
+      <section className="mt-10">
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-400">Group profile</h2>
+        <p className="mt-1 text-xs text-zinc-500">
+          Your group&apos;s name and what it&apos;s about.
+        </p>
+        <ProfileForm orgSlug={orgSlug} name={org.name} activity={org.activity} />
+      </section>
 
       <section className="mt-10">
         <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-400">Branding</h2>
