@@ -13,6 +13,22 @@ export function orgBaseUrl(slug: string): string {
   return `https://${slug}.${root}`
 }
 
+/**
+ * Trim a description to a target max length on a word boundary, so social
+ * previews (~125 chars) and search snippets (~150-160 chars) don't hard-truncate
+ * mid-word. Defaults to 150 to stay under the common truncation thresholds.
+ */
+export function clampDescription(text: string, max = 150): string {
+  const trimmed = text.trim()
+  if (trimmed.length <= max) {
+    return trimmed
+  }
+  const slice = trimmed.slice(0, max - 1)
+  const lastSpace = slice.lastIndexOf(' ')
+  const base = (lastSpace > 0 ? slice.slice(0, lastSpace) : slice).replace(/[\s.,;:!?—-]+$/, '')
+  return `${base}…`
+}
+
 export function buildOrgMetadata({
   slug,
   path,
@@ -38,23 +54,24 @@ export function buildOrgMetadata({
     height: 630,
     alt: imageAlt ?? title,
   }
+  const desc = clampDescription(description)
 
   return {
     metadataBase: new URL(baseUrl),
     title,
-    description,
+    description: desc,
     openGraph: {
       type: 'website',
       url,
       siteName,
       title,
-      description,
+      description: desc,
       images: [image],
     },
     twitter: {
       card: 'summary_large_image',
       title,
-      description,
+      description: desc,
       images: [image.url],
     },
   }

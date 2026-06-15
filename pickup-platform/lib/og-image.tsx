@@ -33,7 +33,7 @@ export function OrgOgCard({
   subline,
   footer,
   logoUrl,
-  cta = 'Tap to RSVP',
+  cta = "I'm going!",
 }: OrgOgCardProps) {
   return (
     <div

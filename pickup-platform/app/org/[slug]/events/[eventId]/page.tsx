@@ -33,7 +33,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const title = `${when} · ${org.name}`
   const activity = org.activity || 'a session'
   const where = event.location_label ? ` at ${event.location_label}` : ''
-  const description = `Join ${org.name} for ${activity} on ${when}${where}. See who's coming, RSVP in seconds, and bring guests along — tap to reserve your spot.`
+  const description = `Join ${org.name} for ${activity} on ${when}${where}. See who's coming and confirm you're in — it only takes a few seconds.`
 
   return buildOrgMetadata({
     slug,
