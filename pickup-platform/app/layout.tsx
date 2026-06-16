@@ -1,14 +1,8 @@
 import type { Metadata } from 'next'
 import './globals.css'
+import { buildRootMetadata } from '@/lib/og-metadata'
 
-export const metadata: Metadata = {
-  title: {
-    default: 'Organizr',
-    template: '%s · Organizr',
-  },
-  description:
-    'Organizr is the easy headcount for recurring group activities — share a link, see who\'s coming, and run your sessions.',
-}
+export const metadata: Metadata = buildRootMetadata()
 
 export default function RootLayout({
   children,

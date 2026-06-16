@@ -38,6 +38,43 @@ export function clampDescription(text: string, max = 125): string {
   return `${base}…`
 }
 
+export function buildRootMetadata(): Metadata {
+  const baseUrl = rootBaseUrl()
+  const title = 'Organizr'
+  const description = clampDescription(
+    "Organizr is the easy headcount for recurring group activities — share a link, see who's coming, and run your sessions.",
+  )
+  const image = {
+    url: `${baseUrl}/og-image`,
+    width: 1200,
+    height: 630,
+    alt: "Organizr — Know who's coming.",
+  }
+
+  return {
+    metadataBase: new URL(baseUrl),
+    title: {
+      default: title,
+      template: '%s · Organizr',
+    },
+    description,
+    openGraph: {
+      type: 'website',
+      url: baseUrl,
+      siteName: title,
+      title,
+      description,
+      images: [image],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: [image.url],
+    },
+  }
+}
+
 export function buildOrgMetadata({
   slug,
   path,
