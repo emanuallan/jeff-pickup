@@ -13,6 +13,15 @@ export function orgBaseUrl(slug: string): string {
   return `https://${slug}.${root}`
 }
 
+/** Canonical apex URL for the marketing/landing page (no org subdomain). */
+export function rootBaseUrl(): string {
+  const root = process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? 'organizr.co'
+  if (process.env.NODE_ENV === 'development') {
+    return 'http://localhost:3000'
+  }
+  return `https://${root}`
+}
+
 /**
  * Trim a description to a target max length on a word boundary. Social previews
  * truncate around ~125 chars, so we cap there; that still clears the ~120 lower

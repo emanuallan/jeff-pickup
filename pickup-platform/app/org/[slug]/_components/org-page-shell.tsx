@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { getRootDomain } from '@/lib/tenancy/parse-host'
+import { rootBaseUrl } from '@/lib/og-metadata'
 
 export function OrgPageShell({ children }: { children: React.ReactNode }) {
   return (
@@ -9,9 +10,18 @@ export function OrgPageShell({ children }: { children: React.ReactNode }) {
 
 export function OrgPageFooter({ slug }: { slug: string }) {
   return (
-    <p className="mt-6 text-center text-xs text-zinc-600">
-      {slug}.{getRootDomain()}
-    </p>
+    <footer className="mt-6 flex flex-col items-center gap-2 text-center">
+      <a
+        href={rootBaseUrl()}
+        className="text-xs text-zinc-500 transition-colors hover:text-zinc-300"
+      >
+        Create your own group with{' '}
+        <span className="font-semibold text-zinc-400">Organizr</span> →
+      </a>
+      <p className="text-xs text-zinc-600">
+        {slug}.{getRootDomain()}
+      </p>
+    </footer>
   )
 }
 
