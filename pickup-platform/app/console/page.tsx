@@ -43,14 +43,14 @@ export default async function ConsolePage_() {
           </EmptyState>
         </div>
       ) : (
-        <ul className="mt-8 grid gap-3 sm:grid-cols-2">
+        <ul className="mt-8 grid grid-cols-1 gap-3 md:grid-cols-2">
           {orgs.map((org) => {
             const orgPublicUrl = orgBaseUrl(org.slug)
 
             return (
-              <li key={org.id}>
-                <div className="group flex h-full flex-col rounded-xl border border-white/10 bg-zinc-900/50 p-4 transition-colors hover:border-indigo-500/40">
-                  <div className="flex items-start gap-3">
+              <li key={org.id} className="min-w-0">
+                <div className="flex min-w-0 flex-col overflow-hidden rounded-xl border border-white/10 bg-zinc-900/50 p-4 transition-colors hover:border-indigo-500/40">
+                  <div className="flex min-w-0 items-start gap-3">
                     {org.branding.logo_url ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
@@ -69,18 +69,20 @@ export default async function ConsolePage_() {
                     <div className="min-w-0 flex-1">
                       <div className="truncate font-medium text-zinc-100">{org.name}</div>
                       {org.activity ? (
-                        <div className="truncate text-xs text-zinc-400">{org.activity}</div>
+                        <p className="mt-0.5 line-clamp-2 text-xs leading-relaxed text-zinc-400">
+                          {org.activity}
+                        </p>
                       ) : null}
-                      <div className="mt-0.5 truncate text-xs text-zinc-600">
+                      <p className="mt-1 break-all text-xs text-zinc-600">
                         {org.slug}.{rootDomain}
-                      </div>
+                      </p>
                     </div>
                   </div>
 
-                  <div className="mt-4 flex items-center gap-2 border-t border-white/5 pt-3">
+                  <div className="mt-4 flex flex-col gap-2 border-t border-white/5 pt-3 sm:flex-row sm:items-stretch">
                     <Link
                       href={`/console/${org.slug}`}
-                      className="inline-flex min-h-10 flex-1 items-center justify-center rounded-lg bg-indigo-500/15 px-3 py-2 text-sm font-semibold text-indigo-200 ring-1 ring-inset ring-indigo-500/25 transition hover:bg-indigo-500/25"
+                      className="inline-flex min-h-11 w-full items-center justify-center rounded-lg bg-indigo-500/15 px-3 py-2.5 text-sm font-semibold text-indigo-200 ring-1 ring-inset ring-indigo-500/25 transition hover:bg-indigo-500/25 sm:flex-1"
                     >
                       Manage
                     </Link>
@@ -88,7 +90,7 @@ export default async function ConsolePage_() {
                       href={orgPublicUrl}
                       target="_blank"
                       rel="noreferrer"
-                      className="inline-flex min-h-10 items-center justify-center rounded-lg px-3 py-2 text-sm font-medium text-zinc-400 transition hover:bg-white/5 hover:text-zinc-200"
+                      className="inline-flex min-h-11 w-full items-center justify-center rounded-lg border border-white/10 px-3 py-2.5 text-sm font-medium text-zinc-400 transition hover:bg-white/5 hover:text-zinc-200 sm:w-auto sm:shrink-0 sm:px-4"
                     >
                       Public ↗
                     </a>
