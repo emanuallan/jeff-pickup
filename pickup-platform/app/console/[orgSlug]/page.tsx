@@ -7,6 +7,7 @@ import {
   getUpcomingEventsForConsole,
   getPastEventsForConsole,
   formatEventTime,
+  eventDisplayName,
   type EventWithLocation,
 } from '@/lib/events'
 import { orgBaseUrl } from '@/lib/og-metadata'
@@ -117,12 +118,16 @@ export default async function OrgConsolePage({ params }: Props) {
     <ScheduleForm orgSlug={orgSlug} locations={locations} createSchedule={createSchedule} />
   )
 
+  const sessionFallback = org.activity?.trim() || 'Session'
+
   const renderEventItem = (ev: EventWithLocation, opts?: { past?: boolean }) => (
     <ConsoleCard key={ev.id} className="text-sm">
       <div className="flex items-start justify-between gap-2">
         <div>
           <div className="font-medium text-zinc-100">{formatEventTime(ev)}</div>
-          <div className="mt-0.5 text-xs text-zinc-500">{ev.location_label}</div>
+          <div className="mt-0.5 text-xs text-zinc-500">
+            {eventDisplayName(ev.title, sessionFallback)} · {ev.location_label}
+          </div>
         </div>
         <EventStatusSelect orgSlug={orgSlug} eventId={ev.id} status={ev.status} />
       </div>

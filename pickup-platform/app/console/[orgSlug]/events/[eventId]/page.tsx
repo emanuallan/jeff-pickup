@@ -17,10 +17,20 @@ type Props = {
   params: Promise<{ orgSlug: string; eventId: string }>
 }
 
-function StatCard({ label, value, hint }: { label: string; value: string; hint?: string }) {
+function StatCard({
+  label,
+  value,
+  hint,
+  valueClassName = 'text-2xl font-semibold',
+}: {
+  label: string
+  value: string
+  hint?: string
+  valueClassName?: string
+}) {
   return (
     <ConsoleCard className="flex flex-col gap-1">
-      <div className="text-2xl font-semibold tabular-nums text-zinc-50">{value}</div>
+      <div className={`tabular-nums text-zinc-50 ${valueClassName}`}>{value}</div>
       <div className="text-xs font-medium text-zinc-400">{label}</div>
       {hint ? <div className="text-[11px] text-zinc-600">{hint}</div> : null}
     </ConsoleCard>
@@ -111,6 +121,7 @@ export default async function ConsoleEventAnalyticsPage({ params }: Props) {
             )}
             <StatCard
               label="Last sign-up"
+              valueClassName="text-sm font-medium leading-snug"
               value={
                 analytics.lastSignupAt
                   ? new Date(analytics.lastSignupAt).toLocaleString(undefined, {
