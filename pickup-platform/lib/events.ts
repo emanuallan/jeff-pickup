@@ -27,7 +27,9 @@ export type EventWithLocation = Event & {
 }
 
 const LOCATION_SELECT =
-  '*, locations(label, lat, lon, maps_url, is_online, meeting_url), schedules(title)'
+  '*, locations(label, lat, lon, maps_url, is_online, meeting_url), schedules!events_schedule_id_fkey(title)'
+
+const EVENT_NAME_FALLBACK = 'Session'
 
 type LocationJoin = {
   label: string
@@ -38,18 +40,21 @@ type LocationJoin = {
   meeting_url: string
 } | null
 
-type ScheduleJoin = {
-  title: string
-} | null
+function scheduleTitleFromJoin(schedules: unknown): string | null {
+  if (schedules == null) return null
+  const row = Array.isArray(schedules) ? schedules[0] : schedules
+  if (!row || typeof row !== 'object') return null
+  const title = (row as { title?: unknown }).title
+  return typeof title === 'string' && title.trim() ? title.trim() : null
+}
 
 function mapEventRow(row: Record<string, unknown>): EventWithLocation {
   const loc = row.locations as LocationJoin
-  const sched = row.schedules as ScheduleJoin
   const { locations: _locations, schedules: _schedules, ...event } = row
   return {
     ...(event as Event),
     timezone: String(event.timezone ?? 'UTC'),
-    title: sched?.title ?? null,
+    title: scheduleTitleFromJoin(row.schedules),
     location_label: loc?.label ?? 'Location',
     location_lat: loc?.lat ?? 0,
     location_lon: loc?.lon ?? 0,
@@ -253,7 +258,7 @@ export function statusLabel(status: EventStatus): string {
   return 'Tentative'
 }
 
-/** Schedule title when present, otherwise fallback (e.g. org activity). */
-export function eventDisplayName(title: string | null | undefined, fallback: string): string {
+/** Schedule title when present, otherwise a generic session label. */
+export function eventDisplayName(title: string | null | undefined, fallback = EVENT_NAME_FALLBACK): string {
   return title?.trim() || fallback
 }

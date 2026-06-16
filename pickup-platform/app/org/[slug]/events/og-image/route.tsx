@@ -11,7 +11,7 @@ export async function GET(_request: Request, { params }: Context) {
   const org = await getOrgBySlug(slug)
   const events = org ? await getUpcomingEventsForOrg(org.id, 1) : []
   const nextEvent = events[0]
-  const nextTitle = eventDisplayName(nextEvent?.title, org?.activity || 'Session')
+  const nextTitle = eventDisplayName(nextEvent?.title)
 
   return renderOrgOgImage({
     slug,

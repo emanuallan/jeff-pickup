@@ -65,7 +65,6 @@ export default async function EventsPage({ params }: Props) {
     isLeaderboardUnlocked(org.id),
   ])
   const accent = org.branding.accent_color
-  const fallbackName = org.activity || 'Session'
 
   const next = events[0]
   const rest = events.slice(1)
@@ -110,7 +109,7 @@ export default async function EventsPage({ params }: Props) {
               </div>
 
               <h2 className={`mt-4 text-2xl font-semibold tracking-tight ${cancelledClasses.titleLg}`}>
-                {eventName(next, fallbackName)}
+                {eventName(next)}
               </h2>
 
               <EventDateTimeRow event={next} cancelled={nextCancelled} />
@@ -161,7 +160,7 @@ export default async function EventsPage({ params }: Props) {
                 <ul className="space-y-2.5">
                   {rest.map((ev) => (
                     <li key={ev.id}>
-                      <SessionRow event={ev} fallbackName={fallbackName} accent={accent} />
+                      <SessionRow event={ev} accent={accent} />
                     </li>
                   ))}
                 </ul>

@@ -109,7 +109,6 @@ export default async function EventPage({ params }: Props) {
   const shareText = `${org.name}: ${formatEventTime(event)} ${event.location_is_online ? 'on' : 'at'} ${event.location_label}. Join us!`
   const accent = org.branding.accent_color
   const accentText = readableTextColor(accent)
-  const fallbackName = org.activity || 'Session'
   const spotsLeft = event.capacity != null ? Math.max(0, event.capacity - headcount) : null
 
   return (
@@ -150,7 +149,7 @@ export default async function EventPage({ params }: Props) {
           </div>
 
           <h2 className={`mt-4 text-2xl font-semibold tracking-tight ${cancelledClasses.titleLg}`}>
-            {eventName(event, fallbackName)}
+            {eventName(event)}
           </h2>
 
           <EventDateTimeRow event={event} cancelled={isCancelled} />

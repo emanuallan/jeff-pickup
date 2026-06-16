@@ -118,7 +118,7 @@ export default async function OrgConsolePage({ params }: Props) {
     <ScheduleForm orgSlug={orgSlug} locations={locations} createSchedule={createSchedule} />
   )
 
-  const sessionFallback = org.activity?.trim() || 'Session'
+  const sessionFallback = 'Session'
 
   const renderEventItem = (ev: EventWithLocation, opts?: { past?: boolean }) => (
     <ConsoleCard key={ev.id} className="text-sm">

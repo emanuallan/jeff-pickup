@@ -10,7 +10,7 @@ export async function GET(_request: Request, { params }: Context) {
   const { slug, eventId } = await params
   const org = await getOrgBySlug(slug)
   const event = org ? await getEventById(eventId, org.id) : null
-  const eventTitle = eventDisplayName(event?.title, org?.activity || 'Session')
+  const eventTitle = eventDisplayName(event?.title)
 
   return renderOrgOgImage({
     slug,

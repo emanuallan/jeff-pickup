@@ -8,9 +8,9 @@ import {
   type EventWithLocation,
 } from '@/lib/events'
 
-/** Event display name: schedule title if present, otherwise a sensible fallback. */
-export function eventName(event: Pick<EventWithLocation, 'title'>, fallback: string): string {
-  return eventDisplayName(event.title, fallback)
+/** Event display name: recurring schedule title when present. */
+export function eventName(event: Pick<EventWithLocation, 'title'>): string {
+  return eventDisplayName(event.title)
 }
 
 export function isEventCancelled(status: EventStatus): boolean {
@@ -104,11 +104,9 @@ export function CancelledCallout({ hasSignup }: { hasSignup: boolean }) {
 /** Compact row used in the "more sessions" list. */
 export function SessionRow({
   event,
-  fallbackName,
   accent,
 }: {
   event: EventWithLocation
-  fallbackName: string
   accent: string
 }) {
   const cancelled = isEventCancelled(event.status)
@@ -122,7 +120,7 @@ export function SessionRow({
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
           <span className={`truncate text-sm font-medium ${classes.titleSm}`}>
-            {eventName(event, fallbackName)}
+            {eventName(event)}
           </span>
         </div>
         <div className="mt-0.5 flex items-center gap-1.5 text-xs text-zinc-500">

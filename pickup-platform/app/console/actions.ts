@@ -48,7 +48,7 @@ function parseScheduleFormData(
   formData: FormData,
 ): { ok: true; values: ScheduleFormValues } | { ok: false; error: string } {
   const locationId = String(formData.get('location_id') ?? '')
-  const title = String(formData.get('title') ?? 'Weekly session').trim()
+  const title = String(formData.get('title') ?? '').trim()
   const startTime = String(formData.get('start_time') ?? '18:00')
   const timezone = String(formData.get('timezone') ?? 'UTC').trim()
   const capacity = parseOptionalInt(formData.get('capacity'))
@@ -62,6 +62,9 @@ function parseScheduleFormData(
 
   if (!locationId) {
     return { ok: false, error: 'Pick a location.' }
+  }
+  if (!title) {
+    return { ok: false, error: 'Enter a recurring session name.' }
   }
   if (byweekday.length === 0) {
     return { ok: false, error: 'Pick at least one day of the week.' }
