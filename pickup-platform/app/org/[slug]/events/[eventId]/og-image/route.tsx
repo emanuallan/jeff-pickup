@@ -20,9 +20,9 @@ export async function GET(_request: Request, { params }: Context) {
     eyebrow: event ? 'Upcoming session' : undefined,
     headline: event ? eventTitle : org?.name ?? 'Organizr',
     subline: event
-      ? `${formatEventTime(event)}${event.location_label ? ` · ${event.location_label}` : ''}`
+      ? formatEventTime(event) + (event.location_label ? ` · ${event.location_label}` : '')
       : undefined,
-    sublineEmoji: event ? (event.location_is_online ? '💻' : '📍') : undefined,
+    locationOnline: event?.location_is_online,
     cta: event ? 'Count me in →' : undefined,
   })
 }

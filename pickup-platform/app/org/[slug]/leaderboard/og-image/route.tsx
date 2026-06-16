@@ -21,7 +21,7 @@ export async function GET(_request: Request, { params }: Context) {
   if (topCaps) {
     headline = `${topCaps.display_name} · ${topCaps.caps} caps`
     subline = topStreak
-      ? `🔥 ${topStreak.display_name} on a ${topStreak.current_streak_weeks}-week streak`
+      ? `${topStreak.display_name} · ${topStreak.current_streak_weeks}-week streak`
       : 'Most sessions attended'
   }
 
