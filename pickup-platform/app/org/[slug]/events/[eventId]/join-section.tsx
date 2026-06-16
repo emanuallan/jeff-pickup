@@ -6,7 +6,7 @@ import { arrivalStatuses, arrivalStatusEmoji, type ArrivalStatus } from '@/lib/a
 import { fireConfetti } from '@/lib/confetti'
 import { hexToRgba } from '@/lib/colors'
 
-type Participant = {
+export type Participant = {
   first_name: string
   last_name: string
   display_name: string

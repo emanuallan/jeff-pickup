@@ -1,3 +1,4 @@
+import { Suspense } from 'react'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
@@ -24,6 +25,7 @@ import {
   ArrivalStatusPicker,
   type RosterBadgeInfo,
   type MySignup,
+  type Participant,
 } from './join-section'
 import { ShareButton } from '../../share-button'
 import { StatusPill, PinIcon, OnlineIcon, eventName } from '../event-ui'
@@ -61,6 +63,48 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   })
 }
 
+type SessionInfo = { participant: Participant | null; mySignup: MySignup | null }
+
+/** Returning-participant lookup. Both RPCs share one client and run in parallel. */
+async function getSessionInfo(
+  token: string | null,
+  orgId: string,
+  eventId: string,
+): Promise<SessionInfo> {
+  if (!token) return { participant: null, mySignup: null }
+
+  const supabase = await createClient()
+  const [{ data: p }, { data: s }] = await Promise.all([
+    supabase.rpc('get_participant_for_session', { p_session_token: token, p_org_id: orgId }),
+    supabase.rpc('get_signup_for_session', { p_event_id: eventId, p_session_token: token }),
+  ])
+
+  return {
+    participant: (p as Participant | null) ?? null,
+    mySignup: (s as MySignup | null) ?? null,
+  }
+}
+
+/** Weather is an external API call, so it streams in via Suspense off the critical path. */
+async function WeatherPill({
+  lat,
+  lon,
+  startsAt,
+}: {
+  lat: number
+  lon: number
+  startsAt: string
+}) {
+  const weather = await getWeatherForEvent(lat, lon, startsAt)
+  if (!weather) return null
+  return (
+    <span className="rounded-lg bg-zinc-800/60 px-2.5 py-1 text-zinc-300">
+      {weather.emoji}
+      {weather.tempF != null ? ` ${weather.tempF}°F` : ''}
+    </span>
+  )
+}
+
 export default async function EventPage({ params }: Props) {
   const { slug, eventId } = await params
   const org = await getOrgBySlug(slug)
@@ -75,10 +119,22 @@ export default async function EventPage({ params }: Props) {
   }
   const isCancelled = event.status === 'cancelled'
 
-  const roster = await getPublicRoster(eventId)
+  // First wave — independent reads that only need the org/event (or cookies).
+  const [roster, leaderboardUnlocked, token] = await Promise.all([
+    getPublicRoster(eventId),
+    isLeaderboardUnlocked(org.id),
+    getSessionToken(),
+  ])
+
   const headcount = rosterHeadcount(roster)
   const participantIds = roster.map((e) => e.participant_id)
-  const engagementStats = await getParticipantEngagementStats(org.id, participantIds)
+
+  // Second wave — engagement needs the roster; the session lookup needs the token.
+  const [engagementStats, { participant, mySignup }] = await Promise.all([
+    getParticipantEngagementStats(org.id, participantIds),
+    getSessionInfo(token, org.id, eventId),
+  ])
+
   const topSessionsOnRoster = Math.max(
     0,
     ...roster.map((e) => engagementStats.get(e.participant_id)?.total_sessions ?? 0),
@@ -92,36 +148,11 @@ export default async function EventPage({ params }: Props) {
   )
   const isPast = new Date(event.starts_at) < new Date()
   const isFull = event.capacity != null && headcount >= event.capacity
-  const weather = await getWeatherForEvent(
-    event.location_lat,
-    event.location_lon,
-    event.starts_at,
-  )
   const shareText = `${org.name}: ${formatEventTime(event)} ${event.location_is_online ? 'on' : 'at'} ${event.location_label}. Join us!`
   const accent = org.branding.accent_color
   const accentText = readableTextColor(accent)
   const fallbackName = org.activity || 'Session'
   const spotsLeft = event.capacity != null ? Math.max(0, event.capacity - headcount) : null
-  const leaderboardUnlocked = await isLeaderboardUnlocked(org.id)
-
-  const token = await getSessionToken()
-  let participant = null
-  let mySignup: MySignup | null = null
-
-  if (token) {
-    const supabase = await createClient()
-    const { data: p } = await supabase.rpc('get_participant_for_session', {
-      p_session_token: token,
-      p_org_id: org.id,
-    })
-    if (p) participant = p as typeof participant
-
-    const { data: s } = await supabase.rpc('get_signup_for_session', {
-      p_event_id: eventId,
-      p_session_token: token,
-    })
-    if (s) mySignup = s as MySignup
-  }
 
   return (
     <main className="mx-auto min-h-dvh max-w-lg px-5 py-10 sm:px-6">
@@ -250,12 +281,13 @@ export default async function EventPage({ params }: Props) {
             <span className="rounded-lg bg-zinc-800/60 px-2.5 py-1 text-zinc-400">
               min {event.min_players}
             </span>
-            {weather ? (
-              <span className="rounded-lg bg-zinc-800/60 px-2.5 py-1 text-zinc-300">
-                {weather.emoji}
-                {weather.tempF != null ? ` ${weather.tempF}°F` : ''}
-              </span>
-            ) : null}
+            <Suspense fallback={null}>
+              <WeatherPill
+                lat={event.location_lat}
+                lon={event.location_lon}
+                startsAt={event.starts_at}
+              />
+            </Suspense>
           </div>
 
           {event.announcement ? (

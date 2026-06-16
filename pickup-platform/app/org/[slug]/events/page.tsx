@@ -104,7 +104,10 @@ export default async function EventsPage({ params }: Props) {
     notFound()
   }
 
-  const events = await getUpcomingEventsForOrg(org.id, 20, true)
+  const [events, leaderboardUnlocked] = await Promise.all([
+    getUpcomingEventsForOrg(org.id, 20, true),
+    isLeaderboardUnlocked(org.id),
+  ])
   const accent = org.branding.accent_color
   const fallbackName = org.activity || 'Session'
 
@@ -112,7 +115,6 @@ export default async function EventsPage({ params }: Props) {
   const rest = events.slice(1)
   const nextCancelled = next?.status === 'cancelled'
   const nextHeadcount = next ? rosterHeadcount(await getPublicRoster(next.id)) : 0
-  const leaderboardUnlocked = await isLeaderboardUnlocked(org.id)
 
   return (
     <main className="mx-auto min-h-dvh max-w-lg px-5 py-10 sm:px-6">

@@ -60,7 +60,10 @@ export async function getWeatherForEvent(
     `&hourly=temperature_2m,weather_code&temperature_unit=fahrenheit&forecast_days=16&timezone=GMT`
 
   try {
-    const res = await fetch(url, { next: { revalidate: 3600 } })
+    const res = await fetch(url, {
+      next: { revalidate: 3600 },
+      signal: AbortSignal.timeout(3000),
+    })
     if (!res.ok) return null
 
     const data = (await res.json()) as {

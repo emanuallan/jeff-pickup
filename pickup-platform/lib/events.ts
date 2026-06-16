@@ -1,3 +1,4 @@
+import { cache } from 'react'
 import { createClient } from '@/lib/supabase/server'
 
 export type EventStatus = 'tentative' | 'on' | 'cancelled'
@@ -58,25 +59,25 @@ function mapEventRow(row: Record<string, unknown>): EventWithLocation {
   }
 }
 
-export async function getEventById(
-  eventId: string,
-  orgId: string,
-): Promise<EventWithLocation | null> {
-  const supabase = await createClient()
+/** Memoized per-request so metadata + page share one query for the same event. */
+export const getEventById = cache(
+  async (eventId: string, orgId: string): Promise<EventWithLocation | null> => {
+    const supabase = await createClient()
 
-  const { data, error } = await supabase
-    .from('events')
-    .select(LOCATION_SELECT)
-    .eq('id', eventId)
-    .eq('org_id', orgId)
-    .maybeSingle()
+    const { data, error } = await supabase
+      .from('events')
+      .select(LOCATION_SELECT)
+      .eq('id', eventId)
+      .eq('org_id', orgId)
+      .maybeSingle()
 
-  if (error || !data) {
-    return null
-  }
+    if (error || !data) {
+      return null
+    }
 
-  return mapEventRow(data)
-}
+    return mapEventRow(data)
+  },
+)
 
 export async function getUpcomingEventsForOrg(
   orgId: string,

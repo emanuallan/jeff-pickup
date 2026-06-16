@@ -1,3 +1,4 @@
+import { cache } from 'react'
 import { createClient } from '@/lib/supabase/server'
 
 export type Org = {
@@ -30,7 +31,8 @@ function parseOrgRow(data: Record<string, unknown>): Org {
   }
 }
 
-export async function getOrgBySlug(slug: string): Promise<Org | null> {
+/** Memoized per-request so metadata + page share one query for the same slug. */
+export const getOrgBySlug = cache(async (slug: string): Promise<Org | null> => {
   const supabase = await createClient()
 
   const { data, error } = await supabase
@@ -44,7 +46,7 @@ export async function getOrgBySlug(slug: string): Promise<Org | null> {
   }
 
   return parseOrgRow(data)
-}
+})
 
 export async function getUserOrgs(): Promise<Org[]> {
   const supabase = await createClient()

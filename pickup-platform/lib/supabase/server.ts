@@ -1,7 +1,12 @@
+import { cache } from 'react'
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 
-export async function createClient() {
+/**
+ * Memoized per-request via React.cache so a single render reuses one client
+ * (and one `cookies()` read) instead of reconstructing it for every query.
+ */
+export const createClient = cache(async () => {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
@@ -27,4 +32,4 @@ export async function createClient() {
       },
     },
   })
-}
+})
