@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { deleteEvent } from '../actions'
+import { chipAction } from '../_components/console-ui'
 
 type Props = {
   orgSlug: string
@@ -36,7 +37,7 @@ export function DeleteEventButton({ orgSlug, eventId, eventLabel, recurring }: P
         type="button"
         onClick={handleDelete}
         disabled={pending}
-        className="text-xs text-zinc-500 hover:text-red-300 disabled:opacity-50"
+        className={`${chipAction} text-zinc-400 hover:bg-red-500/10 hover:text-red-300 disabled:opacity-50`}
       >
         {pending ? 'Deleting…' : 'Delete'}
       </button>

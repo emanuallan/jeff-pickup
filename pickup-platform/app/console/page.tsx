@@ -80,7 +80,7 @@ export default async function ConsolePage_() {
                   <div className="mt-4 flex items-center gap-2 border-t border-white/5 pt-3">
                     <Link
                       href={`/console/${org.slug}`}
-                      className="rounded-lg bg-indigo-500/15 px-3 py-1.5 text-xs font-semibold text-indigo-200 ring-1 ring-inset ring-indigo-500/25 transition hover:bg-indigo-500/25"
+                      className="inline-flex min-h-10 flex-1 items-center justify-center rounded-lg bg-indigo-500/15 px-3 py-2 text-sm font-semibold text-indigo-200 ring-1 ring-inset ring-indigo-500/25 transition hover:bg-indigo-500/25"
                     >
                       Manage
                     </Link>
@@ -88,7 +88,7 @@ export default async function ConsolePage_() {
                       href={orgPublicUrl}
                       target="_blank"
                       rel="noreferrer"
-                      className="rounded-lg px-3 py-1.5 text-xs font-medium text-zinc-400 hover:text-zinc-200"
+                      className="inline-flex min-h-10 items-center justify-center rounded-lg px-3 py-2 text-sm font-medium text-zinc-400 transition hover:bg-white/5 hover:text-zinc-200"
                     >
                       Public ↗
                     </a>

@@ -3,7 +3,14 @@ import { getOrgForMember } from '@/lib/orgs'
 import { getEventById, formatEventTime, statusLabel } from '@/lib/events'
 import { getRosterWithContact, rosterHeadcount } from '@/lib/signups'
 import { arrivalStatusEmoji } from '@/lib/arrival-status'
-import { ConsolePage, ConsoleHeader, ConsoleSection, ConsoleCard } from '../../../_components/console-ui'
+import { orgBaseUrl } from '@/lib/og-metadata'
+import {
+  ConsolePage,
+  ConsoleHeader,
+  ConsoleSection,
+  ConsoleCard,
+  btnOutline,
+} from '../../../_components/console-ui'
 
 type Props = {
   params: Promise<{ orgSlug: string; eventId: string }>
@@ -24,6 +31,7 @@ export default async function ConsoleEventRosterPage({ params }: Props) {
 
   const roster = await getRosterWithContact(eventId)
   const headcount = rosterHeadcount(roster)
+  const publicEventUrl = `${orgBaseUrl(orgSlug)}/events/${eventId}`
 
   return (
     <ConsolePage width="max-w-2xl">
@@ -32,6 +40,11 @@ export default async function ConsoleEventRosterPage({ params }: Props) {
         description={event.location_label}
         backHref={`/console/${orgSlug}`}
         backLabel={org.name}
+        actions={
+          <a href={publicEventUrl} target="_blank" rel="noreferrer" className={btnOutline}>
+            View public event ↗
+          </a>
+        }
       />
       <p className="mt-2 text-xs text-zinc-500">
         {statusLabel(event.status)} · {headcount}

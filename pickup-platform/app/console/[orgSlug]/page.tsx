@@ -30,6 +30,7 @@ import {
   ConsoleCard,
   Disclosure,
   btnOutline,
+  chipAction,
 } from '../_components/console-ui'
 
 type Props = {
@@ -127,24 +128,30 @@ export default async function OrgConsolePage({ params }: Props) {
           {statusLabel(ev.status)}
         </span>
       </div>
-      <div className="mt-3 flex items-center gap-3 border-t border-white/5 pt-2.5">
+      <div className="mt-2.5 flex flex-wrap items-center gap-1 border-t border-white/5 pt-2">
         <Link
           href={`/console/${orgSlug}/events/${ev.id}`}
-          className="text-xs font-medium text-indigo-300 hover:text-indigo-200"
+          className={`${chipAction} text-indigo-300 hover:bg-indigo-500/10 hover:text-indigo-200`}
         >
           View roster →
         </Link>
         {!opts?.past && ev.status !== 'cancelled' ? (
           <form action={cancelEvent.bind(null, orgSlug, ev.id)}>
-            <button type="submit" className="text-xs text-zinc-500 hover:text-red-300">
-              Cancel session
+            <button
+              type="submit"
+              className={`${chipAction} text-zinc-400 hover:bg-red-500/10 hover:text-red-300`}
+            >
+              Cancel
             </button>
           </form>
         ) : null}
         {!opts?.past && ev.status === 'cancelled' ? (
           <form action={uncancelEvent.bind(null, orgSlug, ev.id)}>
-            <button type="submit" className="text-xs text-zinc-500 hover:text-emerald-300">
-              Restore session
+            <button
+              type="submit"
+              className={`${chipAction} text-zinc-400 hover:bg-emerald-500/10 hover:text-emerald-300`}
+            >
+              Restore
             </button>
           </form>
         ) : null}
@@ -181,10 +188,12 @@ export default async function OrgConsolePage({ params }: Props) {
 
       {isSetup ? (
         <div className="mt-8 space-y-6">
-          {/* Sessions — the day-to-day view, surfaced first for live groups. */}
+          {/* Sessions — collapsed by default; they roll in automatically so this stays tidy. */}
           <ConsoleSection
-            title="Sessions"
+            title={`Sessions${upcomingEvents.length > 0 ? ` (${upcomingEvents.length})` : ''}`}
             description="Auto-generated from your recurring schedule for the next 30 days — a new one rolls in each day."
+            collapsible
+            defaultOpen={false}
           >
             {upcomingEvents.length > 0 ? (
               <ul className="space-y-2">{upcomingEvents.map((ev) => renderEventItem(ev))}</ul>

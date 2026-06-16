@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { deleteLocation } from '../actions'
+import { chipAction } from '../_components/console-ui'
 
 type Props = {
   orgSlug: string
@@ -27,12 +28,12 @@ export function DeleteLocationButton({ orgSlug, locationId, locationLabel }: Pro
   }
 
   return (
-    <div className="shrink-0 text-right">
+    <div className="-mr-1.5 shrink-0 text-right">
       <button
         type="button"
         onClick={handleDelete}
         disabled={pending}
-        className="text-xs text-zinc-500 hover:text-red-300 disabled:opacity-50"
+        className={`${chipAction} text-zinc-400 hover:bg-red-500/10 hover:text-red-300 disabled:opacity-50`}
       >
         {pending ? 'Deleting…' : 'Delete'}
       </button>
