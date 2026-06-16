@@ -4,6 +4,11 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { materializeEvents } from '@/lib/materializer'
+import {
+  isStructuralScheduleChange,
+  type Schedule,
+  type ScheduleFormValues,
+} from '@/lib/schedules'
 import { geocodeAddress } from '@/lib/geocode'
 import { localDateTimeInZoneToUtcIso } from '@/lib/datetime'
 import { getOrgForMember } from '@/lib/orgs'
@@ -36,6 +41,61 @@ function parseOptionalMinParticipants(
     return { value: null, error: 'Min participants must be between 2 and 999.' }
   }
   return { value: n }
+}
+
+function parseScheduleFormData(
+  formData: FormData,
+): { ok: true; values: ScheduleFormValues } | { ok: false; error: string } {
+  const locationId = String(formData.get('location_id') ?? '')
+  const title = String(formData.get('title') ?? 'Weekly session').trim()
+  const startTime = String(formData.get('start_time') ?? '18:00')
+  const timezone = String(formData.get('timezone') ?? 'UTC').trim()
+  const capacity = parseOptionalInt(formData.get('capacity'))
+  const minParticipants = parseOptionalMinParticipants(formData.get('min_players'))
+  const durationMin = Number.parseInt(String(formData.get('duration_min') ?? '90'), 10)
+  const intervalWeeks = Number.parseInt(String(formData.get('interval_weeks') ?? '1'), 10)
+  const byweekday = formData
+    .getAll('byweekday')
+    .map((v) => Number.parseInt(String(v), 10))
+    .filter((n) => n >= 0 && n <= 6)
+
+  if (!locationId) {
+    return { ok: false, error: 'Pick a location.' }
+  }
+  if (byweekday.length === 0) {
+    return { ok: false, error: 'Pick at least one day of the week.' }
+  }
+  if (!/^\d{2}:\d{2}$/.test(startTime)) {
+    return { ok: false, error: 'Invalid start time.' }
+  }
+  if (minParticipants.error) {
+    return { ok: false, error: minParticipants.error }
+  }
+  if (
+    minParticipants.value != null &&
+    capacity != null &&
+    minParticipants.value > capacity
+  ) {
+    return { ok: false, error: 'Min participants cannot exceed capacity.' }
+  }
+  if (!Number.isFinite(intervalWeeks) || intervalWeeks < 1 || intervalWeeks > 52) {
+    return { ok: false, error: 'Frequency must be between every 1 and 52 weeks.' }
+  }
+
+  return {
+    ok: true,
+    values: {
+      locationId,
+      title,
+      startTime,
+      timezone,
+      capacity,
+      minPlayers: minParticipants.value,
+      durationMin,
+      intervalWeeks,
+      byweekday,
+    },
+  }
 }
 
 export async function createOrg(formData: FormData) {
@@ -159,41 +219,21 @@ export async function createSchedule(orgSlug: string, formData: FormData) {
   const org = await requireOrgAdmin(orgSlug)
   const supabase = await createClient()
 
-  const locationId = String(formData.get('location_id') ?? '')
-  const title = String(formData.get('title') ?? 'Weekly session').trim()
-  const startTime = String(formData.get('start_time') ?? '18:00')
-  const timezone = String(formData.get('timezone') ?? 'UTC').trim()
-  const capacity = parseOptionalInt(formData.get('capacity'))
-  const minParticipants = parseOptionalMinParticipants(formData.get('min_players'))
-  const durationMin = Number.parseInt(String(formData.get('duration_min') ?? '90'), 10)
-  const intervalWeeks = Number.parseInt(String(formData.get('interval_weeks') ?? '1'), 10)
-  const byweekday = formData
-    .getAll('byweekday')
-    .map((v) => Number.parseInt(String(v), 10))
-    .filter((n) => n >= 0 && n <= 6)
-
-  if (!locationId) {
-    return { error: 'Pick a location.' }
+  const parsed = parseScheduleFormData(formData)
+  if (!parsed.ok) {
+    return { error: parsed.error }
   }
-  if (byweekday.length === 0) {
-    return { error: 'Pick at least one day of the week.' }
-  }
-  if (!/^\d{2}:\d{2}$/.test(startTime)) {
-    return { error: 'Invalid start time.' }
-  }
-  if (minParticipants.error) {
-    return { error: minParticipants.error }
-  }
-  if (
-    minParticipants.value != null &&
-    capacity != null &&
-    minParticipants.value > capacity
-  ) {
-    return { error: 'Min participants cannot exceed capacity.' }
-  }
-  if (!Number.isFinite(intervalWeeks) || intervalWeeks < 1 || intervalWeeks > 52) {
-    return { error: 'Frequency must be between every 1 and 52 weeks.' }
-  }
+  const {
+    locationId,
+    title,
+    startTime,
+    timezone,
+    capacity,
+    minPlayers,
+    durationMin,
+    intervalWeeks,
+    byweekday,
+  } = parsed.values
 
   const anchorDate = new Date().toLocaleDateString('en-CA', { timeZone: timezone || 'UTC' })
 
@@ -205,7 +245,7 @@ export async function createSchedule(orgSlug: string, formData: FormData) {
     start_time: startTime,
     timezone,
     capacity,
-    min_players: minParticipants.value,
+    min_players: minPlayers,
     duration_min: durationMin,
     interval_weeks: intervalWeeks,
     anchor_date: anchorDate,
@@ -369,6 +409,108 @@ export async function deleteEvent(
 
   if (error) {
     return { error: error.message }
+  }
+
+  revalidatePath(`/console/${orgSlug}`)
+  revalidatePath(`/org/${orgSlug}`)
+  return { ok: true }
+}
+
+export type UpdateScheduleMode = 'forward_only' | 'all_scheduled'
+
+export async function updateSchedule(
+  orgSlug: string,
+  scheduleId: string,
+  mode: UpdateScheduleMode,
+  formData: FormData,
+): Promise<{ ok: true } | { error: string }> {
+  const org = await requireOrgAdmin(orgSlug)
+  const supabase = await createClient()
+
+  const parsed = parseScheduleFormData(formData)
+  if (!parsed.ok) {
+    return { error: parsed.error }
+  }
+
+  const { data: existing, error: fetchError } = await supabase
+    .from('schedules')
+    .select('*')
+    .eq('id', scheduleId)
+    .eq('org_id', org.id)
+    .maybeSingle()
+
+  if (fetchError) {
+    return { error: fetchError.message }
+  }
+  if (!existing) {
+    return { error: 'Schedule not found.' }
+  }
+
+  const before = existing as Schedule
+  const values = parsed.values
+  const anchorDate = new Date().toLocaleDateString('en-CA', {
+    timeZone: values.timezone || 'UTC',
+  })
+
+  const { error: updateError } = await supabase
+    .from('schedules')
+    .update({
+      location_id: values.locationId,
+      title: values.title,
+      byweekday: values.byweekday,
+      start_time: values.startTime,
+      timezone: values.timezone,
+      capacity: values.capacity,
+      min_players: values.minPlayers,
+      duration_min: values.durationMin,
+      interval_weeks: values.intervalWeeks,
+      anchor_date: anchorDate,
+    })
+    .eq('id', scheduleId)
+    .eq('org_id', org.id)
+
+  if (updateError) {
+    return { error: updateError.message }
+  }
+
+  if (mode === 'all_scheduled') {
+    const now = new Date().toISOString()
+    const structural = isStructuralScheduleChange(before, values)
+
+    if (structural) {
+      const { error: deleteEventsError } = await supabase
+        .from('events')
+        .delete()
+        .eq('schedule_id', scheduleId)
+        .eq('org_id', org.id)
+        .gte('starts_at', now)
+
+      if (deleteEventsError) {
+        return { error: deleteEventsError.message }
+      }
+
+      try {
+        await materializeEvents({ orgId: org.id })
+      } catch {
+        // swallow — schedule was updated; cron will fill sessions
+      }
+    } else {
+      const { error: patchEventsError } = await supabase
+        .from('events')
+        .update({
+          location_id: values.locationId,
+          capacity: values.capacity,
+          min_players: values.minPlayers,
+          timezone: values.timezone,
+        })
+        .eq('schedule_id', scheduleId)
+        .eq('org_id', org.id)
+        .gte('starts_at', now)
+
+      if (patchEventsError) {
+        return { error: patchEventsError.message }
+      }
+    }
   }
 
   revalidatePath(`/console/${orgSlug}`)

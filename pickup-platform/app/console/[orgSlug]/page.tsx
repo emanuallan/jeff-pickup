@@ -22,6 +22,7 @@ import { ScheduleForm } from './schedule-form'
 import { AddLocationForm } from './add-location-form'
 import { DeleteLocationButton } from './delete-location-button'
 import { DeleteScheduleButton } from './delete-schedule-button'
+import { EditScheduleButton } from './edit-schedule-button'
 import { DeleteEventButton } from './delete-event-button'
 import { OrgConsoleHeader } from './org-console-header'
 import {
@@ -104,11 +105,14 @@ export default async function OrgConsolePage({ params }: Props) {
                   {s.min_players != null ? ` · min ${s.min_players} participants` : ''}
                 </div>
               </div>
-              <DeleteScheduleButton
-                orgSlug={orgSlug}
-                scheduleId={s.id}
-                scheduleTitle={s.title}
-              />
+              <div className="flex shrink-0 gap-1">
+                <EditScheduleButton orgSlug={orgSlug} schedule={s} locations={locations} />
+                <DeleteScheduleButton
+                  orgSlug={orgSlug}
+                  scheduleId={s.id}
+                  scheduleTitle={s.title}
+                />
+              </div>
             </div>
           </ConsoleCard>
         ))}

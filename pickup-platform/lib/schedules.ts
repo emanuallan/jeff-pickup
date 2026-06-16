@@ -41,6 +41,36 @@ export function formatIntervalWeeks(weeks: number): string {
   return `Every ${weeks} weeks`
 }
 
+export function normalizeStartTime(t: string): string {
+  return t.slice(0, 5)
+}
+
+export type ScheduleFormValues = {
+  locationId: string
+  title: string
+  startTime: string
+  timezone: string
+  capacity: number | null
+  minPlayers: number | null
+  durationMin: number
+  intervalWeeks: number
+  byweekday: number[]
+}
+
+export function isStructuralScheduleChange(
+  before: Pick<Schedule, 'byweekday' | 'start_time' | 'interval_weeks' | 'timezone'>,
+  after: Pick<ScheduleFormValues, 'byweekday' | 'startTime' | 'intervalWeeks' | 'timezone'>,
+): boolean {
+  const sortedBefore = [...before.byweekday].sort((a, b) => a - b)
+  const sortedAfter = [...after.byweekday].sort((a, b) => a - b)
+  if (sortedBefore.length !== sortedAfter.length) return true
+  if (sortedBefore.some((d, i) => d !== sortedAfter[i])) return true
+  if (normalizeStartTime(before.start_time) !== after.startTime) return true
+  if (before.interval_weeks !== after.intervalWeeks) return true
+  if (before.timezone !== after.timezone) return true
+  return false
+}
+
 export async function getSchedulesForOrg(orgId: string): Promise<Schedule[]> {
   const supabase = await createClient()
 
