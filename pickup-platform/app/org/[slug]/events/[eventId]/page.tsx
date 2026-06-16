@@ -1,5 +1,4 @@
 import { Suspense } from 'react'
-import { after } from 'next/server'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
@@ -81,9 +80,7 @@ export default async function EventPage({ params }: Props) {
     notFound()
   }
 
-  after(() => {
-    void recordEventPageView(eventId, org.id)
-  })
+  await recordEventPageView(eventId, org.id)
 
   const isCancelled = isEventCancelled(event.status)
   const cancelledClasses = cancelledEventClasses(isCancelled)

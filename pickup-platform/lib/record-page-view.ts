@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { getSessionToken } from '@/lib/participant-session'
 import { VISITOR_COOKIE } from '@/lib/visitor-cookie'
 
-async function resolveViewerKey(): Promise<string | null> {
+export async function resolveViewerKey(): Promise<string | null> {
   const cookieStore = await cookies()
   const fromCookie = cookieStore.get(VISITOR_COOKIE)?.value
   if (fromCookie) {
@@ -17,6 +17,7 @@ async function resolveViewerKey(): Promise<string | null> {
 export async function recordEventPageView(eventId: string, orgId: string): Promise<void> {
   const viewerKey = await resolveViewerKey()
   if (!viewerKey) {
+    console.error('recordEventPageView: missing viewer key (cookie and x-visitor-key header)')
     return
   }
 
@@ -33,9 +34,13 @@ export async function recordEventPageView(eventId: string, orgId: string): Promi
     participantId = participant?.participant_id ?? null
   }
 
-  await supabase.rpc('record_event_page_view', {
+  const { error } = await supabase.rpc('record_event_page_view', {
     p_event_id: eventId,
     p_viewer_key: viewerKey,
     p_participant_id: participantId,
   })
+
+  if (error) {
+    console.error('record_event_page_view failed:', error.message)
+  }
 }

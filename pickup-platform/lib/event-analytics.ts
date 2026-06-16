@@ -77,30 +77,38 @@ export async function getEventAnalytics(
 ): Promise<EventAnalytics> {
   const supabase = await createClient()
 
-  const { data, error } = await supabase.rpc('get_event_analytics', {
-    p_event_id: eventId,
-  })
+  const [viewsRes, joinedRes, leftRes] = await Promise.all([
+    supabase.from('event_page_views').select('viewer_key').eq('event_id', eventId),
+    supabase
+      .from('event_signup_activity')
+      .select('participant_id')
+      .eq('event_id', eventId)
+      .eq('action', 'joined'),
+    supabase
+      .from('event_signup_activity')
+      .select('participant_id')
+      .eq('event_id', eventId)
+      .eq('action', 'left'),
+  ])
 
-  if (error || !data) {
-    return buildRosterAnalytics(roster, capacity, {
-      pageViews: 0,
-      uniqueVisitors: 0,
-      uniqueSignups: 0,
-      uniqueLeft: 0,
-    })
+  if (viewsRes.error) {
+    console.error('event_page_views read failed:', viewsRes.error.message)
+  }
+  if (joinedRes.error) {
+    console.error('event_signup_activity (joined) read failed:', joinedRes.error.message)
+  }
+  if (leftRes.error) {
+    console.error('event_signup_activity (left) read failed:', leftRes.error.message)
   }
 
-  const row = data as {
-    page_views: number
-    unique_visitors: number
-    unique_signups: number
-    unique_left: number
-  }
+  const views = viewsRes.data ?? []
+  const joined = joinedRes.data ?? []
+  const left = leftRes.data ?? []
 
   return buildRosterAnalytics(roster, capacity, {
-    pageViews: row.page_views ?? 0,
-    uniqueVisitors: row.unique_visitors ?? 0,
-    uniqueSignups: row.unique_signups ?? 0,
-    uniqueLeft: row.unique_left ?? 0,
+    pageViews: views.length,
+    uniqueVisitors: new Set(views.map((v) => v.viewer_key)).size,
+    uniqueSignups: new Set(joined.map((r) => r.participant_id)).size,
+    uniqueLeft: new Set(left.map((r) => r.participant_id)).size,
   })
 }

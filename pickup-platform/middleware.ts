@@ -19,19 +19,20 @@ function isPublicEventPage(pathname: string): boolean {
   )
 }
 
-function withVisitorContext(request: NextRequest, response: NextResponse): NextResponse {
+function copyCookies(from: NextResponse, to: NextResponse) {
+  for (const cookie of from.cookies.getAll()) {
+    to.cookies.set(cookie.name, cookie.value, cookie)
+  }
+}
+
+function attachVisitorKey(request: NextRequest, requestHeaders: Headers): string | null {
   if (!isPublicEventPage(request.nextUrl.pathname)) {
-    return response
+    return null
   }
 
-  let visitorKey = request.cookies.get(VISITOR_COOKIE)?.value ?? null
-  if (!visitorKey) {
-    visitorKey = crypto.randomUUID()
-    response.cookies.set(VISITOR_COOKIE, visitorKey, VISITOR_COOKIE_OPTIONS)
-  }
-
-  response.headers.set('x-visitor-key', visitorKey)
-  return response
+  const visitorKey = request.cookies.get(VISITOR_COOKIE)?.value ?? crypto.randomUUID()
+  requestHeaders.set('x-visitor-key', visitorKey)
+  return visitorKey
 }
 
 export async function middleware(request: NextRequest) {
@@ -39,9 +40,7 @@ export async function middleware(request: NextRequest) {
   const orgSlug = parseOrgSlugFromHost(host)
   const pathname = request.nextUrl.pathname
 
-  // Subdomain tenant: rewrite to /org/[slug]/...
   if (orgSlug) {
-    // API, auth, and console routes are not org-scoped rewrites.
     if (
       pathname.startsWith('/api/') ||
       pathname.startsWith('/auth/') ||
@@ -53,21 +52,39 @@ export async function middleware(request: NextRequest) {
     const url = request.nextUrl.clone()
     const path = pathname === '/' ? '' : pathname
     url.pathname = `/org/${orgSlug}${path}`
-    const rewriteResponse = NextResponse.rewrite(url)
-    rewriteResponse.headers.set('x-org-slug', orgSlug)
-    return withVisitorContext(request, rewriteResponse)
+
+    const requestHeaders = new Headers(request.headers)
+    requestHeaders.set('x-org-slug', orgSlug)
+    const visitorKey = attachVisitorKey(request, requestHeaders)
+    const isNewVisitor = visitorKey != null && !request.cookies.get(VISITOR_COOKIE)?.value
+
+    const response = NextResponse.rewrite(url, { request: { headers: requestHeaders } })
+    response.headers.set('x-org-slug', orgSlug)
+
+    if (isNewVisitor && visitorKey) {
+      response.cookies.set(VISITOR_COOKIE, visitorKey, VISITOR_COOKIE_OPTIONS)
+    }
+
+    return response
   }
 
+  const requestHeaders = new Headers(request.headers)
+  const visitorKey = attachVisitorKey(request, requestHeaders)
+  const isNewVisitor = visitorKey != null && !request.cookies.get(VISITOR_COOKIE)?.value
+
   const sessionResponse = await updateSession(request)
-  return withVisitorContext(request, sessionResponse)
+  const response = NextResponse.next({ request: { headers: requestHeaders } })
+  copyCookies(sessionResponse, response)
+
+  if (isNewVisitor && visitorKey) {
+    response.cookies.set(VISITOR_COOKIE, visitorKey, VISITOR_COOKIE_OPTIONS)
+  }
+
+  return response
 }
 
 export const config = {
   matcher: [
-    /*
-     * Match all paths except static files and images.
-     * Auth callback must be included for session refresh.
-     */
     '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }
