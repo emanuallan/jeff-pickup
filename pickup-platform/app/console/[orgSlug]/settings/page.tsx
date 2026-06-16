@@ -1,9 +1,12 @@
 import { notFound } from 'next/navigation'
 import { getOrgForMember } from '@/lib/orgs'
+import { createClient } from '@/lib/supabase/server'
+import { getRootDomain } from '@/lib/tenancy/parse-host'
 import { ProfileForm } from '../profile-form'
 import { BrandingForm } from '../branding-form'
 import { LinksForm } from '../links-form'
 import { MaterializeButton } from '../materialize-button'
+import { DeleteOrgSection } from '../delete-org-section'
 import { MAX_ORG_LINKS } from '@/lib/social-links'
 import { ConsolePage, ConsoleHeader, ConsoleSection } from '../../_components/console-ui'
 
@@ -18,6 +21,20 @@ export default async function OrgSettingsPage({ params }: Props) {
   if (!org) {
     notFound()
   }
+
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  const { data: membership } = user
+    ? await supabase
+        .from('org_members')
+        .select('role')
+        .eq('org_id', org.id)
+        .eq('user_id', user.id)
+        .maybeSingle()
+    : { data: null }
+
+  const isOwner = membership?.role === 'owner'
+  const rootDomain = getRootDomain()
 
   return (
     <ConsolePage width="max-w-2xl">
@@ -52,6 +69,16 @@ export default async function OrgSettingsPage({ params }: Props) {
         >
           <MaterializeButton orgSlug={orgSlug} />
         </ConsoleSection>
+
+        {isOwner ? (
+          <ConsoleSection
+            title="Dangerous"
+            description="Irreversible actions for this group."
+            className="border-red-500/20"
+          >
+            <DeleteOrgSection orgSlug={orgSlug} rootDomain={rootDomain} />
+          </ConsoleSection>
+        ) : null}
       </div>
     </ConsolePage>
   )

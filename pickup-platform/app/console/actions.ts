@@ -478,6 +478,54 @@ export async function updateOrgLinks(orgSlug: string, formData: FormData) {
   return { ok: true }
 }
 
+async function requireOrgOwner(orgSlug: string) {
+  const org = await getOrgForMember(orgSlug)
+  if (!org) {
+    return { error: 'Not authorized' as const }
+  }
+
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    return { error: 'Not signed in' as const }
+  }
+
+  const { data: membership } = await supabase
+    .from('org_members')
+    .select('role')
+    .eq('org_id', org.id)
+    .eq('user_id', user.id)
+    .maybeSingle()
+
+  if (membership?.role !== 'owner') {
+    return { error: 'Only the group owner can delete this group.' as const }
+  }
+
+  return { org }
+}
+
+export async function deleteOrg(orgSlug: string, confirmSlug: string): Promise<{ error?: string }> {
+  const ownerResult = await requireOrgOwner(orgSlug)
+  if ('error' in ownerResult) {
+    return { error: ownerResult.error }
+  }
+
+  const { org } = ownerResult
+  if (normalizeSlug(confirmSlug) !== org.slug) {
+    return { error: 'Slug does not match. Type the exact slug to confirm.' }
+  }
+
+  const supabase = await createClient()
+  const { error } = await supabase.from('orgs').delete().eq('id', org.id)
+
+  if (error) {
+    return { error: error.message }
+  }
+
+  revalidatePath('/console')
+  redirect('/console')
+}
+
 /** Live availability check for the org-creation form. */
 export async function checkSlugAvailability(
   slug: string,
