@@ -1,8 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { joinEvent, leaveEvent, quickJoinEvent, updateArrivalStatus } from './actions'
 import { arrivalStatuses, arrivalStatusEmoji, type ArrivalStatus } from '@/lib/arrival-status'
+import { fireConfetti } from '@/lib/confetti'
 
 type Participant = {
   first_name: string
@@ -166,6 +167,7 @@ export function JoinSection(props: Props) {
             const result = await quickJoinEvent(props.orgSlug, props.eventId, props.orgId)
             setLoading(false)
             if (result.error) setError(result.error)
+            else void fireConfetti(props.accent)
           }}
           className="w-full rounded-xl px-4 py-3.5 text-sm font-semibold shadow-lg transition-opacity hover:opacity-90 disabled:opacity-50"
           style={{
@@ -189,6 +191,7 @@ export function JoinSection(props: Props) {
         const result = await joinEvent(props.orgSlug, props.eventId, formData)
         setLoading(false)
         if (result.error) setError(result.error)
+        else void fireConfetti(props.accent)
       }}
       className="space-y-4"
     >
@@ -286,36 +289,74 @@ export type RosterBadgeInfo = {
   isCapsLeader: boolean
 }
 
+function TooltipBadge({
+  tip,
+  className,
+  children,
+}: {
+  tip: string
+  className?: string
+  children: React.ReactNode
+}) {
+  const [show, setShow] = useState(false)
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  return (
+    <span className="relative inline-flex align-middle">
+      <button
+        type="button"
+        className={className}
+        aria-label={tip}
+        onClick={() => {
+          setShow(true)
+          if (timer.current) clearTimeout(timer.current)
+          timer.current = setTimeout(() => setShow(false), 1800)
+        }}
+      >
+        {children}
+      </button>
+      {show ? (
+        <span className="absolute left-1/2 top-full z-10 mt-1 -translate-x-1/2 whitespace-nowrap rounded-lg border border-zinc-700 bg-black/90 px-2 py-1 text-[10px] font-semibold text-white/90 shadow-lg">
+          {tip}
+        </span>
+      ) : null}
+    </span>
+  )
+}
+
 function RosterBadges({ badges }: { badges: RosterBadgeInfo | undefined }) {
   if (!badges) return null
 
   return (
     <span className="ml-1.5 inline-flex flex-wrap items-center gap-1">
       {badges.isCapsLeader ? (
-        <span title="Most caps on this roster" aria-label="Most caps on this roster">
+        <TooltipBadge tip="Most caps on this roster" className="inline-flex items-center">
           🏅
-        </span>
+        </TooltipBadge>
       ) : null}
       {badges.milestone ? (
-        <span
-          className="rounded bg-zinc-800 px-1.5 py-0.5 text-[10px] font-semibold text-zinc-300"
-          title={`${badges.milestone} caps milestone`}
+        <TooltipBadge
+          tip={`${badges.milestone} caps milestone`}
+          className="inline-flex items-center rounded bg-zinc-800 px-1.5 py-0.5 text-[10px] font-semibold text-zinc-300"
         >
           {badges.milestone}
-        </span>
+        </TooltipBadge>
       ) : null}
       {badges.streak > 0 ? (
-        <span className="text-xs text-orange-400" title={`${badges.streak}-week streak`}>
+        <TooltipBadge
+          tip={`${badges.streak}-week streak`}
+          className="inline-flex items-center text-xs text-orange-400"
+        >
           🔥 {badges.streak}w
-        </span>
+        </TooltipBadge>
       ) : null}
       {badges.isNew ? (
-        <span
-          className="rounded bg-emerald-900/60 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-300"
-          title="First session — say hi!"
+        <TooltipBadge
+          tip="First session — say hi!"
+          className="inline-flex items-center rounded bg-emerald-900/60 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-300"
         >
           New
-        </span>
+        </TooltipBadge>
       ) : null}
     </span>
   )
