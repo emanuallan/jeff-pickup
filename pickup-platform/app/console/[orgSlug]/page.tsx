@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { getOrgForMember } from '@/lib/orgs'
 import { getLocationsForOrg } from '@/lib/locations'
-import { getSchedulesForOrg, formatWeekdays, formatTime } from '@/lib/schedules'
+import { getSchedulesForOrg, formatWeekdays, formatTime, formatIntervalWeeks } from '@/lib/schedules'
 import {
   getUpcomingEventsForConsole,
   getPastEventsForConsole,
@@ -95,10 +95,12 @@ export default async function OrgConsolePage({ params }: Props) {
           <ConsoleCard key={s.id} className="text-sm">
             <div className="font-medium text-zinc-100">{s.title}</div>
             <div className="mt-0.5 text-xs text-zinc-500">
-              {formatWeekdays(s.byweekday)} · {formatTime(s.start_time)} · {s.timezone}
+              {formatIntervalWeeks(s.interval_weeks)} · {formatWeekdays(s.byweekday)} ·{' '}
+              {formatTime(s.start_time)} · {s.timezone}
             </div>
             <div className="mt-0.5 text-xs text-zinc-500">
-              {s.capacity ? `Capacity ${s.capacity}` : 'No capacity limit'} · min {s.min_players}
+              {s.capacity ? `Capacity ${s.capacity}` : 'No capacity limit'}
+              {s.min_players != null ? ` · min ${s.min_players} participants` : ''}
             </div>
           </ConsoleCard>
         ))}

@@ -33,6 +33,9 @@ In the Supabase **SQL Editor**, run in order:
 6. `supabase/migrations/006_event_timezone.sql`
 7. `supabase/migrations/007_schedule_event_skips.sql`
 8. `supabase/migrations/008_online_locations.sql`
+9. `supabase/migrations/009_update_guest_count.sql`
+10. `supabase/migrations/010_optional_min_participants.sql`
+11. `supabase/migrations/011_schedule_interval.sql`
 
 ## 3. Auth settings
 

@@ -11,7 +11,7 @@ export type Event = {
   starts_at: string
   timezone: string
   capacity: number | null
-  min_players: number
+  min_players: number | null
   status: EventStatus
   announcement: string
 }

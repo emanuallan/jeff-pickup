@@ -48,7 +48,8 @@ export default async function ConsoleEventRosterPage({ params }: Props) {
       />
       <p className="mt-2 text-xs text-zinc-500">
         {statusLabel(event.status)} · {headcount}
-        {event.capacity != null ? ` / ${event.capacity}` : ''} coming · min {event.min_players}
+        {event.capacity != null ? ` / ${event.capacity}` : ''} coming
+        {event.min_players != null ? ` · min ${event.min_players} participants` : ''}
       </p>
 
       <div className="mt-8">

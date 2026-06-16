@@ -184,9 +184,11 @@ export default async function EventPage({ params }: Props) {
               <span className="font-semibold text-zinc-100">{headcount}</span>
               {event.capacity != null ? ` / ${event.capacity}` : ''} coming
             </span>
-            <span className="rounded-lg bg-zinc-800/60 px-2.5 py-1 text-zinc-400">
-              min {event.min_players}
-            </span>
+            {event.min_players != null ? (
+              <span className="rounded-lg bg-zinc-800/60 px-2.5 py-1 text-zinc-400">
+                min {event.min_players} participants
+              </span>
+            ) : null}
             <Suspense fallback={null}>
               <WeatherPill
                 lat={event.location_lat}

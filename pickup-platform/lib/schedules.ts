@@ -9,7 +9,9 @@ export type Schedule = {
   start_time: string
   duration_min: number
   capacity: number | null
-  min_players: number
+  min_players: number | null
+  interval_weeks: number
+  anchor_date: string
   timezone: string
   is_active: boolean
 }
@@ -32,6 +34,11 @@ export function formatTime(t: string): string {
   const suffix = h >= 12 ? 'PM' : 'AM'
   const h12 = h % 12 === 0 ? 12 : h % 12
   return `${h12}:${min} ${suffix}`
+}
+
+export function formatIntervalWeeks(weeks: number): string {
+  if (weeks === 1) return 'Every week'
+  return `Every ${weeks} weeks`
 }
 
 export async function getSchedulesForOrg(orgId: string): Promise<Schedule[]> {

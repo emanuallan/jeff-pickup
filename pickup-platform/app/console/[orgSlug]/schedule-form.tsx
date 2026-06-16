@@ -102,6 +102,16 @@ export function ScheduleForm({ orgSlug, locations, createSchedule }: Props) {
         </label>
       </div>
 
+      <label className="block">
+        <span className="text-xs text-zinc-500">Frequency</span>
+        <select name="interval_weeks" defaultValue="1" className={`mt-1 ${consoleInput}`}>
+          <option value="1">Every week</option>
+          <option value="2">Every 2 weeks</option>
+          <option value="3">Every 3 weeks</option>
+          <option value="4">Every 4 weeks</option>
+        </select>
+      </label>
+
       <div className="grid grid-cols-2 gap-3">
         <label className="block">
           <span className="text-xs text-zinc-500">Capacity (optional)</span>
@@ -115,13 +125,13 @@ export function ScheduleForm({ orgSlug, locations, createSchedule }: Props) {
           />
         </label>
         <label className="block">
-          <span className="text-xs text-zinc-500">Min players</span>
+          <span className="text-xs text-zinc-500">Min participants (optional)</span>
           <input
             name="min_players"
             type="number"
             min={2}
             max={999}
-            defaultValue={10}
+            placeholder="No minimum"
             className={`mt-1 ${consoleInput}`}
           />
         </label>

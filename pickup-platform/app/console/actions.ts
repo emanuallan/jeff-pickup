@@ -26,6 +26,18 @@ function parseOptionalInt(value: FormDataEntryValue | null): number | null {
   return Number.isFinite(n) ? n : null
 }
 
+function parseOptionalMinParticipants(
+  value: FormDataEntryValue | null,
+): { value: number | null; error?: string } {
+  const raw = String(value ?? '').trim()
+  if (!raw) return { value: null }
+  const n = Number.parseInt(raw, 10)
+  if (!Number.isFinite(n) || n < 2 || n > 999) {
+    return { value: null, error: 'Min participants must be between 2 and 999.' }
+  }
+  return { value: n }
+}
+
 export async function createOrg(formData: FormData) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -152,8 +164,9 @@ export async function createSchedule(orgSlug: string, formData: FormData) {
   const startTime = String(formData.get('start_time') ?? '18:00')
   const timezone = String(formData.get('timezone') ?? 'UTC').trim()
   const capacity = parseOptionalInt(formData.get('capacity'))
-  const minPlayers = Number.parseInt(String(formData.get('min_players') ?? '10'), 10)
+  const minParticipants = parseOptionalMinParticipants(formData.get('min_players'))
   const durationMin = Number.parseInt(String(formData.get('duration_min') ?? '90'), 10)
+  const intervalWeeks = Number.parseInt(String(formData.get('interval_weeks') ?? '1'), 10)
   const byweekday = formData
     .getAll('byweekday')
     .map((v) => Number.parseInt(String(v), 10))
@@ -168,6 +181,21 @@ export async function createSchedule(orgSlug: string, formData: FormData) {
   if (!/^\d{2}:\d{2}$/.test(startTime)) {
     return { error: 'Invalid start time.' }
   }
+  if (minParticipants.error) {
+    return { error: minParticipants.error }
+  }
+  if (
+    minParticipants.value != null &&
+    capacity != null &&
+    minParticipants.value > capacity
+  ) {
+    return { error: 'Min participants cannot exceed capacity.' }
+  }
+  if (!Number.isFinite(intervalWeeks) || intervalWeeks < 1 || intervalWeeks > 52) {
+    return { error: 'Frequency must be between every 1 and 52 weeks.' }
+  }
+
+  const anchorDate = new Date().toLocaleDateString('en-CA', { timeZone: timezone || 'UTC' })
 
   const { error } = await supabase.from('schedules').insert({
     org_id: org.id,
@@ -177,8 +205,10 @@ export async function createSchedule(orgSlug: string, formData: FormData) {
     start_time: startTime,
     timezone,
     capacity,
-    min_players: minPlayers,
+    min_players: minParticipants.value,
     duration_min: durationMin,
+    interval_weeks: intervalWeeks,
+    anchor_date: anchorDate,
   })
 
   if (error) {
@@ -208,10 +238,20 @@ export async function createOneOffEvent(orgSlug: string, formData: FormData): Pr
   const startsAtLocal = String(formData.get('starts_at') ?? '')
   const timezone = String(formData.get('timezone') ?? 'UTC').trim()
   const capacity = parseOptionalInt(formData.get('capacity'))
-  const minPlayers = Number.parseInt(String(formData.get('min_players') ?? '10'), 10)
+  const minParticipants = parseOptionalMinParticipants(formData.get('min_players'))
   const announcement = String(formData.get('announcement') ?? '').trim()
 
   if (!locationId || !startsAtLocal) {
+    return
+  }
+  if (minParticipants.error) {
+    return
+  }
+  if (
+    minParticipants.value != null &&
+    capacity != null &&
+    minParticipants.value > capacity
+  ) {
     return
   }
 
@@ -229,7 +269,7 @@ export async function createOneOffEvent(orgSlug: string, formData: FormData): Pr
     starts_at: startsAtIso,
     timezone,
     capacity,
-    min_players: minPlayers,
+    min_players: minParticipants.value,
     announcement,
     status: 'tentative',
   })

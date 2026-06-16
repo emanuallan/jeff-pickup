@@ -49,13 +49,13 @@ export function OneOffEventForm({ locations, createOneOff }: Props) {
           />
         </label>
         <label className="block">
-          <span className="text-xs text-zinc-500">Min players</span>
+          <span className="text-xs text-zinc-500">Min participants (optional)</span>
           <input
             name="min_players"
             type="number"
             min={2}
             max={999}
-            defaultValue={10}
+            placeholder="No minimum"
             className={`mt-1 ${consoleInput}`}
           />
         </label>
