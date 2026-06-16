@@ -104,31 +104,30 @@ export default async function EventsPage({ params }: Props) {
 
   return (
     <main className="mx-auto min-h-dvh max-w-lg px-5 py-10 sm:px-6">
-      <header className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          {org.branding.logo_url ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={org.branding.logo_url}
-              alt=""
-              className="h-11 w-11 rounded-xl object-cover"
-            />
-          ) : (
-            <div
-              className="flex h-11 w-11 items-center justify-center rounded-xl text-lg font-bold"
-              style={{ backgroundColor: accent, color: readableTextColor(accent) }}
-            >
-              {org.name.charAt(0).toUpperCase()}
-            </div>
-          )}
-          <div className="min-w-0">
-            <h1 className="truncate text-xl font-semibold tracking-tight">{org.name}</h1>
-            {org.activity ? (
-              <p className="truncate text-sm text-zinc-400">{org.activity}</p>
-            ) : null}
-          </div>
-        </div>
+      <div className="flex justify-end">
         <ShareButton title={org.name} text={`Join ${org.name} on Organizr`} />
+      </div>
+
+      <header className="mt-2 flex flex-col items-center text-center">
+        {org.branding.logo_url ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={org.branding.logo_url}
+            alt=""
+            className="h-20 w-20 rounded-2xl object-cover shadow-lg"
+          />
+        ) : (
+          <div
+            className="flex h-20 w-20 items-center justify-center rounded-2xl text-3xl font-bold shadow-lg"
+            style={{ backgroundColor: accent, color: readableTextColor(accent) }}
+          >
+            {org.name.charAt(0).toUpperCase()}
+          </div>
+        )}
+        <h1 className="mt-4 text-3xl font-bold tracking-tight">{org.name}</h1>
+        {org.activity ? (
+          <p className="mt-1.5 text-base text-zinc-400">{org.activity}</p>
+        ) : null}
       </header>
 
       {next ? (

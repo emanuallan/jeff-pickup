@@ -116,43 +116,41 @@ export default async function EventPage({ params }: Props) {
 
   return (
     <main className="mx-auto min-h-dvh max-w-lg px-5 py-10 sm:px-6">
-      <Link
-        href="/events"
-        className="inline-flex items-center gap-1 text-sm text-zinc-400 transition-colors hover:text-zinc-200"
-      >
-        <span aria-hidden>←</span> All sessions
-      </Link>
+      <div className="flex items-center justify-between gap-3">
+        <Link
+          href="/events"
+          className="inline-flex items-center gap-1 text-sm text-zinc-400 transition-colors hover:text-zinc-200"
+        >
+          <span aria-hidden>←</span> All sessions
+        </Link>
+        <ShareButton title={org.name} text={shareText} />
+      </div>
 
-      <header className="mt-5 flex items-center gap-3">
+      <header className="mt-4 flex flex-col items-center text-center">
         {org.branding.logo_url ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={org.branding.logo_url}
             alt=""
-            className="h-11 w-11 rounded-xl object-cover"
+            className="h-20 w-20 rounded-2xl object-cover shadow-lg"
           />
         ) : (
           <div
-            className="flex h-11 w-11 items-center justify-center rounded-xl text-lg font-bold"
+            className="flex h-20 w-20 items-center justify-center rounded-2xl text-3xl font-bold shadow-lg"
             style={{ backgroundColor: accent, color: accentText }}
           >
             {org.name.charAt(0).toUpperCase()}
           </div>
         )}
-        <div className="min-w-0">
-          <h1 className="truncate text-xl font-semibold tracking-tight">{org.name}</h1>
-          {org.activity ? (
-            <p className="truncate text-sm text-zinc-400">{org.activity}</p>
-          ) : null}
-        </div>
+        <h1 className="mt-4 text-3xl font-bold tracking-tight">{org.name}</h1>
+        {org.activity ? (
+          <p className="mt-1.5 text-base text-zinc-400">{org.activity}</p>
+        ) : null}
       </header>
 
-      <section className="mt-5">
+      <section className="mt-8">
         <div className="overflow-hidden rounded-3xl border border-zinc-800 bg-linear-to-b from-zinc-900 to-zinc-950 p-6">
-          <div className="flex items-center justify-between gap-3">
-            <StatusPill status={event.status} accent={accent} />
-            <ShareButton title={org.name} text={shareText} />
-          </div>
+          <StatusPill status={event.status} accent={accent} />
 
           <h2 className="mt-4 text-2xl font-semibold tracking-tight text-zinc-50">
             {eventName(event, fallbackName)}
