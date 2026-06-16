@@ -169,6 +169,9 @@ export default async function OrgConsolePage({ params }: Props) {
 
   const headerActions = (
     <>
+      <Link href={`/console/${orgSlug}/participants`} className={btnOutline}>
+        Participants
+      </Link>
       <Link href={`/console/${orgSlug}/settings`} className={btnOutline}>
         Personalize
       </Link>
