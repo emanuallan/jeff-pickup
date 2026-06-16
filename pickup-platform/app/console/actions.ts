@@ -257,7 +257,7 @@ export async function createSchedule(orgSlug: string, formData: FormData) {
   }
 
   // Populate sessions immediately so the organizer never has to "generate" by
-  // hand; the nightly cron keeps the rolling 30-day window topped up afterward.
+  // hand; the nightly cron keeps the rolling 5-session buffer topped up afterward.
   // A materialize failure must not fail schedule creation — sessions will still
   // be filled in on the next cron run.
   try {

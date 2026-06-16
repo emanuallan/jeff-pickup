@@ -165,7 +165,7 @@ export default async function OrgConsolePage({ params }: Props) {
           {/* Sessions — collapsed by default; they roll in automatically so this stays tidy. */}
           <ConsoleSection
             title={`Sessions${upcomingEvents.length > 0 ? ` (${upcomingEvents.length})` : ''}`}
-            description="Auto-generated from your recurring schedule for the next 30 days — a new one rolls in each day."
+            description="Auto-generated from your recurring schedule — the next 5 upcoming sessions per schedule roll in automatically."
             collapsible
             defaultOpen={false}
           >

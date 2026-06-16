@@ -1,12 +1,12 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 
-const WINDOW_DAYS = 30
+const SESSION_COUNT = 5
 
 export async function materializeEvents(args?: { orgId?: string }): Promise<number> {
   const admin = createAdminClient()
 
   const { data, error } = await admin.rpc('materialize_events', {
-    p_window_days: WINDOW_DAYS,
+    p_session_count: SESSION_COUNT,
     p_org_id: args?.orgId ?? null,
   })
 
