@@ -95,7 +95,9 @@ export default async function EventPage({ params }: Props) {
     getSessionInfo(token, org.id, eventId),
   ])
 
-  const badgesByParticipantId = buildRosterBadgeMap(roster, engagementStats)
+  const badgesByParticipantId = buildRosterBadgeMap(roster, engagementStats, {
+    capsLeaderUnlocked: leaderboardUnlocked,
+  })
   const isPast = new Date(event.starts_at) < new Date()
   const isFull = event.capacity != null && headcount >= event.capacity
   const shareText = `${org.name}: ${formatEventTime(event)} ${event.location_is_online ? 'on' : 'at'} ${event.location_label}. Join us!`
