@@ -1,6 +1,4 @@
 import Link from 'next/link'
-import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
 import { getRootDomain } from '@/lib/tenancy/parse-host'
 import {
   OrganizrBackdrop,
@@ -9,14 +7,7 @@ import {
   organizrBtnSecondary,
 } from './_components/organizr-shell'
 
-export default async function HomePage() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-
-  if (user) {
-    redirect('/console')
-  }
-
+export default function HomePage() {
   const rootDomain = getRootDomain()
 
   return (
