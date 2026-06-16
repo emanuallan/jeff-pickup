@@ -2,22 +2,25 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { getOrgBySlug } from '@/lib/orgs'
-import {
-  getUpcomingEventsForOrg,
-  formatEventTime,
-  formatEventDayLabel,
-  formatEventTimeOnly,
-  statusLabel,
-  type EventWithLocation,
-} from '@/lib/events'
-import { getRootDomain } from '@/lib/tenancy/parse-host'
-import { readableTextColor } from '@/lib/colors'
+import { getUpcomingEventsForOrg, formatEventTime } from '@/lib/events'
 import { buildOrgMetadata } from '@/lib/og-metadata'
 import { getPublicRoster, rosterHeadcount } from '@/lib/signups'
 import { isLeaderboardUnlocked } from '@/lib/engagement'
+import { OrgHeader } from '../_components/org-header'
+import { OrgPageShell, OrgPageFooter, LeaderboardLink } from '../_components/org-page-shell'
 import { ShareButton } from '../share-button'
 import { MoreSessions } from './more-sessions'
-import { StatusPill, PinIcon, OnlineIcon, eventName } from './event-ui'
+import {
+  StatusPill,
+  PinIcon,
+  OnlineIcon,
+  LiveDot,
+  SessionRow,
+  EventDateTimeRow,
+  eventName,
+  isEventCancelled,
+  cancelledEventClasses,
+} from '../_components/event-ui'
 
 type Props = {
   params: Promise<{ slug: string }>
@@ -48,54 +51,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   })
 }
 
-/** Compact row used in the "more sessions" list. */
-function SessionRow({
-  event,
-  fallbackName,
-  accent,
-}: {
-  event: EventWithLocation
-  fallbackName: string
-  accent: string
-}) {
-  const isCancelled = event.status === 'cancelled'
-  return (
-    <Link
-      href={`/events/${event.id}`}
-      className="flex items-center gap-3 rounded-2xl border border-zinc-800 bg-zinc-900/40 px-4 py-3 transition-colors hover:border-zinc-700"
-    >
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2">
-          <span
-            className={`truncate text-sm font-medium ${
-              isCancelled ? 'text-zinc-500 line-through' : 'text-zinc-100'
-            }`}
-          >
-            {eventName(event, fallbackName)}
-          </span>
-        </div>
-        <div className="mt-0.5 flex items-center gap-1.5 text-xs text-zinc-500">
-          <span className="font-medium text-zinc-400">{formatEventDayLabel(event)}</span>
-          <span>·</span>
-          <span>{formatEventTimeOnly(event)}</span>
-          <span className="truncate">· {event.location_label}</span>
-        </div>
-      </div>
-      {isCancelled ? (
-        <span className="shrink-0 rounded-full bg-red-500/15 px-2 py-0.5 text-[11px] font-medium text-red-400">
-          {statusLabel(event.status)}
-        </span>
-      ) : event.status === 'on' ? (
-        <span
-          className="h-2 w-2 shrink-0 rounded-full"
-          style={{ backgroundColor: accent }}
-          aria-label={statusLabel(event.status)}
-        />
-      ) : null}
-    </Link>
-  )
-}
-
 export default async function EventsPage({ params }: Props) {
   const { slug } = await params
   const org = await getOrgBySlug(slug)
@@ -113,36 +68,17 @@ export default async function EventsPage({ params }: Props) {
 
   const next = events[0]
   const rest = events.slice(1)
-  const nextCancelled = next?.status === 'cancelled'
+  const nextCancelled = next ? isEventCancelled(next.status) : false
+  const cancelledClasses = cancelledEventClasses(nextCancelled)
   const nextHeadcount = next ? rosterHeadcount(await getPublicRoster(next.id)) : 0
 
   return (
-    <main className="mx-auto min-h-dvh max-w-lg px-5 py-10 sm:px-6">
+    <OrgPageShell>
       <div className="flex justify-end">
         <ShareButton title={org.name} text={`Join ${org.name} on Organizr`} />
       </div>
 
-      <header className="mt-2 flex flex-col items-center text-center">
-        {org.branding.logo_url ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={org.branding.logo_url}
-            alt=""
-            className="h-20 w-20 rounded-2xl object-cover shadow-lg"
-          />
-        ) : (
-          <div
-            className="flex h-20 w-20 items-center justify-center rounded-2xl text-3xl font-bold shadow-lg"
-            style={{ backgroundColor: accent, color: readableTextColor(accent) }}
-          >
-            {org.name.charAt(0).toUpperCase()}
-          </div>
-        )}
-        <h1 className="mt-4 text-3xl font-bold tracking-tight">{org.name}</h1>
-        {org.activity ? (
-          <p className="mt-1.5 text-base text-zinc-400">{org.activity}</p>
-        ) : null}
-      </header>
+      <OrgHeader org={org} title={org.name} subtitle={org.activity} />
 
       {next ? (
         <>
@@ -159,16 +95,7 @@ export default async function EventsPage({ params }: Props) {
                     </span>
                   ) : (
                     <>
-                      <span className="relative flex h-2 w-2">
-                        <span
-                          className="absolute inline-flex h-full w-full animate-ping rounded-full opacity-75"
-                          style={{ backgroundColor: accent }}
-                        />
-                        <span
-                          className="relative inline-flex h-2 w-2 rounded-full"
-                          style={{ backgroundColor: accent }}
-                        />
-                      </span>
+                      <LiveDot accent={accent} />
                       <span
                         className="text-xs font-semibold uppercase tracking-wider"
                         style={{ color: accent }}
@@ -181,31 +108,11 @@ export default async function EventsPage({ params }: Props) {
                 <StatusPill status={next.status} accent={accent} />
               </div>
 
-              <h2
-                className={`mt-4 text-2xl font-semibold tracking-tight ${
-                  nextCancelled ? 'text-zinc-400 line-through' : 'text-zinc-50'
-                }`}
-              >
+              <h2 className={`mt-4 text-2xl font-semibold tracking-tight ${cancelledClasses.titleLg}`}>
                 {eventName(next, fallbackName)}
               </h2>
 
-              <div
-                className={`mt-1.5 flex flex-wrap items-baseline gap-x-2 gap-y-1 ${
-                  nextCancelled ? 'line-through' : ''
-                }`}
-              >
-                <span
-                  className={`text-lg font-medium ${
-                    nextCancelled ? 'text-zinc-500' : 'text-zinc-100'
-                  }`}
-                >
-                  {formatEventDayLabel(next)}
-                </span>
-                <span className="text-zinc-600">·</span>
-                <span className={`text-lg ${nextCancelled ? 'text-zinc-500' : 'text-zinc-300'}`}>
-                  {formatEventTimeOnly(next)}
-                </span>
-              </div>
+              <EventDateTimeRow event={next} cancelled={nextCancelled} />
 
               <div className="mt-3 flex items-center gap-2 text-sm text-zinc-400">
                 {next.location_is_online ? <OnlineIcon /> : <PinIcon />}
@@ -268,17 +175,8 @@ export default async function EventsPage({ params }: Props) {
         </section>
       )}
 
-      {leaderboardUnlocked ? (
-        <p className="mt-10 text-center">
-          <Link href="/leaderboard" className="text-sm text-zinc-400 hover:text-zinc-200">
-            View leaderboard →
-          </Link>
-        </p>
-      ) : null}
-
-      <p className="mt-6 text-center text-xs text-zinc-600">
-        {org.slug}.{getRootDomain()}
-      </p>
-    </main>
+      {leaderboardUnlocked ? <LeaderboardLink /> : null}
+      <OrgPageFooter slug={org.slug} />
+    </OrgPageShell>
   )
 }

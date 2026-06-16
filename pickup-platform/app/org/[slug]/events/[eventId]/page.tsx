@@ -6,29 +6,31 @@ import { getOrgBySlug } from '@/lib/orgs'
 import {
   getEventById,
   formatEventTime,
-  formatEventDayLabel,
-  formatEventTimeOnly,
   formatEventHappening,
 } from '@/lib/events'
-import { getRootDomain } from '@/lib/tenancy/parse-host'
 import { readableTextColor } from '@/lib/colors'
 import { buildOrgMetadata } from '@/lib/og-metadata'
 import { getPublicRoster, rosterHeadcount } from '@/lib/signups'
 import { getSessionToken } from '@/lib/participant-session'
-import { getWeatherForEvent } from '@/lib/weather'
-import { createClient } from '@/lib/supabase/server'
+import { getSessionInfo } from '@/lib/participant'
 import { getParticipantEngagementStats, isLeaderboardUnlocked } from '@/lib/engagement'
-import { rosterBadges } from '@/lib/badges'
-import {
-  JoinSection,
-  RosterList,
-  ArrivalStatusPicker,
-  type RosterBadgeInfo,
-  type MySignup,
-  type Participant,
-} from './join-section'
+import { buildRosterBadgeMap } from '@/lib/badges'
+import { JoinSection, RosterList, ArrivalStatusPicker } from './join-section'
+import { WeatherPill } from './weather-pill'
 import { ShareButton } from '../../share-button'
-import { StatusPill, PinIcon, OnlineIcon, eventName } from '../event-ui'
+import { OrgHeader } from '../../_components/org-header'
+import { OrgPageShell, OrgPageFooter, LeaderboardLink } from '../../_components/org-page-shell'
+import {
+  StatusPill,
+  PinIcon,
+  OnlineIcon,
+  LiveDot,
+  EventDateTimeRow,
+  CancelledCallout,
+  eventName,
+  isEventCancelled,
+  cancelledEventClasses,
+} from '../../_components/event-ui'
 
 type Props = {
   params: Promise<{ slug: string; eventId: string }>
@@ -63,48 +65,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   })
 }
 
-type SessionInfo = { participant: Participant | null; mySignup: MySignup | null }
-
-/** Returning-participant lookup. Both RPCs share one client and run in parallel. */
-async function getSessionInfo(
-  token: string | null,
-  orgId: string,
-  eventId: string,
-): Promise<SessionInfo> {
-  if (!token) return { participant: null, mySignup: null }
-
-  const supabase = await createClient()
-  const [{ data: p }, { data: s }] = await Promise.all([
-    supabase.rpc('get_participant_for_session', { p_session_token: token, p_org_id: orgId }),
-    supabase.rpc('get_signup_for_session', { p_event_id: eventId, p_session_token: token }),
-  ])
-
-  return {
-    participant: (p as Participant | null) ?? null,
-    mySignup: (s as MySignup | null) ?? null,
-  }
-}
-
-/** Weather is an external API call, so it streams in via Suspense off the critical path. */
-async function WeatherPill({
-  lat,
-  lon,
-  startsAt,
-}: {
-  lat: number
-  lon: number
-  startsAt: string
-}) {
-  const weather = await getWeatherForEvent(lat, lon, startsAt)
-  if (!weather) return null
-  return (
-    <span className="rounded-lg bg-zinc-800/60 px-2.5 py-1 text-zinc-300">
-      {weather.emoji}
-      {weather.tempF != null ? ` ${weather.tempF}°F` : ''}
-    </span>
-  )
-}
-
 export default async function EventPage({ params }: Props) {
   const { slug, eventId } = await params
   const org = await getOrgBySlug(slug)
@@ -117,9 +77,10 @@ export default async function EventPage({ params }: Props) {
   if (!event) {
     notFound()
   }
-  const isCancelled = event.status === 'cancelled'
 
-  // First wave — independent reads that only need the org/event (or cookies).
+  const isCancelled = isEventCancelled(event.status)
+  const cancelledClasses = cancelledEventClasses(isCancelled)
+
   const [roster, leaderboardUnlocked, token] = await Promise.all([
     getPublicRoster(eventId),
     isLeaderboardUnlocked(org.id),
@@ -129,23 +90,12 @@ export default async function EventPage({ params }: Props) {
   const headcount = rosterHeadcount(roster)
   const participantIds = roster.map((e) => e.participant_id)
 
-  // Second wave — engagement needs the roster; the session lookup needs the token.
   const [engagementStats, { participant, mySignup }] = await Promise.all([
     getParticipantEngagementStats(org.id, participantIds),
     getSessionInfo(token, org.id, eventId),
   ])
 
-  const topSessionsOnRoster = Math.max(
-    0,
-    ...roster.map((e) => engagementStats.get(e.participant_id)?.total_sessions ?? 0),
-  )
-  const badgesByParticipantId = Object.fromEntries(
-    roster.map((e) => {
-      const stats = engagementStats.get(e.participant_id)
-      const badges = rosterBadges({ stats, topSessionsOnRoster })
-      return [e.participant_id, badges satisfies RosterBadgeInfo]
-    }),
-  )
+  const badgesByParticipantId = buildRosterBadgeMap(roster, engagementStats)
   const isPast = new Date(event.starts_at) < new Date()
   const isFull = event.capacity != null && headcount >= event.capacity
   const shareText = `${org.name}: ${formatEventTime(event)} ${event.location_is_online ? 'on' : 'at'} ${event.location_label}. Join us!`
@@ -155,7 +105,7 @@ export default async function EventPage({ params }: Props) {
   const spotsLeft = event.capacity != null ? Math.max(0, event.capacity - headcount) : null
 
   return (
-    <main className="mx-auto min-h-dvh max-w-lg px-5 py-10 sm:px-6">
+    <OrgPageShell>
       <div className="flex items-center justify-between gap-3">
         <Link
           href="/events"
@@ -166,27 +116,7 @@ export default async function EventPage({ params }: Props) {
         <ShareButton title={org.name} text={shareText} />
       </div>
 
-      <header className="mt-4 flex flex-col items-center text-center">
-        {org.branding.logo_url ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={org.branding.logo_url}
-            alt=""
-            className="h-20 w-20 rounded-2xl object-cover shadow-lg"
-          />
-        ) : (
-          <div
-            className="flex h-20 w-20 items-center justify-center rounded-2xl text-3xl font-bold shadow-lg"
-            style={{ backgroundColor: accent, color: accentText }}
-          >
-            {org.name.charAt(0).toUpperCase()}
-          </div>
-        )}
-        <h1 className="mt-4 text-3xl font-bold tracking-tight">{org.name}</h1>
-        {org.activity ? (
-          <p className="mt-1.5 text-base text-zinc-400">{org.activity}</p>
-        ) : null}
-      </header>
+      <OrgHeader org={org} title={org.name} subtitle={org.activity} className="mt-4" />
 
       <section className="mt-8">
         <div className="overflow-hidden rounded-3xl border border-zinc-800 bg-linear-to-b from-zinc-900 to-zinc-950 p-6">
@@ -197,16 +127,7 @@ export default async function EventPage({ params }: Props) {
               </span>
             ) : !isPast ? (
               <span className="flex items-center gap-2">
-                <span className="relative flex h-2 w-2">
-                  <span
-                    className="absolute inline-flex h-full w-full animate-ping rounded-full opacity-75"
-                    style={{ backgroundColor: accent }}
-                  />
-                  <span
-                    className="relative inline-flex h-2 w-2 rounded-full"
-                    style={{ backgroundColor: accent }}
-                  />
-                </span>
+                <LiveDot accent={accent} />
                 <span
                   className="text-xs font-semibold uppercase tracking-wider"
                   style={{ color: accent }}
@@ -220,29 +141,11 @@ export default async function EventPage({ params }: Props) {
             <StatusPill status={event.status} accent={accent} />
           </div>
 
-          <h2
-            className={`mt-4 text-2xl font-semibold tracking-tight ${
-              isCancelled ? 'text-zinc-400 line-through' : 'text-zinc-50'
-            }`}
-          >
+          <h2 className={`mt-4 text-2xl font-semibold tracking-tight ${cancelledClasses.titleLg}`}>
             {eventName(event, fallbackName)}
           </h2>
 
-          <div
-            className={`mt-1.5 flex flex-wrap items-baseline gap-x-2 gap-y-1 ${
-              isCancelled ? 'line-through' : ''
-            }`}
-          >
-            <span
-              className={`text-lg font-medium ${isCancelled ? 'text-zinc-500' : 'text-zinc-100'}`}
-            >
-              {formatEventDayLabel(event)}
-            </span>
-            <span className="text-zinc-600">·</span>
-            <span className={`text-lg ${isCancelled ? 'text-zinc-500' : 'text-zinc-300'}`}>
-              {formatEventTimeOnly(event)}
-            </span>
-          </div>
+          <EventDateTimeRow event={event} cancelled={isCancelled} />
 
           <div className="mt-3 flex items-center gap-2 text-sm text-zinc-400">
             {event.location_is_online ? <OnlineIcon /> : <PinIcon />}
@@ -299,16 +202,7 @@ export default async function EventPage({ params }: Props) {
       </section>
 
       {isCancelled ? (
-        <section className="mt-5 rounded-3xl border border-red-500/30 bg-red-500/10 p-5">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-red-400">
-            Session cancelled
-          </h2>
-          <p className="mt-2 text-sm text-zinc-300">
-            {mySignup
-              ? "This session has been cancelled, so it won't be happening. Keep an eye out for the next one."
-              : "This session has been cancelled and is no longer taking sign-ups. Check the other upcoming sessions."}
-          </p>
-        </section>
+        <CancelledCallout hasSignup={!!mySignup} />
       ) : !mySignup ? (
         <section className="mt-5 rounded-3xl border border-zinc-800 bg-zinc-900/50 p-5">
           <JoinSection
@@ -358,17 +252,8 @@ export default async function EventPage({ params }: Props) {
         ) : null}
       </section>
 
-      {leaderboardUnlocked ? (
-        <p className="mt-10 text-center">
-          <Link href="/leaderboard" className="text-sm text-zinc-400 hover:text-zinc-200">
-            View leaderboard →
-          </Link>
-        </p>
-      ) : null}
-
-      <p className="mt-6 text-center text-xs text-zinc-600">
-        {org.slug}.{getRootDomain()}
-      </p>
-    </main>
+      {leaderboardUnlocked ? <LeaderboardLink /> : null}
+      <OrgPageFooter slug={org.slug} />
+    </OrgPageShell>
   )
 }

@@ -252,3 +252,8 @@ export function statusLabel(status: EventStatus): string {
   if (status === 'cancelled') return 'Cancelled'
   return 'Tentative'
 }
+
+/** Schedule title when present, otherwise fallback (e.g. org activity). */
+export function eventDisplayName(title: string | null | undefined, fallback: string): string {
+  return title?.trim() || fallback
+}

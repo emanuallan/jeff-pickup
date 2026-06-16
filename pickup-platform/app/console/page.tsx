@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { getUserOrgs } from '@/lib/orgs'
 import { getRootDomain } from '@/lib/tenancy/parse-host'
+import { orgBaseUrl } from '@/lib/og-metadata'
 
 export default async function ConsolePage() {
   const supabase = await createClient()
@@ -62,10 +63,7 @@ export default async function ConsolePage() {
 
           <ul className="mt-4 grid gap-3 sm:grid-cols-2">
             {orgs.map((org) => {
-              const orgPublicUrl =
-                process.env.NODE_ENV === 'development'
-                  ? `http://${org.slug}.localhost:3000`
-                  : `https://${org.slug}.${rootDomain}`
+              const orgPublicUrl = orgBaseUrl(org.slug)
 
               return (
                 <li key={org.id}>

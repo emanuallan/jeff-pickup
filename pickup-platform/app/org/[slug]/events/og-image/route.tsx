@@ -1,5 +1,5 @@
 import { getOrgBySlug } from '@/lib/orgs'
-import { getUpcomingEventsForOrg, formatEventTime } from '@/lib/events'
+import { getUpcomingEventsForOrg, formatEventTime, eventDisplayName } from '@/lib/events'
 import { renderOrgOgImage } from '@/lib/og-image'
 
 type Context = {
@@ -11,7 +11,7 @@ export async function GET(_request: Request, { params }: Context) {
   const org = await getOrgBySlug(slug)
   const events = org ? await getUpcomingEventsForOrg(org.id, 1) : []
   const nextEvent = events[0]
-  const nextTitle = nextEvent?.title?.trim() || org?.activity || 'Session'
+  const nextTitle = eventDisplayName(nextEvent?.title, org?.activity || 'Session')
 
   return renderOrgOgImage({
     slug,

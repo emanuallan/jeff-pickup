@@ -10,7 +10,7 @@ import {
   statusLabel,
   type EventWithLocation,
 } from '@/lib/events'
-import { getRootDomain } from '@/lib/tenancy/parse-host'
+import { orgBaseUrl } from '@/lib/og-metadata'
 import {
   cancelEvent,
   uncancelEvent,
@@ -43,11 +43,7 @@ export default async function OrgConsolePage({ params }: Props) {
     getPastEventsForConsole(org.id),
   ])
 
-  const rootDomain = getRootDomain()
-  const orgUrl =
-    process.env.NODE_ENV === 'development'
-      ? `http://${org.slug}.localhost:3000`
-      : `https://${org.slug}.${rootDomain}`
+  const orgUrl = orgBaseUrl(org.slug)
 
   const addLocation = createLocation.bind(null, orgSlug)
 

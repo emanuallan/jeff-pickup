@@ -3,9 +3,10 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { getOrgBySlug } from '@/lib/orgs'
 import { getOrgCapsLeaderboard, getOrgStreakLeaderboard } from '@/lib/engagement'
-import { getRootDomain } from '@/lib/tenancy/parse-host'
 import { readableTextColor } from '@/lib/colors'
 import { buildOrgMetadata } from '@/lib/og-metadata'
+import { OrgHeader } from '../_components/org-header'
+import { OrgPageShell, OrgPageFooter } from '../_components/org-page-shell'
 
 type Props = {
   params: Promise<{ slug: string }>
@@ -81,7 +82,7 @@ export default async function LeaderboardPage({ params }: Props) {
   const topCaps = capsRows[0]?.caps ?? 0
 
   return (
-    <main className="mx-auto min-h-dvh max-w-lg px-5 py-10 sm:px-6">
+    <OrgPageShell>
       <div className="flex justify-start">
         <Link
           href="/events"
@@ -91,25 +92,7 @@ export default async function LeaderboardPage({ params }: Props) {
         </Link>
       </div>
 
-      <header className="mt-4 flex flex-col items-center text-center">
-        {org.branding.logo_url ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={org.branding.logo_url}
-            alt=""
-            className="h-20 w-20 rounded-2xl object-cover shadow-lg"
-          />
-        ) : (
-          <div
-            className="flex h-20 w-20 items-center justify-center rounded-2xl text-3xl font-bold shadow-lg"
-            style={{ backgroundColor: accent, color: readableTextColor(accent) }}
-          >
-            {org.name.charAt(0).toUpperCase()}
-          </div>
-        )}
-        <h1 className="mt-4 text-3xl font-bold tracking-tight">Leaderboard</h1>
-        <p className="mt-1.5 text-base text-zinc-400">{org.name}</p>
-      </header>
+      <OrgHeader org={org} title="Leaderboard" subtitle={org.name} className="mt-4" />
 
       <section className="mt-8 rounded-3xl border border-zinc-800 bg-linear-to-b from-zinc-900 to-zinc-950 p-6">
         <div className="flex items-baseline justify-between gap-3">
@@ -200,9 +183,7 @@ export default async function LeaderboardPage({ params }: Props) {
         </Link>
       </p>
 
-      <p className="mt-6 text-center text-xs text-zinc-600">
-        {org.slug}.{getRootDomain()}
-      </p>
-    </main>
+      <OrgPageFooter slug={org.slug} />
+    </OrgPageShell>
   )
 }

@@ -35,3 +35,22 @@ export function rosterBadges(args: {
     isCapsLeader: totalSessions > 0 && totalSessions === args.topSessionsOnRoster,
   }
 }
+
+export type RosterBadgeInfo = ReturnType<typeof rosterBadges>
+
+export function buildRosterBadgeMap(
+  roster: Array<{ participant_id: string }>,
+  engagementStats: Map<string, EngagementStats>,
+): Record<string, RosterBadgeInfo> {
+  const topSessionsOnRoster = Math.max(
+    0,
+    ...roster.map((e) => engagementStats.get(e.participant_id)?.total_sessions ?? 0),
+  )
+
+  return Object.fromEntries(
+    roster.map((e) => {
+      const stats = engagementStats.get(e.participant_id)
+      return [e.participant_id, rosterBadges({ stats, topSessionsOnRoster })]
+    }),
+  )
+}

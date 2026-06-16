@@ -5,20 +5,10 @@ import { joinEvent, leaveEvent, quickJoinEvent, updateArrivalStatus } from './ac
 import { arrivalStatuses, arrivalStatusEmoji, type ArrivalStatus } from '@/lib/arrival-status'
 import { fireConfetti } from '@/lib/confetti'
 import { hexToRgba } from '@/lib/colors'
+import type { Participant, MySignup } from '@/lib/participant'
+import type { RosterBadgeInfo } from '@/lib/badges'
 
-export type Participant = {
-  first_name: string
-  last_name: string
-  display_name: string
-  phone: string
-}
-
-export type MySignup = {
-  signup_id: string
-  guest_count: number
-  arrival_status: ArrivalStatus
-  display_name: string
-}
+export type { Participant, MySignup, RosterBadgeInfo }
 
 type Props = {
   orgSlug: string
@@ -202,13 +192,6 @@ export function JoinSection(props: Props) {
       </button>
     </form>
   )
-}
-
-export type RosterBadgeInfo = {
-  milestone: number | null
-  isNew: boolean
-  streak: number
-  isCapsLeader: boolean
 }
 
 function TooltipBadge({
