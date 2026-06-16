@@ -7,23 +7,17 @@ import {
   getUpcomingEventsForConsole,
   getPastEventsForConsole,
   formatEventTime,
-  statusLabel,
   type EventWithLocation,
 } from '@/lib/events'
 import { orgBaseUrl } from '@/lib/og-metadata'
-import {
-  cancelEvent,
-  uncancelEvent,
-  createLocation,
-  createOneOffEvent,
-  createSchedule,
-} from '../actions'
+import { createLocation, createOneOffEvent, createSchedule } from '../actions'
 import { ScheduleForm } from './schedule-form'
 import { AddLocationForm } from './add-location-form'
 import { DeleteLocationButton } from './delete-location-button'
 import { DeleteScheduleButton } from './delete-schedule-button'
 import { EditScheduleButton } from './edit-schedule-button'
 import { DeleteEventButton } from './delete-event-button'
+import { EventStatusSelect } from './event-status-select'
 import { OrgConsoleHeader } from './org-console-header'
 import {
   ConsolePage,
@@ -130,17 +124,7 @@ export default async function OrgConsolePage({ params }: Props) {
           <div className="font-medium text-zinc-100">{formatEventTime(ev)}</div>
           <div className="mt-0.5 text-xs text-zinc-500">{ev.location_label}</div>
         </div>
-        <span
-          className={
-            ev.status === 'cancelled'
-              ? 'text-xs font-medium text-red-400'
-              : ev.status === 'on'
-                ? 'text-xs font-medium text-emerald-400'
-                : 'text-xs text-zinc-500'
-          }
-        >
-          {statusLabel(ev.status)}
-        </span>
+        <EventStatusSelect orgSlug={orgSlug} eventId={ev.id} status={ev.status} />
       </div>
       <div className="mt-2.5 flex flex-wrap items-center gap-1 border-t border-white/5 pt-2">
         <Link
@@ -149,26 +133,6 @@ export default async function OrgConsolePage({ params }: Props) {
         >
           View analytics →
         </Link>
-        {!opts?.past && ev.status !== 'cancelled' ? (
-          <form action={cancelEvent.bind(null, orgSlug, ev.id)}>
-            <button
-              type="submit"
-              className={`${chipAction} text-zinc-400 hover:bg-red-500/10 hover:text-red-300`}
-            >
-              Cancel
-            </button>
-          </form>
-        ) : null}
-        {!opts?.past && ev.status === 'cancelled' ? (
-          <form action={uncancelEvent.bind(null, orgSlug, ev.id)}>
-            <button
-              type="submit"
-              className={`${chipAction} text-zinc-400 hover:bg-emerald-500/10 hover:text-emerald-300`}
-            >
-              Restore
-            </button>
-          </form>
-        ) : null}
         <DeleteEventButton
           orgSlug={orgSlug}
           eventId={ev.id}

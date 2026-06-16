@@ -3,8 +3,7 @@ import { getOrgForMember } from '@/lib/orgs'
 import { getEventById, formatEventTime, statusLabel } from '@/lib/events'
 import { getRosterWithContact } from '@/lib/signups'
 import { getEventAnalytics } from '@/lib/event-analytics'
-import { arrivalStatusEmoji, arrivalStatusLabel } from '@/lib/arrival-status'
-import type { ArrivalStatus } from '@/lib/arrival-status'
+import { arrivalStatusEmoji } from '@/lib/arrival-status'
 import { orgBaseUrl } from '@/lib/og-metadata'
 import {
   ConsolePage,
@@ -44,10 +43,6 @@ export default async function ConsoleEventAnalyticsPage({ params }: Props) {
   const roster = await getRosterWithContact(eventId)
   const analytics = await getEventAnalytics(eventId, roster, event.capacity)
   const publicEventUrl = `${orgBaseUrl(orgSlug)}/events/${eventId}`
-
-  const statusEntries = (
-    Object.entries(analytics.arrivalStatusCounts) as [ArrivalStatus, number][]
-  ).sort((a, b) => b[1] - a[1])
 
   return (
     <ConsolePage width="max-w-2xl">
@@ -139,25 +134,6 @@ export default async function ConsoleEventAnalyticsPage({ params }: Props) {
             />
           </div>
         </ConsoleSection>
-
-        {statusEntries.length > 0 ? (
-          <ConsoleSection title="Arrival statuses" description="How signed-up players are feeling.">
-            <ul className="space-y-2">
-              {statusEntries.map(([status, count]) => (
-                <li
-                  key={status}
-                  className="flex items-center justify-between gap-3 text-sm text-zinc-300"
-                >
-                  <span>
-                    {arrivalStatusEmoji(status, event.location_is_online)}{' '}
-                    {arrivalStatusLabel(status, event.location_is_online)}
-                  </span>
-                  <span className="tabular-nums text-zinc-500">{count}</span>
-                </li>
-              ))}
-            </ul>
-          </ConsoleSection>
-        ) : null}
 
         <ConsoleSection
           title={`Roster (${roster.length})`}

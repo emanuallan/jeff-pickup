@@ -11,6 +11,7 @@ import {
 } from '@/lib/schedules'
 import { geocodeAddress } from '@/lib/geocode'
 import { localDateTimeInZoneToUtcIso } from '@/lib/datetime'
+import { type EventStatus } from '@/lib/events'
 import { getOrgForMember } from '@/lib/orgs'
 import { isValidSlug, normalizeSlug } from '@/lib/tenancy/reserved-slugs'
 import { MAX_ORG_LINKS, normalizeLinkUrl } from '@/lib/social-links'
@@ -323,44 +324,56 @@ export async function createOneOffEvent(orgSlug: string, formData: FormData): Pr
 }
 
 export async function cancelEvent(orgSlug: string, eventId: string): Promise<void> {
-  const org = await requireOrgAdmin(orgSlug)
-  const supabase = await createClient()
-
-  const { error } = await supabase
-    .from('events')
-    .update({ status: 'cancelled' })
-    .eq('id', eventId)
-    .eq('org_id', org.id)
-
-  if (error) {
-    return
-  }
-
-  revalidatePath(`/console/${orgSlug}`)
-  revalidatePath(`/org/${orgSlug}`)
+  await updateEventStatus(orgSlug, eventId, 'cancelled')
 }
 
 export async function uncancelEvent(orgSlug: string, eventId: string): Promise<void> {
+  await updateEventStatus(orgSlug, eventId, 'tentative')
+}
+
+export async function updateEventStatus(
+  orgSlug: string,
+  eventId: string,
+  status: EventStatus,
+): Promise<{ ok: true } | { error: string }> {
   const org = await requireOrgAdmin(orgSlug)
   const supabase = await createClient()
 
-  // Restore to 'tentative' first, then let the headcount check promote it back
-  // to 'on' if enough people are already signed up.
-  const { error } = await supabase
+  const { data: event, error: fetchError } = await supabase
     .from('events')
-    .update({ status: 'tentative' })
+    .select('status')
     .eq('id', eventId)
     .eq('org_id', org.id)
-    .eq('status', 'cancelled')
+    .maybeSingle()
 
-  if (error) {
-    return
+  if (fetchError || !event) {
+    return { error: 'Session not found.' }
   }
 
-  await supabase.rpc('maybe_promote_event', { p_event_id: eventId })
+  if (event.status === status) {
+    return { ok: true }
+  }
+
+  const { error } = await supabase
+    .from('events')
+    .update({ status })
+    .eq('id', eventId)
+    .eq('org_id', org.id)
+
+  if (error) {
+    return { error: 'Could not update status.' }
+  }
+
+  // Restoring from cancelled may auto-promote to 'on' when headcount meets the minimum.
+  if (event.status === 'cancelled' && status === 'tentative') {
+    await supabase.rpc('maybe_promote_event', { p_event_id: eventId })
+  }
 
   revalidatePath(`/console/${orgSlug}`)
   revalidatePath(`/org/${orgSlug}`)
+  revalidatePath(`/console/${orgSlug}/events/${eventId}`)
+
+  return { ok: true }
 }
 
 export async function deleteEvent(
