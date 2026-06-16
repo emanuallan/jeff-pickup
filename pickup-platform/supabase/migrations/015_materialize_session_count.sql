@@ -1,7 +1,10 @@
 -- Keep a rolling buffer of upcoming sessions per schedule (default 5)
 -- instead of materializing a fixed calendar-day window.
+-- Must drop first: Postgres cannot rename parameters via CREATE OR REPLACE.
 
-create or replace function public.materialize_events(
+drop function if exists public.materialize_events(int, uuid);
+
+create function public.materialize_events(
   p_session_count int default 5,
   p_org_id uuid default null
 )
