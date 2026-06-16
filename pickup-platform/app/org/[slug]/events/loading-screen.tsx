@@ -35,7 +35,7 @@ export function LoadingScreen({ variant = 'list' }: Props) {
           ))}
         </div>
         <p className="text-sm text-zinc-500" role="status">
-          Counting who&apos;s in…
+          {variant === 'detail' ? 'Counting who\u2019s in…' : 'Gathering sessions…'}
         </p>
       </div>
 
