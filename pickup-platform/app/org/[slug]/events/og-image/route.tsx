@@ -11,16 +11,20 @@ export async function GET(_request: Request, { params }: Context) {
   const org = await getOrgBySlug(slug)
   const events = org ? await getUpcomingEventsForOrg(org.id, 1) : []
   const nextEvent = events[0]
+  const nextTitle = nextEvent?.title?.trim() || org?.activity || 'Session'
 
   return renderOrgOgImage({
     slug,
     orgName: org?.name ?? 'Organizr',
     accent: org?.branding.accent_color ?? '#2563eb',
     logoUrl: org?.branding.logo_url,
-    headline: nextEvent ? formatEventTime(nextEvent) : 'Upcoming sessions',
-    subline: nextEvent?.location_label ?? org?.activity,
+    eyebrow: nextEvent ? 'Next session' : 'Upcoming',
+    headline: nextEvent ? nextTitle : 'Upcoming sessions',
+    subline: nextEvent
+      ? `${formatEventTime(nextEvent)}${nextEvent.location_label ? ` · ${nextEvent.location_label}` : ''}`
+      : org?.activity,
     sublineEmoji: nextEvent ? (nextEvent.location_is_online ? '💻' : '📍') : undefined,
-    footer: nextEvent ? 'Join this session' : org?.activity || 'See who\'s coming',
-    tagline: nextEvent ? 'Join us!' : undefined,
+    cta: nextEvent ? 'Count me in →' : undefined,
+    footer: org?.activity || "See who's coming",
   })
 }

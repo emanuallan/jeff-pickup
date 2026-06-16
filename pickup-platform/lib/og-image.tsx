@@ -8,158 +8,206 @@ type OrgOgCardProps = {
   slug: string
   orgName: string
   accent: string
+  eyebrow?: string
   headline: string
   subline?: string
   sublineEmoji?: string
+  cta?: string
   footer?: string
   logoUrl?: string | null
-  tagline?: string
 }
 
 export function OrgOgCard({
   orgName,
   accent,
+  eyebrow,
   headline,
   subline,
   sublineEmoji,
+  cta,
   footer,
   logoUrl,
-  tagline,
 }: OrgOgCardProps) {
+  const accentText = readableTextColor(accent)
+
   return (
     <div
       style={{
         width: '100%',
         height: '100%',
         display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'space-between',
-        backgroundColor: '#09090b',
+        backgroundColor: '#0a0a0a',
         backgroundImage: `radial-gradient(circle at 86% 4%, ${hexToRgba(
           accent,
-          0.55,
-        )}, transparent 48%), radial-gradient(circle at 0% 110%, ${hexToRgba(
+          0.45,
+        )}, transparent 46%), radial-gradient(circle at 0% 110%, ${hexToRgba(
           accent,
-          0.28,
-        )}, transparent 50%)`,
-        color: '#fafafa',
-        padding: '70px',
-        position: 'relative',
+          0.22,
+        )}, transparent 52%)`,
+        padding: '52px',
       }}
     >
-      {/* Accent edge for brand pop */}
+      {/* Card — mirrors the "Next Session" hero on the events page */}
       <div
         style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          height: '12px',
-          backgroundImage: `linear-gradient(90deg, ${accent}, ${hexToRgba(accent, 0.35)})`,
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'space-between',
+          borderRadius: '40px',
+          border: '1px solid #27272a',
+          backgroundImage: 'linear-gradient(to bottom, #18181b, #09090b)',
+          color: '#fafafa',
+          padding: '60px',
         }}
-      />
-
-      {/* Header: logo + org name */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '22px' }}>
-        {logoUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={logoUrl}
-            alt=""
-            width={84}
-            height={84}
-            style={{
-              width: '84px',
-              height: '84px',
-              borderRadius: '22px',
-              objectFit: 'cover',
-              boxShadow: `0 12px 40px ${hexToRgba(accent, 0.5)}`,
-            }}
-          />
-        ) : (
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: '84px',
-              height: '84px',
-              borderRadius: '22px',
-              backgroundImage: `linear-gradient(135deg, ${accent}, ${hexToRgba(accent, 0.7)})`,
-              fontSize: '46px',
-              fontWeight: 700,
-              color: readableTextColor(accent),
-              boxShadow: `0 12px 40px ${hexToRgba(accent, 0.5)}`,
-            }}
-          >
-            {orgName.charAt(0).toUpperCase()}
-          </div>
-        )}
-        <div style={{ display: 'flex', fontSize: '38px', fontWeight: 600, letterSpacing: '-0.01em' }}>
-          {orgName}
-        </div>
-      </div>
-
-      {/* Main: headline + location chip + tagline */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '22px' }}>
+      >
+        {/* Header: org identity + accent eyebrow */}
         <div
           style={{
             display: 'flex',
-            fontSize: '74px',
-            fontWeight: 700,
-            lineHeight: 1.05,
-            letterSpacing: '-0.02em',
-            maxWidth: '1000px',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '24px',
           }}
         >
-          {headline}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+            {logoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={logoUrl}
+                alt=""
+                width={72}
+                height={72}
+                style={{ width: '72px', height: '72px', borderRadius: '20px', objectFit: 'cover' }}
+              />
+            ) : (
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: '72px',
+                  height: '72px',
+                  borderRadius: '20px',
+                  backgroundColor: accent,
+                  fontSize: '40px',
+                  fontWeight: 700,
+                  color: accentText,
+                }}
+              >
+                {orgName.charAt(0).toUpperCase()}
+              </div>
+            )}
+            <div style={{ display: 'flex', fontSize: '34px', fontWeight: 600, letterSpacing: '-0.01em' }}>
+              {orgName}
+            </div>
+          </div>
+
+          {eyebrow ? (
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '14px',
+                padding: '12px 24px',
+                borderRadius: '9999px',
+                backgroundColor: hexToRgba(accent, 0.12),
+                border: `1px solid ${hexToRgba(accent, 0.32)}`,
+              }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  width: '14px',
+                  height: '14px',
+                  borderRadius: '9999px',
+                  backgroundColor: accent,
+                }}
+              />
+              <div
+                style={{
+                  display: 'flex',
+                  fontSize: '24px',
+                  fontWeight: 600,
+                  letterSpacing: '0.08em',
+                  textTransform: 'uppercase',
+                  color: accent,
+                }}
+              >
+                {eyebrow}
+              </div>
+            </div>
+          ) : null}
         </div>
 
-        {subline ? (
+        {/* Main: headline + info chip */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '26px' }}>
           <div
             style={{
               display: 'flex',
-              alignItems: 'center',
-              alignSelf: 'flex-start',
-              gap: '14px',
-              padding: '14px 28px',
-              borderRadius: '9999px',
-              backgroundColor: 'rgba(255, 255, 255, 0.07)',
-              border: '1px solid rgba(255, 255, 255, 0.14)',
-              fontSize: '36px',
-              color: '#e4e4e7',
-            }}
-          >
-            {sublineEmoji ? <div style={{ display: 'flex' }}>{sublineEmoji}</div> : null}
-            <div style={{ display: 'flex' }}>{subline}</div>
-          </div>
-        ) : null}
-
-        {tagline ? (
-          <div
-            style={{
-              display: 'flex',
-              marginTop: '4px',
-              fontSize: '44px',
+              fontSize: '78px',
               fontWeight: 700,
-              color: accent,
+              lineHeight: 1.04,
+              letterSpacing: '-0.02em',
+              maxWidth: '960px',
             }}
           >
-            {tagline}
+            {headline}
           </div>
-        ) : null}
-      </div>
 
-      {/* Footer */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          fontSize: '30px',
-          color: '#a1a1aa',
-        }}
-      >
-        <div style={{ display: 'flex' }}>{footer ?? "See who's coming"}</div>
+          {subline ? (
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                alignSelf: 'flex-start',
+                gap: '14px',
+                padding: '14px 28px',
+                borderRadius: '9999px',
+                backgroundColor: 'rgba(255, 255, 255, 0.06)',
+                border: '1px solid rgba(255, 255, 255, 0.12)',
+                fontSize: '34px',
+                color: '#d4d4d8',
+              }}
+            >
+              {sublineEmoji ? <div style={{ display: 'flex' }}>{sublineEmoji}</div> : null}
+              <div style={{ display: 'flex' }}>{subline}</div>
+            </div>
+          ) : null}
+        </div>
+
+        {/* Footer: muted context + accent CTA pill */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '24px',
+            borderTop: '1px solid #27272a',
+            paddingTop: '34px',
+          }}
+        >
+          <div style={{ display: 'flex', fontSize: '28px', color: '#a1a1aa' }}>
+            {footer ?? "See who's coming"}
+          </div>
+
+          {cta ? (
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                padding: '16px 36px',
+                borderRadius: '9999px',
+                backgroundColor: accent,
+                color: accentText,
+                fontSize: '30px',
+                fontWeight: 600,
+              }}
+            >
+              {cta}
+            </div>
+          ) : null}
+        </div>
       </div>
     </div>
   )

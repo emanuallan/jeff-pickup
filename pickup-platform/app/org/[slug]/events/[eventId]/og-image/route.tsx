@@ -10,16 +10,20 @@ export async function GET(_request: Request, { params }: Context) {
   const { slug, eventId } = await params
   const org = await getOrgBySlug(slug)
   const event = org ? await getEventById(eventId, org.id) : null
+  const eventTitle = event?.title?.trim() || org?.activity || 'Session'
 
   return renderOrgOgImage({
     slug,
     orgName: org?.name ?? 'Organizr',
     accent: org?.branding.accent_color ?? '#2563eb',
     logoUrl: org?.branding.logo_url,
-    headline: event ? formatEventTime(event) : '',
-    subline: event?.location_label,
+    eyebrow: event ? 'Upcoming session' : undefined,
+    headline: event ? eventTitle : org?.name ?? 'Organizr',
+    subline: event
+      ? `${formatEventTime(event)}${event.location_label ? ` · ${event.location_label}` : ''}`
+      : undefined,
     sublineEmoji: event ? (event.location_is_online ? '💻' : '📍') : undefined,
-    footer: org?.activity || 'See who\'s coming',
-    tagline: 'Join us!',
+    cta: event ? 'Count me in →' : undefined,
+    footer: org?.activity || "See who's coming",
   })
 }

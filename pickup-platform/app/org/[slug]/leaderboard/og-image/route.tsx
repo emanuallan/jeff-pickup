@@ -17,7 +17,7 @@ export async function GET(_request: Request, { params }: Context) {
   const topStreak = streakRows[0]
 
   let headline = 'Leaderboard'
-  let subline = 'Caps and weekly streaks'
+  let subline: string | undefined = undefined
   if (topCaps) {
     headline = `${topCaps.display_name} · ${topCaps.caps} caps`
     subline = topStreak
@@ -30,8 +30,10 @@ export async function GET(_request: Request, { params }: Context) {
     orgName: org?.name ?? 'Organizr',
     accent: org?.branding.accent_color ?? '#2563eb',
     logoUrl: org?.branding.logo_url,
+    eyebrow: 'Leaderboard',
     headline,
     subline,
-    footer: 'See the full leaderboard',
+    cta: 'See the rankings →',
+    footer: 'Caps & weekly streaks',
   })
 }

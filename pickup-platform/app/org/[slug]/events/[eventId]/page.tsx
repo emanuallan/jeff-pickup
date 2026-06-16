@@ -150,7 +150,9 @@ export default async function EventPage({ params }: Props) {
 
       <section className="mt-8">
         <div className="overflow-hidden rounded-3xl border border-zinc-800 bg-linear-to-b from-zinc-900 to-zinc-950 p-6">
-          <StatusPill status={event.status} accent={accent} />
+          <div className="flex justify-end">
+            <StatusPill status={event.status} accent={accent} />
+          </div>
 
           <h2 className="mt-4 text-2xl font-semibold tracking-tight text-zinc-50">
             {eventName(event, fallbackName)}
