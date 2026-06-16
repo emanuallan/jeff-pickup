@@ -21,6 +21,7 @@ import {
 import { ScheduleForm } from './schedule-form'
 import { AddLocationForm } from './add-location-form'
 import { DeleteLocationButton } from './delete-location-button'
+import { DeleteScheduleButton } from './delete-schedule-button'
 import { DeleteEventButton } from './delete-event-button'
 import { OrgConsoleHeader } from './org-console-header'
 import {
@@ -91,14 +92,23 @@ export default async function OrgConsolePage({ params }: Props) {
       <ul className="space-y-2">
         {schedules.map((s) => (
           <ConsoleCard key={s.id} className="text-sm">
-            <div className="font-medium text-zinc-100">{s.title}</div>
-            <div className="mt-0.5 text-xs text-zinc-500">
-              {formatIntervalWeeks(s.interval_weeks)} · {formatWeekdays(s.byweekday)} ·{' '}
-              {formatTime(s.start_time)} · {s.timezone}
-            </div>
-            <div className="mt-0.5 text-xs text-zinc-500">
-              {s.capacity ? `Capacity ${s.capacity}` : 'No capacity limit'}
-              {s.min_players != null ? ` · min ${s.min_players} participants` : ''}
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0">
+                <div className="font-medium text-zinc-100">{s.title}</div>
+                <div className="mt-0.5 text-xs text-zinc-500">
+                  {formatIntervalWeeks(s.interval_weeks)} · {formatWeekdays(s.byweekday)} ·{' '}
+                  {formatTime(s.start_time)} · {s.timezone}
+                </div>
+                <div className="mt-0.5 text-xs text-zinc-500">
+                  {s.capacity ? `Capacity ${s.capacity}` : 'No capacity limit'}
+                  {s.min_players != null ? ` · min ${s.min_players} participants` : ''}
+                </div>
+              </div>
+              <DeleteScheduleButton
+                orgSlug={orgSlug}
+                scheduleId={s.id}
+                scheduleTitle={s.title}
+              />
             </div>
           </ConsoleCard>
         ))}

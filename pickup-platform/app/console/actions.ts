@@ -376,6 +376,59 @@ export async function deleteEvent(
   return { ok: true }
 }
 
+export type DeleteScheduleMode = 'schedule_only' | 'with_future_events'
+
+export async function deleteSchedule(
+  orgSlug: string,
+  scheduleId: string,
+  mode: DeleteScheduleMode,
+): Promise<{ ok: true } | { error: string }> {
+  const org = await requireOrgAdmin(orgSlug)
+  const supabase = await createClient()
+
+  const { data: schedule, error: fetchError } = await supabase
+    .from('schedules')
+    .select('id')
+    .eq('id', scheduleId)
+    .eq('org_id', org.id)
+    .maybeSingle()
+
+  if (fetchError) {
+    return { error: fetchError.message }
+  }
+  if (!schedule) {
+    return { error: 'Schedule not found.' }
+  }
+
+  if (mode === 'with_future_events') {
+    const now = new Date().toISOString()
+    const { error: deleteEventsError } = await supabase
+      .from('events')
+      .delete()
+      .eq('schedule_id', scheduleId)
+      .eq('org_id', org.id)
+      .gte('starts_at', now)
+
+    if (deleteEventsError) {
+      return { error: deleteEventsError.message }
+    }
+  }
+
+  const { error } = await supabase
+    .from('schedules')
+    .delete()
+    .eq('id', scheduleId)
+    .eq('org_id', org.id)
+
+  if (error) {
+    return { error: error.message }
+  }
+
+  revalidatePath(`/console/${orgSlug}`)
+  revalidatePath(`/org/${orgSlug}`)
+  return { ok: true }
+}
+
 export async function materializeOrgEvents(orgSlug: string) {
   const org = await requireOrgAdmin(orgSlug)
 
