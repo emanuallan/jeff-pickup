@@ -2,15 +2,19 @@
 
 import { useEffect, useState } from 'react'
 import type { Location } from '@/lib/locations'
+import { defaultOneOffStartsAtLocal } from '@/lib/one-off-datetime'
 import { consoleInput, btnSecondary } from '../_components/console-ui'
 
 type Props = {
   locations: Location[]
   createOneOff: (formData: FormData) => Promise<void>
+  onSuccess?: () => void
 }
 
-export function OneOffEventForm({ locations, createOneOff }: Props) {
+export function OneOffEventForm({ locations, createOneOff, onSuccess }: Props) {
   const [timezone, setTimezone] = useState('UTC')
+  const [startsAt] = useState(defaultOneOffStartsAtLocal)
+  const [pending, setPending] = useState(false)
 
   useEffect(() => {
     try {
@@ -21,21 +25,40 @@ export function OneOffEventForm({ locations, createOneOff }: Props) {
   }, [])
 
   async function handleSubmit(formData: FormData) {
+    setPending(true)
     formData.set('timezone', Intl.DateTimeFormat().resolvedOptions().timeZone)
     await createOneOff(formData)
+    setPending(false)
+    onSuccess?.()
+  }
+
+  if (locations.length === 0) {
+    return <p className="text-sm text-zinc-500">Add a location first.</p>
   }
 
   return (
     <form action={handleSubmit} className="space-y-3">
       <input type="hidden" name="timezone" value={timezone} />
-      <select name="location_id" required className={consoleInput} defaultValue={locations[0]?.id}>
-        {locations.map((loc) => (
-          <option key={loc.id} value={loc.id}>
-            {loc.label}
-          </option>
-        ))}
-      </select>
-      <input name="starts_at" type="datetime-local" required className={consoleInput} />
+      <label className="block">
+        <span className="text-xs text-zinc-500">Location</span>
+        <select name="location_id" required className={`mt-1 ${consoleInput}`} defaultValue={locations[0]?.id}>
+          {locations.map((loc) => (
+            <option key={loc.id} value={loc.id}>
+              {loc.label}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label className="block">
+        <span className="text-xs text-zinc-500">Date &amp; time</span>
+        <input
+          name="starts_at"
+          type="datetime-local"
+          required
+          defaultValue={startsAt}
+          className={`mt-1 ${consoleInput}`}
+        />
+      </label>
       <div className="grid grid-cols-2 gap-3">
         <label className="block">
           <span className="text-xs text-zinc-500">Capacity (optional)</span>
@@ -61,8 +84,8 @@ export function OneOffEventForm({ locations, createOneOff }: Props) {
         </label>
       </div>
       <p className="text-xs text-zinc-500">Timezone: {timezone}</p>
-      <button type="submit" className={btnSecondary}>
-        Add session
+      <button type="submit" disabled={pending} className={`${btnSecondary} disabled:opacity-50`}>
+        {pending ? 'Adding…' : 'Add session'}
       </button>
     </form>
   )

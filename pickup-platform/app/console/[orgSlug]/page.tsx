@@ -22,14 +22,12 @@ import { ScheduleForm } from './schedule-form'
 import { AddLocationForm } from './add-location-form'
 import { DeleteLocationButton } from './delete-location-button'
 import { DeleteEventButton } from './delete-event-button'
-import { OneOffEventForm } from './one-off-event-form'
+import { OrgConsoleHeader } from './org-console-header'
 import {
   ConsolePage,
-  ConsoleHeader,
   ConsoleSection,
   ConsoleCard,
   Disclosure,
-  btnOutline,
   chipAction,
 } from '../_components/console-ui'
 
@@ -167,28 +165,21 @@ export default async function OrgConsolePage({ params }: Props) {
     </ConsoleCard>
   )
 
-  const headerActions = (
-    <>
-      <Link href={`/console/${orgSlug}/participants`} className={btnOutline}>
-        Participants
-      </Link>
-      <Link href={`/console/${orgSlug}/settings`} className={btnOutline}>
-        Personalize
-      </Link>
-      <a href={orgUrl} className={btnOutline}>
-        View public →
-      </a>
-    </>
-  )
-
   return (
     <ConsolePage>
-      <ConsoleHeader
-        title={org.name}
-        description={org.activity || undefined}
-        backHref="/console"
-        backLabel="All groups"
-        actions={headerActions}
+      <Link href="/console" className="inline-flex min-h-9 items-center gap-1 text-sm text-zinc-400 transition-colors hover:text-zinc-200">
+        <span aria-hidden>←</span> All groups
+      </Link>
+
+      <OrgConsoleHeader
+        orgSlug={orgSlug}
+        orgName={org.name}
+        orgActivity={org.activity || null}
+        logoUrl={org.branding.logo_url}
+        publicUrl={orgUrl}
+        locations={locations}
+        canAddOneOff={hasLocation}
+        createOneOff={createOneOffEvent.bind(null, orgSlug)}
       />
 
       {isSetup ? (
@@ -205,26 +196,19 @@ export default async function OrgConsolePage({ params }: Props) {
             ) : (
               <p className="text-sm text-zinc-500">
                 No upcoming sessions — they&apos;ll appear here automatically once your schedule has
-                upcoming dates. You can add a one-off below.
+                upcoming dates. Use Actions to add a one-off.
               </p>
             )}
 
-            <div className="mt-4 space-y-3">
-              <Disclosure summary="+ Add a one-off session">
-                <OneOffEventForm
-                  locations={locations}
-                  createOneOff={createOneOffEvent.bind(null, orgSlug)}
-                />
-              </Disclosure>
-
-              {pastEvents.length > 0 ? (
+            {pastEvents.length > 0 ? (
+              <div className="mt-4">
                 <Disclosure summary={`Past sessions (${pastEvents.length})`}>
                   <ul className="space-y-2">
                     {pastEvents.map((ev) => renderEventItem(ev, { past: true }))}
                   </ul>
                 </Disclosure>
-              ) : null}
-            </div>
+              </div>
+            ) : null}
           </ConsoleSection>
 
           {/* Locations */}
@@ -257,7 +241,7 @@ export default async function OrgConsolePage({ params }: Props) {
           >
             <div className="space-y-4">
               {locationList}
-              {addLocationForm}
+              {!hasLocation ? addLocationForm : null}
             </div>
           </ConsoleSection>
 
