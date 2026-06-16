@@ -1,4 +1,3 @@
-import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { getOrgForMember } from '@/lib/orgs'
 import { ProfileForm } from '../profile-form'
@@ -6,6 +5,7 @@ import { BrandingForm } from '../branding-form'
 import { LinksForm } from '../links-form'
 import { MaterializeButton } from '../materialize-button'
 import { MAX_ORG_LINKS } from '@/lib/social-links'
+import { ConsolePage, ConsoleHeader, ConsoleSection } from '../../_components/console-ui'
 
 type Props = {
   params: Promise<{ orgSlug: string }>
@@ -20,52 +20,39 @@ export default async function OrgSettingsPage({ params }: Props) {
   }
 
   return (
-    <main className="mx-auto min-h-dvh max-w-lg px-6 py-10">
-      <Link
-        href={`/console/${orgSlug}`}
-        className="text-sm text-zinc-400 hover:text-zinc-200"
-      >
-        ← {org.name}
-      </Link>
+    <ConsolePage width="max-w-2xl">
+      <ConsoleHeader title="Personalize" backHref={`/console/${orgSlug}`} backLabel={org.name} />
 
-      <h1 className="mt-6 text-2xl font-semibold">Personalize</h1>
+      <div className="mt-8 space-y-6">
+        <ConsoleSection title="Group profile" description="Your group's name and what it's about.">
+          <ProfileForm orgSlug={orgSlug} name={org.name} activity={org.activity} />
+        </ConsoleSection>
 
-      <section className="mt-10">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-400">Group profile</h2>
-        <p className="mt-1 text-xs text-zinc-500">
-          Your group&apos;s name and what it&apos;s about.
-        </p>
-        <ProfileForm orgSlug={orgSlug} name={org.name} activity={org.activity} />
-      </section>
+        <ConsoleSection
+          title="Branding"
+          description="How your group looks on its public page and shared links."
+        >
+          <BrandingForm
+            orgSlug={orgSlug}
+            logoUrl={org.branding.logo_url}
+            accentColor={org.branding.accent_color}
+          />
+        </ConsoleSection>
 
-      <section className="mt-10">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-400">Branding</h2>
-        <p className="mt-1 text-xs text-zinc-500">
-          How your group looks on its public page and shared links.
-        </p>
-        <BrandingForm
-          orgSlug={orgSlug}
-          logoUrl={org.branding.logo_url}
-          accentColor={org.branding.accent_color}
-        />
-      </section>
+        <ConsoleSection
+          title="Links"
+          description={`Add up to ${MAX_ORG_LINKS} social or web links. They appear as icons on your public pages.`}
+        >
+          <LinksForm orgSlug={orgSlug} links={org.branding.links} />
+        </ConsoleSection>
 
-      <section className="mt-10">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-400">Links</h2>
-        <p className="mt-1 text-xs text-zinc-500">
-          Add up to {MAX_ORG_LINKS} social or web links. They appear as icons on your public pages.
-        </p>
-        <LinksForm orgSlug={orgSlug} links={org.branding.links} />
-      </section>
-
-      <section className="mt-10">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-400">Sessions</h2>
-        <p className="mt-1 text-xs text-zinc-500">
-          Upcoming sessions are created automatically from your recurring schedule.
-          You shouldn&apos;t need this.
-        </p>
-        <MaterializeButton orgSlug={orgSlug} />
-      </section>
-    </main>
+        <ConsoleSection
+          title="Sessions"
+          description="Upcoming sessions are created automatically from your recurring schedule. You shouldn't need this."
+        >
+          <MaterializeButton orgSlug={orgSlug} />
+        </ConsoleSection>
+      </div>
+    </ConsolePage>
   )
 }

@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { materializeOrgEvents } from '../actions'
+import { btnSecondary } from '../_components/console-ui'
 
 export function MaterializeButton({ orgSlug }: { orgSlug: string }) {
   const [message, setMessage] = useState<string | null>(null)
@@ -20,13 +21,8 @@ export function MaterializeButton({ orgSlug }: { orgSlug: string }) {
   }
 
   return (
-    <div className="mt-3">
-      <button
-        type="button"
-        onClick={handleClick}
-        disabled={loading}
-        className="rounded-xl border border-zinc-700 px-4 py-2 text-sm font-medium text-zinc-200 hover:bg-zinc-900 disabled:opacity-50"
-      >
+    <div>
+      <button type="button" onClick={handleClick} disabled={loading} className={btnSecondary}>
         {loading ? 'Refreshing…' : 'Refresh sessions'}
       </button>
       <p className="mt-2 text-xs text-zinc-500">

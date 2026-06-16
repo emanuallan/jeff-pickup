@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { checkSlugAvailability, createOrg } from './actions'
 import { normalizeSlug } from '@/lib/tenancy/reserved-slugs'
+import { consoleInput, consoleLabel, btnPrimary } from './_components/console-ui'
 
 type SlugState = 'idle' | 'checking' | 'available' | 'taken' | 'invalid'
 
@@ -51,15 +52,18 @@ export function CreateOrgForm() {
   }
 
   return (
-    <form action={handleSubmit} className="space-y-4 rounded-2xl border border-zinc-800 bg-zinc-900/50 p-5">
+    <form
+      action={handleSubmit}
+      className="space-y-4 rounded-xl border border-white/10 bg-zinc-900/50 p-5"
+    >
       <input type="hidden" name="timezone" value={timezone} />
 
       <label className="block">
-        <span className="text-xs font-medium text-zinc-400">Group name</span>
+        <span className={consoleLabel}>Group name</span>
         <input
           name="name"
           required
-          className="mt-1 w-full rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+          className={`mt-1 ${consoleInput}`}
           placeholder="Jeff Soccer"
           onChange={(e) => {
             // Mirror the name into the slug until the user edits the slug directly.
@@ -71,16 +75,16 @@ export function CreateOrgForm() {
       </label>
 
       <label className="block">
-        <span className="text-xs font-medium text-zinc-400">Activity</span>
+        <span className={consoleLabel}>Activity</span>
         <input
           name="activity"
-          className="mt-1 w-full rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+          className={`mt-1 ${consoleInput}`}
           placeholder="Pickup soccer, run club, board games…"
         />
       </label>
 
       <label className="block">
-        <span className="text-xs font-medium text-zinc-400">URL slug</span>
+        <span className={consoleLabel}>URL slug</span>
         <input
           name="slug"
           required
@@ -89,7 +93,7 @@ export function CreateOrgForm() {
             setSlugEdited(true)
             onSlugChange(e.target.value)
           }}
-          className="mt-1 w-full rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+          className={`mt-1 ${consoleInput}`}
           placeholder="jeffsoccer"
         />
         {slugState === 'checking' ? (
@@ -115,7 +119,7 @@ export function CreateOrgForm() {
       <button
         type="submit"
         disabled={slugState === 'taken' || slugState === 'invalid' || slugState === 'checking'}
-        className="w-full rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-50"
+        className={`w-full ${btnPrimary}`}
       >
         Create group
       </button>

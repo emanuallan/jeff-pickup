@@ -1,8 +1,8 @@
-import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { getRootDomain } from '@/lib/tenancy/parse-host'
 import { CreateOrgForm } from '../create-org-form'
+import { ConsolePage, ConsoleHeader } from '../_components/console-ui'
 
 export default async function NewOrgPage() {
   const supabase = await createClient()
@@ -15,12 +15,8 @@ export default async function NewOrgPage() {
   const rootDomain = getRootDomain()
 
   return (
-    <main className="mx-auto min-h-dvh max-w-lg px-6 py-10">
-      <Link href="/console" className="text-sm text-zinc-400 hover:text-zinc-200">
-        ← Console
-      </Link>
-
-      <h1 className="mt-6 text-2xl font-semibold">Create your group</h1>
+    <ConsolePage width="max-w-lg">
+      <ConsoleHeader title="Create your group" backHref="/console" backLabel="Groups" />
       <p className="mt-2 text-sm text-zinc-400">
         You&apos;ll get a page at <span className="text-zinc-300">your-slug.{rootDomain}</span>
       </p>
@@ -28,6 +24,6 @@ export default async function NewOrgPage() {
       <div className="mt-8">
         <CreateOrgForm />
       </div>
-    </main>
+    </ConsolePage>
   )
 }

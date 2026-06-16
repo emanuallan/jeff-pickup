@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { updateOrgProfile } from '../actions'
+import { consoleInput, btnSecondary } from '../_components/console-ui'
 
 type Props = {
   orgSlug: string
@@ -25,10 +26,7 @@ export function ProfileForm({ orgSlug, name, activity }: Props) {
   }
 
   return (
-    <form
-      action={handleSubmit}
-      className="mt-3 space-y-3 rounded-2xl border border-zinc-800 bg-zinc-900/30 p-4"
-    >
+    <form action={handleSubmit} className="space-y-3">
       <label className="block">
         <span className="text-xs text-zinc-500">Group name</span>
         <input
@@ -36,7 +34,7 @@ export function ProfileForm({ orgSlug, name, activity }: Props) {
           required
           defaultValue={name}
           placeholder="Jeff Soccer"
-          className="mt-1 w-full rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+          className={`mt-1 ${consoleInput}`}
         />
       </label>
 
@@ -46,15 +44,12 @@ export function ProfileForm({ orgSlug, name, activity }: Props) {
           name="activity"
           defaultValue={activity}
           placeholder="Pickup soccer, run club, board games…"
-          className="mt-1 w-full rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+          className={`mt-1 ${consoleInput}`}
         />
       </label>
 
       <div className="flex items-center gap-3">
-        <button
-          type="submit"
-          className="rounded-xl bg-zinc-800 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700"
-        >
+        <button type="submit" className={btnSecondary}>
           Save
         </button>
         {message ? <span className="text-xs text-zinc-400">{message}</span> : null}

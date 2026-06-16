@@ -1,27 +1,23 @@
 'use client'
 
 import { useState } from 'react'
+import { consoleInput, btnSecondary } from '../_components/console-ui'
 
 type Props = {
   addLocation: (formData: FormData) => Promise<void>
 }
 
-const inputClass =
-  'w-full rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500'
-
 export function AddLocationForm({ addLocation }: Props) {
   const [isOnline, setIsOnline] = useState(false)
 
   return (
-    <form action={addLocation} className="space-y-3 rounded-2xl border border-zinc-800 bg-zinc-900/30 p-4">
-      <p className="text-xs font-medium text-zinc-400">Add location</p>
-
-      <div className="flex rounded-xl border border-zinc-700 p-1 text-xs">
+    <form action={addLocation} className="space-y-3">
+      <div className="flex rounded-lg border border-white/10 p-1 text-xs">
         <button
           type="button"
           onClick={() => setIsOnline(false)}
-          className={`flex-1 rounded-lg px-3 py-1.5 font-medium ${
-            !isOnline ? 'bg-zinc-800 text-white' : 'text-zinc-400 hover:text-zinc-200'
+          className={`flex-1 rounded-md px-3 py-1.5 font-medium transition ${
+            !isOnline ? 'bg-indigo-500/20 text-indigo-100' : 'text-zinc-400 hover:text-zinc-200'
           }`}
         >
           In person
@@ -29,8 +25,8 @@ export function AddLocationForm({ addLocation }: Props) {
         <button
           type="button"
           onClick={() => setIsOnline(true)}
-          className={`flex-1 rounded-lg px-3 py-1.5 font-medium ${
-            isOnline ? 'bg-zinc-800 text-white' : 'text-zinc-400 hover:text-zinc-200'
+          className={`flex-1 rounded-md px-3 py-1.5 font-medium transition ${
+            isOnline ? 'bg-indigo-500/20 text-indigo-100' : 'text-zinc-400 hover:text-zinc-200'
           }`}
         >
           Online
@@ -42,7 +38,7 @@ export function AddLocationForm({ addLocation }: Props) {
         name="label"
         required
         placeholder={isOnline ? 'Name (e.g. Zoom room)' : 'Park name'}
-        className={inputClass}
+        className={consoleInput}
       />
 
       {isOnline ? (
@@ -50,19 +46,16 @@ export function AddLocationForm({ addLocation }: Props) {
           name="meeting_url"
           type="url"
           placeholder="Meeting link (Zoom, Google Meet, …)"
-          className={inputClass}
+          className={consoleInput}
         />
       ) : (
         <>
-          <input name="address" placeholder="Street address (optional)" className={inputClass} />
-          <input name="maps_url" placeholder="Google Maps link (optional)" className={inputClass} />
+          <input name="address" placeholder="Street address (optional)" className={consoleInput} />
+          <input name="maps_url" placeholder="Google Maps link (optional)" className={consoleInput} />
         </>
       )}
 
-      <button
-        type="submit"
-        className="rounded-xl bg-zinc-800 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700"
-      >
+      <button type="submit" className={btnSecondary}>
         Add location
       </button>
     </form>

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import type { Location } from '@/lib/locations'
+import { consoleInput, btnSecondary } from '../_components/console-ui'
 
 const WEEKDAYS = [
   { value: 0, label: 'Sun' },
@@ -44,25 +45,12 @@ export function ScheduleForm({ orgSlug, locations, createSchedule }: Props) {
   }
 
   return (
-    <form
-      action={handleSubmit}
-      className="space-y-3 rounded-2xl border border-zinc-800 bg-zinc-900/30 p-4"
-    >
-      <p className="text-xs font-medium text-zinc-400">Add recurring schedule</p>
+    <form action={handleSubmit} className="space-y-3">
       <input type="hidden" name="timezone" value={timezone} />
 
-      <input
-        name="title"
-        defaultValue="Weekly session"
-        className="w-full rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
-      />
+      <input name="title" defaultValue="Weekly session" className={consoleInput} />
 
-      <select
-        name="location_id"
-        required
-        className="w-full rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
-        defaultValue={locations[0]?.id}
-      >
+      <select name="location_id" required className={consoleInput} defaultValue={locations[0]?.id}>
         {locations.map((loc) => (
           <option key={loc.id} value={loc.id}>
             {loc.label}
@@ -76,13 +64,13 @@ export function ScheduleForm({ orgSlug, locations, createSchedule }: Props) {
           {WEEKDAYS.map((d) => (
             <label
               key={d.value}
-              className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-zinc-700 px-2.5 py-1.5 text-xs has-checked:border-blue-500 has-checked:bg-blue-500/10"
+              className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-white/10 px-2.5 py-1.5 text-xs transition has-checked:border-indigo-500 has-checked:bg-indigo-500/10"
             >
               <input
                 type="checkbox"
                 name="byweekday"
                 value={d.value}
-                className="accent-blue-500"
+                className="accent-indigo-500"
               />
               {d.label}
             </label>
@@ -98,7 +86,7 @@ export function ScheduleForm({ orgSlug, locations, createSchedule }: Props) {
             type="time"
             defaultValue="18:00"
             required
-            className="mt-1 w-full rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+            className={`mt-1 ${consoleInput}`}
           />
         </label>
         <label className="block">
@@ -109,7 +97,7 @@ export function ScheduleForm({ orgSlug, locations, createSchedule }: Props) {
             min={15}
             max={480}
             defaultValue={90}
-            className="mt-1 w-full rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+            className={`mt-1 ${consoleInput}`}
           />
         </label>
       </div>
@@ -123,7 +111,7 @@ export function ScheduleForm({ orgSlug, locations, createSchedule }: Props) {
             min={2}
             max={999}
             placeholder="No limit"
-            className="mt-1 w-full rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+            className={`mt-1 ${consoleInput}`}
           />
         </label>
         <label className="block">
@@ -134,7 +122,7 @@ export function ScheduleForm({ orgSlug, locations, createSchedule }: Props) {
             min={2}
             max={999}
             defaultValue={10}
-            className="mt-1 w-full rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+            className={`mt-1 ${consoleInput}`}
           />
         </label>
       </div>
@@ -143,10 +131,7 @@ export function ScheduleForm({ orgSlug, locations, createSchedule }: Props) {
 
       {error ? <p className="text-sm text-red-300">{error}</p> : null}
 
-      <button
-        type="submit"
-        className="rounded-xl bg-zinc-800 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700"
-      >
+      <button type="submit" className={btnSecondary}>
         Add schedule
       </button>
     </form>

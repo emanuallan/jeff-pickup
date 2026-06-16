@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { updateOrgLinks } from '../actions'
 import { MAX_ORG_LINKS } from '@/lib/social-links'
 import { SocialLinkIcon } from '@/app/org/[slug]/_components/social-links'
+import { consoleInput, btnSecondary } from '../_components/console-ui'
 
 type Props = {
   orgSlug: string
@@ -42,10 +43,7 @@ export function LinksForm({ orgSlug, links }: Props) {
   }
 
   return (
-    <form
-      action={handleSubmit}
-      className="mt-3 space-y-3 rounded-2xl border border-zinc-800 bg-zinc-900/30 p-4"
-    >
+    <form action={handleSubmit} className="space-y-3">
       <div className="space-y-2">
         {items.map((value, index) => {
           const trimmed = value.trim()
@@ -65,7 +63,7 @@ export function LinksForm({ orgSlug, links }: Props) {
                 value={value}
                 onChange={(e) => setItem(index, e.target.value)}
                 placeholder="https://instagram.com/yourgroup"
-                className="min-w-0 flex-1 rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                className={`min-w-0 flex-1 ${consoleInput}`}
               />
               <button
                 type="button"
@@ -95,7 +93,7 @@ export function LinksForm({ orgSlug, links }: Props) {
         <button
           type="button"
           onClick={addItem}
-          className="text-xs font-medium text-blue-400 hover:text-blue-300"
+          className="text-xs font-medium text-indigo-300 hover:text-indigo-200"
         >
           + Add link
         </button>
@@ -103,11 +101,8 @@ export function LinksForm({ orgSlug, links }: Props) {
         <p className="text-xs text-zinc-600">You can add up to {MAX_ORG_LINKS} links.</p>
       )}
 
-      <div className="flex items-center gap-3 border-t border-zinc-800 pt-3">
-        <button
-          type="submit"
-          className="rounded-xl bg-zinc-800 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700"
-        >
+      <div className="flex items-center gap-3 border-t border-white/5 pt-3">
+        <button type="submit" className={btnSecondary}>
           Save links
         </button>
         {message ? <span className="text-xs text-zinc-400">{message}</span> : null}
