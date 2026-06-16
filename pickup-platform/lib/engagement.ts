@@ -42,6 +42,23 @@ export async function isLeaderboardUnlocked(orgId: string): Promise<boolean> {
   return pastSessions >= LEADERBOARD_MIN_SESSIONS
 }
 
+/** True when this event is the org's earliest non-cancelled session. */
+export async function isOrgInauguralSession(orgId: string, eventId: string): Promise<boolean> {
+  const supabase = await createClient()
+
+  const { data, error } = await supabase
+    .from('events')
+    .select('id')
+    .eq('org_id', orgId)
+    .neq('status', 'cancelled')
+    .order('starts_at', { ascending: true })
+    .limit(1)
+    .maybeSingle()
+
+  if (error || !data) return false
+  return data.id === eventId
+}
+
 export async function getOrgCapsLeaderboard(
   orgId: string,
   limit = 50,

@@ -13,7 +13,7 @@ import { buildOrgMetadata } from '@/lib/og-metadata'
 import { getPublicRoster, rosterHeadcount } from '@/lib/signups'
 import { getSessionToken } from '@/lib/participant-session'
 import { getSessionInfo } from '@/lib/participant'
-import { getParticipantEngagementStats, isLeaderboardUnlocked } from '@/lib/engagement'
+import { getParticipantEngagementStats, isLeaderboardUnlocked, isOrgInauguralSession } from '@/lib/engagement'
 import { buildRosterBadgeMap } from '@/lib/badges'
 import { JoinSection, RosterList, ArrivalStatusPicker, GuestCountEditor } from './join-section'
 import { WeatherPill } from './weather-pill'
@@ -82,9 +82,10 @@ export default async function EventPage({ params }: Props) {
   const isCancelled = isEventCancelled(event.status)
   const cancelledClasses = cancelledEventClasses(isCancelled)
 
-  const [roster, leaderboardUnlocked, token] = await Promise.all([
+  const [roster, leaderboardUnlocked, isInauguralSession, token] = await Promise.all([
     getPublicRoster(eventId),
     isLeaderboardUnlocked(org.id),
+    isOrgInauguralSession(org.id, eventId),
     getSessionToken(),
   ])
 
@@ -98,6 +99,7 @@ export default async function EventPage({ params }: Props) {
 
   const badgesByParticipantId = buildRosterBadgeMap(roster, engagementStats, {
     capsLeaderUnlocked: leaderboardUnlocked,
+    newBadgeUnlocked: !isInauguralSession,
   })
   const isPast = new Date(event.starts_at) < new Date()
   const isFull = event.capacity != null && headcount >= event.capacity

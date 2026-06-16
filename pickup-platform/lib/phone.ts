@@ -7,7 +7,7 @@ export function normalizePhoneDigits(value: string): string {
   return digits.slice(0, 10)
 }
 
-/** Format up to 10 digits as (xxx) xxx-xxxx while the user types. */
+/** Format up to 10 digits as (555) 123-4567 while the user types. */
 export function formatPhoneDisplay(digits: string): string {
   const d = digits.slice(0, 10)
   if (d.length === 0) return ''
