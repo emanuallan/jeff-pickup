@@ -4,6 +4,7 @@ import { useRef, useState } from 'react'
 import { joinEvent, leaveEvent, quickJoinEvent, updateArrivalStatus } from './actions'
 import { arrivalStatuses, arrivalStatusEmoji, type ArrivalStatus } from '@/lib/arrival-status'
 import { fireConfetti } from '@/lib/confetti'
+import { hexToRgba } from '@/lib/colors'
 
 type Participant = {
   first_name: string
@@ -12,7 +13,7 @@ type Participant = {
   phone: string
 }
 
-type MySignup = {
+export type MySignup = {
   signup_id: string
   guest_count: number
   arrival_status: ArrivalStatus
@@ -49,89 +50,10 @@ export function JoinSection(props: Props) {
     )
   }
 
+  // Signed-up users are handled in the roster (highlighted row + status picker
+  // below the attendee list), so the join card collapses for them.
   if (props.mySignup) {
-    const guestCount = props.mySignup.guest_count
-    return (
-      <div className="space-y-5">
-        <div className="flex items-center gap-3 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3.5">
-          <span
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-500/20 text-lg"
-            aria-hidden
-          >
-            ✓
-          </span>
-          <div className="text-sm text-emerald-100">
-            You&apos;re in as <strong>{props.mySignup.display_name}</strong>
-            {guestCount > 0
-              ? ` (+${guestCount} guest${guestCount > 1 ? 's' : ''})`
-              : ''}
-          </div>
-        </div>
-
-        <div>
-          <p className="text-xs font-medium text-zinc-400">Update your status</p>
-          <div className="mt-2 flex flex-wrap gap-2">
-            {arrivalStatuses(props.isOnline).map((s) => {
-              const selected = props.mySignup?.arrival_status === s.value
-              return (
-                <button
-                  key={s.value}
-                  type="button"
-                  disabled={loading}
-                  onClick={async () => {
-                    setLoading(true)
-                    setError(null)
-                    const result = await updateArrivalStatus(
-                      props.orgSlug,
-                      props.eventId,
-                      props.mySignup!.signup_id,
-                      s.value,
-                    )
-                    setLoading(false)
-                    if (result.error) setError(result.error)
-                  }}
-                  className="rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors disabled:opacity-50"
-                  style={
-                    selected
-                      ? {
-                          borderColor: props.accent,
-                          backgroundColor: `${props.accent}1a`,
-                          color: props.accent,
-                        }
-                      : { borderColor: '#3f3f46', color: '#d4d4d8' }
-                  }
-                >
-                  {s.emoji} {s.label}
-                </button>
-              )
-            })}
-          </div>
-        </div>
-
-        {error ? <p className="text-sm text-red-300">{error}</p> : null}
-
-        <button
-          type="button"
-          disabled={loading}
-          onClick={async () => {
-            setLoading(true)
-            setError(null)
-            const result = await leaveEvent(
-              props.orgSlug,
-              props.eventId,
-              props.mySignup!.signup_id,
-            )
-            setLoading(false)
-            if (result.error) setError(result.error)
-          }}
-          className="text-sm text-zinc-500 transition-colors hover:text-red-300 disabled:opacity-50"
-        >
-          Leave this session
-        </button>
-
-        {/* TODO: dormant OTP verification seam when org.require_phone_verification */}
-      </div>
-    )
+    return null
   }
 
   if (props.isFull) {
@@ -362,37 +284,170 @@ function RosterBadges({ badges }: { badges: RosterBadgeInfo | undefined }) {
   )
 }
 
+type RosterEntryView = {
+  id: string
+  participant_id: string
+  display_name: string
+  guest_count: number
+  arrival_status: string
+}
+
 export function RosterList(props: {
-  entries: {
-    id: string
-    participant_id: string
-    display_name: string
-    guest_count: number
-    arrival_status: string
-  }[]
+  entries: RosterEntryView[]
   badgesByParticipantId?: Record<string, RosterBadgeInfo>
   isOnline?: boolean
+  /** Signup id of the current viewer, so their row is highlighted + leavable. */
+  mySignupId?: string | null
+  canLeave?: boolean
+  orgSlug?: string
+  eventId?: string
+  accent?: string
+  accentText?: string
 }) {
+  const [leaving, setLeaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const accent = props.accent ?? '#2563eb'
+  const accentText = props.accentText ?? '#ffffff'
+
   if (props.entries.length === 0) {
     return <p className="text-sm text-zinc-500">No one signed up yet. Be the first!</p>
   }
 
   return (
-    <ul className="space-y-2">
-      {props.entries.map((e) => (
-        <li
-          key={e.id}
-          className="flex items-center justify-between gap-2 rounded-xl border border-zinc-800 bg-black/20 px-3 py-2 text-sm"
-        >
-          <span className="min-w-0">
-            {arrivalStatusEmoji(e.arrival_status, props.isOnline)} {e.display_name}
-            <RosterBadges badges={props.badgesByParticipantId?.[e.participant_id]} />
-            {e.guest_count > 0 ? (
-              <span className="text-zinc-500"> +{e.guest_count}</span>
-            ) : null}
-          </span>
-        </li>
-      ))}
-    </ul>
+    <div>
+      <ul className="space-y-2">
+        {props.entries.map((e) => {
+          const isMe = props.mySignupId != null && e.id === props.mySignupId
+
+          if (isMe) {
+            return (
+              <li
+                key={e.id}
+                className="flex items-center justify-between gap-2 rounded-xl px-3 py-2.5 text-sm"
+                style={{
+                  backgroundImage: `linear-gradient(135deg, ${accent}, ${hexToRgba(accent, 0.55)})`,
+                  color: accentText,
+                }}
+              >
+                <span className="min-w-0 font-semibold">
+                  {arrivalStatusEmoji(e.arrival_status, props.isOnline)} {e.display_name}
+                  <span className="opacity-80"> (you)</span>
+                  {e.guest_count > 0 ? (
+                    <span className="opacity-80"> +{e.guest_count}</span>
+                  ) : null}
+                </span>
+                {props.canLeave && props.orgSlug && props.eventId ? (
+                  <button
+                    type="button"
+                    disabled={leaving}
+                    aria-label="Leave this session"
+                    title="Leave this session"
+                    onClick={async () => {
+                      setLeaving(true)
+                      setError(null)
+                      const result = await leaveEvent(props.orgSlug!, props.eventId!, e.id)
+                      setLeaving(false)
+                      if (result.error) setError(result.error)
+                    }}
+                    className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full transition-opacity hover:opacity-80 disabled:opacity-50"
+                    style={{ backgroundColor: hexToRgba('#000000', 0.18), color: accentText }}
+                  >
+                    <svg
+                      className="h-4 w-4"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      aria-hidden
+                    >
+                      <path d="M18 6 6 18M6 6l12 12" />
+                    </svg>
+                  </button>
+                ) : null}
+              </li>
+            )
+          }
+
+          return (
+            <li
+              key={e.id}
+              className="flex items-center justify-between gap-2 rounded-xl border border-zinc-800 bg-black/20 px-3 py-2 text-sm"
+            >
+              <span className="min-w-0">
+                {arrivalStatusEmoji(e.arrival_status, props.isOnline)} {e.display_name}
+                <RosterBadges badges={props.badgesByParticipantId?.[e.participant_id]} />
+                {e.guest_count > 0 ? (
+                  <span className="text-zinc-500"> +{e.guest_count}</span>
+                ) : null}
+              </span>
+            </li>
+          )
+        })}
+      </ul>
+      {error ? <p className="mt-2 text-sm text-red-300">{error}</p> : null}
+    </div>
+  )
+}
+
+export function ArrivalStatusPicker(props: {
+  orgSlug: string
+  eventId: string
+  signupId: string
+  currentStatus: ArrivalStatus
+  isOnline: boolean
+  accent: string
+}) {
+  const [status, setStatus] = useState<ArrivalStatus>(props.currentStatus)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  return (
+    <div>
+      <p className="text-xs font-medium text-zinc-400">Update your status</p>
+      <div className="mt-2 flex flex-wrap gap-2">
+        {arrivalStatuses(props.isOnline).map((s) => {
+          const selected = status === s.value
+          return (
+            <button
+              key={s.value}
+              type="button"
+              disabled={loading}
+              onClick={async () => {
+                const prev = status
+                setStatus(s.value)
+                setLoading(true)
+                setError(null)
+                const result = await updateArrivalStatus(
+                  props.orgSlug,
+                  props.eventId,
+                  props.signupId,
+                  s.value,
+                )
+                setLoading(false)
+                if (result.error) {
+                  setStatus(prev)
+                  setError(result.error)
+                }
+              }}
+              className="rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors disabled:opacity-50"
+              style={
+                selected
+                  ? {
+                      borderColor: props.accent,
+                      backgroundColor: `${props.accent}1a`,
+                      color: props.accent,
+                    }
+                  : { borderColor: '#3f3f46', color: '#d4d4d8' }
+              }
+            >
+              {s.emoji} {s.label}
+            </button>
+          )
+        })}
+      </div>
+      {error ? <p className="mt-2 text-sm text-red-300">{error}</p> : null}
+    </div>
   )
 }

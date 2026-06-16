@@ -7,6 +7,7 @@ import {
   formatEventTime,
   formatEventDayLabel,
   formatEventTimeOnly,
+  formatEventHappening,
 } from '@/lib/events'
 import { getRootDomain } from '@/lib/tenancy/parse-host'
 import { readableTextColor } from '@/lib/colors'
@@ -17,7 +18,13 @@ import { getWeatherForEvent } from '@/lib/weather'
 import { createClient } from '@/lib/supabase/server'
 import { getParticipantEngagementStats, isLeaderboardUnlocked } from '@/lib/engagement'
 import { rosterBadges } from '@/lib/badges'
-import { JoinSection, RosterList, type RosterBadgeInfo } from './join-section'
+import {
+  JoinSection,
+  RosterList,
+  ArrivalStatusPicker,
+  type RosterBadgeInfo,
+  type MySignup,
+} from './join-section'
 import { ShareButton } from '../../share-button'
 import { StatusPill, PinIcon, OnlineIcon, eventName } from '../event-ui'
 
@@ -98,7 +105,7 @@ export default async function EventPage({ params }: Props) {
 
   const token = await getSessionToken()
   let participant = null
-  let mySignup = null
+  let mySignup: MySignup | null = null
 
   if (token) {
     const supabase = await createClient()
@@ -112,7 +119,7 @@ export default async function EventPage({ params }: Props) {
       p_event_id: eventId,
       p_session_token: token,
     })
-    if (s) mySignup = s as typeof mySignup
+    if (s) mySignup = s as MySignup
   }
 
   return (
@@ -151,7 +158,29 @@ export default async function EventPage({ params }: Props) {
 
       <section className="mt-8">
         <div className="overflow-hidden rounded-3xl border border-zinc-800 bg-linear-to-b from-zinc-900 to-zinc-950 p-6">
-          <div className="flex justify-end">
+          <div className="flex items-center justify-between gap-3">
+            {!isPast ? (
+              <span className="flex items-center gap-2">
+                <span className="relative flex h-2 w-2">
+                  <span
+                    className="absolute inline-flex h-full w-full animate-ping rounded-full opacity-75"
+                    style={{ backgroundColor: accent }}
+                  />
+                  <span
+                    className="relative inline-flex h-2 w-2 rounded-full"
+                    style={{ backgroundColor: accent }}
+                  />
+                </span>
+                <span
+                  className="text-xs font-semibold uppercase tracking-wider"
+                  style={{ color: accent }}
+                >
+                  Happening {formatEventHappening(event)}
+                </span>
+              </span>
+            ) : (
+              <span />
+            )}
             <StatusPill status={event.status} accent={accent} />
           </div>
 
@@ -218,21 +247,23 @@ export default async function EventPage({ params }: Props) {
         </div>
       </section>
 
-      <section className="mt-5 rounded-3xl border border-zinc-800 bg-zinc-900/50 p-5">
-        <JoinSection
-          orgSlug={slug}
-          orgId={org.id}
-          eventId={eventId}
-          accent={accent}
-          accentText={accentText}
-          isPast={isPast}
-          isFull={isFull}
-          isOnline={event.location_is_online}
-          spotsLeft={spotsLeft}
-          participant={participant}
-          mySignup={mySignup}
-        />
-      </section>
+      {!mySignup ? (
+        <section className="mt-5 rounded-3xl border border-zinc-800 bg-zinc-900/50 p-5">
+          <JoinSection
+            orgSlug={slug}
+            orgId={org.id}
+            eventId={eventId}
+            accent={accent}
+            accentText={accentText}
+            isPast={isPast}
+            isFull={isFull}
+            isOnline={event.location_is_online}
+            spotsLeft={spotsLeft}
+            participant={participant}
+            mySignup={mySignup}
+          />
+        </section>
+      ) : null}
 
       <section className="mt-5 rounded-3xl border border-zinc-800 bg-zinc-900/50 p-5">
         <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-400">
@@ -243,8 +274,27 @@ export default async function EventPage({ params }: Props) {
             entries={roster}
             badgesByParticipantId={badgesByParticipantId}
             isOnline={event.location_is_online}
+            mySignupId={mySignup?.signup_id}
+            canLeave={!isPast}
+            orgSlug={slug}
+            eventId={eventId}
+            accent={accent}
+            accentText={accentText}
           />
         </div>
+
+        {mySignup && !isPast ? (
+          <div className="mt-5 border-t border-zinc-800 pt-5">
+            <ArrivalStatusPicker
+              orgSlug={slug}
+              eventId={eventId}
+              signupId={mySignup.signup_id}
+              currentStatus={mySignup.arrival_status}
+              isOnline={event.location_is_online}
+              accent={accent}
+            />
+          </div>
+        ) : null}
       </section>
 
       {leaderboardUnlocked ? (

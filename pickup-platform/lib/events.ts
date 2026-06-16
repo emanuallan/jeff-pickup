@@ -205,6 +205,41 @@ export function formatEventTimeOnly(event: Pick<Event, 'starts_at' | 'timezone'>
   })
 }
 
+/**
+ * Fuzzy "when" phrase for an upcoming event, e.g. "in a couple hours", "today",
+ * "tomorrow", "this week", "next week", "next month", else "coming up soon".
+ * Day/week/month boundaries are evaluated in the event's own timezone.
+ */
+export function formatEventHappening(event: Pick<Event, 'starts_at' | 'timezone'>): string {
+  const zone = event.timezone || 'UTC'
+  const now = new Date()
+  const start = new Date(event.starts_at)
+  const hoursAway = (start.getTime() - now.getTime()) / 3_600_000
+
+  if (hoursAway >= 0 && hoursAway <= 3) return 'in a couple hours'
+
+  const nowKey = dayKeyInZone(now.toISOString(), zone)
+  const startKey = dayKeyInZone(event.starts_at, zone)
+  const nowMidnight = new Date(`${nowKey}T00:00:00Z`)
+  const startMidnight = new Date(`${startKey}T00:00:00Z`)
+  const dayDiff = Math.round((startMidnight.getTime() - nowMidnight.getTime()) / 86_400_000)
+
+  if (dayDiff <= 0) return 'today'
+  if (dayDiff === 1) return 'tomorrow'
+
+  // Weeks are Sunday-start; getUTCDay on the zone-local midnight gives the weekday.
+  const daysLeftThisWeek = 6 - nowMidnight.getUTCDay()
+  if (dayDiff <= daysLeftThisWeek) return 'this week'
+  if (dayDiff <= daysLeftThisWeek + 7) return 'next week'
+
+  const [nowYear, nowMonth] = nowKey.split('-').map(Number)
+  const [startYear, startMonth] = startKey.split('-').map(Number)
+  const monthDelta = (startYear - nowYear) * 12 + (startMonth - nowMonth)
+  if (monthDelta === 1) return 'next month'
+
+  return 'coming up soon'
+}
+
 export function statusLabel(status: EventStatus): string {
   if (status === 'on') return 'On'
   if (status === 'cancelled') return 'Cancelled'
