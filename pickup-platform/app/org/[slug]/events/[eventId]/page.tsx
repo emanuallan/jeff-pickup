@@ -15,7 +15,7 @@ import { getPublicRoster, rosterHeadcount } from '@/lib/signups'
 import { getSessionToken } from '@/lib/participant-session'
 import { getWeatherForEvent } from '@/lib/weather'
 import { createClient } from '@/lib/supabase/server'
-import { getParticipantEngagementStats } from '@/lib/engagement'
+import { getParticipantEngagementStats, isLeaderboardUnlocked } from '@/lib/engagement'
 import { rosterBadges } from '@/lib/badges'
 import { JoinSection, RosterList, type RosterBadgeInfo } from './join-section'
 import { ShareButton } from '../../share-button'
@@ -94,6 +94,7 @@ export default async function EventPage({ params }: Props) {
   const accentText = readableTextColor(accent)
   const fallbackName = org.activity || 'Session'
   const spotsLeft = event.capacity != null ? Math.max(0, event.capacity - headcount) : null
+  const leaderboardUnlocked = await isLeaderboardUnlocked(org.id)
 
   const token = await getSessionToken()
   let participant = null
@@ -246,11 +247,13 @@ export default async function EventPage({ params }: Props) {
         </div>
       </section>
 
-      <p className="mt-10 text-center">
-        <Link href="/leaderboard" className="text-sm text-zinc-400 hover:text-zinc-200">
-          View leaderboard →
-        </Link>
-      </p>
+      {leaderboardUnlocked ? (
+        <p className="mt-10 text-center">
+          <Link href="/leaderboard" className="text-sm text-zinc-400 hover:text-zinc-200">
+            View leaderboard →
+          </Link>
+        </p>
+      ) : null}
 
       <p className="mt-6 text-center text-xs text-zinc-600">
         {org.slug}.{getRootDomain()}

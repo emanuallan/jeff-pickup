@@ -14,6 +14,34 @@ export type StreakLeaderboardRow = {
   best_streak_weeks: number
 }
 
+/** Sessions held before the leaderboard is worth showing (avoids empty/sparse boards). */
+export const LEADERBOARD_MIN_SESSIONS = 3
+
+/** Count of an org's past, non-cancelled sessions (i.e. sessions that have happened). */
+export async function getOrgPastSessionCount(orgId: string): Promise<number> {
+  const supabase = await createClient()
+  const now = new Date().toISOString()
+
+  const { count, error } = await supabase
+    .from('events')
+    .select('id', { count: 'exact', head: true })
+    .eq('org_id', orgId)
+    .neq('status', 'cancelled')
+    .lt('starts_at', now)
+
+  if (error || count == null) return 0
+  return count
+}
+
+/**
+ * Whether the org leaderboard should be surfaced yet. Gated on enough past
+ * sessions so we never link to an empty or near-empty board.
+ */
+export async function isLeaderboardUnlocked(orgId: string): Promise<boolean> {
+  const pastSessions = await getOrgPastSessionCount(orgId)
+  return pastSessions >= LEADERBOARD_MIN_SESSIONS
+}
+
 export async function getOrgCapsLeaderboard(
   orgId: string,
   limit = 50,

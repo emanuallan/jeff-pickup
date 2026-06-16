@@ -14,6 +14,7 @@ import { getRootDomain } from '@/lib/tenancy/parse-host'
 import { readableTextColor } from '@/lib/colors'
 import { buildOrgMetadata } from '@/lib/og-metadata'
 import { getPublicRoster, rosterHeadcount } from '@/lib/signups'
+import { isLeaderboardUnlocked } from '@/lib/engagement'
 import { ShareButton } from '../share-button'
 import { MoreSessions } from './more-sessions'
 import { StatusPill, PinIcon, OnlineIcon, eventName } from './event-ui'
@@ -101,6 +102,7 @@ export default async function EventsPage({ params }: Props) {
   const next = events[0]
   const rest = events.slice(1)
   const nextHeadcount = next ? rosterHeadcount(await getPublicRoster(next.id)) : 0
+  const leaderboardUnlocked = await isLeaderboardUnlocked(org.id)
 
   return (
     <main className="mx-auto min-h-dvh max-w-lg px-5 py-10 sm:px-6">
@@ -221,11 +223,13 @@ export default async function EventsPage({ params }: Props) {
         </section>
       )}
 
-      <p className="mt-10 text-center">
-        <Link href="/leaderboard" className="text-sm text-zinc-400 hover:text-zinc-200">
-          View leaderboard →
-        </Link>
-      </p>
+      {leaderboardUnlocked ? (
+        <p className="mt-10 text-center">
+          <Link href="/leaderboard" className="text-sm text-zinc-400 hover:text-zinc-200">
+            View leaderboard →
+          </Link>
+        </p>
+      ) : null}
 
       <p className="mt-6 text-center text-xs text-zinc-600">
         {org.slug}.{getRootDomain()}
