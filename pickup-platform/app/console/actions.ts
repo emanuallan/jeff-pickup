@@ -8,6 +8,7 @@ import { geocodeAddress } from '@/lib/geocode'
 import { localDateTimeInZoneToUtcIso } from '@/lib/datetime'
 import { getOrgForMember } from '@/lib/orgs'
 import { isValidSlug, normalizeSlug } from '@/lib/tenancy/reserved-slugs'
+import { MAX_ORG_LINKS, normalizeLinkUrl } from '@/lib/social-links'
 
 async function requireOrgAdmin(slug: string) {
   const org = await getOrgForMember(slug)
@@ -392,7 +393,8 @@ export async function updateBranding(orgSlug: string, formData: FormData) {
   const { error } = await supabase
     .from('orgs')
     .update({
-      branding: { logo_url: logoUrl || null, accent_color: accent },
+      // Preserve links — branding is stored as one JSONB object.
+      branding: { logo_url: logoUrl || null, accent_color: accent, links: org.branding.links },
     })
     .eq('id', org.id)
 
@@ -401,6 +403,37 @@ export async function updateBranding(orgSlug: string, formData: FormData) {
   }
 
   revalidatePath(`/console/${orgSlug}`)
+  revalidatePath(`/org/${orgSlug}`)
+  return { ok: true }
+}
+
+export async function updateOrgLinks(orgSlug: string, formData: FormData) {
+  const org = await requireOrgAdmin(orgSlug)
+  const supabase = await createClient()
+
+  const links = formData
+    .getAll('link')
+    .map((v) => normalizeLinkUrl(String(v)))
+    .filter((v): v is string => v != null)
+    .slice(0, MAX_ORG_LINKS)
+
+  const { error } = await supabase
+    .from('orgs')
+    .update({
+      branding: {
+        logo_url: org.branding.logo_url,
+        accent_color: org.branding.accent_color,
+        links,
+      },
+    })
+    .eq('id', org.id)
+
+  if (error) {
+    return { error: error.message }
+  }
+
+  revalidatePath(`/console/${orgSlug}`)
+  revalidatePath(`/console/${orgSlug}/settings`)
   revalidatePath(`/org/${orgSlug}`)
   return { ok: true }
 }

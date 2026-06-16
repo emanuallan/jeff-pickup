@@ -1,5 +1,6 @@
 import { cache } from 'react'
 import { createClient } from '@/lib/supabase/server'
+import { MAX_ORG_LINKS } from '@/lib/social-links'
 
 export type Org = {
   id: string
@@ -11,11 +12,16 @@ export type Org = {
   branding: {
     logo_url: string | null
     accent_color: string
+    links: string[]
   }
 }
 
 function parseOrgRow(data: Record<string, unknown>): Org {
-  const branding = data.branding as Org['branding'] | null
+  const branding = data.branding as Partial<Org['branding']> | null
+  const rawLinks = Array.isArray(branding?.links) ? branding.links : []
+  const links = rawLinks
+    .filter((l): l is string => typeof l === 'string' && l.length > 0)
+    .slice(0, MAX_ORG_LINKS)
 
   return {
     id: String(data.id),
@@ -27,6 +33,7 @@ function parseOrgRow(data: Record<string, unknown>): Org {
     branding: {
       logo_url: branding?.logo_url ?? null,
       accent_color: branding?.accent_color ?? '#2563eb',
+      links,
     },
   }
 }

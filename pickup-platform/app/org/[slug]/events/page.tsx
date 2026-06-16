@@ -8,6 +8,7 @@ import { getPublicRoster, rosterHeadcount } from '@/lib/signups'
 import { isLeaderboardUnlocked } from '@/lib/engagement'
 import { OrgHeader } from '../_components/org-header'
 import { OrgPageShell, OrgPageFooter, LeaderboardLink } from '../_components/org-page-shell'
+import { SocialLinks } from '../_components/social-links'
 import { ShareButton } from '../share-button'
 import { MoreSessions } from './more-sessions'
 import {
@@ -176,6 +177,7 @@ export default async function EventsPage({ params }: Props) {
       )}
 
       {leaderboardUnlocked ? <LeaderboardLink /> : null}
+      <SocialLinks links={org.branding.links} />
       <OrgPageFooter slug={org.slug} />
     </OrgPageShell>
   )

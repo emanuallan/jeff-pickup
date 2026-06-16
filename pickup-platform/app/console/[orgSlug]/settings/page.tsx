@@ -3,7 +3,9 @@ import { notFound } from 'next/navigation'
 import { getOrgForMember } from '@/lib/orgs'
 import { ProfileForm } from '../profile-form'
 import { BrandingForm } from '../branding-form'
+import { LinksForm } from '../links-form'
 import { MaterializeButton } from '../materialize-button'
+import { MAX_ORG_LINKS } from '@/lib/social-links'
 
 type Props = {
   params: Promise<{ orgSlug: string }>
@@ -46,6 +48,14 @@ export default async function OrgSettingsPage({ params }: Props) {
           logoUrl={org.branding.logo_url}
           accentColor={org.branding.accent_color}
         />
+      </section>
+
+      <section className="mt-10">
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-400">Links</h2>
+        <p className="mt-1 text-xs text-zinc-500">
+          Add up to {MAX_ORG_LINKS} social or web links. They appear as icons on your public pages.
+        </p>
+        <LinksForm orgSlug={orgSlug} links={org.branding.links} />
       </section>
 
       <section className="mt-10">

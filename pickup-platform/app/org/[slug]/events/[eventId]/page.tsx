@@ -20,6 +20,7 @@ import { WeatherPill } from './weather-pill'
 import { ShareButton } from '../../share-button'
 import { OrgHeader } from '../../_components/org-header'
 import { OrgPageShell, OrgPageFooter, LeaderboardLink } from '../../_components/org-page-shell'
+import { SocialLinks } from '../../_components/social-links'
 import {
   StatusPill,
   PinIcon,
@@ -255,6 +256,7 @@ export default async function EventPage({ params }: Props) {
       </section>
 
       {leaderboardUnlocked ? <LeaderboardLink /> : null}
+      <SocialLinks links={org.branding.links} />
       <OrgPageFooter slug={org.slug} />
     </OrgPageShell>
   )
