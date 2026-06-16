@@ -45,6 +45,7 @@ export async function quickJoinEvent(
   orgSlug: string,
   eventId: string,
   orgId: string,
+  guestCount = 0,
 ): Promise<{ error?: string }> {
   const token = await getSessionToken()
   if (!token) {
@@ -69,13 +70,15 @@ export async function quickJoinEvent(
     display_name: string
   }
 
+  const guests = Number.isFinite(guestCount) ? Math.max(0, Math.min(20, guestCount)) : 0
+
   const { data, error } = await supabase.rpc('join_event', {
     p_event_id: eventId,
     p_phone: p.phone,
     p_first_name: p.first_name,
     p_last_name: p.last_name,
     p_display_name: p.display_name,
-    p_guest_count: 0,
+    p_guest_count: guests,
   })
 
   if (error) {
@@ -85,6 +88,35 @@ export async function quickJoinEvent(
   const result = data as { session_token?: string } | null
   if (result?.session_token) {
     await setSessionToken(result.session_token)
+  }
+
+  revalidatePath(`/org/${orgSlug}/events/${eventId}`)
+  revalidatePath(`/org/${orgSlug}`)
+  return {}
+}
+
+export async function updateGuestCount(
+  orgSlug: string,
+  eventId: string,
+  signupId: string,
+  guestCount: number,
+): Promise<{ error?: string }> {
+  const token = await getSessionToken()
+  if (!token) {
+    return { error: 'Not signed in' }
+  }
+
+  const guests = Number.isFinite(guestCount) ? Math.max(0, Math.min(20, guestCount)) : 0
+
+  const supabase = await createClient()
+  const { error } = await supabase.rpc('update_guest_count', {
+    p_signup_id: signupId,
+    p_session_token: token,
+    p_guest_count: guests,
+  })
+
+  if (error) {
+    return { error: error.message }
   }
 
   revalidatePath(`/org/${orgSlug}/events/${eventId}`)

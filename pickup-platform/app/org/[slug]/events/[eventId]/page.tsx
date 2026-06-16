@@ -15,7 +15,7 @@ import { getSessionToken } from '@/lib/participant-session'
 import { getSessionInfo } from '@/lib/participant'
 import { getParticipantEngagementStats, isLeaderboardUnlocked } from '@/lib/engagement'
 import { buildRosterBadgeMap } from '@/lib/badges'
-import { JoinSection, RosterList, ArrivalStatusPicker } from './join-section'
+import { JoinSection, RosterList, ArrivalStatusPicker, GuestCountEditor } from './join-section'
 import { WeatherPill } from './weather-pill'
 import { ShareButton } from '../../share-button'
 import { OrgHeader } from '../../_components/org-header'
@@ -242,7 +242,14 @@ export default async function EventPage({ params }: Props) {
         </div>
 
         {mySignup && !isPast && !isCancelled ? (
-          <div className="mt-5 border-t border-zinc-800 pt-5">
+          <div className="mt-5 space-y-5 border-t border-zinc-800 pt-5">
+            <GuestCountEditor
+              orgSlug={slug}
+              eventId={eventId}
+              signupId={mySignup.signup_id}
+              currentCount={mySignup.guest_count}
+              accent={accent}
+            />
             <ArrivalStatusPicker
               orgSlug={slug}
               eventId={eventId}

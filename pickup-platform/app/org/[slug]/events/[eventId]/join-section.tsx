@@ -1,7 +1,7 @@
 'use client'
 
-import { useRef, useState } from 'react'
-import { joinEvent, leaveEvent, quickJoinEvent, updateArrivalStatus } from './actions'
+import { useRef, useState, useEffect } from 'react'
+import { joinEvent, leaveEvent, quickJoinEvent, updateArrivalStatus, updateGuestCount } from './actions'
 import { arrivalStatuses, arrivalStatusEmoji, type ArrivalStatus } from '@/lib/arrival-status'
 import { fireConfetti } from '@/lib/confetti'
 import { hexToRgba } from '@/lib/colors'
@@ -30,6 +30,7 @@ const inputClass =
 export function JoinSection(props: Props) {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const [guestCount, setGuestCount] = useState(0)
 
   if (props.isPast) {
     return (
@@ -70,13 +71,35 @@ export function JoinSection(props: Props) {
               : 'Tap below to lock in your spot.'}
           </p>
         </div>
+
+        <label className="block">
+          <span className="text-xs text-zinc-500">Guests</span>
+          <input
+            type="number"
+            min={0}
+            max={20}
+            value={guestCount}
+            onChange={(e) => {
+              const n = Number.parseInt(e.target.value, 10)
+              setGuestCount(Number.isFinite(n) ? Math.max(0, Math.min(20, n)) : 0)
+            }}
+            className={inputClass}
+            style={{ '--tw-ring-color': props.accent } as React.CSSProperties}
+          />
+        </label>
+
         <button
           type="button"
           disabled={loading}
           onClick={async () => {
             setLoading(true)
             setError(null)
-            const result = await quickJoinEvent(props.orgSlug, props.eventId, props.orgId)
+            const result = await quickJoinEvent(
+              props.orgSlug,
+              props.eventId,
+              props.orgId,
+              guestCount,
+            )
             setLoading(false)
             if (result.error) setError(result.error)
             else void fireConfetti(props.accent)
@@ -366,6 +389,70 @@ export function RosterList(props: {
           )
         })}
       </ul>
+      {error ? <p className="mt-2 text-sm text-red-300">{error}</p> : null}
+    </div>
+  )
+}
+
+export function GuestCountEditor(props: {
+  orgSlug: string
+  eventId: string
+  signupId: string
+  currentCount: number
+  accent: string
+}) {
+  const [count, setCount] = useState(props.currentCount)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [saved, setSaved] = useState(false)
+
+  useEffect(() => {
+    setCount(props.currentCount)
+  }, [props.currentCount])
+
+  return (
+    <div>
+      <p className="text-xs font-medium text-zinc-400">Guests you&apos;re bringing</p>
+      <div className="mt-2 flex items-center gap-2">
+        <input
+          type="number"
+          min={0}
+          max={20}
+          value={count}
+          onChange={(e) => {
+            setSaved(false)
+            const n = Number.parseInt(e.target.value, 10)
+            setCount(Number.isFinite(n) ? Math.max(0, Math.min(20, n)) : 0)
+          }}
+          className="w-20 rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm outline-none focus:ring-2"
+          style={{ '--tw-ring-color': props.accent } as React.CSSProperties}
+        />
+        <button
+          type="button"
+          disabled={loading || count === props.currentCount}
+          onClick={async () => {
+            setLoading(true)
+            setError(null)
+            setSaved(false)
+            const result = await updateGuestCount(
+              props.orgSlug,
+              props.eventId,
+              props.signupId,
+              count,
+            )
+            setLoading(false)
+            if (result.error) {
+              setError(result.error)
+            } else {
+              setSaved(true)
+            }
+          }}
+          className="rounded-lg border border-zinc-700 px-3 py-2 text-xs font-medium text-zinc-200 transition-colors hover:border-zinc-600 hover:bg-zinc-800 disabled:opacity-50"
+        >
+          {loading ? 'Saving…' : 'Update'}
+        </button>
+        {saved ? <span className="text-xs text-zinc-500">Saved.</span> : null}
+      </div>
       {error ? <p className="mt-2 text-sm text-red-300">{error}</p> : null}
     </div>
   )
