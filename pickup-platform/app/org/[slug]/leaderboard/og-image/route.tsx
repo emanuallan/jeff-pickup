@@ -22,7 +22,7 @@ export async function GET(_request: Request, { params }: Context) {
     headline = `${topCaps.display_name} · ${topCaps.caps} caps`
     subline = topStreak
       ? `🔥 ${topStreak.display_name} on a ${topStreak.current_streak_weeks}-week streak`
-      : 'Most sessions played'
+      : 'Most sessions attended'
   }
 
   return renderOrgOgImage({

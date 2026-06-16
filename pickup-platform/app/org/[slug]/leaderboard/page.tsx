@@ -114,11 +114,11 @@ export default async function LeaderboardPage({ params }: Props) {
       <section className="mt-8 rounded-3xl border border-zinc-800 bg-linear-to-b from-zinc-900 to-zinc-950 p-6">
         <div className="flex items-baseline justify-between gap-3">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-400">Caps</h2>
-          <span className="text-xs text-zinc-600">Distinct sessions played</span>
+          <span className="text-xs text-zinc-600">Distinct sessions attended</span>
         </div>
 
         {capsRows.length === 0 ? (
-          <p className="mt-4 text-sm text-zinc-500">No sessions played yet.</p>
+          <p className="mt-4 text-sm text-zinc-500">No sessions attended yet.</p>
         ) : (
           <ol className="mt-4 space-y-2">
             {capsRows.map((row, idx) => {
