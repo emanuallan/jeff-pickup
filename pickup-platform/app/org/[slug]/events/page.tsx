@@ -187,12 +187,22 @@ export default async function EventsPage({ params }: Props) {
                 {eventName(next, fallbackName)}
               </h2>
 
-              <div className="mt-1.5 flex flex-wrap items-baseline gap-x-2 gap-y-1">
-                <span className="text-lg font-medium text-zinc-100">
+              <div
+                className={`mt-1.5 flex flex-wrap items-baseline gap-x-2 gap-y-1 ${
+                  nextCancelled ? 'line-through' : ''
+                }`}
+              >
+                <span
+                  className={`text-lg font-medium ${
+                    nextCancelled ? 'text-zinc-500' : 'text-zinc-100'
+                  }`}
+                >
                   {formatEventDayLabel(next)}
                 </span>
                 <span className="text-zinc-600">·</span>
-                <span className="text-lg text-zinc-300">{formatEventTimeOnly(next)}</span>
+                <span className={`text-lg ${nextCancelled ? 'text-zinc-500' : 'text-zinc-300'}`}>
+                  {formatEventTimeOnly(next)}
+                </span>
               </div>
 
               <div className="mt-3 flex items-center gap-2 text-sm text-zinc-400">
