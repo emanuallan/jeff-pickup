@@ -13,7 +13,6 @@ type OrgOgCardProps = {
   subline?: string
   sublineEmoji?: string
   cta?: string
-  footer?: string
   logoUrl?: string | null
 }
 
@@ -25,7 +24,6 @@ export function OrgOgCard({
   subline,
   sublineEmoji,
   cta,
-  footer,
   logoUrl,
 }: OrgOgCardProps) {
   const accentText = readableTextColor(accent)
@@ -140,16 +138,16 @@ export function OrgOgCard({
           ) : null}
         </div>
 
-        {/* Main: headline + info chip */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '26px' }}>
+        {/* Main: headline + clean muted subline (no box, to reduce clutter) */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
           <div
             style={{
               display: 'flex',
-              fontSize: '78px',
+              fontSize: '82px',
               fontWeight: 700,
-              lineHeight: 1.04,
+              lineHeight: 1.02,
               letterSpacing: '-0.02em',
-              maxWidth: '960px',
+              maxWidth: '980px',
             }}
           >
             {headline}
@@ -160,14 +158,9 @@ export function OrgOgCard({
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                alignSelf: 'flex-start',
                 gap: '14px',
-                padding: '14px 28px',
-                borderRadius: '9999px',
-                backgroundColor: 'rgba(255, 255, 255, 0.06)',
-                border: '1px solid rgba(255, 255, 255, 0.12)',
-                fontSize: '34px',
-                color: '#d4d4d8',
+                fontSize: '36px',
+                color: '#a1a1aa',
               }}
             >
               {sublineEmoji ? <div style={{ display: 'flex' }}>{sublineEmoji}</div> : null}
@@ -176,31 +169,18 @@ export function OrgOgCard({
           ) : null}
         </div>
 
-        {/* Footer: muted context + accent CTA pill */}
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: '24px',
-            borderTop: '1px solid #27272a',
-            paddingTop: '34px',
-          }}
-        >
-          <div style={{ display: 'flex', fontSize: '28px', color: '#a1a1aa' }}>
-            {footer ?? "See who's coming"}
-          </div>
-
+        {/* Footer: single accent CTA pill */}
+        <div style={{ display: 'flex' }}>
           {cta ? (
             <div
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                padding: '16px 36px',
+                padding: '18px 40px',
                 borderRadius: '9999px',
                 backgroundColor: accent,
                 color: accentText,
-                fontSize: '30px',
+                fontSize: '32px',
                 fontWeight: 600,
               }}
             >

@@ -24,6 +24,5 @@ export async function GET(_request: Request, { params }: Context) {
       : undefined,
     sublineEmoji: event ? (event.location_is_online ? '💻' : '📍') : undefined,
     cta: event ? 'Count me in →' : undefined,
-    footer: org?.activity || "See who's coming",
   })
 }

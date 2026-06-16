@@ -25,6 +25,5 @@ export async function GET(_request: Request, { params }: Context) {
       : org?.activity,
     sublineEmoji: nextEvent ? (nextEvent.location_is_online ? '💻' : '📍') : undefined,
     cta: nextEvent ? 'Count me in →' : undefined,
-    footer: org?.activity || "See who's coming",
   })
 }

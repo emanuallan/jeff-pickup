@@ -34,6 +34,5 @@ export async function GET(_request: Request, { params }: Context) {
     headline,
     subline,
     cta: 'See the rankings →',
-    footer: 'Caps & weekly streaks',
   })
 }

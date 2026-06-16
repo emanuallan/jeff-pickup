@@ -279,7 +279,6 @@ export default async function EventPage({ params }: Props) {
             orgSlug={slug}
             eventId={eventId}
             accent={accent}
-            accentText={accentText}
           />
         </div>
 

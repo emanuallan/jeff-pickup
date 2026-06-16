@@ -302,12 +302,10 @@ export function RosterList(props: {
   orgSlug?: string
   eventId?: string
   accent?: string
-  accentText?: string
 }) {
   const [leaving, setLeaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const accent = props.accent ?? '#2563eb'
-  const accentText = props.accentText ?? '#ffffff'
 
   if (props.entries.length === 0) {
     return <p className="text-sm text-zinc-500">No one signed up yet. Be the first!</p>
@@ -323,17 +321,17 @@ export function RosterList(props: {
             return (
               <li
                 key={e.id}
-                className="flex items-center justify-between gap-2 rounded-xl px-3 py-2.5 text-sm"
+                className="flex items-center justify-between gap-2 rounded-xl border px-3 py-2.5 text-sm text-zinc-100"
                 style={{
-                  backgroundImage: `linear-gradient(135deg, ${accent}, ${hexToRgba(accent, 0.55)})`,
-                  color: accentText,
+                  backgroundImage: `linear-gradient(135deg, ${hexToRgba(accent, 0.18)}, ${hexToRgba(accent, 0.04)})`,
+                  borderColor: hexToRgba(accent, 0.45),
                 }}
               >
                 <span className="min-w-0 font-semibold">
                   {arrivalStatusEmoji(e.arrival_status, props.isOnline)} {e.display_name}
-                  <span className="opacity-80"> (you)</span>
+                  <span className="text-zinc-400"> (you)</span>
                   {e.guest_count > 0 ? (
-                    <span className="opacity-80"> +{e.guest_count}</span>
+                    <span className="text-zinc-400"> +{e.guest_count}</span>
                   ) : null}
                 </span>
                 {props.canLeave && props.orgSlug && props.eventId ? (
@@ -349,8 +347,7 @@ export function RosterList(props: {
                       setLeaving(false)
                       if (result.error) setError(result.error)
                     }}
-                    className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full transition-opacity hover:opacity-80 disabled:opacity-50"
-                    style={{ backgroundColor: hexToRgba('#000000', 0.18), color: accentText }}
+                    className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white/5 text-zinc-400 transition-colors hover:bg-white/10 hover:text-zinc-200 disabled:opacity-50"
                   >
                     <svg
                       className="h-4 w-4"
