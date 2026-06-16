@@ -40,7 +40,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 
   const event = await getEventById(eventId, org.id)
-  if (!event || event.status === 'cancelled') {
+  if (!event) {
     return {}
   }
 
@@ -70,9 +70,10 @@ export default async function EventPage({ params }: Props) {
   }
 
   const event = await getEventById(eventId, org.id)
-  if (!event || event.status === 'cancelled') {
+  if (!event) {
     notFound()
   }
+  const isCancelled = event.status === 'cancelled'
 
   const roster = await getPublicRoster(eventId)
   const headcount = rosterHeadcount(roster)
@@ -159,7 +160,7 @@ export default async function EventPage({ params }: Props) {
       <section className="mt-8">
         <div className="overflow-hidden rounded-3xl border border-zinc-800 bg-linear-to-b from-zinc-900 to-zinc-950 p-6">
           <div className="flex items-center justify-between gap-3">
-            {!isPast ? (
+            {!isPast && !isCancelled ? (
               <span className="flex items-center gap-2">
                 <span className="relative flex h-2 w-2">
                   <span
@@ -247,7 +248,18 @@ export default async function EventPage({ params }: Props) {
         </div>
       </section>
 
-      {!mySignup ? (
+      {isCancelled ? (
+        <section className="mt-5 rounded-3xl border border-red-500/30 bg-red-500/10 p-5">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-red-400">
+            Session cancelled
+          </h2>
+          <p className="mt-2 text-sm text-zinc-300">
+            {mySignup
+              ? "This session has been cancelled, so it won't be happening. Keep an eye out for the next one."
+              : "This session has been cancelled and is no longer taking sign-ups. Check the other upcoming sessions."}
+          </p>
+        </section>
+      ) : !mySignup ? (
         <section className="mt-5 rounded-3xl border border-zinc-800 bg-zinc-900/50 p-5">
           <JoinSection
             orgSlug={slug}
@@ -282,7 +294,7 @@ export default async function EventPage({ params }: Props) {
           />
         </div>
 
-        {mySignup && !isPast ? (
+        {mySignup && !isPast && !isCancelled ? (
           <div className="mt-5 border-t border-zinc-800 pt-5">
             <ArrivalStatusPicker
               orgSlug={slug}

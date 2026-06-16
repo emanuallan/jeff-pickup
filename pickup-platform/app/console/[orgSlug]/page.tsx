@@ -13,6 +13,7 @@ import {
 import { getRootDomain } from '@/lib/tenancy/parse-host'
 import {
   cancelEvent,
+  uncancelEvent,
   createLocation,
   createOneOffEvent,
   createSchedule,
@@ -143,6 +144,13 @@ export default async function OrgConsolePage({ params }: Props) {
           <form action={cancelEvent.bind(null, orgSlug, ev.id)}>
             <button type="submit" className="text-xs text-zinc-500 hover:text-red-300">
               Cancel session
+            </button>
+          </form>
+        ) : null}
+        {!opts?.past && ev.status === 'cancelled' ? (
+          <form action={uncancelEvent.bind(null, orgSlug, ev.id)}>
+            <button type="submit" className="text-xs text-zinc-500 hover:text-emerald-300">
+              Restore session
             </button>
           </form>
         ) : null}

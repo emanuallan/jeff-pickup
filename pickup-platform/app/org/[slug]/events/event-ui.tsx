@@ -6,6 +6,14 @@ export function eventName(event: Pick<EventWithLocation, 'title'>, fallback: str
 }
 
 export function StatusPill({ status, accent }: { status: EventStatus; accent: string }) {
+  if (status === 'cancelled') {
+    return (
+      <span className="inline-flex items-center gap-1.5 rounded-full bg-red-500/15 px-2.5 py-1 text-xs font-medium text-red-400">
+        <span className="h-1.5 w-1.5 rounded-full bg-red-400" />
+        {statusLabel(status)}
+      </span>
+    )
+  }
   if (status === 'on') {
     return (
       <span

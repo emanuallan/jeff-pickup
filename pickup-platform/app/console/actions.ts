@@ -259,6 +259,29 @@ export async function cancelEvent(orgSlug: string, eventId: string): Promise<voi
   revalidatePath(`/org/${orgSlug}`)
 }
 
+export async function uncancelEvent(orgSlug: string, eventId: string): Promise<void> {
+  const org = await requireOrgAdmin(orgSlug)
+  const supabase = await createClient()
+
+  // Restore to 'tentative' first, then let the headcount check promote it back
+  // to 'on' if enough people are already signed up.
+  const { error } = await supabase
+    .from('events')
+    .update({ status: 'tentative' })
+    .eq('id', eventId)
+    .eq('org_id', org.id)
+    .eq('status', 'cancelled')
+
+  if (error) {
+    return
+  }
+
+  await supabase.rpc('maybe_promote_event', { p_event_id: eventId })
+
+  revalidatePath(`/console/${orgSlug}`)
+  revalidatePath(`/org/${orgSlug}`)
+}
+
 export async function deleteEvent(
   orgSlug: string,
   eventId: string,

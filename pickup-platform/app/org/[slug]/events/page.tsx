@@ -58,6 +58,7 @@ function SessionRow({
   fallbackName: string
   accent: string
 }) {
+  const isCancelled = event.status === 'cancelled'
   return (
     <Link
       href={`/events/${event.id}`}
@@ -65,7 +66,11 @@ function SessionRow({
     >
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
-          <span className="truncate text-sm font-medium text-zinc-100">
+          <span
+            className={`truncate text-sm font-medium ${
+              isCancelled ? 'text-zinc-500 line-through' : 'text-zinc-100'
+            }`}
+          >
             {eventName(event, fallbackName)}
           </span>
         </div>
@@ -76,7 +81,11 @@ function SessionRow({
           <span className="truncate">· {event.location_label}</span>
         </div>
       </div>
-      {event.status === 'on' ? (
+      {isCancelled ? (
+        <span className="shrink-0 rounded-full bg-red-500/15 px-2 py-0.5 text-[11px] font-medium text-red-400">
+          {statusLabel(event.status)}
+        </span>
+      ) : event.status === 'on' ? (
         <span
           className="h-2 w-2 shrink-0 rounded-full"
           style={{ backgroundColor: accent }}
@@ -95,12 +104,13 @@ export default async function EventsPage({ params }: Props) {
     notFound()
   }
 
-  const events = await getUpcomingEventsForOrg(org.id)
+  const events = await getUpcomingEventsForOrg(org.id, 20, true)
   const accent = org.branding.accent_color
   const fallbackName = org.activity || 'Session'
 
   const next = events[0]
   const rest = events.slice(1)
+  const nextCancelled = next?.status === 'cancelled'
   const nextHeadcount = next ? rosterHeadcount(await getPublicRoster(next.id)) : 0
   const leaderboardUnlocked = await isLeaderboardUnlocked(org.id)
 
@@ -141,27 +151,39 @@ export default async function EventsPage({ params }: Props) {
             >
               <div className="flex items-center justify-between gap-3">
                 <span className="flex items-center gap-2">
-                  <span className="relative flex h-2 w-2">
-                    <span
-                      className="absolute inline-flex h-full w-full animate-ping rounded-full opacity-75"
-                      style={{ backgroundColor: accent }}
-                    />
-                    <span
-                      className="relative inline-flex h-2 w-2 rounded-full"
-                      style={{ backgroundColor: accent }}
-                    />
-                  </span>
-                  <span
-                    className="text-xs font-semibold uppercase tracking-wider"
-                    style={{ color: accent }}
-                  >
-                    Next session
-                  </span>
+                  {nextCancelled ? (
+                    <span className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
+                      Next session
+                    </span>
+                  ) : (
+                    <>
+                      <span className="relative flex h-2 w-2">
+                        <span
+                          className="absolute inline-flex h-full w-full animate-ping rounded-full opacity-75"
+                          style={{ backgroundColor: accent }}
+                        />
+                        <span
+                          className="relative inline-flex h-2 w-2 rounded-full"
+                          style={{ backgroundColor: accent }}
+                        />
+                      </span>
+                      <span
+                        className="text-xs font-semibold uppercase tracking-wider"
+                        style={{ color: accent }}
+                      >
+                        Next session
+                      </span>
+                    </>
+                  )}
                 </span>
                 <StatusPill status={next.status} accent={accent} />
               </div>
 
-              <h2 className="mt-4 text-2xl font-semibold tracking-tight text-zinc-50">
+              <h2
+                className={`mt-4 text-2xl font-semibold tracking-tight ${
+                  nextCancelled ? 'text-zinc-400 line-through' : 'text-zinc-50'
+                }`}
+              >
                 {eventName(next, fallbackName)}
               </h2>
 
@@ -185,16 +207,27 @@ export default async function EventsPage({ params }: Props) {
               ) : null}
 
               <div className="mt-5 flex items-center justify-between border-t border-zinc-800 pt-4">
-                <span className="text-sm text-zinc-400">
-                  <span className="font-semibold text-zinc-100">{nextHeadcount}</span>
-                  {next.capacity != null ? ` / ${next.capacity}` : ''} coming
-                </span>
-                <span
-                  className="inline-flex items-center gap-1 text-sm font-medium transition-transform group-hover:translate-x-0.5"
-                  style={{ color: accent }}
-                >
-                  Count me in →
-                </span>
+                {nextCancelled ? (
+                  <>
+                    <span className="text-sm text-red-400">This session was cancelled</span>
+                    <span className="inline-flex items-center gap-1 text-sm font-medium text-zinc-400 transition-transform group-hover:translate-x-0.5">
+                      View details →
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <span className="text-sm text-zinc-400">
+                      <span className="font-semibold text-zinc-100">{nextHeadcount}</span>
+                      {next.capacity != null ? ` / ${next.capacity}` : ''} coming
+                    </span>
+                    <span
+                      className="inline-flex items-center gap-1 text-sm font-medium transition-transform group-hover:translate-x-0.5"
+                      style={{ color: accent }}
+                    >
+                      Count me in →
+                    </span>
+                  </>
+                )}
               </div>
             </Link>
           </section>

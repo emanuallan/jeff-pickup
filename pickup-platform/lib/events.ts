@@ -81,16 +81,22 @@ export async function getEventById(
 export async function getUpcomingEventsForOrg(
   orgId: string,
   limit = 20,
+  includeCancelled = false,
 ): Promise<EventWithLocation[]> {
   const supabase = await createClient()
   const now = new Date().toISOString()
 
-  const { data, error } = await supabase
+  let query = supabase
     .from('events')
     .select(LOCATION_SELECT)
     .eq('org_id', orgId)
     .gte('starts_at', now)
-    .neq('status', 'cancelled')
+
+  if (!includeCancelled) {
+    query = query.neq('status', 'cancelled')
+  }
+
+  const { data, error } = await query
     .order('starts_at', { ascending: true })
     .limit(limit)
 
