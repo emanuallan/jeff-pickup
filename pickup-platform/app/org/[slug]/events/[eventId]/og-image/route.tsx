@@ -20,6 +20,6 @@ export async function GET(_request: Request, { params }: Context) {
     subline: event?.location_label,
     sublineEmoji: event ? (event.location_is_online ? '💻' : '📍') : undefined,
     footer: org?.activity || 'See who\'s coming',
-    cta: 'Count me in',
+    tagline: 'Join us!',
   })
 }

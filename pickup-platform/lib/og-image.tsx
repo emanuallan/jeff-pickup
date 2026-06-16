@@ -1,5 +1,4 @@
 import { ImageResponse } from 'next/og'
-import { getRootDomain } from '@/lib/tenancy/parse-host'
 
 export const ogImageSize = { width: 1200, height: 630 }
 export const ogImageContentType = 'image/png'
@@ -13,7 +12,7 @@ type OrgOgCardProps = {
   sublineEmoji?: string
   footer?: string
   logoUrl?: string | null
-  cta?: string
+  tagline?: string
 }
 
 function readableTextColor(hex: string): string {
@@ -36,7 +35,6 @@ function hexToRgba(hex: string, alpha: number): string {
 }
 
 export function OrgOgCard({
-  slug,
   orgName,
   accent,
   headline,
@@ -44,7 +42,7 @@ export function OrgOgCard({
   sublineEmoji,
   footer,
   logoUrl,
-  cta = 'Count me in',
+  tagline,
 }: OrgOgCardProps) {
   return (
     <div
@@ -120,7 +118,7 @@ export function OrgOgCard({
         </div>
       </div>
 
-      {/* Main: headline + location chip + CTA */}
+      {/* Main: headline + location chip + tagline */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '22px' }}>
         <div
           style={{
@@ -155,23 +153,17 @@ export function OrgOgCard({
           </div>
         ) : null}
 
-        {cta ? (
+        {tagline ? (
           <div
             style={{
               display: 'flex',
-              alignItems: 'center',
-              alignSelf: 'flex-start',
-              marginTop: '8px',
-              padding: '20px 44px',
-              borderRadius: '9999px',
-              backgroundImage: `linear-gradient(135deg, ${accent}, ${hexToRgba(accent, 0.78)})`,
-              color: readableTextColor(accent),
-              fontSize: '38px',
+              marginTop: '4px',
+              fontSize: '44px',
               fontWeight: 700,
-              boxShadow: `0 20px 60px ${hexToRgba(accent, 0.55)}`,
+              color: accent,
             }}
           >
-            {cta}
+            {tagline}
           </div>
         ) : null}
       </div>
@@ -180,27 +172,12 @@ export function OrgOgCard({
       <div
         style={{
           display: 'flex',
-          justifyContent: 'space-between',
           alignItems: 'center',
           fontSize: '30px',
           color: '#a1a1aa',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-          <div
-            style={{
-              display: 'flex',
-              width: '14px',
-              height: '14px',
-              borderRadius: '9999px',
-              backgroundColor: accent,
-            }}
-          />
-          <div style={{ display: 'flex' }}>{footer ?? "See who's coming"}</div>
-        </div>
-        <div style={{ display: 'flex', color: '#71717a' }}>
-          {slug}.{getRootDomain()}
-        </div>
+        <div style={{ display: 'flex' }}>{footer ?? "See who's coming"}</div>
       </div>
     </div>
   )

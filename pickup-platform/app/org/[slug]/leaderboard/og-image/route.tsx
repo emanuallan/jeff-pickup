@@ -33,6 +33,5 @@ export async function GET(_request: Request, { params }: Context) {
     headline,
     subline,
     footer: 'See the full leaderboard',
-    cta: 'View leaderboard',
   })
 }
