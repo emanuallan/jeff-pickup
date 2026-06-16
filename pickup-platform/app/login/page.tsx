@@ -3,6 +3,13 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
+import {
+  OrganizrBackdrop,
+  OrganizrMarketingHeader,
+  organizrBtnPrimary,
+  organizrInput,
+  organizrLabel,
+} from '../_components/organizr-shell'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
@@ -37,50 +44,59 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="mx-auto flex min-h-dvh max-w-md flex-col justify-center px-6 py-16">
-      <Link href="/" className="text-sm text-zinc-400 hover:text-zinc-200">
-        ← Back
-      </Link>
+    <div className="relative min-h-dvh">
+      <OrganizrBackdrop />
+      <OrganizrMarketingHeader showSignIn={false} />
 
-      <h1 className="mt-6 text-2xl font-semibold">Sign in</h1>
-      <p className="mt-2 text-sm text-zinc-400">
-        We&apos;ll email you a magic link. No password needed.
-      </p>
+      <main className="mx-auto flex min-h-[calc(100dvh-3.5rem)] max-w-md flex-col justify-center px-6 py-16">
+        <Link
+          href="/"
+          className="inline-flex min-h-9 items-center gap-1 text-sm text-zinc-400 transition-colors hover:text-zinc-200"
+        >
+          <span aria-hidden>←</span> Home
+        </Link>
 
-      {status === 'sent' ? (
-        <div className="mt-8 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-100">
-          Check your email for the sign-in link.
-        </div>
-      ) : (
-        <form onSubmit={handleSubmit} className="mt-8 space-y-4">
-          <label className="block">
-            <span className="text-xs font-medium text-zinc-400">Email</span>
-            <input
-              type="email"
-              required
-              autoComplete="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="mt-1 w-full rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="you@example.com"
-            />
-          </label>
+        <p className="mt-6 text-xs font-semibold uppercase tracking-wider text-indigo-300/90">
+          Sign in
+        </p>
+        <h1 className="mt-3 text-2xl font-semibold tracking-tight text-zinc-50">Welcome back</h1>
+        <p className="mt-2 text-sm text-zinc-400">
+          We&apos;ll email you a magic link. No password needed.
+        </p>
 
-          {error ? (
-            <p className="text-sm text-red-300">{error}</p>
-          ) : null}
+        {status === 'sent' ? (
+          <div className="mt-8 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-100">
+            Check your email for the sign-in link.
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="mt-8 space-y-4">
+            <label className="block">
+              <span className={organizrLabel}>Email</span>
+              <input
+                type="email"
+                required
+                autoComplete="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className={organizrInput}
+                placeholder="you@example.com"
+              />
+            </label>
 
-          <button
-            type="submit"
-            disabled={status === 'loading'}
-            className="w-full rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-50"
-          >
-            {status === 'loading' ? 'Sending…' : 'Send magic link'}
-          </button>
-        </form>
-      )}
+            {error ? <p className="text-sm text-red-300">{error}</p> : null}
 
-      {/* TODO: Phase 3 — self-serve org creation wizard after login */}
-    </main>
+            <button
+              type="submit"
+              disabled={status === 'loading'}
+              className={`w-full ${organizrBtnPrimary} disabled:opacity-50`}
+            >
+              {status === 'loading' ? 'Sending…' : 'Send magic link'}
+            </button>
+          </form>
+        )}
+
+        {/* TODO: Phase 3 — self-serve org creation wizard after login */}
+      </main>
+    </div>
   )
 }

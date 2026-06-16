@@ -20,23 +20,31 @@ export function OrganizrBackdrop() {
 }
 
 /** Minimal apex-site header — Organizr wordmark only (no Console badge). */
-export function OrganizrMarketingHeader() {
+export function OrganizrMarketingHeader({ showSignIn = true }: { showSignIn?: boolean }) {
   return (
     <header className="sticky top-0 z-20 border-b border-white/10 bg-zinc-950/80 backdrop-blur-md">
       <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-5 sm:px-6">
         <Link href="/" className="text-sm font-bold tracking-tight text-zinc-50">
           Organizr
         </Link>
-        <Link
-          href="/login"
-          className="rounded-lg border border-white/10 px-4 py-2 text-sm font-medium text-zinc-200 transition hover:border-white/20 hover:bg-white/5"
-        >
-          Sign in
-        </Link>
+        {showSignIn ? (
+          <Link
+            href="/login"
+            className="rounded-lg border border-white/10 px-4 py-2 text-sm font-medium text-zinc-200 transition hover:border-white/20 hover:bg-white/5"
+          >
+            Sign in
+          </Link>
+        ) : null}
       </div>
     </header>
   )
 }
+
+/** Form field tokens — matches the console input style. */
+export const organizrLabel = 'text-xs font-medium text-zinc-400'
+
+export const organizrInput =
+  'mt-1 w-full rounded-lg border border-white/10 bg-zinc-950/60 px-3 py-2.5 text-sm text-zinc-100 placeholder:text-zinc-600 outline-none transition focus:border-indigo-500/50 focus:ring-2 focus:ring-indigo-500/25'
 
 /** Primary / secondary CTA classes — matches the console design tokens. */
 export const organizrBtnPrimary =
