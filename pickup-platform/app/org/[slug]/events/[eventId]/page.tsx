@@ -160,7 +160,11 @@ export default async function EventPage({ params }: Props) {
       <section className="mt-8">
         <div className="overflow-hidden rounded-3xl border border-zinc-800 bg-linear-to-b from-zinc-900 to-zinc-950 p-6">
           <div className="flex items-center justify-between gap-3">
-            {!isPast && !isCancelled ? (
+            {isCancelled ? (
+              <span className="text-xs font-semibold uppercase tracking-wider text-red-400">
+                Not happening
+              </span>
+            ) : !isPast ? (
               <span className="flex items-center gap-2">
                 <span className="relative flex h-2 w-2">
                   <span
