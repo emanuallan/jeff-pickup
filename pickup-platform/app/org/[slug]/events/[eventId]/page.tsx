@@ -185,7 +185,11 @@ export default async function EventPage({ params }: Props) {
             <StatusPill status={event.status} accent={accent} />
           </div>
 
-          <h2 className="mt-4 text-2xl font-semibold tracking-tight text-zinc-50">
+          <h2
+            className={`mt-4 text-2xl font-semibold tracking-tight ${
+              isCancelled ? 'text-zinc-400 line-through' : 'text-zinc-50'
+            }`}
+          >
             {eventName(event, fallbackName)}
           </h2>
 
