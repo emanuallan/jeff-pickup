@@ -2,7 +2,13 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { getOrgBySlug } from '@/lib/orgs'
-import { getEventById, formatEventTime, statusLabel } from '@/lib/events'
+import {
+  getEventById,
+  formatEventTime,
+  formatEventDayLabel,
+  formatEventTimeOnly,
+} from '@/lib/events'
+import { getRootDomain } from '@/lib/tenancy/parse-host'
 import { buildOrgMetadata } from '@/lib/og-metadata'
 import { getPublicRoster, rosterHeadcount } from '@/lib/signups'
 import { getSessionToken } from '@/lib/participant-session'
@@ -12,6 +18,7 @@ import { getParticipantEngagementStats } from '@/lib/engagement'
 import { rosterBadges } from '@/lib/badges'
 import { JoinSection, RosterList, type RosterBadgeInfo } from './join-section'
 import { ShareButton } from '../../share-button'
+import { StatusPill, PinIcon, OnlineIcon, eventName } from '../event-ui'
 
 type Props = {
   params: Promise<{ slug: string; eventId: string }>
@@ -82,6 +89,9 @@ export default async function EventPage({ params }: Props) {
     event.starts_at,
   )
   const shareText = `${org.name}: ${formatEventTime(event)} ${event.location_is_online ? 'on' : 'at'} ${event.location_label}. Join us!`
+  const accent = org.branding.accent_color
+  const fallbackName = org.activity || 'Session'
+  const spotsLeft = event.capacity != null ? Math.max(0, event.capacity - headcount) : null
 
   const token = await getSessionToken()
   let participant = null
@@ -103,83 +113,100 @@ export default async function EventPage({ params }: Props) {
   }
 
   return (
-    <main className="mx-auto min-h-dvh max-w-lg px-6 py-10">
-      <Link href="/events" className="text-sm text-zinc-400 hover:text-zinc-200">
-        ← {org.name}
+    <main className="mx-auto min-h-dvh max-w-lg px-5 py-10 sm:px-6">
+      <Link
+        href="/events"
+        className="inline-flex items-center gap-1 text-sm text-zinc-400 transition-colors hover:text-zinc-200"
+      >
+        <span aria-hidden>←</span> {org.name}
       </Link>
 
-      <header className="mt-6">
-        <div className="flex items-start justify-between gap-3">
-          <h1 className="text-2xl font-semibold">{formatEventTime(event)}</h1>
-          <ShareButton title={org.name} text={shareText} />
-        </div>
-        <p className="mt-1 text-sm text-zinc-400">
-          {event.location_is_online ? (
-            event.location_meeting_url ? (
+      <section className="mt-5">
+        <div className="overflow-hidden rounded-3xl border border-zinc-800 bg-linear-to-b from-zinc-900 to-zinc-950 p-6">
+          <div className="flex items-center justify-between gap-3">
+            <StatusPill status={event.status} accent={accent} />
+            <ShareButton title={org.name} text={shareText} />
+          </div>
+
+          <h1 className="mt-4 text-2xl font-semibold tracking-tight text-zinc-50">
+            {eventName(event, fallbackName)}
+          </h1>
+
+          <div className="mt-1.5 flex flex-wrap items-baseline gap-x-2 gap-y-1">
+            <span className="text-lg font-medium text-zinc-100">{formatEventDayLabel(event)}</span>
+            <span className="text-zinc-600">·</span>
+            <span className="text-lg text-zinc-300">{formatEventTimeOnly(event)}</span>
+          </div>
+
+          <div className="mt-3 flex items-center gap-2 text-sm text-zinc-400">
+            {event.location_is_online ? <OnlineIcon /> : <PinIcon />}
+            {event.location_is_online ? (
+              event.location_meeting_url ? (
+                <a
+                  href={event.location_meeting_url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="truncate transition-colors hover:text-zinc-200"
+                >
+                  {event.location_label} · Join online ↗
+                </a>
+              ) : (
+                <span className="truncate">{event.location_label} · Online</span>
+              )
+            ) : event.location_maps_url ? (
               <a
-                href={event.location_meeting_url}
+                href={event.location_maps_url}
                 target="_blank"
                 rel="noreferrer"
-                className="hover:text-zinc-200"
+                className="truncate transition-colors hover:text-zinc-200"
               >
-                {event.location_label} · Join online ↗
+                {event.location_label} ↗
               </a>
             ) : (
-              <>{event.location_label} · Online</>
-            )
-          ) : event.location_maps_url ? (
-            <a
-              href={event.location_maps_url}
-              target="_blank"
-              rel="noreferrer"
-              className="hover:text-zinc-200"
-            >
-              {event.location_label} ↗
-            </a>
-          ) : (
-            event.location_label
-          )}
-        </p>
-        <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-zinc-500">
-          <span>{statusLabel(event.status)}</span>
-          <span>
-            {headcount}
-            {event.capacity != null ? ` / ${event.capacity}` : ''} coming
-          </span>
-          <span>min {event.min_players}</span>
-          {weather ? (
-            <span>
-              {weather.emoji}
-              {weather.tempF != null ? ` ${weather.tempF}°F` : ''}
-            </span>
-          ) : null}
-        </div>
-        {event.announcement ? (
-          <p className="mt-3 rounded-xl border border-zinc-800 bg-zinc-900/50 px-3 py-2 text-sm text-zinc-300">
-            {event.announcement}
-          </p>
-        ) : null}
-      </header>
+              <span className="truncate">{event.location_label}</span>
+            )}
+          </div>
 
-      <section className="mt-8 rounded-2xl border border-zinc-800 bg-zinc-900/50 p-5">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-400">
-          Join
-        </h2>
-        <div className="mt-4">
-          <JoinSection
-            orgSlug={slug}
-            orgId={org.id}
-            eventId={eventId}
-            isPast={isPast}
-            isFull={isFull}
-            isOnline={event.location_is_online}
-            participant={participant}
-            mySignup={mySignup}
-          />
+          <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-zinc-800 pt-4 text-sm">
+            <span className="rounded-lg bg-zinc-800/60 px-2.5 py-1 text-zinc-300">
+              <span className="font-semibold text-zinc-100">{headcount}</span>
+              {event.capacity != null ? ` / ${event.capacity}` : ''} coming
+            </span>
+            <span className="rounded-lg bg-zinc-800/60 px-2.5 py-1 text-zinc-400">
+              min {event.min_players}
+            </span>
+            {weather ? (
+              <span className="rounded-lg bg-zinc-800/60 px-2.5 py-1 text-zinc-300">
+                {weather.emoji}
+                {weather.tempF != null ? ` ${weather.tempF}°F` : ''}
+              </span>
+            ) : null}
+          </div>
+
+          {event.announcement ? (
+            <p className="mt-4 rounded-xl border border-zinc-800 bg-black/30 px-3 py-2 text-sm text-zinc-300">
+              {event.announcement}
+            </p>
+          ) : null}
         </div>
       </section>
 
-      <section className="mt-6 rounded-2xl border border-zinc-800 bg-zinc-900/50 p-5">
+      <section className="mt-5 rounded-3xl border border-zinc-800 bg-zinc-900/50 p-5">
+        <JoinSection
+          orgSlug={slug}
+          orgId={org.id}
+          eventId={eventId}
+          accent={accent}
+          isPast={isPast}
+          isFull={isFull}
+          isOnline={event.location_is_online}
+          spotsLeft={spotsLeft}
+          participant={participant}
+          mySignup={mySignup}
+        />
+      </section>
+
+      <section className="mt-5 rounded-3xl border border-zinc-800 bg-zinc-900/50 p-5">
         <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-400">
           Who&apos;s coming ({headcount})
         </h2>
@@ -191,6 +218,16 @@ export default async function EventPage({ params }: Props) {
           />
         </div>
       </section>
+
+      <p className="mt-10 text-center">
+        <Link href="/leaderboard" className="text-sm text-zinc-400 hover:text-zinc-200">
+          View leaderboard →
+        </Link>
+      </p>
+
+      <p className="mt-6 text-center text-xs text-zinc-600">
+        {org.slug}.{getRootDomain()}
+      </p>
     </main>
   )
 }
