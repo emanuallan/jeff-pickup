@@ -16,6 +16,7 @@ import { getSessionInfo } from '@/lib/participant'
 import { getParticipantEngagementStats, isLeaderboardUnlocked, isOrgInauguralSession } from '@/lib/engagement'
 import { buildRosterBadgeMap } from '@/lib/badges'
 import { JoinSection, RosterList, ArrivalStatusPicker, GuestCountEditor } from './join-section'
+import { PageViewTracker } from './page-view-tracker'
 import { WeatherPill } from './weather-pill'
 import { ShareButton } from '../../share-button'
 import { OrgHeader } from '../../_components/org-header'
@@ -269,6 +270,7 @@ export default async function EventPage({ params }: Props) {
       {leaderboardUnlocked ? <LeaderboardLink /> : null}
       <SocialLinks links={org.branding.links} />
       <OrgPageFooter slug={org.slug} />
+      <PageViewTracker slug={slug} eventId={eventId} />
     </OrgPageShell>
   )
 }

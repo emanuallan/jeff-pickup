@@ -1,8 +1,10 @@
 import { notFound } from 'next/navigation'
 import { getOrgForMember } from '@/lib/orgs'
 import { getEventById, formatEventTime, statusLabel } from '@/lib/events'
-import { getRosterWithContact, rosterHeadcount } from '@/lib/signups'
-import { arrivalStatusEmoji } from '@/lib/arrival-status'
+import { getRosterWithContact } from '@/lib/signups'
+import { getEventAnalytics } from '@/lib/event-analytics'
+import { arrivalStatusEmoji, arrivalStatusLabel } from '@/lib/arrival-status'
+import type { ArrivalStatus } from '@/lib/arrival-status'
 import { orgBaseUrl } from '@/lib/og-metadata'
 import {
   ConsolePage,
@@ -16,7 +18,17 @@ type Props = {
   params: Promise<{ orgSlug: string; eventId: string }>
 }
 
-export default async function ConsoleEventRosterPage({ params }: Props) {
+function StatCard({ label, value, hint }: { label: string; value: string; hint?: string }) {
+  return (
+    <ConsoleCard className="flex flex-col gap-1">
+      <div className="text-2xl font-semibold tabular-nums text-zinc-50">{value}</div>
+      <div className="text-xs font-medium text-zinc-400">{label}</div>
+      {hint ? <div className="text-[11px] text-zinc-600">{hint}</div> : null}
+    </ConsoleCard>
+  )
+}
+
+export default async function ConsoleEventAnalyticsPage({ params }: Props) {
   const { orgSlug, eventId } = await params
   const org = await getOrgForMember(orgSlug)
 
@@ -30,8 +42,12 @@ export default async function ConsoleEventRosterPage({ params }: Props) {
   }
 
   const roster = await getRosterWithContact(eventId)
-  const headcount = rosterHeadcount(roster)
+  const analytics = await getEventAnalytics(eventId, roster, event.capacity)
   const publicEventUrl = `${orgBaseUrl(orgSlug)}/events/${eventId}`
+
+  const statusEntries = (
+    Object.entries(analytics.arrivalStatusCounts) as [ArrivalStatus, number][]
+  ).sort((a, b) => b[1] - a[1])
 
   return (
     <ConsolePage width="max-w-2xl">
@@ -47,12 +63,102 @@ export default async function ConsoleEventRosterPage({ params }: Props) {
         }
       />
       <p className="mt-2 text-xs text-zinc-500">
-        {statusLabel(event.status)} · {headcount}
+        {statusLabel(event.status)} · {analytics.headcount}
         {event.capacity != null ? ` / ${event.capacity}` : ''} coming
         {event.min_players != null ? ` · min ${event.min_players} participants` : ''}
       </p>
 
-      <div className="mt-8">
+      <div className="mt-8 space-y-6">
+        <ConsoleSection title="Engagement" description="Traffic and sign-up funnel for this session.">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+            <StatCard label="Page views" value={String(analytics.pageViews)} />
+            <StatCard label="Unique visitors" value={String(analytics.uniqueVisitors)} />
+            <StatCard
+              label="Sign-up rate"
+              value={analytics.conversionRate != null ? `${analytics.conversionRate}%` : '—'}
+              hint={
+                analytics.uniqueVisitors > 0
+                  ? `${analytics.uniqueSignups} signed up`
+                  : 'Needs page views'
+              }
+            />
+            <StatCard
+              label="All-time sign-ups"
+              value={String(analytics.uniqueSignups)}
+              hint="Unique people who joined"
+            />
+            <StatCard
+              label="Currently signed up"
+              value={String(analytics.currentSignups)}
+              hint={`${analytics.headcount} total headcount`}
+            />
+            <StatCard
+              label="Unregistered"
+              value={String(analytics.uniqueLeft)}
+              hint="Unique people who left"
+            />
+          </div>
+
+          <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
+            <StatCard
+              label="Guests"
+              value={String(analytics.totalGuests)}
+              hint="Extra people beyond sign-ups"
+            />
+            {event.capacity != null ? (
+              <StatCard
+                label="Capacity fill"
+                value={analytics.capacityFill != null ? `${analytics.capacityFill}%` : '—'}
+                hint={`${analytics.headcount} of ${event.capacity}`}
+              />
+            ) : (
+              <StatCard label="Capacity" value="No limit" />
+            )}
+            <StatCard
+              label="Last sign-up"
+              value={
+                analytics.lastSignupAt
+                  ? new Date(analytics.lastSignupAt).toLocaleString(undefined, {
+                      month: 'short',
+                      day: 'numeric',
+                      hour: 'numeric',
+                      minute: '2-digit',
+                    })
+                  : '—'
+              }
+              hint={
+                analytics.firstSignupAt
+                  ? `First: ${new Date(analytics.firstSignupAt).toLocaleString(undefined, {
+                      month: 'short',
+                      day: 'numeric',
+                      hour: 'numeric',
+                      minute: '2-digit',
+                    })}`
+                  : undefined
+              }
+            />
+          </div>
+        </ConsoleSection>
+
+        {statusEntries.length > 0 ? (
+          <ConsoleSection title="Arrival statuses" description="How signed-up players are feeling.">
+            <ul className="space-y-2">
+              {statusEntries.map(([status, count]) => (
+                <li
+                  key={status}
+                  className="flex items-center justify-between gap-3 text-sm text-zinc-300"
+                >
+                  <span>
+                    {arrivalStatusEmoji(status, event.location_is_online)}{' '}
+                    {arrivalStatusLabel(status, event.location_is_online)}
+                  </span>
+                  <span className="tabular-nums text-zinc-500">{count}</span>
+                </li>
+              ))}
+            </ul>
+          </ConsoleSection>
+        ) : null}
+
         <ConsoleSection
           title={`Roster (${roster.length})`}
           action={

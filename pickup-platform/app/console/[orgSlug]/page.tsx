@@ -143,7 +143,7 @@ export default async function OrgConsolePage({ params }: Props) {
           href={`/console/${orgSlug}/events/${ev.id}`}
           className={`${chipAction} text-indigo-300 hover:bg-indigo-500/10 hover:text-indigo-200`}
         >
-          View roster →
+          View analytics →
         </Link>
         {!opts?.past && ev.status !== 'cancelled' ? (
           <form action={cancelEvent.bind(null, orgSlug, ev.id)}>
