@@ -11,6 +11,7 @@ import {
   type EventWithLocation,
 } from '@/lib/events'
 import { getRootDomain } from '@/lib/tenancy/parse-host'
+import { readableTextColor } from '@/lib/colors'
 import { buildOrgMetadata } from '@/lib/og-metadata'
 import { getPublicRoster, rosterHeadcount } from '@/lib/signups'
 import { ShareButton } from '../share-button'
@@ -114,8 +115,8 @@ export default async function EventsPage({ params }: Props) {
             />
           ) : (
             <div
-              className="flex h-11 w-11 items-center justify-center rounded-xl text-lg font-bold text-white"
-              style={{ backgroundColor: accent }}
+              className="flex h-11 w-11 items-center justify-center rounded-xl text-lg font-bold"
+              style={{ backgroundColor: accent, color: readableTextColor(accent) }}
             >
               {org.name.charAt(0).toUpperCase()}
             </div>

@@ -1,4 +1,5 @@
 import { ImageResponse } from 'next/og'
+import { readableTextColor, hexToRgba } from '@/lib/colors'
 
 export const ogImageSize = { width: 1200, height: 630 }
 export const ogImageContentType = 'image/png'
@@ -13,25 +14,6 @@ type OrgOgCardProps = {
   footer?: string
   logoUrl?: string | null
   tagline?: string
-}
-
-function readableTextColor(hex: string): string {
-  const m = /^#?([0-9a-fA-F]{6})$/.exec(hex)
-  if (!m) return '#ffffff'
-  const r = parseInt(m[1].slice(0, 2), 16)
-  const g = parseInt(m[1].slice(2, 4), 16)
-  const b = parseInt(m[1].slice(4, 6), 16)
-  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
-  return luminance > 0.6 ? '#09090b' : '#ffffff'
-}
-
-function hexToRgba(hex: string, alpha: number): string {
-  const m = /^#?([0-9a-fA-F]{6})$/.exec(hex)
-  if (!m) return `rgba(37, 99, 235, ${alpha})`
-  const r = parseInt(m[1].slice(0, 2), 16)
-  const g = parseInt(m[1].slice(2, 4), 16)
-  const b = parseInt(m[1].slice(4, 6), 16)
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`
 }
 
 export function OrgOgCard({

@@ -23,6 +23,7 @@ type Props = {
   orgId: string
   eventId: string
   accent: string
+  accentText: string
   isPast: boolean
   isFull: boolean
   isOnline: boolean
@@ -166,8 +167,12 @@ export function JoinSection(props: Props) {
             setLoading(false)
             if (result.error) setError(result.error)
           }}
-          className="w-full rounded-xl px-4 py-3.5 text-sm font-semibold text-white shadow-lg transition-opacity hover:opacity-90 disabled:opacity-50"
-          style={{ backgroundColor: props.accent, boxShadow: `0 10px 30px -12px ${props.accent}` }}
+          className="w-full rounded-xl px-4 py-3.5 text-sm font-semibold shadow-lg transition-opacity hover:opacity-90 disabled:opacity-50"
+          style={{
+            backgroundColor: props.accent,
+            color: props.accentText,
+            boxShadow: `0 10px 30px -12px ${props.accent}`,
+          }}
         >
           {loading ? 'Counting you in…' : "Count me in →"}
         </button>
@@ -261,8 +266,12 @@ export function JoinSection(props: Props) {
       <button
         type="submit"
         disabled={loading}
-        className="w-full rounded-xl px-4 py-3.5 text-sm font-semibold text-white shadow-lg transition-opacity hover:opacity-90 disabled:opacity-50"
-        style={{ backgroundColor: props.accent, boxShadow: `0 10px 30px -12px ${props.accent}` }}
+        className="w-full rounded-xl px-4 py-3.5 text-sm font-semibold shadow-lg transition-opacity hover:opacity-90 disabled:opacity-50"
+        style={{
+          backgroundColor: props.accent,
+          color: props.accentText,
+          boxShadow: `0 10px 30px -12px ${props.accent}`,
+        }}
       >
         {loading ? 'Counting you in…' : "Count me in →"}
       </button>

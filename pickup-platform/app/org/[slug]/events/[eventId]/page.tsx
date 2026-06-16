@@ -9,6 +9,7 @@ import {
   formatEventTimeOnly,
 } from '@/lib/events'
 import { getRootDomain } from '@/lib/tenancy/parse-host'
+import { readableTextColor } from '@/lib/colors'
 import { buildOrgMetadata } from '@/lib/og-metadata'
 import { getPublicRoster, rosterHeadcount } from '@/lib/signups'
 import { getSessionToken } from '@/lib/participant-session'
@@ -90,6 +91,7 @@ export default async function EventPage({ params }: Props) {
   )
   const shareText = `${org.name}: ${formatEventTime(event)} ${event.location_is_online ? 'on' : 'at'} ${event.location_label}. Join us!`
   const accent = org.branding.accent_color
+  const accentText = readableTextColor(accent)
   const fallbackName = org.activity || 'Session'
   const spotsLeft = event.capacity != null ? Math.max(0, event.capacity - headcount) : null
 
@@ -118,8 +120,32 @@ export default async function EventPage({ params }: Props) {
         href="/events"
         className="inline-flex items-center gap-1 text-sm text-zinc-400 transition-colors hover:text-zinc-200"
       >
-        <span aria-hidden>←</span> {org.name}
+        <span aria-hidden>←</span> All sessions
       </Link>
+
+      <header className="mt-5 flex items-center gap-3">
+        {org.branding.logo_url ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={org.branding.logo_url}
+            alt=""
+            className="h-11 w-11 rounded-xl object-cover"
+          />
+        ) : (
+          <div
+            className="flex h-11 w-11 items-center justify-center rounded-xl text-lg font-bold"
+            style={{ backgroundColor: accent, color: accentText }}
+          >
+            {org.name.charAt(0).toUpperCase()}
+          </div>
+        )}
+        <div className="min-w-0">
+          <h1 className="truncate text-xl font-semibold tracking-tight">{org.name}</h1>
+          {org.activity ? (
+            <p className="truncate text-sm text-zinc-400">{org.activity}</p>
+          ) : null}
+        </div>
+      </header>
 
       <section className="mt-5">
         <div className="overflow-hidden rounded-3xl border border-zinc-800 bg-linear-to-b from-zinc-900 to-zinc-950 p-6">
@@ -128,9 +154,9 @@ export default async function EventPage({ params }: Props) {
             <ShareButton title={org.name} text={shareText} />
           </div>
 
-          <h1 className="mt-4 text-2xl font-semibold tracking-tight text-zinc-50">
+          <h2 className="mt-4 text-2xl font-semibold tracking-tight text-zinc-50">
             {eventName(event, fallbackName)}
-          </h1>
+          </h2>
 
           <div className="mt-1.5 flex flex-wrap items-baseline gap-x-2 gap-y-1">
             <span className="text-lg font-medium text-zinc-100">{formatEventDayLabel(event)}</span>
@@ -197,6 +223,7 @@ export default async function EventPage({ params }: Props) {
           orgId={org.id}
           eventId={eventId}
           accent={accent}
+          accentText={accentText}
           isPast={isPast}
           isFull={isFull}
           isOnline={event.location_is_online}
