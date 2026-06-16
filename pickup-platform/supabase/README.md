@@ -36,6 +36,7 @@ In the Supabase **SQL Editor**, run in order:
 9. `supabase/migrations/009_update_guest_count.sql`
 10. `supabase/migrations/010_optional_min_participants.sql`
 11. `supabase/migrations/011_schedule_interval.sql`
+12. `supabase/migrations/012_normalize_phone_us10.sql`
 
 ## 3. Auth settings
 

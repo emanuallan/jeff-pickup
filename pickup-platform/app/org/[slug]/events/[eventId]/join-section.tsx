@@ -5,6 +5,7 @@ import { joinEvent, leaveEvent, quickJoinEvent, updateArrivalStatus, updateGuest
 import { arrivalStatuses, arrivalStatusEmoji, type ArrivalStatus } from '@/lib/arrival-status'
 import { fireConfetti } from '@/lib/confetti'
 import { hexToRgba } from '@/lib/colors'
+import { PhoneInput } from '@/app/_components/phone-input'
 import type { Participant, MySignup } from '@/lib/participant'
 import type { RosterBadgeInfo } from '@/lib/badges'
 
@@ -164,14 +165,9 @@ export function JoinSection(props: Props) {
 
       <label className="block">
         <span className="text-xs text-zinc-500">Phone</span>
-        <input
-          name="phone"
-          type="tel"
-          required
-          autoComplete="tel"
+        <PhoneInput
           className={inputClass}
           style={{ '--tw-ring-color': props.accent } as React.CSSProperties}
-          placeholder="(555) 123-4567"
         />
       </label>
 

@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { setSessionToken, getSessionToken } from '@/lib/participant-session'
 import type { ArrivalStatus } from '@/lib/arrival-status'
+import { normalizePhoneDigits, isValidPhoneDigits } from '@/lib/phone'
 
 export async function joinEvent(
   orgSlug: string,
@@ -12,11 +13,15 @@ export async function joinEvent(
 ): Promise<{ error?: string }> {
   const supabase = await createClient()
 
-  const phone = String(formData.get('phone') ?? '').trim()
+  const phone = normalizePhoneDigits(String(formData.get('phone') ?? ''))
   const firstName = String(formData.get('first_name') ?? '').trim()
   const lastName = String(formData.get('last_name') ?? '').trim()
   const displayName = String(formData.get('display_name') ?? '').trim()
   const guestCount = Number.parseInt(String(formData.get('guest_count') ?? '0'), 10)
+
+  if (!isValidPhoneDigits(phone)) {
+    return { error: 'Enter a valid 10-digit phone number.' }
+  }
 
   const { data, error } = await supabase.rpc('join_event', {
     p_event_id: eventId,
