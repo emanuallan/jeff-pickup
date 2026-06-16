@@ -193,10 +193,20 @@ export default async function EventPage({ params }: Props) {
             {eventName(event, fallbackName)}
           </h2>
 
-          <div className="mt-1.5 flex flex-wrap items-baseline gap-x-2 gap-y-1">
-            <span className="text-lg font-medium text-zinc-100">{formatEventDayLabel(event)}</span>
+          <div
+            className={`mt-1.5 flex flex-wrap items-baseline gap-x-2 gap-y-1 ${
+              isCancelled ? 'line-through' : ''
+            }`}
+          >
+            <span
+              className={`text-lg font-medium ${isCancelled ? 'text-zinc-500' : 'text-zinc-100'}`}
+            >
+              {formatEventDayLabel(event)}
+            </span>
             <span className="text-zinc-600">·</span>
-            <span className="text-lg text-zinc-300">{formatEventTimeOnly(event)}</span>
+            <span className={`text-lg ${isCancelled ? 'text-zinc-500' : 'text-zinc-300'}`}>
+              {formatEventTimeOnly(event)}
+            </span>
           </div>
 
           <div className="mt-3 flex items-center gap-2 text-sm text-zinc-400">
