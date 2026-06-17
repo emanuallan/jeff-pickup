@@ -6,6 +6,7 @@ import {
   organizrBtnPrimary,
   organizrBtnSecondary,
 } from './_components/organizr-shell'
+import { MarketingFooter } from './_components/marketing-page'
 import { OrganizrLogo } from './_components/organizr-logo'
 
 export default function HomePage() {
@@ -16,7 +17,8 @@ export default function HomePage() {
       <OrganizrBackdrop />
       <OrganizrMarketingHeader />
 
-      <main className="mx-auto flex min-h-[calc(100dvh-3.5rem)] max-w-lg flex-col justify-center px-6 py-16">
+      <main className="mx-auto flex min-h-[calc(100dvh-3.5rem)] max-w-lg flex-col px-6 py-16">
+        <div className="flex flex-1 flex-col justify-center">
         <OrganizrLogo
           size={40}
           priority
@@ -42,6 +44,9 @@ export default function HomePage() {
         <p className="mt-12 text-sm text-zinc-500">
           Orgs live at <span className="text-zinc-300">yourgroup.{rootDomain}</span>
         </p>
+        </div>
+
+        <MarketingFooter />
       </main>
     </div>
   )
