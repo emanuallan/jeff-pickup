@@ -29,7 +29,7 @@ export default function HomePage() {
         </h1>
         <p className="mt-4 text-lg text-zinc-400">
           Run recurring group activities — pickup sports, run clubs, meetups — and let
-          participants sign up in seconds.
+          participants sign up in a tap. No more manual lists ;)
         </p>
 
         <div className="mt-8 flex flex-col gap-3 sm:flex-row">
