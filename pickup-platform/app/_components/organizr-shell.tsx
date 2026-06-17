@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { OrganizrLogo } from './organizr-logo'
 
 /** Indigo top-glow + faint technical grid — shared by the marketing site and console. */
 export function OrganizrBackdrop() {
@@ -24,9 +25,7 @@ export function OrganizrMarketingHeader({ showSignIn = true }: { showSignIn?: bo
   return (
     <header className="sticky top-0 z-20 border-b border-white/10 bg-zinc-950/80 backdrop-blur-md">
       <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-5 sm:px-6">
-        <Link href="/" className="text-sm font-bold tracking-tight text-zinc-50">
-          Organizr
-        </Link>
+        <OrganizrLogo href="/" priority />
         {showSignIn ? (
           <Link
             href="/login"

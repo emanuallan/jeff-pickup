@@ -1,5 +1,5 @@
-import Link from 'next/link'
 import { OrganizrBackdrop } from '../_components/organizr-shell'
+import { OrganizrLogo } from '../_components/organizr-logo'
 
 /**
  * Console chrome — a persistent top bar + technical background that makes the
@@ -13,12 +13,12 @@ export default function ConsoleLayout({ children }: { children: React.ReactNode 
 
       <header className="sticky top-0 z-20 border-b border-white/10 bg-zinc-950/80 backdrop-blur-md">
         <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-5 sm:px-6">
-          <Link href="/console" className="flex items-center gap-2">
-            <span className="text-sm font-bold tracking-tight text-zinc-50">Organizr</span>
+          <div className="flex items-center gap-2">
+            <OrganizrLogo href="/console" size={26} />
             <span className="rounded-md bg-indigo-500/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-indigo-300 ring-1 ring-inset ring-indigo-500/30">
               Console
             </span>
-          </Link>
+          </div>
           <form action="/auth/signout" method="post">
             <button
               type="submit"

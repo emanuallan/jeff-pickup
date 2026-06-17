@@ -1,6 +1,7 @@
 import { ImageResponse } from 'next/og'
 import { readableTextColor, hexToRgba } from '@/lib/colors'
 import { getOgFonts } from '@/lib/og-fonts'
+import { getOrganizrLogoDataUrl } from '@/lib/organizr-logo-server'
 import { arrowRight } from '@/lib/text-arrows'
 
 export const ogImageSize = { width: 1200, height: 630 }
@@ -85,7 +86,7 @@ function LocationMark({ accent, online }: { accent: string; online?: boolean }) 
 }
 
 /** Apex marketing preview — Organizr brand, not tenant styling. */
-export function MarketingOgCard() {
+export function MarketingOgCard({ logoSrc }: { logoSrc: string }) {
   const accentText = readableTextColor(ORGANIZR_ACCENT)
 
   return (
@@ -118,23 +119,14 @@ export function MarketingOgCard() {
 
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', zIndex: 1 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '18px' }}>
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: '56px',
-              height: '56px',
-              borderRadius: '16px',
-              backgroundColor: ORGANIZR_ACCENT,
-              ...font(700),
-              fontSize: '28px',
-              color: accentText,
-              boxShadow: `0 12px 40px ${hexToRgba(ORGANIZR_ACCENT, 0.45)}`,
-            }}
-          >
-            O
-          </div>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={logoSrc}
+            alt=""
+            width={56}
+            height={56}
+            style={{ objectFit: 'contain' }}
+          />
           <div style={{ display: 'flex', ...font(700), fontSize: '32px', letterSpacing: '-0.03em' }}>
             Organizr
           </div>
@@ -456,8 +448,8 @@ export function OrgOgCard({
 }
 
 export async function renderMarketingOgImage() {
-  const fonts = await getOgFonts()
-  return new ImageResponse(<MarketingOgCard />, { ...ogImageSize, fonts })
+  const [fonts, logoSrc] = await Promise.all([getOgFonts(), getOrganizrLogoDataUrl()])
+  return new ImageResponse(<MarketingOgCard logoSrc={logoSrc} />, { ...ogImageSize, fonts })
 }
 
 export async function renderOrgOgImage(props: OrgOgCardProps) {

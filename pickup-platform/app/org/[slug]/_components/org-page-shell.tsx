@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { getRootDomain } from '@/lib/tenancy/parse-host'
 import { rootBaseUrl } from '@/lib/og-metadata'
 import { arrowRight } from '@/lib/text-arrows'
+import { OrganizrLogo } from '../../../_components/organizr-logo'
 
 export function OrgPageShell({ children }: { children: React.ReactNode }) {
   return (
@@ -14,10 +15,11 @@ export function OrgPageFooter({ slug }: { slug: string }) {
     <footer className="mt-6 flex flex-col items-center gap-2 text-center">
       <a
         href={rootBaseUrl()}
-        className="text-xs text-zinc-500 transition-colors hover:text-zinc-300"
+        className="inline-flex items-center gap-1.5 text-xs text-zinc-500 transition-colors hover:text-zinc-300"
       >
-        Create your own group with{' '}
-        <span className="font-semibold text-zinc-400">Organizr</span> {arrowRight}
+        Create your own group with
+        <OrganizrLogo size={16} showWordmark wordmarkClassName="font-semibold text-zinc-400" className="inline-flex items-center gap-1" />
+        {arrowRight}
       </a>
       <p className="text-xs text-zinc-600">
         {slug}.{getRootDomain()}

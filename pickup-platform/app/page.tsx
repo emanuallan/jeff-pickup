@@ -6,6 +6,7 @@ import {
   organizrBtnPrimary,
   organizrBtnSecondary,
 } from './_components/organizr-shell'
+import { OrganizrLogo } from './_components/organizr-logo'
 
 export default function HomePage() {
   const rootDomain = getRootDomain()
@@ -16,10 +17,13 @@ export default function HomePage() {
       <OrganizrMarketingHeader />
 
       <main className="mx-auto flex min-h-[calc(100dvh-3.5rem)] max-w-lg flex-col justify-center px-6 py-16">
-        <p className="text-xs font-semibold uppercase tracking-wider text-indigo-300/90">
-          Organizr
-        </p>
-        <h1 className="mt-3 text-4xl font-semibold tracking-tight text-zinc-50">
+        <OrganizrLogo
+          size={40}
+          priority
+          className="inline-flex items-center gap-2.5"
+          wordmarkClassName="text-sm font-bold tracking-tight text-zinc-50"
+        />
+        <h1 className="mt-6 text-4xl font-semibold tracking-tight text-zinc-50">
           Know who&apos;s coming.
         </h1>
         <p className="mt-4 text-lg text-zinc-400">
