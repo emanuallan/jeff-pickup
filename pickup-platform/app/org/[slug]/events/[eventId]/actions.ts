@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { getOrgBySlug } from '@/lib/orgs'
-import { getEventByRef } from '@/lib/events'
+import { canUpdateArrivalStatus, getEventByRef } from '@/lib/events'
 import { createClient } from '@/lib/supabase/server'
 import { setSessionToken, getSessionToken } from '@/lib/participant-session'
 import type { ArrivalStatus } from '@/lib/arrival-status'
@@ -217,6 +217,20 @@ export async function updateArrivalStatus(
   const token = await getSessionToken()
   if (!token) {
     return { error: 'Not signed in' }
+  }
+
+  const org = await getOrgBySlug(orgSlug)
+  if (!org) {
+    return { error: 'Organization not found.' }
+  }
+
+  const event = await getEventByRef(eventId, org.id)
+  if (!event) {
+    return { error: 'Session not found.' }
+  }
+
+  if (!canUpdateArrivalStatus(event)) {
+    return { error: 'Status updates are only available on the day of the session.' }
   }
 
   const supabase = await createClient()

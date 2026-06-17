@@ -218,8 +218,30 @@ export function formatInstantInZone(iso: string, timeZone?: string): string {
 }
 
 /** YYYY-MM-DD calendar key for a date in a given zone, for same-day comparisons. */
-function dayKeyInZone(iso: string, timeZone: string): string {
+export function dayKeyInZone(iso: string, timeZone: string): string {
   return new Date(iso).toLocaleDateString('en-CA', { timeZone })
+}
+
+/** True once the event start time has passed (UTC instant comparison). */
+export function isEventStarted(event: Pick<Event, 'starts_at'>, now = new Date()): boolean {
+  return new Date(event.starts_at) < now
+}
+
+/** True while the current moment is on the event's calendar day in its timezone. */
+export function isEventSameDay(
+  event: Pick<Event, 'starts_at' | 'timezone'>,
+  now = new Date(),
+): boolean {
+  const zone = event.timezone || 'UTC'
+  return dayKeyInZone(event.starts_at, zone) === dayKeyInZone(now.toISOString(), zone)
+}
+
+/** Participants may update arrival status through the end of the event's local day. */
+export function canUpdateArrivalStatus(
+  event: Pick<Event, 'starts_at' | 'timezone'>,
+  now = new Date(),
+): boolean {
+  return isEventSameDay(event, now)
 }
 
 /**
