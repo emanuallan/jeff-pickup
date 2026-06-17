@@ -4,6 +4,9 @@ import {
   eventDisplayName,
   formatEventDayLabel,
   formatEventTimeOnly,
+  formatEventHappening,
+  isEventEnded,
+  isEventInProgress,
   type EventStatus,
   type EventWithLocation,
 } from '@/lib/events'
@@ -38,12 +41,28 @@ export function cancelledEventClasses(cancelled: boolean) {
   }
 }
 
-export function StatusPill({ status, accent }: { status: EventStatus; accent: string }) {
+export function StatusPill({
+  status,
+  accent,
+  live = false,
+}: {
+  status: EventStatus
+  accent: string
+  live?: boolean
+}) {
   if (status === 'cancelled') {
     return (
       <span className="inline-flex items-center gap-1.5 rounded-full bg-red-500/15 px-2.5 py-1 text-xs font-medium text-red-400">
         <span className="h-1.5 w-1.5 rounded-full bg-red-400" />
         {statusLabel(status)}
+      </span>
+    )
+  }
+  if (status === 'on' && live) {
+    return (
+      <span className="inline-flex items-center gap-1.5 rounded-full bg-red-500/15 px-2.5 py-1 text-xs font-medium text-red-400">
+        <span className="h-1.5 w-1.5 rounded-full bg-red-400" />
+        Live
       </span>
     )
   }
@@ -65,17 +84,70 @@ export function StatusPill({ status, accent }: { status: EventStatus; accent: st
   )
 }
 
-export function LiveDot({ accent }: { accent: string }) {
+export function LiveDot({ accent, live = false }: { accent: string; live?: boolean }) {
+  const color = live ? '#f87171' : accent
   return (
     <span className="relative flex h-2 w-2">
       <span
         className="absolute inline-flex h-full w-full animate-ping rounded-full opacity-75"
-        style={{ backgroundColor: accent }}
+        style={{ backgroundColor: color }}
       />
       <span
         className="relative inline-flex h-2 w-2 rounded-full"
-        style={{ backgroundColor: accent }}
+        style={{ backgroundColor: color }}
       />
+    </span>
+  )
+}
+
+type EventTimingFields = Pick<EventWithLocation, 'starts_at' | 'duration_min' | 'timezone' | 'status'>
+
+/** Left-side timing label for event cards (pulse, happening now, already happened). */
+export function EventTimingBadge({
+  event,
+  accent,
+  cancelled,
+  upcomingLabel,
+}: {
+  event: EventTimingFields
+  accent: string
+  cancelled: boolean
+  /** Label when the session hasn't started yet — defaults to "Happening {when}". */
+  upcomingLabel?: string
+}) {
+  if (cancelled) {
+    return (
+      <span className="text-xs font-semibold uppercase tracking-wider text-red-400">
+        Not happening
+      </span>
+    )
+  }
+
+  const ended = isEventEnded(event)
+  const inProgress = isEventInProgress(event)
+
+  if (ended) {
+    return (
+      <span className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
+        Already happened
+      </span>
+    )
+  }
+
+  const label = inProgress
+    ? 'Happening now'
+    : (upcomingLabel ?? `Happening ${formatEventHappening(event)}`)
+  const labelColor = inProgress ? '#f87171' : accent
+
+  return (
+    <span className="flex items-center gap-2">
+      <LiveDot accent={accent} live={inProgress} />
+      <span
+        className="text-xs font-semibold uppercase tracking-wider"
+        style={{ color: labelColor }}
+      >
+        {label}
+      </span>
     </span>
   )
 }

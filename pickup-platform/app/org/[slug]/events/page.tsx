@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { getOrgBySlug } from '@/lib/orgs'
-import { getUpcomingEventsForOrg, formatEventTime, formatEventDayLabel } from '@/lib/events'
+import { getUpcomingEventsForOrg, formatEventTime, formatEventDayLabel, isEventInProgress } from '@/lib/events'
 import { buildOrgMetadata } from '@/lib/og-metadata'
 import { getPublicRoster, rosterHeadcount } from '@/lib/signups'
 import { isLeaderboardUnlocked } from '@/lib/engagement'
@@ -14,10 +14,10 @@ import { arrowRight } from '@/lib/text-arrows'
 import { MoreSessions } from './more-sessions'
 import {
   StatusPill,
-  LiveDot,
   SessionRow,
   EventDateTimeRow,
   EventLocationRow,
+  EventTimingBadge,
   eventName,
   isEventCancelled,
   cancelledEventClasses,
@@ -69,6 +69,7 @@ export default async function EventsPage({ params }: Props) {
   const next = events[0]
   const rest = events.slice(1)
   const nextCancelled = next ? isEventCancelled(next.status) : false
+  const nextLive = next ? isEventInProgress(next) && next.status === 'on' : false
   const cancelledClasses = cancelledEventClasses(nextCancelled)
   const nextHeadcount = next ? rosterHeadcount(await getPublicRoster(next.id)) : 0
 
@@ -91,24 +92,17 @@ export default async function EventsPage({ params }: Props) {
               />
               <div className="relative z-10 pointer-events-none">
               <div className="flex items-center justify-between gap-3">
-                <span className="flex items-center gap-2">
-                  {nextCancelled ? (
-                    <span className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
-                      Next session
-                    </span>
-                  ) : (
-                    <>
-                      <LiveDot accent={accent} />
-                      <span
-                        className="text-xs font-semibold uppercase tracking-wider"
-                        style={{ color: accent }}
-                      >
-                        Next session
-                      </span>
-                    </>
-                  )}
-                </span>
-                <StatusPill status={next.status} accent={accent} />
+                {nextCancelled ? (
+                  <EventTimingBadge event={next} accent={accent} cancelled />
+                ) : (
+                  <EventTimingBadge
+                    event={next}
+                    accent={accent}
+                    cancelled={false}
+                    upcomingLabel="Next session"
+                  />
+                )}
+                <StatusPill status={next.status} accent={accent} live={nextLive} />
               </div>
 
               <h2 className={`mt-4 text-2xl font-semibold tracking-tight ${cancelledClasses.titleLg}`}>

@@ -6,9 +6,8 @@ import { after } from 'next/server'
 import { getOrgBySlug } from '@/lib/orgs'
 import {
   getEventByRef,
-  formatEventHappening,
   formatEventTime,
-  isEventEnded,
+  isEventInProgress,
 } from '@/lib/events'
 import { buildOrgMetadata } from '@/lib/og-metadata'
 import { recordEventPageView } from '@/lib/record-page-view'
@@ -22,9 +21,9 @@ import { OrgPageShell, OrgPageFooter } from '../../_components/org-page-shell'
 import { SocialLinks } from '../../_components/social-links'
 import {
   StatusPill,
-  LiveDot,
   EventDateTimeRow,
   EventLocationRow,
+  EventTimingBadge,
   eventName,
   isEventCancelled,
   cancelledEventClasses,
@@ -82,7 +81,7 @@ export default async function EventPage({ params }: Props) {
 
   const isCancelled = isEventCancelled(event.status)
   const cancelledClasses = cancelledEventClasses(isCancelled)
-  const isEnded = isEventEnded(event)
+  const isLive = isEventInProgress(event) && event.status === 'on'
   const shareText = `${org.name}: ${formatEventTime(event)} ${event.location_is_online ? 'on' : 'at'} ${event.location_label}. Join us!`
   const accent = org.branding.accent_color
 
@@ -109,24 +108,8 @@ export default async function EventPage({ params }: Props) {
       <section className="mt-8">
         <div className="overflow-hidden rounded-3xl border border-zinc-800 bg-linear-to-b from-zinc-900 to-zinc-950 p-6">
           <div className="flex items-center justify-between gap-3">
-            {isCancelled ? (
-              <span className="text-xs font-semibold uppercase tracking-wider text-red-400">
-                Not happening
-              </span>
-            ) : !isEnded ? (
-              <span className="flex items-center gap-2">
-                <LiveDot accent={accent} />
-                <span
-                  className="text-xs font-semibold uppercase tracking-wider"
-                  style={{ color: accent }}
-                >
-                  Happening {formatEventHappening(event)}
-                </span>
-              </span>
-            ) : (
-              <span />
-            )}
-            <StatusPill status={event.status} accent={accent} />
+            <EventTimingBadge event={event} accent={accent} cancelled={isCancelled} />
+            <StatusPill status={event.status} accent={accent} live={isLive} />
           </div>
 
           <h2 className={`mt-4 text-2xl font-semibold tracking-tight ${cancelledClasses.titleLg}`}>

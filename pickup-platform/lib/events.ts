@@ -258,6 +258,14 @@ export function isEventEnded(
   return getEventEndTime(event) <= now
 }
 
+/** True while the session is underway (between start and end). */
+export function isEventInProgress(
+  event: Pick<Event, 'starts_at' | 'duration_min'>,
+  now = new Date(),
+): boolean {
+  return isEventStarted(event, now) && !isEventEnded(event, now)
+}
+
 /** True while the current moment is on the event's calendar day in its timezone. */
 export function isEventSameDay(
   event: Pick<Event, 'starts_at' | 'timezone'>,
