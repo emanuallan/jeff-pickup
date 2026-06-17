@@ -203,6 +203,17 @@ export function formatEventTime(event: Pick<Event, 'starts_at' | 'timezone'>): s
   return formatEventDateTime(event.starts_at, event.timezone)
 }
 
+/** Compact timestamp in a specific IANA zone — e.g. "Jun 17, 6:30 PM". */
+export function formatInstantInZone(iso: string, timeZone?: string): string {
+  return new Date(iso).toLocaleString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    timeZone: timeZone || 'UTC',
+  })
+}
+
 /** YYYY-MM-DD calendar key for a date in a given zone, for same-day comparisons. */
 function dayKeyInZone(iso: string, timeZone: string): string {
   return new Date(iso).toLocaleDateString('en-CA', { timeZone })

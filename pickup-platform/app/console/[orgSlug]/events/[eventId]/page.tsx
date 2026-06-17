@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation'
 import { getOrgForMember } from '@/lib/orgs'
-import { getEventByRef, formatEventTime, statusLabel } from '@/lib/events'
+import { getEventByRef, formatEventTime, formatInstantInZone, statusLabel } from '@/lib/events'
 import { getRosterWithContact } from '@/lib/signups'
 import { getEventAnalytics } from '@/lib/event-analytics'
 import { arrivalStatusEmoji } from '@/lib/arrival-status'
@@ -125,22 +125,12 @@ export default async function ConsoleEventAnalyticsPage({ params }: Props) {
               valueClassName="text-sm font-medium leading-snug"
               value={
                 analytics.lastSignupAt
-                  ? new Date(analytics.lastSignupAt).toLocaleString(undefined, {
-                      month: 'short',
-                      day: 'numeric',
-                      hour: 'numeric',
-                      minute: '2-digit',
-                    })
+                  ? formatInstantInZone(analytics.lastSignupAt, event.timezone)
                   : '—'
               }
               hint={
                 analytics.firstSignupAt
-                  ? `First: ${new Date(analytics.firstSignupAt).toLocaleString(undefined, {
-                      month: 'short',
-                      day: 'numeric',
-                      hour: 'numeric',
-                      minute: '2-digit',
-                    })}`
+                  ? `First: ${formatInstantInZone(analytics.firstSignupAt, event.timezone)}`
                   : undefined
               }
             />
