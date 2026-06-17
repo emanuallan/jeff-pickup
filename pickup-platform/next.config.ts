@@ -4,7 +4,12 @@ import path from 'path'
 const nextConfig: NextConfig = {
   // Avoid picking up the PoC lockfile at repo root
   outputFileTracingRoot: path.join(__dirname),
-  // TODO: add image domains when org logo uploads are implemented
+  images: {
+    remotePatterns: [
+      { protocol: 'https', hostname: '**' },
+      { protocol: 'http', hostname: '**' },
+    ],
+  },
 }
 
 export default nextConfig

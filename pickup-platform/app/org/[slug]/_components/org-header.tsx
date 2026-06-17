@@ -1,3 +1,4 @@
+import Image from 'next/image'
 import type { Org } from '@/lib/orgs'
 import { readableTextColor } from '@/lib/colors'
 
@@ -6,18 +7,23 @@ type Props = {
   title: string
   subtitle?: string | null
   className?: string
+  /** Preload logo on above-the-fold pages (event detail). */
+  logoPriority?: boolean
 }
 
-export function OrgHeader({ org, title, subtitle, className = 'mt-2' }: Props) {
+export function OrgHeader({ org, title, subtitle, className = 'mt-2', logoPriority }: Props) {
   const accent = org.branding.accent_color
 
   return (
     <header className={`${className} flex flex-col items-center text-center`}>
       {org.branding.logo_url ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
+        <Image
           src={org.branding.logo_url}
           alt=""
+          width={80}
+          height={80}
+          priority={logoPriority}
+          sizes="80px"
           className="h-20 w-20 rounded-2xl object-cover shadow-lg"
         />
       ) : (

@@ -1,3 +1,4 @@
+import { cache } from 'react'
 import { createClient } from '@/lib/supabase/server'
 import type { ArrivalStatus } from '@/lib/arrival-status'
 
@@ -17,7 +18,8 @@ export type SignupWithContact = RosterEntry & {
   phone: string
 }
 
-export async function getPublicRoster(eventId: string): Promise<RosterEntry[]> {
+/** Memoized per-request so headcount + roster panels share one query. */
+export const getPublicRoster = cache(async (eventId: string): Promise<RosterEntry[]> => {
   const supabase = await createClient()
 
   const { data, error } = await supabase
@@ -31,7 +33,7 @@ export async function getPublicRoster(eventId: string): Promise<RosterEntry[]> {
   }
 
   return data as RosterEntry[]
-}
+})
 
 export async function getRosterWithContact(eventId: string): Promise<SignupWithContact[]> {
   const supabase = await createClient()
