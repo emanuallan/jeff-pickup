@@ -136,8 +136,8 @@ export function JoinSection(props: Props) {
         <h2 className="text-lg font-semibold text-zinc-100">Save your spot</h2>
         <p className="mt-0.5 text-sm text-zinc-400">
           {props.spotsLeft != null && props.spotsLeft <= 5
-            ? `Only ${props.spotsLeft} spot${props.spotsLeft === 1 ? '' : 's'} left. Add your name — it takes seconds.`
-            : 'Add your name so everyone knows you\u2019re coming. It takes seconds.'}
+            ? `Only ${props.spotsLeft} spot${props.spotsLeft === 1 ? '' : 's'} left. Add your name — you only have to do this once.`
+            : 'Add your name so everyone knows you\u2019re coming. You only have to do this once.'}
         </p>
       </div>
 
