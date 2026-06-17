@@ -145,7 +145,7 @@ export function JoinSection(props: Props) {
     return (
       <div>
         <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-400">Closed</h2>
-        <p className="mt-2 text-sm text-zinc-500">This session has already started or passed.</p>
+        <p className="mt-2 text-sm text-zinc-500">This session has ended.</p>
       </div>
     )
   }

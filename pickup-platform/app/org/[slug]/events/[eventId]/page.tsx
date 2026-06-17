@@ -6,8 +6,9 @@ import { after } from 'next/server'
 import { getOrgBySlug } from '@/lib/orgs'
 import {
   getEventByRef,
-  formatEventTime,
   formatEventHappening,
+  formatEventTime,
+  isEventEnded,
 } from '@/lib/events'
 import { buildOrgMetadata } from '@/lib/og-metadata'
 import { recordEventPageView } from '@/lib/record-page-view'
@@ -81,7 +82,7 @@ export default async function EventPage({ params }: Props) {
 
   const isCancelled = isEventCancelled(event.status)
   const cancelledClasses = cancelledEventClasses(isCancelled)
-  const isPast = new Date(event.starts_at) < new Date()
+  const isEnded = isEventEnded(event)
   const shareText = `${org.name}: ${formatEventTime(event)} ${event.location_is_online ? 'on' : 'at'} ${event.location_label}. Join us!`
   const accent = org.branding.accent_color
 
@@ -112,7 +113,7 @@ export default async function EventPage({ params }: Props) {
               <span className="text-xs font-semibold uppercase tracking-wider text-red-400">
                 Not happening
               </span>
-            ) : !isPast ? (
+            ) : !isEnded ? (
               <span className="flex items-center gap-2">
                 <LiveDot accent={accent} />
                 <span

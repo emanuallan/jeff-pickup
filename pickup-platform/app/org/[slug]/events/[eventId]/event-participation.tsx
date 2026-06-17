@@ -1,6 +1,6 @@
 import type { Org } from '@/lib/orgs'
 import type { EventWithLocation } from '@/lib/events'
-import { canUpdateArrivalStatus, isEventStarted } from '@/lib/events'
+import { canUpdateArrivalStatus, isEventEnded } from '@/lib/events'
 import { readableTextColor } from '@/lib/colors'
 import { getPublicRoster, rosterHeadcount } from '@/lib/signups'
 import { getSessionToken } from '@/lib/participant-session'
@@ -29,7 +29,7 @@ type Props = {
 
 export async function EventParticipation({ slug, eventId, org, event }: Props) {
   const isCancelled = isEventCancelled(event.status)
-  const isStarted = isEventStarted(event)
+  const isEnded = isEventEnded(event)
   const canUpdateStatus = canUpdateArrivalStatus(event)
   const accent = org.branding.accent_color
   const accentText = readableTextColor(accent)
@@ -68,7 +68,7 @@ export async function EventParticipation({ slug, eventId, org, event }: Props) {
             eventId={eventId}
             accent={accent}
             accentText={accentText}
-            isPast={isStarted}
+            isPast={isEnded}
             isFull={isFull}
             isOnline={event.location_is_online}
             spotsLeft={spotsLeft}
@@ -88,7 +88,7 @@ export async function EventParticipation({ slug, eventId, org, event }: Props) {
             badgesByParticipantId={badgesByParticipantId}
             isOnline={event.location_is_online}
             mySignupId={mySignup?.signup_id}
-            canLeave={!isStarted}
+            canLeave={!isEnded}
             orgSlug={slug}
             eventId={eventId}
             accent={accent}

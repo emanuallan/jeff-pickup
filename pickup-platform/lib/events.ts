@@ -11,6 +11,7 @@ export type Event = {
   location_id: string
   starts_at: string
   timezone: string
+  duration_min: number
   capacity: number | null
   min_players: number | null
   status: EventStatus
@@ -29,9 +30,12 @@ export type EventWithLocation = Event & {
 }
 
 const LOCATION_SELECT =
-  '*, locations(label, address, lat, lon, maps_url, is_online, meeting_url), schedules!events_schedule_id_fkey(title)'
+  '*, locations(label, address, lat, lon, maps_url, is_online, meeting_url), schedules!events_schedule_id_fkey(title, duration_min)'
 
 const EVENT_NAME_FALLBACK = 'Session'
+export const DEFAULT_EVENT_DURATION_MIN = 90
+/** Matches schedules.duration_min upper bound in the database. */
+export const MAX_EVENT_DURATION_MIN = 480
 
 type LocationJoin = {
   label: string
@@ -43,21 +47,32 @@ type LocationJoin = {
   meeting_url: string
 } | null
 
-function scheduleTitleFromJoin(schedules: unknown): string | null {
-  if (schedules == null) return null
+function scheduleFromJoin(schedules: unknown): { title: string | null; duration_min: number } {
+  if (schedules == null) {
+    return { title: null, duration_min: DEFAULT_EVENT_DURATION_MIN }
+  }
   const row = Array.isArray(schedules) ? schedules[0] : schedules
-  if (!row || typeof row !== 'object') return null
+  if (!row || typeof row !== 'object') {
+    return { title: null, duration_min: DEFAULT_EVENT_DURATION_MIN }
+  }
   const title = (row as { title?: unknown }).title
-  return typeof title === 'string' && title.trim() ? title.trim() : null
+  const duration = (row as { duration_min?: unknown }).duration_min
+  return {
+    title: typeof title === 'string' && title.trim() ? title.trim() : null,
+    duration_min:
+      typeof duration === 'number' && duration > 0 ? duration : DEFAULT_EVENT_DURATION_MIN,
+  }
 }
 
 function mapEventRow(row: Record<string, unknown>): EventWithLocation {
   const loc = row.locations as LocationJoin
+  const schedule = scheduleFromJoin(row.schedules)
   const { locations: _locations, schedules: _schedules, ...event } = row
   return {
     ...(event as Event),
     timezone: String(event.timezone ?? 'UTC'),
-    title: scheduleTitleFromJoin(row.schedules),
+    title: schedule.title,
+    duration_min: schedule.duration_min,
     location_label: loc?.label ?? 'Location',
     location_address: loc?.address ?? '',
     location_lat: loc?.lat ?? 0,
@@ -113,28 +128,7 @@ export async function getUpcomingEventsForOrg(
   limit = 20,
   includeCancelled = false,
 ): Promise<EventWithLocation[]> {
-  const supabase = await createClient()
-  const now = new Date().toISOString()
-
-  let query = supabase
-    .from('events')
-    .select(LOCATION_SELECT)
-    .eq('org_id', orgId)
-    .gte('starts_at', now)
-
-  if (!includeCancelled) {
-    query = query.neq('status', 'cancelled')
-  }
-
-  const { data, error } = await query
-    .order('starts_at', { ascending: true })
-    .limit(limit)
-
-  if (error || !data) {
-    return []
-  }
-
-  return data.map(mapEventRow)
+  return fetchActiveEventsForOrg(orgId, { limit, includeCancelled })
 }
 
 /** Upcoming sessions for the organizer console (all statuses), soonest first. */
@@ -142,22 +136,7 @@ export async function getUpcomingEventsForConsole(
   orgId: string,
   limit = 50,
 ): Promise<EventWithLocation[]> {
-  const supabase = await createClient()
-  const now = new Date().toISOString()
-
-  const { data, error } = await supabase
-    .from('events')
-    .select(LOCATION_SELECT)
-    .eq('org_id', orgId)
-    .gte('starts_at', now)
-    .order('starts_at', { ascending: true })
-    .limit(limit)
-
-  if (error || !data) {
-    return []
-  }
-
-  return data.map(mapEventRow)
+  return fetchActiveEventsForOrg(orgId, { limit, includeCancelled: true })
 }
 
 /** Past sessions for the organizer console (all statuses), most recent first. */
@@ -166,21 +145,60 @@ export async function getPastEventsForConsole(
   limit = 30,
 ): Promise<EventWithLocation[]> {
   const supabase = await createClient()
-  const now = new Date().toISOString()
+  const now = new Date()
+  const fetchLimit = Math.min(Math.max(limit * 2, limit + 10), 100)
 
   const { data, error } = await supabase
     .from('events')
     .select(LOCATION_SELECT)
     .eq('org_id', orgId)
-    .lt('starts_at', now)
+    .lt('starts_at', now.toISOString())
     .order('starts_at', { ascending: false })
-    .limit(limit)
+    .limit(fetchLimit)
 
   if (error || !data) {
     return []
   }
 
-  return data.map(mapEventRow)
+  return data
+    .map(mapEventRow)
+    .filter((event) => isEventEnded(event, now))
+    .slice(0, limit)
+}
+
+async function fetchActiveEventsForOrg(
+  orgId: string,
+  options: { limit: number; includeCancelled?: boolean },
+): Promise<EventWithLocation[]> {
+  const supabase = await createClient()
+  const now = new Date()
+  const lookbackIso = new Date(
+    now.getTime() - MAX_EVENT_DURATION_MIN * 60_000,
+  ).toISOString()
+  const fetchLimit = Math.min(Math.max(options.limit * 2, options.limit + 10), 100)
+
+  let query = supabase
+    .from('events')
+    .select(LOCATION_SELECT)
+    .eq('org_id', orgId)
+    .gte('starts_at', lookbackIso)
+
+  if (!options.includeCancelled) {
+    query = query.neq('status', 'cancelled')
+  }
+
+  const { data, error } = await query
+    .order('starts_at', { ascending: true })
+    .limit(fetchLimit)
+
+  if (error || !data) {
+    return []
+  }
+
+  return data
+    .map(mapEventRow)
+    .filter((event) => !isEventEnded(event, now))
+    .slice(0, options.limit)
 }
 
 export function formatEventDateTime(iso: string, timeZone?: string): string {
@@ -227,6 +245,19 @@ export function isEventStarted(event: Pick<Event, 'starts_at'>, now = new Date()
   return new Date(event.starts_at) < now
 }
 
+/** When the session ends (start + schedule duration). */
+export function getEventEndTime(event: Pick<Event, 'starts_at' | 'duration_min'>): Date {
+  return new Date(new Date(event.starts_at).getTime() + event.duration_min * 60_000)
+}
+
+/** True once the session duration has elapsed. */
+export function isEventEnded(
+  event: Pick<Event, 'starts_at' | 'duration_min'>,
+  now = new Date(),
+): boolean {
+  return getEventEndTime(event) <= now
+}
+
 /** True while the current moment is on the event's calendar day in its timezone. */
 export function isEventSameDay(
   event: Pick<Event, 'starts_at' | 'timezone'>,
@@ -236,12 +267,12 @@ export function isEventSameDay(
   return dayKeyInZone(event.starts_at, zone) === dayKeyInZone(now.toISOString(), zone)
 }
 
-/** Participants may update arrival status through the end of the event's local day. */
+/** Participants may sign up and update status until the session duration ends. */
 export function canUpdateArrivalStatus(
-  event: Pick<Event, 'starts_at' | 'timezone'>,
+  event: Pick<Event, 'starts_at' | 'duration_min'>,
   now = new Date(),
 ): boolean {
-  return isEventSameDay(event, now)
+  return !isEventEnded(event, now)
 }
 
 /**

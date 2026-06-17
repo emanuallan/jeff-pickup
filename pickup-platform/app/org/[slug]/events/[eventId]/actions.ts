@@ -3,16 +3,31 @@
 import { revalidatePath } from 'next/cache'
 import { getOrgBySlug } from '@/lib/orgs'
 import { canUpdateArrivalStatus, getEventByRef } from '@/lib/events'
+import type { EventWithLocation } from '@/lib/events'
 import { createClient } from '@/lib/supabase/server'
 import { setSessionToken, getSessionToken } from '@/lib/participant-session'
 import type { ArrivalStatus } from '@/lib/arrival-status'
 import { normalizePhoneDigits, isValidPhoneDigits } from '@/lib/phone'
 
-async function resolveEventUuid(orgSlug: string, eventRef: string): Promise<string | null> {
+async function getOpenEvent(
+  orgSlug: string,
+  eventRef: string,
+): Promise<{ event: EventWithLocation } | { error: string }> {
   const org = await getOrgBySlug(orgSlug)
-  if (!org) return null
+  if (!org) {
+    return { error: 'Organization not found.' }
+  }
+
   const event = await getEventByRef(eventRef, org.id)
-  return event?.id ?? null
+  if (!event) {
+    return { error: 'Session not found.' }
+  }
+
+  if (!canUpdateArrivalStatus(event)) {
+    return { error: 'This session has ended.' }
+  }
+
+  return { event }
 }
 
 export async function joinEvent(
@@ -32,13 +47,13 @@ export async function joinEvent(
     return { error: 'Enter a valid 10-digit phone number.' }
   }
 
-  const eventUuid = await resolveEventUuid(orgSlug, eventId)
-  if (!eventUuid) {
-    return { error: 'Session not found.' }
+  const open = await getOpenEvent(orgSlug, eventId)
+  if ('error' in open) {
+    return { error: open.error }
   }
 
   const { data, error } = await supabase.rpc('join_event', {
-    p_event_id: eventUuid,
+    p_event_id: open.event.id,
     p_phone: phone,
     p_first_name: firstName,
     p_last_name: lastName,
@@ -126,13 +141,13 @@ export async function quickJoinEvent(
 
   const guests = Number.isFinite(guestCount) ? Math.max(0, Math.min(20, guestCount)) : 0
 
-  const eventUuid = await getEventByRef(eventId, orgId).then((e) => e?.id ?? null)
-  if (!eventUuid) {
-    return { error: 'Session not found.' }
+  const open = await getOpenEvent(orgSlug, eventId)
+  if ('error' in open) {
+    return { error: open.error }
   }
 
   const { data, error } = await supabase.rpc('join_event', {
-    p_event_id: eventUuid,
+    p_event_id: open.event.id,
     p_phone: p.phone,
     p_first_name: p.first_name,
     p_last_name: p.last_name,
@@ -165,6 +180,11 @@ export async function updateGuestCount(
     return { error: 'Not signed in' }
   }
 
+  const open = await getOpenEvent(orgSlug, eventId)
+  if ('error' in open) {
+    return { error: open.error }
+  }
+
   const guests = Number.isFinite(guestCount) ? Math.max(0, Math.min(20, guestCount)) : 0
 
   const supabase = await createClient()
@@ -193,6 +213,11 @@ export async function leaveEvent(
     return { error: 'Not signed in' }
   }
 
+  const open = await getOpenEvent(orgSlug, eventId)
+  if ('error' in open) {
+    return { error: open.error }
+  }
+
   const supabase = await createClient()
   const { error } = await supabase.rpc('leave_event', {
     p_signup_id: signupId,
@@ -219,18 +244,9 @@ export async function updateArrivalStatus(
     return { error: 'Not signed in' }
   }
 
-  const org = await getOrgBySlug(orgSlug)
-  if (!org) {
-    return { error: 'Organization not found.' }
-  }
-
-  const event = await getEventByRef(eventId, org.id)
-  if (!event) {
-    return { error: 'Session not found.' }
-  }
-
-  if (!canUpdateArrivalStatus(event)) {
-    return { error: 'Status updates are only available on the day of the session.' }
+  const open = await getOpenEvent(orgSlug, eventId)
+  if ('error' in open) {
+    return { error: open.error }
   }
 
   const supabase = await createClient()
