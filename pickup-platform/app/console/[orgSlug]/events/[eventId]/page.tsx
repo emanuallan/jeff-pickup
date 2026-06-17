@@ -5,6 +5,7 @@ import { getRosterWithContact } from '@/lib/signups'
 import { getEventAnalytics } from '@/lib/event-analytics'
 import { arrivalStatusEmoji } from '@/lib/arrival-status'
 import { orgBaseUrl } from '@/lib/og-metadata'
+import { arrowNe } from '@/lib/text-arrows'
 import {
   ConsolePage,
   ConsoleHeader,
@@ -63,7 +64,7 @@ export default async function ConsoleEventAnalyticsPage({ params }: Props) {
         backLabel={org.name}
         actions={
           <a href={publicEventUrl} target="_blank" rel="noreferrer" className={btnOutline}>
-            View public event ↗
+            View public event {arrowNe}
           </a>
         }
       />

@@ -1,6 +1,7 @@
 import { ImageResponse } from 'next/og'
 import { readableTextColor, hexToRgba } from '@/lib/colors'
 import { getOgFonts } from '@/lib/og-fonts'
+import { arrowRight } from '@/lib/text-arrows'
 
 export const ogImageSize = { width: 1200, height: 630 }
 export const ogImageContentType = 'image/png'
@@ -192,7 +193,7 @@ export function MarketingOgCard() {
             boxShadow: `0 16px 48px ${hexToRgba(ORGANIZR_ACCENT, 0.35)}`,
           }}
         >
-          Create your group →
+          Create your group {arrowRight}
         </div>
         <div style={{ display: 'flex', ...font(400), fontSize: '22px', color: '#52525b' }}>
           organizr.co

@@ -5,6 +5,7 @@ import Link from 'next/link'
 import type { Location } from '@/lib/locations'
 import { OneOffEventForm } from './one-off-event-form'
 import { btnOutline } from '../_components/console-ui'
+import { arrowNe } from '@/lib/text-arrows'
 
 type Props = {
   orgSlug: string
@@ -120,7 +121,7 @@ export function OrgConsoleHeader({
                 className={menuItemClass}
                 onClick={() => setMenuOpen(false)}
               >
-                View public page ↗
+                View public page {arrowNe}
               </a>
               {canAddOneOff ? (
                 <button

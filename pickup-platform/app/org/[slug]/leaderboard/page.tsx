@@ -8,6 +8,7 @@ import { buildOrgMetadata } from '@/lib/og-metadata'
 import { OrgHeader } from '../_components/org-header'
 import { OrgPageShell, OrgPageFooter } from '../_components/org-page-shell'
 import { SocialLinks } from '../_components/social-links'
+import { arrowRight } from '@/lib/text-arrows'
 
 type Props = {
   params: Promise<{ slug: string }>
@@ -180,7 +181,7 @@ export default async function LeaderboardPage({ params }: Props) {
 
       <p className="mt-10 text-center">
         <Link href="/events" className="text-sm text-zinc-400 hover:text-zinc-200">
-          View sessions →
+          View sessions {arrowRight}
         </Link>
       </p>
 

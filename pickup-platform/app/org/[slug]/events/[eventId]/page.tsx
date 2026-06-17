@@ -17,6 +17,7 @@ import { getParticipantEngagementStats, isLeaderboardUnlocked, isOrgInauguralSes
 import { buildRosterBadgeMap } from '@/lib/badges'
 import { JoinSection, RosterList, ArrivalStatusPicker, GuestCountEditor } from './join-section'
 import { recordEventPageView } from '@/lib/record-page-view'
+import { arrowNe } from '@/lib/text-arrows'
 import { WeatherPill } from './weather-pill'
 import { ShareButton } from '../../share-button'
 import { OrgHeader } from '../../_components/org-header'
@@ -164,7 +165,7 @@ export default async function EventPage({ params }: Props) {
                   rel="noreferrer"
                   className="truncate transition-colors hover:text-zinc-200"
                 >
-                  {event.location_label} · Join online ↗
+                  {event.location_label} · Join online {arrowNe}
                 </a>
               ) : (
                 <span className="truncate">{event.location_label} · Online</span>
@@ -176,7 +177,7 @@ export default async function EventPage({ params }: Props) {
                 rel="noreferrer"
                 className="truncate transition-colors hover:text-zinc-200"
               >
-                {event.location_label} ↗
+                {event.location_label} {arrowNe}
               </a>
             ) : (
               <span className="truncate">{event.location_label}</span>

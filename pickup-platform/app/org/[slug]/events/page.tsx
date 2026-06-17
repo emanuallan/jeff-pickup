@@ -10,6 +10,7 @@ import { OrgHeader } from '../_components/org-header'
 import { OrgPageShell, OrgPageFooter, LeaderboardLink } from '../_components/org-page-shell'
 import { SocialLinks } from '../_components/social-links'
 import { ShareButton } from '../share-button'
+import { arrowRight } from '@/lib/text-arrows'
 import { MoreSessions } from './more-sessions'
 import {
   StatusPill,
@@ -130,7 +131,7 @@ export default async function EventsPage({ params }: Props) {
                   <>
                     <span className="text-sm text-red-400">This session was cancelled</span>
                     <span className="inline-flex items-center gap-1 text-sm font-medium text-zinc-400 transition-transform group-hover:translate-x-0.5">
-                      View details →
+                      View details {arrowRight}
                     </span>
                   </>
                 ) : (
@@ -143,7 +144,7 @@ export default async function EventsPage({ params }: Props) {
                       className="inline-flex items-center gap-1 text-sm font-medium transition-transform group-hover:translate-x-0.5"
                       style={{ color: accent }}
                     >
-                      Count me in →
+                      Count me in {arrowRight}
                     </span>
                   </>
                 )}

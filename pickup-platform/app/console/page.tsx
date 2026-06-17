@@ -5,6 +5,7 @@ import { getUserOrgs } from '@/lib/orgs'
 import { getRootDomain } from '@/lib/tenancy/parse-host'
 import { orgBaseUrl } from '@/lib/og-metadata'
 import { ConsolePage, ConsoleHeader, EmptyState, btnPrimary } from './_components/console-ui'
+import { arrowNe } from '@/lib/text-arrows'
 
 export default async function ConsolePage_() {
   const supabase = await createClient()
@@ -92,7 +93,7 @@ export default async function ConsolePage_() {
                       rel="noreferrer"
                       className="inline-flex min-h-11 w-full items-center justify-center rounded-lg border border-white/10 px-3 py-2.5 text-sm font-medium text-zinc-400 transition hover:bg-white/5 hover:text-zinc-200 sm:w-auto sm:shrink-0 sm:px-4"
                     >
-                      Public ↗
+                      Public page {arrowNe}
                     </a>
                   </div>
                 </div>

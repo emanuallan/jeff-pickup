@@ -20,6 +20,7 @@ import { EditScheduleButton } from './edit-schedule-button'
 import { DeleteEventButton } from './delete-event-button'
 import { EventStatusSelect } from './event-status-select'
 import { OrgConsoleHeader } from './org-console-header'
+import { arrowRight } from '@/lib/text-arrows'
 import {
   ConsolePage,
   ConsoleSection,
@@ -136,7 +137,7 @@ export default async function OrgConsolePage({ params }: Props) {
           href={`/console/${orgSlug}/events/${ev.short_id}`}
           className={`${chipAction} text-indigo-300 hover:bg-indigo-500/10 hover:text-indigo-200`}
         >
-          View analytics →
+          View analytics {arrowRight}
         </Link>
         <DeleteEventButton
           orgSlug={orgSlug}

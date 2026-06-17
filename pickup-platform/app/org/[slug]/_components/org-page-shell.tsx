@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { getRootDomain } from '@/lib/tenancy/parse-host'
 import { rootBaseUrl } from '@/lib/og-metadata'
+import { arrowRight } from '@/lib/text-arrows'
 
 export function OrgPageShell({ children }: { children: React.ReactNode }) {
   return (
@@ -16,7 +17,7 @@ export function OrgPageFooter({ slug }: { slug: string }) {
         className="text-xs text-zinc-500 transition-colors hover:text-zinc-300"
       >
         Create your own group with{' '}
-        <span className="font-semibold text-zinc-400">Organizr</span> →
+        <span className="font-semibold text-zinc-400">Organizr</span> {arrowRight}
       </a>
       <p className="text-xs text-zinc-600">
         {slug}.{getRootDomain()}
@@ -29,7 +30,7 @@ export function LeaderboardLink() {
   return (
     <p className="mt-10 text-center">
       <Link href="/leaderboard" className="text-sm text-zinc-400 hover:text-zinc-200">
-        View leaderboard →
+        View leaderboard {arrowRight}
       </Link>
     </p>
   )

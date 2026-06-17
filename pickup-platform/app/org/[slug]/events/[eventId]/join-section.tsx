@@ -4,6 +4,7 @@ import { useRef, useState, useEffect } from 'react'
 import { joinEvent, leaveEvent, quickJoinEvent, updateArrivalStatus, updateGuestCount } from './actions'
 import { arrivalStatuses, arrivalStatusEmoji, type ArrivalStatus } from '@/lib/arrival-status'
 import { fireConfetti } from '@/lib/confetti'
+import { arrowRight } from '@/lib/text-arrows'
 import { hexToRgba } from '@/lib/colors'
 import { PhoneInput } from '@/app/_components/phone-input'
 import type { Participant, MySignup } from '@/lib/participant'
@@ -112,7 +113,7 @@ export function JoinSection(props: Props) {
             boxShadow: `0 10px 30px -12px ${props.accent}`,
           }}
         >
-          {loading ? 'Counting you in…' : "Count me in →"}
+          {loading ? 'Counting you in…' : `Count me in ${arrowRight}`}
         </button>
         {error ? <p className="text-sm text-red-300">{error}</p> : null}
       </div>
@@ -207,7 +208,7 @@ export function JoinSection(props: Props) {
           boxShadow: `0 10px 30px -12px ${props.accent}`,
         }}
       >
-        {loading ? 'Counting you in…' : "Count me in →"}
+        {loading ? 'Counting you in…' : `Count me in ${arrowRight}`}
       </button>
     </form>
   )
