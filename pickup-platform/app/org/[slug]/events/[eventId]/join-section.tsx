@@ -1,7 +1,8 @@
 'use client'
 
 import { useRef, useState, useEffect } from 'react'
-import { joinEvent, leaveEvent, quickJoinEvent, updateArrivalStatus, updateGuestCount } from './actions'
+import { useRouter } from 'next/navigation'
+import { joinEvent, leaveEvent, quickJoinEvent, recoverSession, updateArrivalStatus, updateGuestCount } from './actions'
 import { arrivalStatuses, arrivalStatusEmoji, type ArrivalStatus } from '@/lib/arrival-status'
 import { fireConfetti } from '@/lib/confetti'
 import { arrowRight } from '@/lib/text-arrows'
@@ -28,6 +29,90 @@ type Props = {
 
 const inputClass =
   'mt-1 w-full rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2.5 text-sm outline-none transition-colors focus:border-transparent focus:ring-2'
+
+const recoverInputClass =
+  'mt-1 w-full rounded-lg border border-zinc-800 bg-zinc-900/50 px-3 py-2 text-sm text-zinc-400 outline-none transition-colors focus:border-zinc-700 focus:ring-1 focus:ring-zinc-700'
+
+function RecoverSession({
+  orgSlug,
+  eventId,
+  accent,
+}: {
+  orgSlug: string
+  eventId: string
+  accent: string
+}) {
+  const router = useRouter()
+  const [open, setOpen] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  if (!open) {
+    return (
+      <div className="border-t border-white/5 pt-4">
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="text-xs text-zinc-600 transition-colors hover:text-zinc-500"
+        >
+          Already signed up on another device? Enter your phone
+        </button>
+      </div>
+    )
+  }
+
+  return (
+    <div className="border-t border-white/5 pt-4">
+      <p className="text-xs text-zinc-600">Pick up where you left off on this device</p>
+      <form
+        onSubmit={async (e) => {
+          e.preventDefault()
+          const formData = new FormData(e.currentTarget)
+          setLoading(true)
+          setError(null)
+          const result = await recoverSession(
+            orgSlug,
+            eventId,
+            String(formData.get('phone') ?? ''),
+          )
+          setLoading(false)
+          if (result.error) {
+            setError(result.error)
+          } else {
+            router.refresh()
+          }
+        }}
+        className="mt-2 flex items-end gap-2"
+      >
+        <label className="block min-w-0 flex-1">
+          <span className="text-xs text-zinc-600">Phone</span>
+          <PhoneInput
+            className={recoverInputClass}
+            style={{ '--tw-ring-color': accent } as React.CSSProperties}
+          />
+        </label>
+        <button
+          type="submit"
+          disabled={loading}
+          className="mb-0.5 shrink-0 rounded-lg px-2 py-2 text-xs text-zinc-500 transition-colors hover:text-zinc-400 disabled:opacity-50"
+        >
+          {loading ? '…' : 'Continue'}
+        </button>
+      </form>
+      {error ? <p className="mt-1.5 text-xs text-red-400/90">{error}</p> : null}
+      <button
+        type="button"
+        onClick={() => {
+          setOpen(false)
+          setError(null)
+        }}
+        className="mt-2 text-xs text-zinc-700 transition-colors hover:text-zinc-600"
+      >
+        Cancel
+      </button>
+    </div>
+  )
+}
 
 export function JoinSection(props: Props) {
   const [error, setError] = useState<string | null>(null)
@@ -172,29 +257,18 @@ export function JoinSection(props: Props) {
         />
       </label>
 
-      <div className="grid grid-cols-2 gap-3">
-        <label className="block">
-          <span className="text-xs text-zinc-500">Display name (optional)</span>
-          <input
-            name="display_name"
-            className={inputClass}
-            style={{ '--tw-ring-color': props.accent } as React.CSSProperties}
-            placeholder="First L."
-          />
-        </label>
-        <label className="block">
-          <span className="text-xs text-zinc-500">Guests</span>
-          <input
-            name="guest_count"
-            type="number"
-            min={0}
-            max={20}
-            defaultValue={0}
-            className={inputClass}
-            style={{ '--tw-ring-color': props.accent } as React.CSSProperties}
-          />
-        </label>
-      </div>
+      <label className="block">
+        <span className="text-xs text-zinc-500">Guests</span>
+        <input
+          name="guest_count"
+          type="number"
+          min={0}
+          max={20}
+          defaultValue={0}
+          className={inputClass}
+          style={{ '--tw-ring-color': props.accent } as React.CSSProperties}
+        />
+      </label>
 
       {error ? <p className="text-sm text-red-300">{error}</p> : null}
 
@@ -210,6 +284,8 @@ export function JoinSection(props: Props) {
       >
         {loading ? 'Counting you in…' : `Count me in ${arrowRight}`}
       </button>
+
+      <RecoverSession orgSlug={props.orgSlug} eventId={props.eventId} accent={props.accent} />
     </form>
   )
 }

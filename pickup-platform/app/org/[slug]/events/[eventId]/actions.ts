@@ -60,6 +60,41 @@ export async function joinEvent(
   return {}
 }
 
+export async function recoverSession(
+  orgSlug: string,
+  eventId: string,
+  phone: string,
+): Promise<{ error?: string }> {
+  const org = await getOrgBySlug(orgSlug)
+  if (!org) {
+    return { error: 'Group not found.' }
+  }
+
+  const digits = normalizePhoneDigits(phone)
+  if (!isValidPhoneDigits(digits)) {
+    return { error: 'Enter a valid 10-digit phone number.' }
+  }
+
+  const supabase = await createClient()
+  const { data, error } = await supabase.rpc('recover_participant_session', {
+    p_org_id: org.id,
+    p_phone: digits,
+  })
+
+  if (error) {
+    return { error: error.message }
+  }
+
+  const result = data as { session_token?: string } | null
+  if (result?.session_token) {
+    await setSessionToken(result.session_token)
+  }
+
+  revalidatePath(`/org/${orgSlug}/events/${eventId}`)
+  revalidatePath(`/org/${orgSlug}`)
+  return {}
+}
+
 export async function quickJoinEvent(
   orgSlug: string,
   eventId: string,
