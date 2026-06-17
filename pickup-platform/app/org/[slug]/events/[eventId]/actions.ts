@@ -52,7 +52,7 @@ export async function joinEvent(
 
   const result = data as { session_token?: string } | null
   if (result?.session_token) {
-    await setSessionToken(result.session_token)
+    await setSessionToken(String(result.session_token))
   }
 
   revalidatePath(`/org/${orgSlug}/events/${eventId}`)
@@ -87,7 +87,7 @@ export async function recoverSession(
 
   const result = data as { session_token?: string } | null
   if (result?.session_token) {
-    await setSessionToken(result.session_token)
+    await setSessionToken(String(result.session_token))
   }
 
   revalidatePath(`/org/${orgSlug}/events/${eventId}`)
@@ -146,7 +146,7 @@ export async function quickJoinEvent(
 
   const result = data as { session_token?: string } | null
   if (result?.session_token) {
-    await setSessionToken(result.session_token)
+    await setSessionToken(String(result.session_token))
   }
 
   revalidatePath(`/org/${orgSlug}/events/${eventId}`)

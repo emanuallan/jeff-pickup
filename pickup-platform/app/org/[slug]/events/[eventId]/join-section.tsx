@@ -1,7 +1,6 @@
 'use client'
 
 import { useRef, useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
 import { joinEvent, leaveEvent, quickJoinEvent, recoverSession, updateArrivalStatus, updateGuestCount } from './actions'
 import { arrivalStatuses, arrivalStatusEmoji, type ArrivalStatus } from '@/lib/arrival-status'
 import { fireConfetti } from '@/lib/confetti'
@@ -42,10 +41,9 @@ function RecoverSession({
   eventId: string
   accent: string
 }) {
-  const router = useRouter()
   const [open, setOpen] = useState(false)
-  const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false)
 
   if (!open) {
     return (
@@ -65,9 +63,7 @@ function RecoverSession({
     <div className="border-t border-white/5 pt-4">
       <p className="text-xs text-zinc-600">Pick up where you left off on this device</p>
       <form
-        onSubmit={async (e) => {
-          e.preventDefault()
-          const formData = new FormData(e.currentTarget)
+        action={async (formData) => {
           setLoading(true)
           setError(null)
           const result = await recoverSession(
@@ -75,12 +71,12 @@ function RecoverSession({
             eventId,
             String(formData.get('phone') ?? ''),
           )
-          setLoading(false)
           if (result.error) {
+            setLoading(false)
             setError(result.error)
-          } else {
-            router.refresh()
+            return
           }
+          window.location.reload()
         }}
         className="mt-2 flex items-end gap-2"
       >
@@ -206,17 +202,18 @@ export function JoinSection(props: Props) {
   }
 
   return (
-    <form
-      action={async (formData) => {
-        setLoading(true)
-        setError(null)
-        const result = await joinEvent(props.orgSlug, props.eventId, formData)
-        setLoading(false)
-        if (result.error) setError(result.error)
-        else void fireConfetti(props.accent)
-      }}
-      className="space-y-4"
-    >
+    <div className="space-y-4">
+      <form
+        action={async (formData) => {
+          setLoading(true)
+          setError(null)
+          const result = await joinEvent(props.orgSlug, props.eventId, formData)
+          setLoading(false)
+          if (result.error) setError(result.error)
+          else void fireConfetti(props.accent)
+        }}
+        className="space-y-4"
+      >
       <div>
         <h2 className="text-lg font-semibold text-zinc-100">Save your spot</h2>
         <p className="mt-0.5 text-sm text-zinc-400">
@@ -284,9 +281,10 @@ export function JoinSection(props: Props) {
       >
         {loading ? 'Counting you in…' : `Count me in ${arrowRight}`}
       </button>
+      </form>
 
       <RecoverSession orgSlug={props.orgSlug} eventId={props.eventId} accent={props.accent} />
-    </form>
+    </div>
   )
 }
 
