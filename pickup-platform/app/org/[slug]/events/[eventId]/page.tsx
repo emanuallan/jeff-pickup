@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { getOrgBySlug } from '@/lib/orgs'
 import {
-  getEventById,
+  getEventByRef,
   formatEventTime,
   formatEventHappening,
 } from '@/lib/events'
@@ -45,7 +45,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     return {}
   }
 
-  const event = await getEventById(eventId, org.id)
+  const event = await getEventByRef(eventId, org.id)
   if (!event) {
     return {}
   }
@@ -75,20 +75,20 @@ export default async function EventPage({ params }: Props) {
     notFound()
   }
 
-  const event = await getEventById(eventId, org.id)
+  const event = await getEventByRef(eventId, org.id)
   if (!event) {
     notFound()
   }
 
-  await recordEventPageView(eventId, org.id)
+  await recordEventPageView(event.id, org.id)
 
   const isCancelled = isEventCancelled(event.status)
   const cancelledClasses = cancelledEventClasses(isCancelled)
 
   const [roster, leaderboardUnlocked, isInauguralSession, token] = await Promise.all([
-    getPublicRoster(eventId),
+    getPublicRoster(event.id),
     isLeaderboardUnlocked(org.id),
-    isOrgInauguralSession(org.id, eventId),
+    isOrgInauguralSession(org.id, event.id),
     getSessionToken(),
   ])
 
@@ -97,7 +97,7 @@ export default async function EventPage({ params }: Props) {
 
   const [engagementStats, { participant, mySignup }] = await Promise.all([
     getParticipantEngagementStats(org.id, participantIds),
-    getSessionInfo(token, org.id, eventId),
+    getSessionInfo(token, org.id, event.id),
   ])
 
   const badgesByParticipantId = buildRosterBadgeMap(roster, engagementStats, {

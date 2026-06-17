@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation'
 import { getOrgForMember } from '@/lib/orgs'
-import { getEventById, formatEventTime, statusLabel } from '@/lib/events'
+import { getEventByRef, formatEventTime, statusLabel } from '@/lib/events'
 import { getRosterWithContact } from '@/lib/signups'
 import { getEventAnalytics } from '@/lib/event-analytics'
 import { arrivalStatusEmoji } from '@/lib/arrival-status'
@@ -45,14 +45,14 @@ export default async function ConsoleEventAnalyticsPage({ params }: Props) {
     notFound()
   }
 
-  const event = await getEventById(eventId, org.id)
+  const event = await getEventByRef(eventId, org.id)
   if (!event) {
     notFound()
   }
 
-  const roster = await getRosterWithContact(eventId)
-  const analytics = await getEventAnalytics(eventId, roster, event.capacity)
-  const publicEventUrl = `${orgBaseUrl(orgSlug)}/events/${eventId}`
+  const roster = await getRosterWithContact(event.id)
+  const analytics = await getEventAnalytics(event.id, roster, event.capacity)
+  const publicEventUrl = `${orgBaseUrl(orgSlug)}/events/${event.short_id}`
 
   return (
     <ConsolePage width="max-w-2xl">

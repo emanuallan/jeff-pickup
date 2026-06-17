@@ -84,7 +84,7 @@ export default async function EventsPage({ params }: Props) {
         <>
           <section className="mt-8">
             <Link
-              href={`/events/${next.id}`}
+              href={`/events/${next.short_id}`}
               className="group block overflow-hidden rounded-3xl border border-zinc-800 bg-linear-to-b from-zinc-900 to-zinc-950 p-6 transition-colors hover:border-zinc-700"
             >
               <div className="flex items-center justify-between gap-3">

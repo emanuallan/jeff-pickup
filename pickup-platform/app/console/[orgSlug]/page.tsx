@@ -129,18 +129,18 @@ export default async function OrgConsolePage({ params }: Props) {
             {eventDisplayName(ev.title, sessionFallback)} · {ev.location_label}
           </div>
         </div>
-        <EventStatusSelect orgSlug={orgSlug} eventId={ev.id} status={ev.status} />
+        <EventStatusSelect orgSlug={orgSlug} eventId={ev.short_id} status={ev.status} />
       </div>
       <div className="mt-2.5 flex flex-wrap items-center gap-1 border-t border-white/5 pt-2">
         <Link
-          href={`/console/${orgSlug}/events/${ev.id}`}
+          href={`/console/${orgSlug}/events/${ev.short_id}`}
           className={`${chipAction} text-indigo-300 hover:bg-indigo-500/10 hover:text-indigo-200`}
         >
           View analytics →
         </Link>
         <DeleteEventButton
           orgSlug={orgSlug}
-          eventId={ev.id}
+          eventId={ev.short_id}
           eventLabel={formatEventTime(ev)}
           recurring={!opts?.past && ev.schedule_id != null}
         />

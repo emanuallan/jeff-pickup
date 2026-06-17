@@ -1,5 +1,5 @@
 import { getOrgBySlug } from '@/lib/orgs'
-import { getEventById, formatEventTime, eventDisplayName } from '@/lib/events'
+import { getEventByRef, formatEventTime, eventDisplayName } from '@/lib/events'
 import { renderOrgOgImage } from '@/lib/og-image'
 
 type Context = {
@@ -9,7 +9,7 @@ type Context = {
 export async function GET(_request: Request, { params }: Context) {
   const { slug, eventId } = await params
   const org = await getOrgBySlug(slug)
-  const event = org ? await getEventById(eventId, org.id) : null
+  const event = org ? await getEventByRef(eventId, org.id) : null
   const eventTitle = eventDisplayName(event?.title)
 
   return renderOrgOgImage({

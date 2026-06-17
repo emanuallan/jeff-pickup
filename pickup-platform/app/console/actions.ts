@@ -344,8 +344,8 @@ export async function updateEventStatus(
 
   const { data: event, error: fetchError } = await supabase
     .from('events')
-    .select('status')
-    .eq('id', eventId)
+    .select('id, status')
+    .eq('short_id', eventId)
     .eq('org_id', org.id)
     .maybeSingle()
 
@@ -360,7 +360,7 @@ export async function updateEventStatus(
   const { error } = await supabase
     .from('events')
     .update({ status })
-    .eq('id', eventId)
+    .eq('id', event.id)
     .eq('org_id', org.id)
 
   if (error) {
@@ -369,7 +369,7 @@ export async function updateEventStatus(
 
   // Restoring from cancelled may auto-promote to 'on' when headcount meets the minimum.
   if (event.status === 'cancelled' && status === 'tentative') {
-    await supabase.rpc('maybe_promote_event', { p_event_id: eventId })
+    await supabase.rpc('maybe_promote_event', { p_event_id: event.id })
   }
 
   revalidatePath(`/console/${orgSlug}`)
@@ -388,8 +388,8 @@ export async function deleteEvent(
 
   const { data: event, error: fetchError } = await supabase
     .from('events')
-    .select('schedule_id, starts_at')
-    .eq('id', eventId)
+    .select('id, schedule_id, starts_at')
+    .eq('short_id', eventId)
     .eq('org_id', org.id)
     .maybeSingle()
 
@@ -420,7 +420,7 @@ export async function deleteEvent(
   const { error } = await supabase
     .from('events')
     .delete()
-    .eq('id', eventId)
+    .eq('id', event.id)
     .eq('org_id', org.id)
 
   if (error) {

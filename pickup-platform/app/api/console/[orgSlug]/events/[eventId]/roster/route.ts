@@ -1,5 +1,5 @@
 import { getOrgForMember } from '@/lib/orgs'
-import { getEventById } from '@/lib/events'
+import { getEventByRef } from '@/lib/events'
 import { getRosterWithContact } from '@/lib/signups'
 import { rosterToCsv } from '@/lib/roster-csv'
 
@@ -15,12 +15,12 @@ export async function GET(_request: Request, { params }: Props) {
     return new Response('Unauthorized', { status: 401 })
   }
 
-  const event = await getEventById(eventId, org.id)
+  const event = await getEventByRef(eventId, org.id)
   if (!event) {
     return new Response('Not found', { status: 404 })
   }
 
-  const roster = await getRosterWithContact(eventId)
+  const roster = await getRosterWithContact(event.id)
   const csv = rosterToCsv(roster)
   const dateSlug = event.starts_at.slice(0, 10)
   const filename = `${org.slug}-roster-${dateSlug}.csv`

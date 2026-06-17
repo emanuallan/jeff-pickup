@@ -114,7 +114,7 @@ export function SessionRow({
 
   return (
     <Link
-      href={`/events/${event.id}`}
+      href={`/events/${event.short_id}`}
       className="flex items-center gap-3 rounded-2xl border border-zinc-800 bg-zinc-900/40 px-4 py-3 transition-colors hover:border-zinc-700"
     >
       <div className="min-w-0 flex-1">

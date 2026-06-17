@@ -5,6 +5,7 @@ export type EventStatus = 'tentative' | 'on' | 'cancelled'
 
 export type Event = {
   id: string
+  short_id: string
   org_id: string
   schedule_id: string | null
   location_id: string
@@ -65,6 +66,26 @@ function mapEventRow(row: Record<string, unknown>): EventWithLocation {
 }
 
 /** Memoized per-request so metadata + page share one query for the same event. */
+export const getEventByRef = cache(
+  async (shortId: string, orgId: string): Promise<EventWithLocation | null> => {
+    const supabase = await createClient()
+
+    const { data, error } = await supabase
+      .from('events')
+      .select(LOCATION_SELECT)
+      .eq('short_id', shortId)
+      .eq('org_id', orgId)
+      .maybeSingle()
+
+    if (error || !data) {
+      return null
+    }
+
+    return mapEventRow(data)
+  },
+)
+
+/** Internal lookup by UUID (analytics, RPCs, FK joins). */
 export const getEventById = cache(
   async (eventId: string, orgId: string): Promise<EventWithLocation | null> => {
     const supabase = await createClient()

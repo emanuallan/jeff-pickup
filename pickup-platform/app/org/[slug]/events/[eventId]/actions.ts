@@ -1,10 +1,19 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
+import { getOrgBySlug } from '@/lib/orgs'
+import { getEventByRef } from '@/lib/events'
 import { createClient } from '@/lib/supabase/server'
 import { setSessionToken, getSessionToken } from '@/lib/participant-session'
 import type { ArrivalStatus } from '@/lib/arrival-status'
 import { normalizePhoneDigits, isValidPhoneDigits } from '@/lib/phone'
+
+async function resolveEventUuid(orgSlug: string, eventRef: string): Promise<string | null> {
+  const org = await getOrgBySlug(orgSlug)
+  if (!org) return null
+  const event = await getEventByRef(eventRef, org.id)
+  return event?.id ?? null
+}
 
 export async function joinEvent(
   orgSlug: string,
@@ -23,8 +32,13 @@ export async function joinEvent(
     return { error: 'Enter a valid 10-digit phone number.' }
   }
 
+  const eventUuid = await resolveEventUuid(orgSlug, eventId)
+  if (!eventUuid) {
+    return { error: 'Session not found.' }
+  }
+
   const { data, error } = await supabase.rpc('join_event', {
-    p_event_id: eventId,
+    p_event_id: eventUuid,
     p_phone: phone,
     p_first_name: firstName,
     p_last_name: lastName,
@@ -77,8 +91,13 @@ export async function quickJoinEvent(
 
   const guests = Number.isFinite(guestCount) ? Math.max(0, Math.min(20, guestCount)) : 0
 
+  const eventUuid = await getEventByRef(eventId, orgId).then((e) => e?.id ?? null)
+  if (!eventUuid) {
+    return { error: 'Session not found.' }
+  }
+
   const { data, error } = await supabase.rpc('join_event', {
-    p_event_id: eventId,
+    p_event_id: eventUuid,
     p_phone: p.phone,
     p_first_name: p.first_name,
     p_last_name: p.last_name,
