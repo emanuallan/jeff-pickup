@@ -278,18 +278,18 @@ export function OrgOgCard({
           zIndex: 1,
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '18px', minWidth: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '22px', minWidth: 0 }}>
           {logoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={logoUrl}
               alt=""
-              width={64}
-              height={64}
+              width={84}
+              height={84}
               style={{
-                width: '64px',
-                height: '64px',
-                borderRadius: '18px',
+                width: '84px',
+                height: '84px',
+                borderRadius: '22px',
                 objectFit: 'cover',
                 border: '1px solid rgba(255,255,255,0.1)',
               }}
@@ -300,12 +300,12 @@ export function OrgOgCard({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                width: '64px',
-                height: '64px',
-                borderRadius: '18px',
+                width: '84px',
+                height: '84px',
+                borderRadius: '22px',
                 backgroundColor: accent,
                 ...font(700),
-                fontSize: '30px',
+                fontSize: '38px',
                 color: accentText,
                 flexShrink: 0,
               }}
@@ -317,7 +317,7 @@ export function OrgOgCard({
             style={{
               display: 'flex',
               ...font(600),
-              fontSize: '30px',
+              fontSize: '38px',
               letterSpacing: '-0.02em',
               overflow: 'hidden',
               textOverflow: 'ellipsis',
