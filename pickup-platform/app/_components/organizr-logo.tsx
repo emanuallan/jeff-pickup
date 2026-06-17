@@ -17,7 +17,7 @@ export function OrganizrLogo({
   wordmarkClassName = 'text-sm font-bold tracking-tight text-zinc-50',
   href,
   priority,
-  className = 'inline-flex items-center gap-2',
+  className = 'inline-flex items-center gap-1',
 }: Props) {
   const mark = (
     <Image

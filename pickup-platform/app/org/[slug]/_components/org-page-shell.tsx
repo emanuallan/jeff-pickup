@@ -18,7 +18,7 @@ export function OrgPageFooter({ slug }: { slug: string }) {
         className="inline-flex items-center gap-1.5 text-xs text-zinc-500 transition-colors hover:text-zinc-300"
       >
         Create your own group with
-        <OrganizrLogo size={16} showWordmark wordmarkClassName="font-semibold text-zinc-400" className="inline-flex items-center gap-1" />
+        <OrganizrLogo size={16} showWordmark wordmarkClassName="font-semibold text-zinc-400" />
         {arrowRight}
       </a>
       <p className="text-xs text-zinc-600">

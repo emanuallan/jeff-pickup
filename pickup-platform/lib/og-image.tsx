@@ -118,7 +118,7 @@ export function MarketingOgCard({ logoSrc }: { logoSrc: string }) {
       <DotGrid />
 
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', zIndex: 1 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '18px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={logoSrc}

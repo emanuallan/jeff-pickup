@@ -20,7 +20,6 @@ export default function HomePage() {
         <OrganizrLogo
           size={40}
           priority
-          className="inline-flex items-center gap-2.5"
           wordmarkClassName="text-sm font-bold tracking-tight text-zinc-50"
         />
         <h1 className="mt-6 text-4xl font-semibold tracking-tight text-zinc-50">
