@@ -135,7 +135,7 @@ export function EventLocationRow({
     className ??
     (compact
       ? 'flex min-w-0 items-center gap-1.5 text-xs text-zinc-500'
-      : 'mt-3 flex gap-2 text-sm text-zinc-400')
+      : 'mt-3 flex items-start gap-2 text-sm text-zinc-400')
 
   if (event.location_is_online) {
     return (
@@ -261,10 +261,10 @@ export function SessionRow({
   )
 }
 
-export function PinIcon({ className = 'h-4 w-4 shrink-0 text-zinc-500' }: { className?: string }) {
+export function PinIcon({ className }: { className?: string }) {
   return (
     <svg
-      className={className}
+      className={`h-4 w-4 shrink-0 text-zinc-500${className ? ` ${className}` : ''}`}
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
@@ -280,13 +280,13 @@ export function PinIcon({ className = 'h-4 w-4 shrink-0 text-zinc-500' }: { clas
 }
 
 export function OnlineIcon({
-  className = 'h-4 w-4 shrink-0 text-zinc-500',
+  className,
 }: {
   className?: string
 }) {
   return (
     <svg
-      className={className}
+      className={`h-4 w-4 shrink-0 text-zinc-500${className ? ` ${className}` : ''}`}
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
