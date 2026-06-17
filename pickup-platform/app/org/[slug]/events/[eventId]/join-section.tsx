@@ -32,6 +32,32 @@ const inputClass =
 const recoverInputClass =
   'mt-1 w-full rounded-lg border border-zinc-800 bg-zinc-900/50 px-3 py-2 text-sm text-zinc-400 outline-none transition-colors focus:border-zinc-700 focus:ring-1 focus:ring-zinc-700'
 
+const phoneWhyText =
+  'We use your phone number to identify you within a group so you can manage your own sign-ups across visits.'
+
+function PhoneNumberWhy() {
+  const [show, setShow] = useState(false)
+
+  return (
+    <>
+      <span className="flex items-baseline justify-between gap-2">
+        <span className="text-xs text-zinc-500">Phone</span>
+        <button
+          type="button"
+          onClick={() => setShow((open) => !open)}
+          aria-expanded={show}
+          className="text-xs text-zinc-600 transition-colors hover:text-zinc-500"
+        >
+          Why do we need your number?
+        </button>
+      </span>
+      {show ? (
+        <p className="mt-1 text-xs leading-relaxed text-zinc-500">{phoneWhyText}</p>
+      ) : null}
+    </>
+  )
+}
+
 function RecoverSession({
   orgSlug,
   eventId,
@@ -247,7 +273,7 @@ export function JoinSection(props: Props) {
       </div>
 
       <label className="block">
-        <span className="text-xs text-zinc-500">Phone</span>
+        <PhoneNumberWhy />
         <PhoneInput
           className={inputClass}
           style={{ '--tw-ring-color': props.accent } as React.CSSProperties}
