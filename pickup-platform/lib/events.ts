@@ -20,6 +20,7 @@ export type Event = {
 export type EventWithLocation = Event & {
   title: string | null
   location_label: string
+  location_address: string
   location_lat: number
   location_lon: number
   location_maps_url: string
@@ -28,12 +29,13 @@ export type EventWithLocation = Event & {
 }
 
 const LOCATION_SELECT =
-  '*, locations(label, lat, lon, maps_url, is_online, meeting_url), schedules!events_schedule_id_fkey(title)'
+  '*, locations(label, address, lat, lon, maps_url, is_online, meeting_url), schedules!events_schedule_id_fkey(title)'
 
 const EVENT_NAME_FALLBACK = 'Session'
 
 type LocationJoin = {
   label: string
+  address: string
   lat: number
   lon: number
   maps_url: string
@@ -57,6 +59,7 @@ function mapEventRow(row: Record<string, unknown>): EventWithLocation {
     timezone: String(event.timezone ?? 'UTC'),
     title: scheduleTitleFromJoin(row.schedules),
     location_label: loc?.label ?? 'Location',
+    location_address: loc?.address ?? '',
     location_lat: loc?.lat ?? 0,
     location_lon: loc?.lon ?? 0,
     location_maps_url: loc?.maps_url ?? '',

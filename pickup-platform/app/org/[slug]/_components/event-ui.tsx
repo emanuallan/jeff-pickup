@@ -7,6 +7,17 @@ import {
   type EventStatus,
   type EventWithLocation,
 } from '@/lib/events'
+import { arrowNe } from '@/lib/text-arrows'
+import { MapsLink } from './maps-link'
+
+export type EventLocationFields = Pick<
+  EventWithLocation,
+  | 'location_label'
+  | 'location_address'
+  | 'location_maps_url'
+  | 'location_is_online'
+  | 'location_meeting_url'
+>
 
 /** Event display name: recurring schedule title when present. */
 export function eventName(event: Pick<EventWithLocation, 'title'>): string {
@@ -101,6 +112,107 @@ export function CancelledCallout({ hasSignup }: { hasSignup: boolean }) {
   )
 }
 
+const mapsLinkClass = 'cursor-pointer transition-colors hover:text-zinc-200'
+
+export function EventLocationRow({
+  event,
+  nestedInLink = false,
+  compact = false,
+  className,
+}: {
+  event: EventLocationFields
+  nestedInLink?: boolean
+  compact?: boolean
+  className?: string
+}) {
+  const mapsUrl = event.location_maps_url.trim()
+  const address = event.location_address.trim()
+  const meetingUrl = event.location_meeting_url.trim()
+  const hasMaps = Boolean(mapsUrl)
+  const linkClass = nestedInLink ? `${mapsLinkClass} pointer-events-auto` : mapsLinkClass
+
+  const rowClass =
+    className ??
+    (compact
+      ? 'flex min-w-0 items-center gap-1.5 text-xs text-zinc-500'
+      : 'mt-3 flex gap-2 text-sm text-zinc-400')
+
+  if (event.location_is_online) {
+    return (
+      <div className={rowClass}>
+        {!compact ? <OnlineIcon /> : null}
+        <div className="min-w-0">
+          {meetingUrl ? (
+            <MapsLink href={meetingUrl} nestedInLink={nestedInLink} className={`truncate ${linkClass}`}>
+              {event.location_label} · Join online {arrowNe}
+            </MapsLink>
+          ) : (
+            <span className="truncate">{event.location_label} · Online</span>
+          )}
+        </div>
+      </div>
+    )
+  }
+
+  if (compact) {
+    return (
+      <div className={rowClass}>
+        {hasMaps ? (
+          <MapsLink href={mapsUrl} nestedInLink={nestedInLink} className={`truncate ${linkClass}`}>
+            {event.location_label}
+          </MapsLink>
+        ) : (
+          <span className="truncate">{event.location_label}</span>
+        )}
+        {address ? (
+          <>
+            <span className="shrink-0 text-zinc-600">·</span>
+            {hasMaps ? (
+              <MapsLink
+                href={mapsUrl}
+                nestedInLink={nestedInLink}
+                className={`min-w-0 truncate ${linkClass}`}
+              >
+                {address}
+              </MapsLink>
+            ) : (
+              <span className="min-w-0 truncate">{address}</span>
+            )}
+          </>
+        ) : null}
+      </div>
+    )
+  }
+
+  return (
+    <div className={rowClass}>
+      <PinIcon className="mt-0.5" />
+      <div className="min-w-0">
+        {hasMaps ? (
+          <MapsLink href={mapsUrl} nestedInLink={nestedInLink} className={`block truncate ${linkClass}`}>
+            {event.location_label}
+          </MapsLink>
+        ) : (
+          <span className="block truncate">{event.location_label}</span>
+        )}
+        {address ? (
+          hasMaps ? (
+            <MapsLink
+              href={mapsUrl}
+              nestedInLink={nestedInLink}
+              className={`mt-0.5 block truncate text-xs text-zinc-500 ${linkClass}`}
+            >
+              {address}
+            </MapsLink>
+          ) : (
+            <span className="mt-0.5 block truncate text-xs text-zinc-500">{address}</span>
+          )
+        ) : null}
+      </div>
+    </div>
+  )
+}
+
 /** Compact row used in the "more sessions" list. */
 export function SessionRow({
   event,
@@ -113,21 +225,25 @@ export function SessionRow({
   const classes = cancelledEventClasses(cancelled)
 
   return (
-    <Link
-      href={`/events/${event.short_id}`}
-      className="flex items-center gap-3 rounded-2xl border border-zinc-800 bg-zinc-900/40 px-4 py-3 transition-colors hover:border-zinc-700"
-    >
-      <div className="min-w-0 flex-1">
+    <div className="relative flex items-center gap-3 rounded-2xl border border-zinc-800 bg-zinc-900/40 px-4 py-3 transition-colors hover:border-zinc-700">
+      <Link
+        href={`/events/${event.short_id}`}
+        className="absolute inset-0 z-0 rounded-2xl"
+        aria-label={`${eventName(event)} on ${formatEventDayLabel(event)}`}
+      />
+      <div className="relative z-10 min-w-0 flex-1 pointer-events-none">
         <div className="flex items-center gap-2">
           <span className={`truncate text-sm font-medium ${classes.titleSm}`}>
             {eventName(event)}
           </span>
         </div>
-        <div className="mt-0.5 flex items-center gap-1.5 text-xs text-zinc-500">
-          <span className="font-medium text-zinc-400">{formatEventDayLabel(event)}</span>
-          <span>·</span>
-          <span>{formatEventTimeOnly(event)}</span>
-          <span className="truncate">· {event.location_label}</span>
+        <div className="mt-0.5 text-xs text-zinc-500">
+          <div className="flex items-center gap-1.5">
+            <span className="font-medium text-zinc-400">{formatEventDayLabel(event)}</span>
+            <span>·</span>
+            <span>{formatEventTimeOnly(event)}</span>
+          </div>
+          <EventLocationRow event={event} nestedInLink compact className="mt-0.5" />
         </div>
       </div>
       {cancelled ? (
@@ -141,7 +257,7 @@ export function SessionRow({
           aria-label={statusLabel(event.status)}
         />
       ) : null}
-    </Link>
+    </div>
   )
 }
 

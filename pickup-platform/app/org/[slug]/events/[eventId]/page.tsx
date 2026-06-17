@@ -11,7 +11,6 @@ import {
 } from '@/lib/events'
 import { buildOrgMetadata } from '@/lib/og-metadata'
 import { recordEventPageView } from '@/lib/record-page-view'
-import { arrowNe } from '@/lib/text-arrows'
 import { WeatherPill } from './weather-pill'
 import { EventHeadcount, EventHeadcountFallback } from './event-headcount'
 import { EventParticipation } from './event-participation'
@@ -22,10 +21,9 @@ import { OrgPageShell, OrgPageFooter } from '../../_components/org-page-shell'
 import { SocialLinks } from '../../_components/social-links'
 import {
   StatusPill,
-  PinIcon,
-  OnlineIcon,
   LiveDot,
   EventDateTimeRow,
+  EventLocationRow,
   eventName,
   isEventCancelled,
   cancelledEventClasses,
@@ -136,34 +134,7 @@ export default async function EventPage({ params }: Props) {
 
           <EventDateTimeRow event={event} cancelled={isCancelled} />
 
-          <div className="mt-3 flex items-center gap-2 text-sm text-zinc-400">
-            {event.location_is_online ? <OnlineIcon /> : <PinIcon />}
-            {event.location_is_online ? (
-              event.location_meeting_url ? (
-                <a
-                  href={event.location_meeting_url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="truncate transition-colors hover:text-zinc-200"
-                >
-                  {event.location_label} · Join online {arrowNe}
-                </a>
-              ) : (
-                <span className="truncate">{event.location_label} · Online</span>
-              )
-            ) : event.location_maps_url ? (
-              <a
-                href={event.location_maps_url}
-                target="_blank"
-                rel="noreferrer"
-                className="truncate transition-colors hover:text-zinc-200"
-              >
-                {event.location_label} {arrowNe}
-              </a>
-            ) : (
-              <span className="truncate">{event.location_label}</span>
-            )}
-          </div>
+          <EventLocationRow event={event} className="mt-3 flex gap-2 text-sm text-zinc-400" />
 
           <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-zinc-800 pt-4 text-sm">
             <Suspense

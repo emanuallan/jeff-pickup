@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { getOrgBySlug } from '@/lib/orgs'
-import { getUpcomingEventsForOrg, formatEventTime } from '@/lib/events'
+import { getUpcomingEventsForOrg, formatEventTime, formatEventDayLabel } from '@/lib/events'
 import { buildOrgMetadata } from '@/lib/og-metadata'
 import { getPublicRoster, rosterHeadcount } from '@/lib/signups'
 import { isLeaderboardUnlocked } from '@/lib/engagement'
@@ -14,11 +14,10 @@ import { arrowRight } from '@/lib/text-arrows'
 import { MoreSessions } from './more-sessions'
 import {
   StatusPill,
-  PinIcon,
-  OnlineIcon,
   LiveDot,
   SessionRow,
   EventDateTimeRow,
+  EventLocationRow,
   eventName,
   isEventCancelled,
   cancelledEventClasses,
@@ -84,10 +83,13 @@ export default async function EventsPage({ params }: Props) {
       {next ? (
         <>
           <section className="mt-8">
-            <Link
-              href={`/events/${next.short_id}`}
-              className="group block overflow-hidden rounded-3xl border border-zinc-800 bg-linear-to-b from-zinc-900 to-zinc-950 p-6 transition-colors hover:border-zinc-700"
-            >
+            <div className="group relative overflow-hidden rounded-3xl border border-zinc-800 bg-linear-to-b from-zinc-900 to-zinc-950 p-6 transition-colors hover:border-zinc-700">
+              <Link
+                href={`/events/${next.short_id}`}
+                className="absolute inset-0 z-0 rounded-3xl"
+                aria-label={`${eventName(next)} — ${formatEventDayLabel(next)}`}
+              />
+              <div className="relative z-10 pointer-events-none">
               <div className="flex items-center justify-between gap-3">
                 <span className="flex items-center gap-2">
                   {nextCancelled ? (
@@ -115,10 +117,7 @@ export default async function EventsPage({ params }: Props) {
 
               <EventDateTimeRow event={next} cancelled={nextCancelled} />
 
-              <div className="mt-3 flex items-center gap-2 text-sm text-zinc-400">
-                {next.location_is_online ? <OnlineIcon /> : <PinIcon />}
-                <span className="truncate">{next.location_label}</span>
-              </div>
+              <EventLocationRow event={next} nestedInLink className="mt-3 flex gap-2 text-sm text-zinc-400" />
 
               {next.announcement ? (
                 <p className="mt-4 rounded-xl border border-zinc-800 bg-black/30 px-3 py-2 text-sm text-zinc-300">
@@ -149,7 +148,8 @@ export default async function EventsPage({ params }: Props) {
                   </>
                 )}
               </div>
-            </Link>
+              </div>
+            </div>
           </section>
 
           {rest.length > 0 ? (
