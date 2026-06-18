@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { getRootDomain } from '@/lib/tenancy/parse-host'
+import { orgBaseUrl } from '@/lib/og-metadata'
 import {
   OrganizrBackdrop,
   OrganizrMarketingHeader,
@@ -11,6 +12,7 @@ import { OrganizrLogo } from './_components/organizr-logo'
 
 export default function HomePage() {
   const rootDomain = getRootDomain()
+  const demoUrl = orgBaseUrl('demo')
 
   return (
     <div className="relative min-h-dvh">
@@ -32,13 +34,21 @@ export default function HomePage() {
           participants sign up in a tap. No more manual lists ;)
         </p>
 
-        <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+        <div className="mt-8 flex flex-col gap-3">
           <Link href="/login" className={`${organizrBtnPrimary} text-center`}>
             Sign in / Create your group
           </Link>
-          <Link href="/console" className={`${organizrBtnSecondary} text-center`}>
-            Organizer console
-          </Link>
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <a href={demoUrl} className={`${organizrBtnSecondary} text-center sm:flex-1`}>
+              Try the demo
+            </a>
+            <Link href="/console" className={`${organizrBtnSecondary} text-center sm:flex-1`}>
+              Organizer console
+            </Link>
+          </div>
+          <p className="text-center text-sm text-zinc-500">
+            Demo pickup soccer with a live roster, sign-ups, and leaderboard.
+          </p>
         </div>
 
         <p className="mt-12 text-sm text-zinc-500">
