@@ -46,7 +46,7 @@ begin
     'Pickup soccer in Nashville — all skill levels, friendly games twice a week.',
     'active',
     jsonb_build_object(
-      'logo_url', null,
+      'logo_url', 'https://dijtbndiacmfsgxhfcth.supabase.co/storage/v1/object/public/organizr_public/demo-logo.png',
       'accent_color', '#0080ff',
       'links', jsonb_build_array(
         'https://instagram.com/organizr.co',
