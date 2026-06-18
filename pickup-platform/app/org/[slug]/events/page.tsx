@@ -23,6 +23,7 @@ import {
   EventDateTimeRow,
   EventLocationRow,
   EventTimingBadge,
+  ViewNextSessionLink,
   eventName,
   isEventCancelled,
   cancelledEventClasses,
@@ -74,6 +75,9 @@ export default async function EventsPage({ params }: Props) {
   const next = events[0]
   const rest = events.slice(1)
   const nextCancelled = next ? isEventCancelled(next.status) : false
+  const nextAvailable = nextCancelled
+    ? rest.find((ev) => !isEventCancelled(ev.status)) ?? null
+    : null
   const nextLive = next ? isEventInProgress(next) && next.status === 'on' : false
   const nextEnded = next ? isEventEnded(next) : false
   const cancelledClasses = cancelledEventClasses(nextCancelled)
@@ -97,6 +101,10 @@ export default async function EventsPage({ params }: Props) {
 
       {next ? (
         <>
+          {nextAvailable ? (
+            <ViewNextSessionLink href={`/events/${nextAvailable.short_id}`} accent={accent} />
+          ) : null}
+
           <section className="mt-8">
             <div className="group relative overflow-hidden rounded-3xl border border-zinc-800 bg-linear-to-b from-zinc-900 to-zinc-950 p-6 transition-colors hover:border-zinc-700">
               <Link

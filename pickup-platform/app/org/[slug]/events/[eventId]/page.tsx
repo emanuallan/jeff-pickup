@@ -6,6 +6,7 @@ import { after } from 'next/server'
 import { getOrgBySlug } from '@/lib/orgs'
 import {
   getEventByRef,
+  getUpcomingEventsForOrg,
   formatEventTime,
   isEventInProgress,
   isEventEnded,
@@ -30,6 +31,7 @@ import {
   EventDateTimeRow,
   EventLocationRow,
   EventTimingBadge,
+  ViewNextSessionLink,
   eventName,
   isEventCancelled,
   cancelledEventClasses,
@@ -98,6 +100,9 @@ export default async function EventPage({ params }: Props) {
 
   const isCancelled = isEventCancelled(event.status)
   const cancelledClasses = cancelledEventClasses(isCancelled)
+  const nextSession = isCancelled
+    ? (await getUpcomingEventsForOrg(org.id, 1))[0] ?? null
+    : null
   const isLive = isEventInProgress(event) && event.status === 'on'
   const isEnded = isEventEnded(event)
   const shareText = `${org.name}: ${formatEventTime(event)} ${event.location_is_online ? 'on' : 'at'} ${event.location_label}. Join us!`
@@ -123,6 +128,10 @@ export default async function EventPage({ params }: Props) {
         className="mt-4"
         logoPriority
       />
+
+      {nextSession ? (
+        <ViewNextSessionLink href={`/events/${nextSession.short_id}`} accent={accent} />
+      ) : null}
 
       <section className="mt-8">
         <div className="overflow-hidden rounded-3xl border border-zinc-800 bg-linear-to-b from-zinc-900 to-zinc-950 p-6">

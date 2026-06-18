@@ -183,6 +183,28 @@ export function EventDateTimeRow({
   )
 }
 
+export function ViewNextSessionLink({
+  href,
+  accent,
+  className = 'mt-6',
+}: {
+  href: string
+  accent: string
+  className?: string
+}) {
+  return (
+    <div className={`flex justify-end ${className}`}>
+      <Link
+        href={href}
+        className="inline-flex items-center gap-1 text-sm font-medium transition-opacity hover:opacity-80"
+        style={{ color: accent }}
+      >
+        View next session {arrowRight}
+      </Link>
+    </div>
+  )
+}
+
 export function CancelledCallout({ hasSignup }: { hasSignup: boolean }) {
   return (
     <section className="mt-5 rounded-3xl border border-red-500/30 bg-red-500/10 p-5">
