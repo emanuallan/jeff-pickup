@@ -1,6 +1,5 @@
 import { cookies, headers } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
-import { createAdminClient } from '@/lib/supabase/admin'
 import { SESSION_COOKIE } from '@/lib/participant-session'
 import { VISITOR_COOKIE } from '@/lib/visitor-cookie'
 
@@ -42,7 +41,7 @@ export async function recordEventPageView(
   eventId: string,
   context: PageViewContext,
 ): Promise<void> {
-  const supabase = createAdminClient()
+  const supabase = await createClient()
   const { error } = await supabase.rpc('record_event_page_view', {
     p_event_id: eventId,
     p_viewer_key: context.viewerKey,
