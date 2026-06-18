@@ -253,22 +253,6 @@ export function EventLocationRow({
         ) : (
           <span className="truncate">{event.location_label}</span>
         )}
-        {address ? (
-          <>
-            <span className="shrink-0 text-zinc-600">·</span>
-            {hasMaps ? (
-              <MapsLink
-                href={mapsUrl}
-                nestedInLink={nestedInLink}
-                className={`min-w-0 truncate ${linkClass}`}
-              >
-                {address}
-              </MapsLink>
-            ) : (
-              <span className="min-w-0 truncate">{address}</span>
-            )}
-          </>
-        ) : null}
       </div>
     )
   }
