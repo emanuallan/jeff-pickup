@@ -11,7 +11,7 @@ import {
   isEventEnded,
 } from '@/lib/events'
 import { buildOrgMetadata } from '@/lib/og-metadata'
-import { recordEventPageView } from '@/lib/record-page-view'
+import { recordEventPageView, resolvePageViewContext } from '@/lib/record-page-view'
 import { WeatherPill } from './weather-pill'
 import { EventHeadcount, EventHeadcountFallback } from './event-headcount'
 import { EventParticipation } from './event-participation'
@@ -76,9 +76,14 @@ export default async function EventPage({ params }: Props) {
     notFound()
   }
 
-  after(() => {
-    void recordEventPageView(event.id, org.id)
-  })
+  const pageViewContext = await resolvePageViewContext(org.id)
+  if (pageViewContext) {
+    after(() => {
+      void recordEventPageView(event.id, pageViewContext)
+    })
+  } else {
+    console.error('recordEventPageView: missing viewer key (cookie and x-visitor-key header)')
+  }
 
   const isCancelled = isEventCancelled(event.status)
   const cancelledClasses = cancelledEventClasses(isCancelled)
