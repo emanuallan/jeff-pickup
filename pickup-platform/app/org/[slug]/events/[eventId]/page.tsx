@@ -11,12 +11,16 @@ import {
   isEventEnded,
 } from '@/lib/events'
 import { buildOrgMetadata } from '@/lib/og-metadata'
-import { recordEventPageView, resolvePageViewContext } from '@/lib/record-page-view'
+import {
+  lookupParticipantId,
+  recordEventPageView,
+  resolvePageViewTrackingKeys,
+} from '@/lib/record-page-view'
 import { WeatherPill } from './weather-pill'
 import { EventHeadcount, EventHeadcountFallback } from './event-headcount'
 import { EventParticipation } from './event-participation'
 import { ParticipationFallback } from './participation-fallback'
-import { ShareButton } from '../../share-button'
+import { ShareButton } from '../../share-button-lazy'
 import { OrgHeader } from '../../_components/org-header'
 import { OrgPageShell, OrgPageFooter } from '../../_components/org-page-shell'
 import { SocialLinks } from '../../_components/social-links'
@@ -71,15 +75,21 @@ export default async function EventPage({ params }: Props) {
     notFound()
   }
 
-  const event = await getEventByRef(eventId, org.id)
+  const [event, tracking] = await Promise.all([
+    getEventByRef(eventId, org.id),
+    resolvePageViewTrackingKeys(),
+  ])
   if (!event) {
     notFound()
   }
 
-  const pageViewContext = await resolvePageViewContext(org.id)
-  if (pageViewContext) {
-    after(() => {
-      void recordEventPageView(event.id, pageViewContext)
+  const { viewerKey, sessionToken } = tracking
+  if (viewerKey) {
+    after(async () => {
+      const participantId = sessionToken
+        ? await lookupParticipantId(org.id, sessionToken)
+        : null
+      await recordEventPageView(event.id, { viewerKey, participantId })
     })
   } else {
     console.error('recordEventPageView: missing viewer key (cookie and x-visitor-key header)')

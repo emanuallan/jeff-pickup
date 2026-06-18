@@ -1,19 +1,23 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import { Suspense } from 'react'
 import { notFound } from 'next/navigation'
 import { getOrgBySlug } from '@/lib/orgs'
 import { getUpcomingEventsForOrg, formatEventTime, formatEventDayLabel, isEventInProgress, isEventEnded } from '@/lib/events'
 import { buildOrgMetadata } from '@/lib/og-metadata'
 // import { rootBaseUrl } from '@/lib/og-metadata'
-import { getPublicRoster, rosterHeadcount } from '@/lib/signups'
 import { isLeaderboardUnlocked } from '@/lib/engagement'
 import { OrgHeader } from '../_components/org-header'
 import { OrgPageShell, OrgPageFooter, LeaderboardLink } from '../_components/org-page-shell'
 // import { OrganizrLogo } from '../../../_components/organizr-logo'
 import { SocialLinks } from '../_components/social-links'
-import { ShareButton } from '../share-button'
+import { ShareButton } from '../share-button-lazy'
 import { arrowRight } from '@/lib/text-arrows'
 import { MoreSessions } from './more-sessions'
+import {
+  FeaturedEventHeadcount,
+  FeaturedEventHeadcountFallback,
+} from './[eventId]/event-headcount'
 import {
   StatusPill,
   SessionRow,
@@ -74,7 +78,6 @@ export default async function EventsPage({ params }: Props) {
   const nextLive = next ? isEventInProgress(next) && next.status === 'on' : false
   const nextEnded = next ? isEventEnded(next) : false
   const cancelledClasses = cancelledEventClasses(nextCancelled)
-  const nextHeadcount = next ? rosterHeadcount(await getPublicRoster(next.id)) : 0
 
   return (
     <OrgPageShell>
@@ -145,8 +148,16 @@ export default async function EventsPage({ params }: Props) {
                 ) : (
                   <>
                     <span className="text-sm text-zinc-400">
-                      <span className="font-semibold text-zinc-100">{nextHeadcount}</span>
-                      {next.capacity != null ? ` / ${next.capacity}` : ''} coming
+                      <Suspense
+                        fallback={
+                          <FeaturedEventHeadcountFallback capacity={next.capacity} />
+                        }
+                      >
+                        <FeaturedEventHeadcount
+                          eventId={next.id}
+                          capacity={next.capacity}
+                        />
+                      </Suspense>
                     </span>
                     <span
                       className="inline-flex items-center gap-1 text-sm font-medium transition-transform group-hover:translate-x-0.5"

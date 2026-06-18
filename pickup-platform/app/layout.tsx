@@ -10,6 +10,10 @@ const inter = Inter({
   display: 'swap',
 })
 
+const supabaseOrigin = process.env.NEXT_PUBLIC_SUPABASE_URL
+  ? new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).origin
+  : null
+
 export const metadata: Metadata = buildRootMetadata()
 
 export default function RootLayout({
@@ -19,6 +23,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        {supabaseOrigin ? (
+          <link rel="preconnect" href={supabaseOrigin} crossOrigin="" />
+        ) : null}
+      </head>
       <body className={`${inter.className} min-h-dvh antialiased`}>
         {children}
         <Analytics />

@@ -25,6 +25,33 @@ export async function EventHeadcount({ eventId, capacity, minPlayers }: Props) {
   )
 }
 
+export async function FeaturedEventHeadcount({
+  eventId,
+  capacity,
+}: {
+  eventId: string
+  capacity: number | null
+}) {
+  const roster = await getPublicRoster(eventId)
+  const headcount = rosterHeadcount(roster)
+
+  return (
+    <>
+      <span className="font-semibold text-zinc-100">{headcount}</span>
+      {capacity != null ? ` / ${capacity}` : ''} coming
+    </>
+  )
+}
+
+export function FeaturedEventHeadcountFallback({ capacity }: { capacity: number | null }) {
+  return (
+    <>
+      <span className="inline-block h-4 w-6 animate-pulse rounded bg-zinc-700/80" />
+      {capacity != null ? ` / ${capacity}` : ''} coming
+    </>
+  )
+}
+
 export function EventHeadcountFallback({
   capacity,
   minPlayers,

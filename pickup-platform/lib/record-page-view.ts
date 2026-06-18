@@ -1,7 +1,7 @@
 import { cookies, headers } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { getSessionToken } from '@/lib/participant-session'
+import { SESSION_COOKIE } from '@/lib/participant-session'
 import { VISITOR_COOKIE } from '@/lib/visitor-cookie'
 
 export type PageViewContext = {
@@ -9,29 +9,32 @@ export type PageViewContext = {
   participantId: string | null
 }
 
-/** Read request-scoped data before `after()` — cookies/headers are not available inside it. */
-export async function resolvePageViewContext(orgId: string): Promise<PageViewContext | null> {
+/** Fast cookie/header read — safe to parallelize with page data fetches. */
+export async function resolvePageViewTrackingKeys(): Promise<{
+  viewerKey: string | null
+  sessionToken: string | null
+}> {
   const cookieStore = await cookies()
-  const fromCookie = cookieStore.get(VISITOR_COOKIE)?.value
   const headerStore = await headers()
-  const viewerKey = fromCookie ?? headerStore.get('x-visitor-key')
-  if (!viewerKey) {
-    return null
+  return {
+    viewerKey:
+      cookieStore.get(VISITOR_COOKIE)?.value ?? headerStore.get('x-visitor-key'),
+    sessionToken: cookieStore.get(SESSION_COOKIE)?.value ?? null,
   }
+}
 
-  let participantId: string | null = null
-  const sessionToken = await getSessionToken()
-  if (sessionToken) {
-    const supabase = await createClient()
-    const { data } = await supabase.rpc('get_participant_for_session', {
-      p_session_token: sessionToken,
-      p_org_id: orgId,
-    })
-    const participant = data as { participant_id?: string } | null
-    participantId = participant?.participant_id ?? null
-  }
-
-  return { viewerKey, participantId }
+/** Participant lookup is deferred to `after()` so it does not block FCP. */
+export async function lookupParticipantId(
+  orgId: string,
+  sessionToken: string,
+): Promise<string | null> {
+  const supabase = await createClient()
+  const { data } = await supabase.rpc('get_participant_for_session', {
+    p_session_token: sessionToken,
+    p_org_id: orgId,
+  })
+  const participant = data as { participant_id?: string } | null
+  return participant?.participant_id ?? null
 }
 
 /** Fire-and-forget page view write — safe to call inside `after()`. */
