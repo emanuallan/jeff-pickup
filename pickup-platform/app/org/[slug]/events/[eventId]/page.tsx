@@ -8,6 +8,7 @@ import {
   getEventByRef,
   formatEventTime,
   isEventInProgress,
+  isEventEnded,
 } from '@/lib/events'
 import { buildOrgMetadata } from '@/lib/og-metadata'
 import { recordEventPageView } from '@/lib/record-page-view'
@@ -82,6 +83,7 @@ export default async function EventPage({ params }: Props) {
   const isCancelled = isEventCancelled(event.status)
   const cancelledClasses = cancelledEventClasses(isCancelled)
   const isLive = isEventInProgress(event) && event.status === 'on'
+  const isEnded = isEventEnded(event)
   const shareText = `${org.name}: ${formatEventTime(event)} ${event.location_is_online ? 'on' : 'at'} ${event.location_label}. Join us!`
   const accent = org.branding.accent_color
 
@@ -109,7 +111,7 @@ export default async function EventPage({ params }: Props) {
         <div className="overflow-hidden rounded-3xl border border-zinc-800 bg-linear-to-b from-zinc-900 to-zinc-950 p-6">
           <div className="flex items-center justify-between gap-3">
             <EventTimingBadge event={event} accent={accent} cancelled={isCancelled} />
-            <StatusPill status={event.status} accent={accent} live={isLive} />
+            <StatusPill status={event.status} accent={accent} live={isLive} ended={isEnded} />
           </div>
 
           <h2 className={`mt-4 text-2xl font-semibold tracking-tight ${cancelledClasses.titleLg}`}>

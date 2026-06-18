@@ -45,10 +45,12 @@ export function StatusPill({
   status,
   accent,
   live = false,
+  ended = false,
 }: {
   status: EventStatus
   accent: string
   live?: boolean
+  ended?: boolean
 }) {
   if (status === 'cancelled') {
     return (
@@ -63,6 +65,14 @@ export function StatusPill({
       <span className="inline-flex items-center gap-1.5 rounded-full bg-red-500/15 px-2.5 py-1 text-xs font-medium text-red-400">
         <span className="h-1.5 w-1.5 rounded-full bg-red-400" />
         Live
+      </span>
+    )
+  }
+  if (status === 'on' && ended) {
+    return (
+      <span className="inline-flex items-center gap-1.5 rounded-full bg-zinc-800/80 px-2.5 py-1 text-xs font-medium text-zinc-400">
+        <span className="h-1.5 w-1.5 rounded-full bg-zinc-500" />
+        Ended
       </span>
     )
   }

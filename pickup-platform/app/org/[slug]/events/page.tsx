@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { getOrgBySlug } from '@/lib/orgs'
-import { getUpcomingEventsForOrg, formatEventTime, formatEventDayLabel, isEventInProgress } from '@/lib/events'
+import { getUpcomingEventsForOrg, formatEventTime, formatEventDayLabel, isEventInProgress, isEventEnded } from '@/lib/events'
 import { buildOrgMetadata } from '@/lib/og-metadata'
 import { getPublicRoster, rosterHeadcount } from '@/lib/signups'
 import { isLeaderboardUnlocked } from '@/lib/engagement'
@@ -70,6 +70,7 @@ export default async function EventsPage({ params }: Props) {
   const rest = events.slice(1)
   const nextCancelled = next ? isEventCancelled(next.status) : false
   const nextLive = next ? isEventInProgress(next) && next.status === 'on' : false
+  const nextEnded = next ? isEventEnded(next) : false
   const cancelledClasses = cancelledEventClasses(nextCancelled)
   const nextHeadcount = next ? rosterHeadcount(await getPublicRoster(next.id)) : 0
 
@@ -102,7 +103,7 @@ export default async function EventsPage({ params }: Props) {
                     upcomingLabel="Next session"
                   />
                 )}
-                <StatusPill status={next.status} accent={accent} live={nextLive} />
+                <StatusPill status={next.status} accent={accent} live={nextLive} ended={nextEnded} />
               </div>
 
               <h2 className={`mt-4 text-2xl font-semibold tracking-tight ${cancelledClasses.titleLg}`}>
