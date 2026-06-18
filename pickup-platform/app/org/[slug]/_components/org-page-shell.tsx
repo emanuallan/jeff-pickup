@@ -28,10 +28,14 @@ export function OrgPageFooter({ slug }: { slug: string }) {
   )
 }
 
-export function LeaderboardLink() {
+export function LeaderboardLink({ accent }: { accent: string }) {
   return (
     <p className="mt-10 text-center">
-      <Link href="/leaderboard" className="text-sm text-zinc-400 hover:text-zinc-200">
+      <Link
+        href="/leaderboard"
+        className="text-sm transition-opacity hover:opacity-80"
+        style={{ color: accent }}
+      >
         View leaderboard {arrowRight}
       </Link>
     </p>

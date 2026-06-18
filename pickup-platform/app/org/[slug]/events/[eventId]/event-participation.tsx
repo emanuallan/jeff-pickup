@@ -116,7 +116,7 @@ export async function EventParticipation({ slug, eventId, org, event }: Props) {
         ) : null}
       </section>
 
-      {leaderboardUnlocked ? <LeaderboardLink /> : null}
+      {leaderboardUnlocked ? <LeaderboardLink accent={accent} /> : null}
     </>
   )
 }
