@@ -55,7 +55,7 @@ export function ScheduleFormFields({ locations, schedule, timezone }: Props) {
 					{WEEKDAYS.map((d) => (
 						<label
 							key={d.value}
-							className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-white/10 px-2.5 py-1.5 text-xs transition has-checked:border-indigo-500 has-checked:bg-indigo-500/10"
+							className="flex min-h-10 cursor-pointer items-center gap-1.5 rounded-lg border border-white/10 px-3 py-2 text-xs transition has-checked:border-indigo-500 has-checked:bg-indigo-500/10"
 						>
 							<input
 								type="checkbox"
@@ -70,7 +70,7 @@ export function ScheduleFormFields({ locations, schedule, timezone }: Props) {
 				</div>
 			</fieldset>
 
-			<div className="grid grid-cols-2 gap-3">
+			<div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
 				<label className="block">
 					<span className="text-xs text-zinc-500">Start time</span>
 					<input
@@ -110,7 +110,7 @@ export function ScheduleFormFields({ locations, schedule, timezone }: Props) {
 				</select>
 			</label>
 
-			<div className="grid grid-cols-2 gap-3">
+			<div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
 				<label className="block">
 					<span className="text-xs text-zinc-500">Capacity (optional)</span>
 					<input

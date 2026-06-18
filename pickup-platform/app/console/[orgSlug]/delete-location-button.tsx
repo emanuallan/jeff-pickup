@@ -28,7 +28,7 @@ export function DeleteLocationButton({ orgSlug, locationId, locationLabel }: Pro
   }
 
   return (
-    <div className="-mr-1.5 shrink-0 text-right">
+    <div className="shrink-0 self-end sm:self-auto">
       <button
         type="button"
         onClick={handleDelete}

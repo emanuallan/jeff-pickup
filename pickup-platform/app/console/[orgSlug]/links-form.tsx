@@ -49,7 +49,7 @@ export function LinksForm({ orgSlug, links }: Props) {
           const trimmed = value.trim()
           return (
             <div key={index} className="flex items-center gap-2">
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center sm:h-9 sm:w-9">
                 {trimmed ? (
                   <SocialLinkIcon url={trimmed} />
                 ) : (
@@ -69,7 +69,7 @@ export function LinksForm({ orgSlug, links }: Props) {
                 type="button"
                 onClick={() => removeItem(index)}
                 aria-label="Remove link"
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-zinc-500 transition-colors hover:bg-zinc-800 hover:text-zinc-200"
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-zinc-500 transition-colors hover:bg-zinc-800 hover:text-zinc-200 sm:h-9 sm:w-9"
               >
                 <svg
                   className="h-4 w-4"
@@ -101,8 +101,8 @@ export function LinksForm({ orgSlug, links }: Props) {
         <p className="text-xs text-zinc-600">You can add up to {MAX_ORG_LINKS} links.</p>
       )}
 
-      <div className="flex items-center gap-3 border-t border-white/5 pt-3">
-        <button type="submit" className={btnSecondary}>
+      <div className="flex flex-col gap-2 border-t border-white/5 pt-3 sm:flex-row sm:items-center sm:gap-3">
+        <button type="submit" className={`w-full sm:w-auto ${btnSecondary}`}>
           Save links
         </button>
         {message ? <span className="text-xs text-zinc-400">{message}</span> : null}

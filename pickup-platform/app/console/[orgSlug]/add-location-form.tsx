@@ -16,7 +16,7 @@ export function AddLocationForm({ addLocation }: Props) {
         <button
           type="button"
           onClick={() => setIsOnline(false)}
-          className={`flex-1 rounded-md px-3 py-1.5 font-medium transition ${
+          className={`flex min-h-11 flex-1 items-center justify-center rounded-md px-3 py-2 font-medium transition ${
             !isOnline ? 'bg-indigo-500/20 text-indigo-100' : 'text-zinc-400 hover:text-zinc-200'
           }`}
         >
@@ -25,7 +25,7 @@ export function AddLocationForm({ addLocation }: Props) {
         <button
           type="button"
           onClick={() => setIsOnline(true)}
-          className={`flex-1 rounded-md px-3 py-1.5 font-medium transition ${
+          className={`flex min-h-11 flex-1 items-center justify-center rounded-md px-3 py-2 font-medium transition ${
             isOnline ? 'bg-indigo-500/20 text-indigo-100' : 'text-zinc-400 hover:text-zinc-200'
           }`}
         >
@@ -55,7 +55,7 @@ export function AddLocationForm({ addLocation }: Props) {
         </>
       )}
 
-      <button type="submit" className={btnSecondary}>
+      <button type="submit" className={`w-full sm:w-auto ${btnSecondary}`}>
         Add location
       </button>
     </form>

@@ -59,9 +59,9 @@ export default async function OrgConsolePage({ params }: Props) {
     locations.length > 0 ? (
       <ul className="space-y-2">
         {locations.map((loc) => (
-          <ConsoleCard key={loc.id} className="text-sm">
-            <div className="flex items-start justify-between gap-2">
-              <div>
+          <ConsoleCard key={loc.id} className="min-w-0 text-sm">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
+              <div className="min-w-0">
                 <div className="font-medium text-zinc-100">{loc.label}</div>
                 {loc.is_online ? (
                   <div className="mt-0.5 text-xs text-zinc-500">
@@ -88,8 +88,8 @@ export default async function OrgConsolePage({ params }: Props) {
     schedules.length > 0 ? (
       <ul className="space-y-2">
         {schedules.map((s) => (
-          <ConsoleCard key={s.id} className="text-sm">
-            <div className="flex items-start justify-between gap-2">
+          <ConsoleCard key={s.id} className="min-w-0 text-sm">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
               <div className="min-w-0">
                 <div className="font-medium text-zinc-100">{s.title}</div>
                 <div className="mt-0.5 text-xs text-zinc-500">
@@ -101,7 +101,7 @@ export default async function OrgConsolePage({ params }: Props) {
                   {s.min_players != null ? ` · min ${s.min_players} participants` : ''}
                 </div>
               </div>
-              <div className="flex shrink-0 gap-1">
+              <div className="flex shrink-0 flex-wrap gap-1 sm:justify-end">
                 <EditScheduleButton orgSlug={orgSlug} schedule={s} locations={locations} />
                 <DeleteScheduleButton
                   orgSlug={orgSlug}
@@ -122,9 +122,9 @@ export default async function OrgConsolePage({ params }: Props) {
   const sessionFallback = 'Session'
 
   const renderEventItem = (ev: EventWithLocation, opts?: { past?: boolean }) => (
-    <ConsoleCard key={ev.id} className="text-sm">
-      <div className="flex items-start justify-between gap-2">
-        <div>
+    <ConsoleCard key={ev.id} className="min-w-0 text-sm">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
+        <div className="min-w-0">
           <div className="font-medium text-zinc-100">{formatEventTime(ev)}</div>
           <div className="mt-0.5 text-xs text-zinc-500">
             {eventDisplayName(ev.title, sessionFallback)} · {ev.location_label}

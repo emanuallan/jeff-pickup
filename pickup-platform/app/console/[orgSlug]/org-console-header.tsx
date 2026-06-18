@@ -4,7 +4,12 @@ import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import type { Location } from '@/lib/locations'
 import { OneOffEventForm } from './one-off-event-form'
-import { btnOutline } from '../_components/console-ui'
+import {
+  btnOutline,
+  consoleModalBackdrop,
+  consoleModalOverlay,
+  consoleModalPanel,
+} from '../_components/console-ui'
 import { arrowNe } from '@/lib/text-arrows'
 
 type Props = {
@@ -62,7 +67,7 @@ export function OrgConsoleHeader({
 
   return (
     <>
-      <div className="mt-4 flex items-start justify-between gap-3">
+      <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex min-w-0 items-start gap-3">
           {logoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -73,16 +78,16 @@ export function OrgConsoleHeader({
             />
           ) : null}
           <div className="min-w-0">
-            <h1 className="text-2xl font-semibold tracking-tight text-zinc-50">{orgName}</h1>
+            <h1 className="text-xl font-semibold tracking-tight text-zinc-50 sm:text-2xl">{orgName}</h1>
             {orgActivity ? <p className="mt-1 text-sm text-zinc-400">{orgActivity}</p> : null}
           </div>
         </div>
 
-        <div ref={menuRef} className="relative shrink-0">
+        <div ref={menuRef} className="relative w-full shrink-0 sm:w-auto">
           <button
             type="button"
             onClick={() => setMenuOpen((v) => !v)}
-            className={`${btnOutline} gap-1.5`}
+            className={`${btnOutline} w-full gap-1.5 sm:w-auto`}
             aria-expanded={menuOpen}
             aria-haspopup="menu"
           >
@@ -95,7 +100,7 @@ export function OrgConsoleHeader({
           {menuOpen ? (
             <div
               role="menu"
-              className="absolute right-0 z-30 mt-2 w-56 rounded-xl border border-white/10 bg-zinc-900 p-1.5 shadow-xl"
+              className="absolute right-0 z-30 mt-2 w-full min-w-[14rem] rounded-xl border border-white/10 bg-zinc-900 p-1.5 shadow-xl sm:w-56"
             >
               <Link
                 href={`/console/${orgSlug}/participants`}
@@ -140,18 +145,18 @@ export function OrgConsoleHeader({
 
       {oneOffOpen ? (
         <div
-          className="fixed inset-0 z-50 flex items-end justify-center p-4 sm:items-center"
+          className={consoleModalOverlay}
           role="dialog"
           aria-modal="true"
           aria-labelledby="one-off-title"
         >
           <button
             type="button"
-            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            className={consoleModalBackdrop}
             aria-label="Close"
             onClick={() => setOneOffOpen(false)}
           />
-          <div className="relative w-full max-w-md rounded-xl border border-white/10 bg-zinc-900 p-5 shadow-xl">
+          <div className={`${consoleModalPanel} max-w-md`}>
             <h2 id="one-off-title" className="text-lg font-semibold text-zinc-50">
               Add one-off session
             </h2>

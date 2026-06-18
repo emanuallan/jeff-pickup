@@ -4,7 +4,7 @@ import { useEffect, useState, useTransition } from 'react'
 import type { Location } from '@/lib/locations'
 import type { Schedule } from '@/lib/schedules'
 import { updateSchedule, type UpdateScheduleMode } from '../actions'
-import { chipAction } from '../_components/console-ui'
+import { chipAction, consoleModalBackdrop, consoleModalOverlay, consoleModalPanel } from '../_components/console-ui'
 import { ScheduleFormFields } from './schedule-form-fields'
 
 type Props = {
@@ -64,18 +64,18 @@ export function EditScheduleButton({ orgSlug, schedule, locations }: Props) {
 
       {open ? (
         <div
-          className="fixed inset-0 z-50 flex items-end justify-center p-4 sm:items-center"
+          className={consoleModalOverlay}
           role="dialog"
           aria-modal="true"
           aria-labelledby="edit-schedule-title"
         >
           <button
             type="button"
-            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            className={consoleModalBackdrop}
             aria-label="Close"
             onClick={closeModal}
           />
-          <div className="relative max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-xl border border-white/10 bg-zinc-900 p-5 shadow-xl">
+          <div className={consoleModalPanel}>
             <h3 id="edit-schedule-title" className="text-lg font-semibold text-zinc-50">
               Edit recurring schedule
             </h3>

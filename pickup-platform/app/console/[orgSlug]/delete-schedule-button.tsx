@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useTransition } from 'react'
 import { deleteSchedule, type DeleteScheduleMode } from '../actions'
-import { chipAction } from '../_components/console-ui'
+import { chipAction, consoleModalBackdrop, consoleModalOverlay, consoleModalPanel } from '../_components/console-ui'
 
 type Props = {
   orgSlug: string
@@ -59,18 +59,18 @@ export function DeleteScheduleButton({ orgSlug, scheduleId, scheduleTitle }: Pro
 
       {open ? (
         <div
-          className="fixed inset-0 z-50 flex items-end justify-center p-4 sm:items-center"
+          className={consoleModalOverlay}
           role="dialog"
           aria-modal="true"
           aria-labelledby="delete-schedule-title"
         >
           <button
             type="button"
-            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            className={consoleModalBackdrop}
             aria-label="Close"
             onClick={closeModal}
           />
-          <div className="relative w-full max-w-md rounded-xl border border-red-500/30 bg-zinc-900 p-5 shadow-xl">
+          <div className={`${consoleModalPanel} max-w-md border-red-500/30`}>
             <h3 id="delete-schedule-title" className="text-lg font-semibold text-zinc-50">
               Delete recurring schedule?
             </h3>

@@ -63,8 +63,8 @@ export function EventStatusSelect({ orgSlug, eventId, status: initialStatus }: P
   }
 
   return (
-    <div className="flex shrink-0 flex-col items-end gap-1">
-      <div className="flex items-center gap-1.5">
+    <div className="flex w-full shrink-0 flex-col gap-1 sm:w-auto sm:items-end">
+      <div className="flex w-full items-center gap-1.5 sm:w-auto sm:justify-end">
         {savedFlash ? (
           <span className="text-[11px] font-medium text-emerald-400" aria-live="polite">
             Saved
@@ -75,7 +75,7 @@ export function EventStatusSelect({ orgSlug, eventId, status: initialStatus }: P
           onChange={(e) => handleChange(e.target.value as EventStatus)}
           disabled={pending}
           aria-label="Session status"
-          className={`rounded-lg border bg-zinc-950/60 py-1 pl-2 pr-7 text-xs font-medium outline-none transition focus:border-indigo-500/50 focus:ring-2 focus:ring-indigo-500/25 disabled:opacity-50 ${statusSelectClass[status]}`}
+          className={`min-h-11 w-full rounded-lg border bg-zinc-950/60 py-2 pl-3 pr-8 text-base font-medium outline-none transition focus:border-indigo-500/50 focus:ring-2 focus:ring-indigo-500/25 disabled:opacity-50 sm:w-auto sm:py-1 sm:pl-2 sm:pr-7 sm:text-xs ${statusSelectClass[status]}`}
         >
           {STATUS_OPTIONS.map((option) => (
             <option key={option} value={option} className="bg-zinc-900 text-zinc-100">

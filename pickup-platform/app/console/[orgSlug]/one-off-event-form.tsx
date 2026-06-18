@@ -59,7 +59,7 @@ export function OneOffEventForm({ locations, createOneOff, onSuccess }: Props) {
           className={`mt-1 ${consoleInput}`}
         />
       </label>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <label className="block">
           <span className="text-xs text-zinc-500">Capacity (optional)</span>
           <input
@@ -84,7 +84,7 @@ export function OneOffEventForm({ locations, createOneOff, onSuccess }: Props) {
         </label>
       </div>
       <p className="text-xs text-zinc-500">Timezone: {timezone}</p>
-      <button type="submit" disabled={pending} className={`${btnSecondary} disabled:opacity-50`}>
+      <button type="submit" disabled={pending} className={`w-full sm:w-auto ${btnSecondary} disabled:opacity-50`}>
         {pending ? 'Adding…' : 'Add session'}
       </button>
     </form>

@@ -155,10 +155,10 @@ export default async function ConsoleEventAnalyticsPage({ params }: Props) {
           ) : (
             <ul className="space-y-2">
               {roster.map((e) => (
-                <ConsoleCard key={e.id} className="text-sm">
+                <ConsoleCard key={e.id} className="min-w-0 text-sm">
                   <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <div className="font-medium text-zinc-100">
+                    <div className="min-w-0">
+                      <div className="break-words font-medium text-zinc-100">
                         {arrivalStatusEmoji(e.arrival_status, event.location_is_online)}{' '}
                         {e.display_name}
                         {e.guest_count > 0 ? ` +${e.guest_count}` : ''}

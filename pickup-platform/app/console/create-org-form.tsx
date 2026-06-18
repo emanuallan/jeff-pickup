@@ -54,7 +54,7 @@ export function CreateOrgForm() {
   return (
     <form
       action={handleSubmit}
-      className="space-y-4 rounded-xl border border-white/10 bg-zinc-900/50 p-5"
+      className="space-y-4 rounded-xl border border-white/10 bg-zinc-900/50 p-4 sm:p-5"
     >
       <input type="hidden" name="timezone" value={timezone} />
 

@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useTransition } from 'react'
 import { deleteOrg } from '../actions'
-import { consoleInput, chipAction } from '../_components/console-ui'
+import { consoleInput, chipAction, consoleModalBackdrop, consoleModalOverlay, consoleModalPanel } from '../_components/console-ui'
 import { normalizeSlug } from '@/lib/tenancy/reserved-slugs'
 
 type Props = {
@@ -64,18 +64,18 @@ export function DeleteOrgSection({ orgSlug, rootDomain }: Props) {
 
       {open ? (
         <div
-          className="fixed inset-0 z-50 flex items-end justify-center p-4 sm:items-center"
+          className={consoleModalOverlay}
           role="dialog"
           aria-modal="true"
           aria-labelledby="delete-org-title"
         >
           <button
             type="button"
-            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            className={consoleModalBackdrop}
             aria-label="Close"
             onClick={closeModal}
           />
-          <div className="relative w-full max-w-md rounded-xl border border-red-500/30 bg-zinc-900 p-5 shadow-xl">
+          <div className={`${consoleModalPanel} max-w-md border-red-500/30`}>
             <h3 id="delete-org-title" className="text-lg font-semibold text-zinc-50">
               Delete this group?
             </h3>

@@ -48,8 +48,8 @@ export function ProfileForm({ orgSlug, name, activity }: Props) {
         />
       </label>
 
-      <div className="flex items-center gap-3">
-        <button type="submit" className={btnSecondary}>
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+        <button type="submit" className={`w-full sm:w-auto ${btnSecondary}`}>
           Save
         </button>
         {message ? <span className="text-xs text-zinc-400">{message}</span> : null}

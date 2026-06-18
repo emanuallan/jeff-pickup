@@ -41,7 +41,7 @@ export function ScheduleForm({ orgSlug, locations, createSchedule }: Props) {
 
       {error ? <p className="text-sm text-red-300">{error}</p> : null}
 
-      <button type="submit" className={btnSecondary}>
+      <button type="submit" className={`w-full sm:w-auto ${btnSecondary}`}>
         Add schedule
       </button>
     </form>
