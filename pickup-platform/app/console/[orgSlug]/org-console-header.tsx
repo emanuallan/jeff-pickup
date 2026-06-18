@@ -108,7 +108,7 @@ export function OrgConsoleHeader({
                 className={menuItemClass}
                 onClick={() => setMenuOpen(false)}
               >
-                Participants
+                Participant history
               </Link>
               <Link
                 href={`/console/${orgSlug}/settings`}

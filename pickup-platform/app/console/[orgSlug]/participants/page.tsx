@@ -1,9 +1,8 @@
-import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { getOrgForMember } from '@/lib/orgs'
 import { getParticipantHistoryForOrg } from '@/lib/participants'
 import { formatPhoneDisplay } from '@/lib/phone'
-import { ConsolePage, ConsoleHeader, ConsoleSection, ConsoleCard, btnOutline } from '../../_components/console-ui'
+import { ConsolePage, ConsoleHeader, ConsoleSection, ConsoleCard } from '../../_components/console-ui'
 
 type Props = {
   params: Promise<{ orgSlug: string }>
@@ -26,11 +25,6 @@ export default async function ParticipantHistoryPage({ params }: Props) {
         description="Everyone who has joined a session with contact info and attendance."
         backHref={`/console/${orgSlug}`}
         backLabel={org.name}
-        actions={
-          <Link href={`/console/${orgSlug}/settings`} className={btnOutline}>
-            Personalize
-          </Link>
-        }
       />
 
       <div className="mt-8">
