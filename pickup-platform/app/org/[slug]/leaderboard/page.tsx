@@ -7,7 +7,6 @@ import { readableTextColor } from '@/lib/colors'
 import { buildOrgMetadata } from '@/lib/og-metadata'
 import { OrgHeader } from '../_components/org-header'
 import { OrgPageShell, OrgPageFooter } from '../_components/org-page-shell'
-import { SocialLinks } from '../_components/social-links'
 import { arrowRight } from '@/lib/text-arrows'
 
 type Props = {
@@ -185,7 +184,6 @@ export default async function LeaderboardPage({ params }: Props) {
         </Link>
       </p>
 
-      <SocialLinks links={org.branding.links} />
       <OrgPageFooter slug={org.slug} />
     </OrgPageShell>
   )

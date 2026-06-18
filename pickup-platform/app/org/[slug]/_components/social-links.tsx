@@ -51,15 +51,15 @@ export function SocialLinkIcon({ url }: { url: string }) {
   )
 }
 
-/** Right-aligned row of an org's social/web links. Renders nothing when empty. */
+/** Centered row of an org's social/web links. Renders nothing when empty. */
 export function SocialLinks({ links }: { links: string[] }) {
   if (!links.length) return null
 
   return (
-    <div className="mt-10 flex flex-wrap items-center justify-end gap-2">
+    <nav aria-label="Social links" className="mt-4 flex flex-wrap items-center justify-center gap-2">
       {links.map((url) => (
         <SocialLinkIcon key={url} url={url} />
       ))}
-    </div>
+    </nav>
   )
 }

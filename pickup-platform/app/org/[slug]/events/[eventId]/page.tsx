@@ -23,7 +23,6 @@ import { ParticipationFallback } from './participation-fallback'
 import { ShareButton } from '../../share-button-lazy'
 import { OrgHeader } from '../../_components/org-header'
 import { OrgPageShell, OrgPageFooter } from '../../_components/org-page-shell'
-import { SocialLinks } from '../../_components/social-links'
 import {
   StatusPill,
   EventDateTimeRow,
@@ -173,7 +172,6 @@ export default async function EventPage({ params }: Props) {
         <EventParticipation slug={slug} eventId={eventId} org={org} event={event} />
       </Suspense>
 
-      <SocialLinks links={org.branding.links} />
       <OrgPageFooter slug={org.slug} />
     </OrgPageShell>
   )

@@ -10,7 +10,6 @@ import { isLeaderboardUnlocked } from '@/lib/engagement'
 import { OrgHeader } from '../_components/org-header'
 import { OrgPageShell, OrgPageFooter, LeaderboardLink } from '../_components/org-page-shell'
 // import { OrganizrLogo } from '../../../_components/organizr-logo'
-import { SocialLinks } from '../_components/social-links'
 import { ShareButton } from '../share-button-lazy'
 import { arrowRight } from '@/lib/text-arrows'
 import { MoreSessions } from './more-sessions'
@@ -197,7 +196,6 @@ export default async function EventsPage({ params }: Props) {
       )}
 
       {leaderboardUnlocked ? <LeaderboardLink accent={accent} /> : null}
-      <SocialLinks links={org.branding.links} />
       <OrgPageFooter slug={org.slug} />
     </OrgPageShell>
   )

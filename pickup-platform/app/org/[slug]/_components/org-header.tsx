@@ -1,6 +1,7 @@
 import Image from 'next/image'
 import type { Org } from '@/lib/orgs'
 import { readableTextColor } from '@/lib/colors'
+import { SocialLinks } from './social-links'
 
 type Props = {
   org: Org
@@ -36,6 +37,7 @@ export function OrgHeader({ org, title, subtitle, className = 'mt-2', logoPriori
       )}
       <h1 className="mt-4 text-3xl font-bold tracking-tight">{title}</h1>
       {subtitle ? <p className="mt-1.5 text-base text-zinc-400">{subtitle}</p> : null}
+      <SocialLinks links={org.branding.links} />
     </header>
   )
 }
