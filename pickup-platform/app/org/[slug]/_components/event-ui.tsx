@@ -10,7 +10,7 @@ import {
   type EventStatus,
   type EventWithLocation,
 } from '@/lib/events'
-import { arrowNe } from '@/lib/text-arrows'
+import { arrowNe, arrowRight } from '@/lib/text-arrows'
 import { MapsLink } from './maps-link'
 
 export type EventLocationFields = Pick<
@@ -46,32 +46,39 @@ export function StatusPill({
   accent,
   live = false,
   ended = false,
+  compact = false,
 }: {
   status: EventStatus
   accent: string
   live?: boolean
   ended?: boolean
+  compact?: boolean
 }) {
+  const pill = compact
+    ? 'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium'
+    : 'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium'
+  const dot = compact ? 'h-1 w-1 rounded-full' : 'h-1.5 w-1.5 rounded-full'
+
   if (status === 'cancelled') {
     return (
-      <span className="inline-flex items-center gap-1.5 rounded-full bg-red-500/15 px-2.5 py-1 text-xs font-medium text-red-400">
-        <span className="h-1.5 w-1.5 rounded-full bg-red-400" />
+      <span className={`${pill} bg-red-500/15 text-red-400`}>
+        <span className={`${dot} bg-red-400`} />
         {statusLabel(status)}
       </span>
     )
   }
   if (status === 'on' && live) {
     return (
-      <span className="inline-flex items-center gap-1.5 rounded-full bg-red-500/15 px-2.5 py-1 text-xs font-medium text-red-400">
-        <span className="h-1.5 w-1.5 rounded-full bg-red-400" />
+      <span className={`${pill} bg-red-500/15 text-red-400`}>
+        <span className={`${dot} bg-red-400`} />
         Live
       </span>
     )
   }
   if (status === 'on' && ended) {
     return (
-      <span className="inline-flex items-center gap-1.5 rounded-full bg-zinc-800/80 px-2.5 py-1 text-xs font-medium text-zinc-400">
-        <span className="h-1.5 w-1.5 rounded-full bg-zinc-500" />
+      <span className={`${pill} bg-zinc-800/80 text-zinc-500`}>
+        <span className={`${dot} bg-zinc-500`} />
         Ended
       </span>
     )
@@ -79,16 +86,16 @@ export function StatusPill({
   if (status === 'on') {
     return (
       <span
-        className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium"
-        style={{ backgroundColor: `${accent}1a`, color: accent }}
+        className={pill}
+        style={{ backgroundColor: `${accent}14`, color: accent }}
       >
-        <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: accent }} />
+        <span className={dot} style={{ backgroundColor: accent }} />
         {statusLabel(status)}
       </span>
     )
   }
   return (
-    <span className="inline-flex items-center rounded-full bg-zinc-800/80 px-2.5 py-1 text-xs font-medium text-zinc-400">
+    <span className={`${pill} bg-zinc-800/60 text-zinc-500`}>
       {statusLabel(status)}
     </span>
   )
@@ -296,6 +303,15 @@ export function EventLocationRow({
 }
 
 /** Compact row used in the "more sessions" list. */
+function sessionDateChip(event: Pick<EventWithLocation, 'starts_at' | 'timezone'>) {
+  const zone = event.timezone || 'UTC'
+  const d = new Date(event.starts_at)
+  return {
+    weekday: d.toLocaleString('en-US', { weekday: 'short', timeZone: zone }),
+    day: d.toLocaleString('en-US', { day: 'numeric', timeZone: zone }),
+  }
+}
+
 export function SessionRow({
   event,
   accent,
@@ -304,41 +320,57 @@ export function SessionRow({
   accent: string
 }) {
   const cancelled = isEventCancelled(event.status)
+  const inProgress = isEventInProgress(event)
+  const ended = isEventEnded(event)
+  const live = inProgress && event.status === 'on'
   const classes = cancelledEventClasses(cancelled)
+  const { weekday, day } = sessionDateChip(event)
 
   return (
-    <div className="relative flex items-center gap-3 rounded-2xl border border-zinc-800 bg-zinc-900/40 px-4 py-3 transition-colors hover:border-zinc-700">
+    <div className="group relative flex items-center gap-3 rounded-xl border border-white/5 bg-zinc-950/40 px-3 py-2.5 transition-colors hover:border-zinc-700/60 hover:bg-zinc-900/40">
       <Link
         href={`/events/${event.short_id}`}
-        className="absolute inset-0 z-0 rounded-2xl"
+        className="absolute inset-0 z-0 rounded-xl"
         aria-label={`${eventName(event)} on ${formatEventDayLabel(event)}`}
       />
+      <div className="relative z-10 flex w-11 shrink-0 flex-col items-center rounded-lg border border-white/5 bg-black/25 py-1.5 pointer-events-none">
+        <span className="text-[10px] font-medium uppercase tracking-wide text-zinc-600">
+          {weekday}
+        </span>
+        <span className="text-sm font-semibold tabular-nums leading-tight text-zinc-400">
+          {day}
+        </span>
+      </div>
       <div className="relative z-10 min-w-0 flex-1 pointer-events-none">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center justify-between gap-2">
           <span className={`truncate text-sm font-medium ${classes.titleSm}`}>
             {eventName(event)}
           </span>
+          <StatusPill
+            status={event.status}
+            accent={accent}
+            live={live}
+            ended={ended}
+            compact
+          />
         </div>
-        <div className="mt-0.5 text-xs text-zinc-500">
-          <div className="flex items-center gap-1.5">
-            <span className="font-medium text-zinc-400">{formatEventDayLabel(event)}</span>
-            <span>·</span>
-            <span>{formatEventTimeOnly(event)}</span>
-          </div>
-          <EventLocationRow event={event} nestedInLink compact className="mt-0.5" />
+        <div className="mt-0.5 flex min-w-0 flex-wrap items-center gap-x-1.5 text-xs text-zinc-600">
+          <span className="shrink-0 tabular-nums">{formatEventTimeOnly(event)}</span>
+          <span className="shrink-0 text-zinc-700">·</span>
+          <EventLocationRow
+            event={event}
+            nestedInLink
+            compact
+            className="min-w-0 text-zinc-600"
+          />
         </div>
       </div>
-      {cancelled ? (
-        <span className="shrink-0 rounded-full bg-red-500/15 px-2 py-0.5 text-[11px] font-medium text-red-400">
-          {statusLabel(event.status)}
-        </span>
-      ) : event.status === 'on' ? (
-        <span
-          className="h-2 w-2 shrink-0 rounded-full"
-          style={{ backgroundColor: accent }}
-          aria-label={statusLabel(event.status)}
-        />
-      ) : null}
+      <span
+        className="relative z-10 shrink-0 text-sm text-zinc-700 transition-all group-hover:translate-x-0.5 group-hover:text-zinc-500 pointer-events-none"
+        aria-hidden
+      >
+        {arrowRight}
+      </span>
     </div>
   )
 }

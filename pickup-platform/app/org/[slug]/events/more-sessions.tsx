@@ -4,11 +4,10 @@ import { useState } from 'react'
 
 type Props = {
   count: number
-  accent: string
   children: React.ReactNode
 }
 
-export function MoreSessions({ count, accent, children }: Props) {
+export function MoreSessions({ count, children }: Props) {
   const [open, setOpen] = useState(false)
 
   if (count <= 0) {
@@ -16,15 +15,15 @@ export function MoreSessions({ count, accent, children }: Props) {
   }
 
   return (
-    <div className="mt-4">
+    <div className="mt-3">
       {!open ? (
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-zinc-800 bg-zinc-900/40 px-4 py-3 text-sm font-medium text-zinc-300 transition-colors hover:border-zinc-700 hover:text-zinc-100"
+          className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-white/5 bg-zinc-950/30 px-4 py-2.5 text-sm text-zinc-500 transition-colors hover:border-zinc-700/60 hover:bg-zinc-900/30 hover:text-zinc-400"
         >
           View {count} more {count === 1 ? 'session' : 'sessions'}
-          <span aria-hidden style={{ color: accent }}>
+          <span aria-hidden className="text-zinc-600">
             ↓
           </span>
         </button>
@@ -34,7 +33,7 @@ export function MoreSessions({ count, accent, children }: Props) {
           <button
             type="button"
             onClick={() => setOpen(false)}
-            className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-xl border border-zinc-800 bg-zinc-900/40 px-4 py-3 text-sm font-medium text-zinc-400 transition-colors hover:border-zinc-700 hover:text-zinc-200"
+            className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-xl border border-white/5 bg-transparent px-4 py-2 text-xs text-zinc-600 transition-colors hover:border-zinc-700/60 hover:text-zinc-500"
           >
             Show less
             <span aria-hidden>↑</span>

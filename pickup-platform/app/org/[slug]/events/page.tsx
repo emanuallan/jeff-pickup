@@ -148,12 +148,12 @@ export default async function EventsPage({ params }: Props) {
           </section>
 
           {rest.length > 0 ? (
-            <section className="mt-8">
-              <h3 className="px-1 text-xs font-semibold uppercase tracking-wide text-zinc-500">
+            <section className="mt-10 border-t border-white/5 pt-8">
+              <h3 className="px-1 text-xs font-medium uppercase tracking-wide text-zinc-600">
                 More sessions
               </h3>
-              <MoreSessions count={rest.length} accent={accent}>
-                <ul className="space-y-2.5">
+              <MoreSessions count={rest.length}>
+                <ul className="space-y-2">
                   {rest.map((ev) => (
                     <li key={ev.id}>
                       <SessionRow event={ev} accent={accent} />
