@@ -4,7 +4,6 @@ export type ArrivalStatus =
   | 'running_late'
   | 'in_traffic'
   | 'maybe'
-  | 'cant_make_it'
 
 type ArrivalStatusOption = {
   value: ArrivalStatus
@@ -19,7 +18,6 @@ export const ARRIVAL_STATUSES: ArrivalStatusOption[] = [
   { value: 'running_late', emoji: '⏰', label: 'Running late' },
   { value: 'in_traffic', emoji: '🚦', label: 'Stuck in traffic' },
   { value: 'maybe', emoji: '❓', label: 'Maybe' },
-  { value: 'cant_make_it', emoji: '🙅', label: "Can't make it" },
 ]
 
 // Online sessions: same underlying values, adapted copy/emoji for joining a call.
@@ -29,7 +27,6 @@ export const ARRIVAL_STATUSES_ONLINE: ArrivalStatusOption[] = [
   { value: 'running_late', emoji: '⏰', label: 'Running late' },
   { value: 'in_traffic', emoji: '📶', label: 'Connection issues' },
   { value: 'maybe', emoji: '❓', label: 'Maybe' },
-  { value: 'cant_make_it', emoji: '🙅', label: "Can't make it" },
 ]
 
 export function arrivalStatuses(isOnline = false): ArrivalStatusOption[] {

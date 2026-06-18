@@ -72,7 +72,5 @@ export async function getRosterWithContact(eventId: string): Promise<SignupWithC
 }
 
 export function rosterHeadcount(entries: RosterEntry[]): number {
-  return entries
-    .filter((e) => e.arrival_status !== 'cant_make_it')
-    .reduce((sum, e) => sum + 1 + e.guest_count, 0)
+  return entries.reduce((sum, e) => sum + 1 + e.guest_count, 0)
 }
