@@ -3,6 +3,11 @@ import { createClient } from '@/lib/supabase/server'
 
 export type EventStatus = 'tentative' | 'on' | 'cancelled'
 
+/** Sessions without a minimum start as on; min_players gates tentative until the threshold is met. */
+export function initialEventStatus(minPlayers: number | null | undefined): EventStatus {
+  return minPlayers != null ? 'tentative' : 'on'
+}
+
 export type Event = {
   id: string
   short_id: string

@@ -11,7 +11,7 @@ import {
 } from '@/lib/schedules'
 import { geocodeAddress } from '@/lib/geocode'
 import { localDateTimeInZoneToUtcIso } from '@/lib/datetime'
-import { type EventStatus } from '@/lib/events'
+import { type EventStatus, initialEventStatus } from '@/lib/events'
 import { getOrgForMember } from '@/lib/orgs'
 import { isValidSlug, normalizeSlug } from '@/lib/tenancy/reserved-slugs'
 import { MAX_ORG_LINKS, normalizeLinkUrl } from '@/lib/social-links'
@@ -315,7 +315,7 @@ export async function createOneOffEvent(orgSlug: string, formData: FormData): Pr
     capacity,
     min_players: minParticipants.value,
     announcement,
-    status: 'tentative',
+    status: initialEventStatus(minParticipants.value),
   })
 
   if (error) {
@@ -331,7 +331,17 @@ export async function cancelEvent(orgSlug: string, eventId: string): Promise<voi
 }
 
 export async function uncancelEvent(orgSlug: string, eventId: string): Promise<void> {
-  await updateEventStatus(orgSlug, eventId, 'tentative')
+  const org = await requireOrgAdmin(orgSlug)
+  const supabase = await createClient()
+
+  const { data: event } = await supabase
+    .from('events')
+    .select('min_players')
+    .eq('short_id', eventId)
+    .eq('org_id', org.id)
+    .maybeSingle()
+
+  await updateEventStatus(orgSlug, eventId, initialEventStatus(event?.min_players))
 }
 
 export async function updateEventStatus(

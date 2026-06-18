@@ -193,7 +193,7 @@ begin
       ((current_date + 8) + time '19:00') at time zone v_tz,
       16,
       8,
-      'on',
+      'tentative',
       'Monthly sync for organizers and regulars. Link goes live 10 min before.',
       v_tz,
       'DmPkZomm'
