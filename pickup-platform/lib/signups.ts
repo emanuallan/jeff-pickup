@@ -74,10 +74,3 @@ export async function getRosterWithContact(eventId: string): Promise<SignupWithC
 export function rosterHeadcount(entries: RosterEntry[]): number {
   return entries.reduce((sum, e) => sum + 1 + e.guest_count, 0)
 }
-
-/** Roster suffix for extra guests, e.g. " +1 guest" or " +2 guests". */
-export function formatGuestSuffix(guestCount: number): string {
-  if (guestCount <= 0) return ''
-  const label = guestCount === 1 ? 'guest' : 'guests'
-  return ` +${guestCount} ${label}`
-}

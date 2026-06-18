@@ -6,7 +6,7 @@ import { arrivalStatuses, arrivalStatusEmoji, type ArrivalStatus } from '@/lib/a
 import { fireConfetti } from '@/lib/confetti'
 import { arrowRight } from '@/lib/text-arrows'
 import { hexToRgba } from '@/lib/colors'
-import { formatGuestSuffix } from '@/lib/signups'
+import { formatGuestSuffix } from '@/lib/format-guest-suffix'
 import { PhoneInput } from '@/app/_components/phone-input'
 import type { Participant, MySignup } from '@/lib/participant'
 import type { RosterBadgeInfo } from '@/lib/badges'
