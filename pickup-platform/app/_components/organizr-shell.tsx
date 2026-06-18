@@ -20,19 +20,39 @@ export function OrganizrBackdrop() {
   )
 }
 
+const headerBtnClass =
+  'rounded-lg border border-white/10 px-4 py-2 text-sm font-medium text-zinc-200 transition hover:border-white/20 hover:bg-white/5'
+
 /** Minimal apex-site header — Organizr wordmark only (no Console badge). */
-export function OrganizrMarketingHeader({ showSignIn = true }: { showSignIn?: boolean }) {
+export function OrganizrMarketingHeader({
+  showSignIn = true,
+  demoUrl,
+}: {
+  showSignIn?: boolean
+  demoUrl?: string
+}) {
   return (
     <header className="sticky top-0 z-20 border-b border-white/10 bg-zinc-950/80 backdrop-blur-md">
       <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-5 sm:px-6">
         <OrganizrLogo href="/" priority />
-        {showSignIn ? (
-          <Link
-            href="/login"
-            className="rounded-lg border border-white/10 px-4 py-2 text-sm font-medium text-zinc-200 transition hover:border-white/20 hover:bg-white/5"
-          >
-            Sign in
-          </Link>
+        {demoUrl || showSignIn ? (
+          <div className="flex items-center gap-2">
+            {demoUrl ? (
+              <a
+                href={demoUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={headerBtnClass}
+              >
+                Try the demo
+              </a>
+            ) : null}
+            {showSignIn ? (
+              <Link href="/login" className={headerBtnClass}>
+                Sign in
+              </Link>
+            ) : null}
+          </div>
         ) : null}
       </div>
     </header>

@@ -20,7 +20,7 @@ export default function HomePage() {
     <div className="relative min-h-dvh">
       <JsonLd data={buildWebsiteJsonLd()} />
       <OrganizrBackdrop />
-      <OrganizrMarketingHeader />
+      <OrganizrMarketingHeader demoUrl={demoUrl} />
 
       <main className="mx-auto flex min-h-[calc(100dvh-3.5rem)] max-w-lg flex-col px-6 py-16">
         <div className="flex flex-1 flex-col justify-center">
@@ -42,7 +42,12 @@ export default function HomePage() {
             Sign in / Create your group
           </Link>
           <div className="flex flex-col gap-3 sm:flex-row">
-            <a href={demoUrl} className={`${organizrBtnSecondary} text-center sm:flex-1`}>
+            <a
+              href={demoUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`${organizrBtnSecondary} text-center sm:flex-1`}
+            >
               Try the demo
             </a>
             <Link href="/console" className={`${organizrBtnSecondary} text-center sm:flex-1`}>
