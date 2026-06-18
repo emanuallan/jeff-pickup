@@ -5,6 +5,8 @@ import { notFound } from 'next/navigation'
 import { getOrgBySlug } from '@/lib/orgs'
 import { getUpcomingEventsForOrg, formatEventTime, formatEventDayLabel, isEventInProgress, isEventEnded } from '@/lib/events'
 import { buildOrgMetadata } from '@/lib/og-metadata'
+import { buildOrgJsonLd } from '@/lib/seo'
+import { JsonLd } from '@/app/_components/json-ld'
 // import { rootBaseUrl } from '@/lib/og-metadata'
 import { isLeaderboardUnlocked } from '@/lib/engagement'
 import { OrgHeader } from '../_components/org-header'
@@ -80,6 +82,7 @@ export default async function EventsPage({ params }: Props) {
 
   return (
     <OrgPageShell>
+      <JsonLd data={buildOrgJsonLd(org)} />
       <div className="flex justify-end">
         {/* Organizr apex branding — re-enable when ready
         <a

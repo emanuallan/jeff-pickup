@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { ROBOTS_PUBLIC } from '@/lib/seo'
 
 /**
  * Canonical public base URL for an org's subdomain.
@@ -40,9 +41,10 @@ export function clampDescription(text: string, max = 125): string {
 
 export function buildRootMetadata(): Metadata {
   const baseUrl = rootBaseUrl()
-  const title = 'Organizr'
+  const title = 'Organizr — Know who\'s coming'
+  const shortTitle = 'Organizr'
   const description = clampDescription(
-    "Organizr is the easy headcount for recurring group activities — share a link, see who's coming, and run your sessions.",
+    "Organizr is the easy headcount for recurring group activities — pickup sports, run clubs, and meetups. Share a link, see who's coming, and run your sessions.",
   )
   const image = {
     url: `${baseUrl}/og-image`,
@@ -58,10 +60,12 @@ export function buildRootMetadata(): Metadata {
       template: '%s · Organizr',
     },
     description,
+    alternates: { canonical: baseUrl },
+    robots: ROBOTS_PUBLIC,
     openGraph: {
       type: 'website',
       url: baseUrl,
-      siteName: title,
+      siteName: shortTitle,
       title,
       description,
       images: [image],
@@ -70,6 +74,44 @@ export function buildRootMetadata(): Metadata {
       card: 'summary_large_image',
       title,
       description,
+      images: [image.url],
+    },
+  }
+}
+
+/** Static marketing pages on the apex domain (about, privacy, terms). */
+export function buildMarketingPageMetadata(
+  path: string,
+  title: string,
+  description: string,
+): Metadata {
+  const baseUrl = rootBaseUrl()
+  const url = `${baseUrl}${path}`
+  const desc = clampDescription(description)
+  const image = {
+    url: `${baseUrl}/og-image`,
+    width: 1200,
+    height: 630,
+    alt: "Organizr — Know who's coming.",
+  }
+
+  return {
+    title,
+    description: desc,
+    alternates: { canonical: url },
+    robots: ROBOTS_PUBLIC,
+    openGraph: {
+      type: 'website',
+      url,
+      siteName: 'Organizr',
+      title: `${title} · Organizr`,
+      description: desc,
+      images: [image],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: `${title} · Organizr`,
+      description: desc,
       images: [image.url],
     },
   }
@@ -107,6 +149,8 @@ export function buildOrgMetadata({
     // Absolute so the root "%s · Organizr" template doesn't suffix tenant pages.
     title: { absolute: title },
     description: desc,
+    alternates: { canonical: url },
+    robots: ROBOTS_PUBLIC,
     openGraph: {
       type: 'website',
       url,

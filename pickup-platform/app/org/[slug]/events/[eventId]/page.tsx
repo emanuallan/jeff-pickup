@@ -11,6 +11,8 @@ import {
   isEventEnded,
 } from '@/lib/events'
 import { buildOrgMetadata } from '@/lib/og-metadata'
+import { buildEventJsonLd } from '@/lib/seo'
+import { JsonLd } from '@/app/_components/json-ld'
 import {
   lookupParticipantId,
   recordEventPageView,
@@ -103,6 +105,7 @@ export default async function EventPage({ params }: Props) {
 
   return (
     <OrgPageShell>
+      <JsonLd data={buildEventJsonLd(org, event, `/events/${eventId}`)} />
       <div className="flex items-center justify-between gap-3">
         <Link
           href="/events"

@@ -1,11 +1,13 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { MarketingPage } from '../_components/marketing-page'
+import { buildMarketingPageMetadata } from '@/lib/og-metadata'
 
-export const metadata: Metadata = {
-  title: 'Terms of Service',
-  description: 'Terms for using Organizr.',
-}
+export const metadata: Metadata = buildMarketingPageMetadata(
+  '/terms',
+  'Terms of Service',
+  'Terms for using Organizr to run recurring group activities, manage sign-ups, and publish public session pages.',
+)
 
 export default function TermsPage() {
   return (

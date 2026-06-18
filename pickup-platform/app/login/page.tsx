@@ -1,6 +1,13 @@
+import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { ROBOTS_PRIVATE } from '@/lib/seo'
 import { LoginForm } from './login-form'
+
+export const metadata: Metadata = {
+  title: 'Sign in',
+  robots: ROBOTS_PRIVATE,
+}
 
 type Props = {
   searchParams: Promise<{ next?: string }>

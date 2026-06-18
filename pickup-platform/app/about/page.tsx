@@ -1,12 +1,13 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { MarketingPage } from '../_components/marketing-page'
+import { buildMarketingPageMetadata } from '@/lib/og-metadata'
 
-export const metadata: Metadata = {
-  title: 'About',
-  description:
-    'Organizr started with a pickup soccer group in Jeffersonville, Indiana that wanted a simple way to manage attendance.',
-}
+export const metadata: Metadata = buildMarketingPageMetadata(
+  '/about',
+  'About',
+  'Organizr started with a pickup soccer group in Jeffersonville, Indiana that wanted a simple way to manage attendance for recurring group activities.',
+)
 
 export default function AboutPage() {
   return (

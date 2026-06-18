@@ -42,6 +42,8 @@ export async function middleware(request: NextRequest) {
 
   if (orgSlug) {
     if (
+      pathname === '/robots.txt' ||
+      pathname === '/sitemap.xml' ||
       pathname.startsWith('/api/') ||
       pathname.startsWith('/auth/') ||
       pathname.startsWith('/console')

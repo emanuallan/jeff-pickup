@@ -1,6 +1,8 @@
 import Link from 'next/link'
 import { getRootDomain } from '@/lib/tenancy/parse-host'
 import { orgBaseUrl } from '@/lib/og-metadata'
+import { buildWebsiteJsonLd } from '@/lib/seo'
+import { JsonLd } from './_components/json-ld'
 import {
   OrganizrBackdrop,
   OrganizrMarketingHeader,
@@ -16,6 +18,7 @@ export default function HomePage() {
 
   return (
     <div className="relative min-h-dvh">
+      <JsonLd data={buildWebsiteJsonLd()} />
       <OrganizrBackdrop />
       <OrganizrMarketingHeader />
 

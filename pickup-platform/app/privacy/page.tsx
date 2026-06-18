@@ -1,11 +1,13 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { MarketingPage } from '../_components/marketing-page'
+import { buildMarketingPageMetadata } from '@/lib/og-metadata'
 
-export const metadata: Metadata = {
-  title: 'Privacy Policy',
-  description: 'How Organizr collects, uses, and protects your information.',
-}
+export const metadata: Metadata = buildMarketingPageMetadata(
+  '/privacy',
+  'Privacy Policy',
+  'How Organizr collects, uses, and protects your information when you sign up for group sessions and use organizer tools.',
+)
 
 export default function PrivacyPage() {
   return (

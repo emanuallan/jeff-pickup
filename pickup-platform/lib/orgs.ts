@@ -55,6 +55,23 @@ export const getOrgBySlug = cache(async (slug: string): Promise<Org | null> => {
   return parseOrgRow(data)
 })
 
+/** Active org slugs for apex sitemap discovery. */
+export async function getActivePublicOrgSlugs(): Promise<string[]> {
+  const supabase = await createClient()
+
+  const { data, error } = await supabase
+    .from('orgs')
+    .select('slug')
+    .eq('status', 'active')
+    .order('slug')
+
+  if (error || !data) {
+    return []
+  }
+
+  return data.map((row) => String(row.slug))
+}
+
 export async function getUserOrgs(): Promise<Org[]> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()

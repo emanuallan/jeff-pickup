@@ -1,5 +1,12 @@
+import type { Metadata } from 'next'
 import { OrganizrBackdrop } from '../_components/organizr-shell'
 import { OrganizrLogo } from '../_components/organizr-logo'
+import { ROBOTS_PRIVATE } from '@/lib/seo'
+
+export const metadata: Metadata = {
+  title: 'Console',
+  robots: ROBOTS_PRIVATE,
+}
 
 /**
  * Console chrome — a persistent top bar + technical background that makes the
