@@ -2,7 +2,7 @@
 
 import { useRef, useState, useEffect } from 'react'
 import { joinEvent, leaveEvent, quickJoinEvent, recoverSession, updateArrivalStatus, updateGuestCount } from './actions'
-import { arrivalStatuses, arrivalStatusEmoji, type ArrivalStatus } from '@/lib/arrival-status'
+import { arrivalStatuses, arrivalStatusEmoji, arrivalStatusLabel, type ArrivalStatus } from '@/lib/arrival-status'
 import { fireConfetti } from '@/lib/confetti'
 import { arrowRight } from '@/lib/text-arrows'
 import { hexToRgba } from '@/lib/colors'
@@ -350,6 +350,24 @@ function TooltipBadge({
   )
 }
 
+function ArrivalStatusIcon({
+  status,
+  isOnline,
+}: {
+  status: string
+  isOnline?: boolean
+}) {
+  const emoji = arrivalStatusEmoji(status, isOnline)
+  const label = arrivalStatusLabel(status, isOnline)
+  if (!emoji) return null
+
+  return (
+    <TooltipBadge tip={label} className="mr-1 inline-flex items-center">
+      {emoji}
+    </TooltipBadge>
+  )
+}
+
 function RosterBadges({ badges }: { badges: RosterBadgeInfo | undefined }) {
   if (!badges) return null
 
@@ -432,7 +450,8 @@ export function RosterList(props: {
                 }}
               >
                 <span className="min-w-0 font-semibold">
-                  {arrivalStatusEmoji(e.arrival_status, props.isOnline)} {e.display_name}
+                  <ArrivalStatusIcon status={e.arrival_status} isOnline={props.isOnline} />
+                  {e.display_name}
                   <span className="text-zinc-400"> (you)</span>
                   {e.guest_count > 0 ? (
                     <span className="text-zinc-400">{formatGuestSuffix(e.guest_count)}</span>
@@ -477,7 +496,8 @@ export function RosterList(props: {
               className="flex items-center justify-between gap-2 rounded-xl border border-zinc-800 bg-black/20 px-3 py-2 text-sm"
             >
               <span className="min-w-0">
-                {arrivalStatusEmoji(e.arrival_status, props.isOnline)} {e.display_name}
+                <ArrivalStatusIcon status={e.arrival_status} isOnline={props.isOnline} />
+                {e.display_name}
                 <RosterBadges badges={props.badgesByParticipantId?.[e.participant_id]} />
                 {e.guest_count > 0 ? (
                   <span className="text-zinc-500">{formatGuestSuffix(e.guest_count)}</span>
