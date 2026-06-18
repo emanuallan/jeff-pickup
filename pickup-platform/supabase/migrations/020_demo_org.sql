@@ -8,6 +8,7 @@ declare
   v_loc_zoom uuid := 'a0000000-0000-4000-8000-000000000003';
   v_sched_pickup uuid := 'a0000000-0000-4000-8000-000000000004';
   v_sched_skills uuid := 'a0000000-0000-4000-8000-000000000005';
+  v_sched_volunteers uuid := 'a0000000-0000-4000-8000-000000000006';
   v_tz text := 'America/Chicago';
 
   v_ev_live uuid := 'b0000000-0000-4000-8000-000000000001';
@@ -72,7 +73,7 @@ begin
     (
       v_loc_zoom,
       v_org_id,
-      'Zoom (rain backup)',
+      'Zoom',
       '',
       '',
       0,
@@ -109,6 +110,19 @@ begin
       75,
       20,
       10,
+      v_tz,
+      1
+    ),
+    (
+      v_sched_volunteers,
+      v_org_id,
+      v_loc_zoom,
+      'Volunteers Meeting',
+      array[3],
+      '19:00',
+      60,
+      16,
+      8,
       v_tz,
       1
     );
@@ -174,13 +188,13 @@ begin
     (
       v_ev_online,
       v_org_id,
-      null,
+      v_sched_volunteers,
       v_loc_zoom,
       ((current_date + 8) + time '19:00') at time zone v_tz,
       16,
       8,
       'on',
-      'Rainy week backup: FIFA watch party + tactics chat. Link goes live 10 min before.',
+      'Monthly sync for organizers and regulars. Link goes live 10 min before.',
       v_tz,
       'DmPkZomm'
     ),
