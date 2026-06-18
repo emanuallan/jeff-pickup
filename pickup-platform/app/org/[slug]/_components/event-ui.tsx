@@ -85,11 +85,8 @@ export function StatusPill({
   }
   if (status === 'on') {
     return (
-      <span
-        className={pill}
-        style={{ backgroundColor: `${accent}14`, color: accent }}
-      >
-        <span className={dot} style={{ backgroundColor: accent }} />
+      <span className={`${pill} bg-emerald-500/15 text-emerald-400`}>
+        <span className={`${dot} bg-emerald-400`} />
         {statusLabel(status)}
       </span>
     )
