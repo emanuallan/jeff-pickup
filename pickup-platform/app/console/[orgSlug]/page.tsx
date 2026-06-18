@@ -19,6 +19,7 @@ import { DeleteScheduleButton } from './delete-schedule-button'
 import { EditScheduleButton } from './edit-schedule-button'
 import { DeleteEventButton } from './delete-event-button'
 import { EventStatusSelect } from './event-status-select'
+import { EventAnnouncementEditor } from './event-announcement-editor'
 import { OrgConsoleHeader } from './org-console-header'
 import { arrowRight } from '@/lib/text-arrows'
 import {
@@ -132,6 +133,11 @@ export default async function OrgConsolePage({ params }: Props) {
         </div>
         <EventStatusSelect orgSlug={orgSlug} eventId={ev.short_id} status={ev.status} />
       </div>
+      <EventAnnouncementEditor
+        orgSlug={orgSlug}
+        eventId={ev.short_id}
+        announcement={ev.announcement}
+      />
       <div className="mt-2.5 flex flex-wrap items-center gap-1 border-t border-white/5 pt-2">
         <Link
           href={`/console/${orgSlug}/events/${ev.short_id}`}

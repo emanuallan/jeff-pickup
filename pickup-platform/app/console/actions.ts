@@ -379,6 +379,48 @@ export async function updateEventStatus(
   return { ok: true }
 }
 
+export async function updateEventAnnouncement(
+  orgSlug: string,
+  eventId: string,
+  announcement: string,
+): Promise<{ ok: true } | { error: string }> {
+  const org = await requireOrgAdmin(orgSlug)
+  const supabase = await createClient()
+  const text = announcement.trim()
+
+  if (text.length > 500) {
+    return { error: 'Announcement must be 500 characters or fewer.' }
+  }
+
+  const { data: event, error: fetchError } = await supabase
+    .from('events')
+    .select('id')
+    .eq('short_id', eventId)
+    .eq('org_id', org.id)
+    .maybeSingle()
+
+  if (fetchError || !event) {
+    return { error: 'Session not found.' }
+  }
+
+  const { error } = await supabase
+    .from('events')
+    .update({ announcement: text })
+    .eq('id', event.id)
+    .eq('org_id', org.id)
+
+  if (error) {
+    return { error: 'Could not save announcement.' }
+  }
+
+  revalidatePath(`/console/${orgSlug}`)
+  revalidatePath(`/org/${orgSlug}`)
+  revalidatePath(`/org/${orgSlug}/events`)
+  revalidatePath(`/console/${orgSlug}/events/${eventId}`)
+
+  return { ok: true }
+}
+
 export async function deleteEvent(
   orgSlug: string,
   eventId: string,
