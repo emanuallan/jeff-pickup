@@ -23,6 +23,9 @@ export function OrganizrBackdrop() {
 const headerBtnClass =
   'rounded-lg border border-white/10 px-4 py-2 text-sm font-medium text-zinc-200 transition hover:border-white/20 hover:bg-white/5'
 
+const headerDemoBtnClass =
+  'rounded-lg border border-indigo-500/30 px-4 py-2 text-sm font-medium text-indigo-300 transition hover:border-indigo-400/50 hover:bg-indigo-500/10 hover:text-indigo-200'
+
 /** Minimal apex-site header — Organizr wordmark only (no Console badge). */
 export function OrganizrMarketingHeader({
   showSignIn = true,
@@ -42,7 +45,7 @@ export function OrganizrMarketingHeader({
                 href={demoUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className={headerBtnClass}
+                className={headerDemoBtnClass}
               >
                 Try the demo
               </a>

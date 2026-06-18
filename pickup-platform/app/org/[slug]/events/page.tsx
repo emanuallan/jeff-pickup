@@ -4,14 +4,12 @@ import { Suspense } from 'react'
 import { notFound } from 'next/navigation'
 import { getOrgBySlug } from '@/lib/orgs'
 import { getUpcomingEventsForOrg, formatEventTime, formatEventDayLabel, isEventInProgress, isEventEnded } from '@/lib/events'
-import { buildOrgMetadata } from '@/lib/og-metadata'
+import { buildOrgMetadata, rootBaseUrl } from '@/lib/og-metadata'
 import { buildOrgJsonLd } from '@/lib/seo'
 import { JsonLd } from '@/app/_components/json-ld'
-// import { rootBaseUrl } from '@/lib/og-metadata'
 import { isLeaderboardUnlocked } from '@/lib/engagement'
 import { OrgHeader } from '../_components/org-header'
 import { OrgPageShell, OrgPageFooter, LeaderboardLink } from '../_components/org-page-shell'
-// import { OrganizrLogo } from '../../../_components/organizr-logo'
 import { ShareButton } from '../share-button-lazy'
 import { arrowRight } from '@/lib/text-arrows'
 import { MoreSessions } from './more-sessions'
@@ -83,19 +81,15 @@ export default async function EventsPage({ params }: Props) {
   return (
     <OrgPageShell>
       <JsonLd data={buildOrgJsonLd(org)} />
-      <div className="flex justify-end">
-        {/* Organizr apex branding — re-enable when ready
-        <a
-          href={rootBaseUrl()}
-          className="-ml-1 inline-flex shrink-0 rounded-lg p-1 text-zinc-500 transition-colors hover:text-zinc-300"
-          aria-label="Organizr home"
-        >
-          <OrganizrLogo
-            size={22}
-            wordmarkClassName="text-sm font-semibold tracking-tight text-inherit"
-          />
-        </a>
-        */}
+      <div className={`flex items-center ${slug === 'demo' ? 'justify-between' : 'justify-end'}`}>
+        {slug === 'demo' ? (
+          <a
+            href={rootBaseUrl()}
+            className="text-sm text-zinc-500 transition-colors hover:text-zinc-300"
+          >
+            ← Back to Organizr
+          </a>
+        ) : null}
         <ShareButton title={org.name} text={`Join ${org.name} on Organizr`} />
       </div>
 
