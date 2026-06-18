@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation'
 import { getOrgForMember } from '@/lib/orgs'
 import { getEventByRef, formatEventTime, formatInstantInZone, statusLabel } from '@/lib/events'
-import { getRosterWithContact } from '@/lib/signups'
+import { getRosterWithContact, formatGuestSuffix } from '@/lib/signups'
 import { getEventAnalytics } from '@/lib/event-analytics'
 import { arrivalStatusEmoji } from '@/lib/arrival-status'
 import { orgBaseUrl } from '@/lib/og-metadata'
@@ -161,7 +161,7 @@ export default async function ConsoleEventAnalyticsPage({ params }: Props) {
                       <div className="break-words font-medium text-zinc-100">
                         {arrivalStatusEmoji(e.arrival_status, event.location_is_online)}{' '}
                         {e.display_name}
-                        {e.guest_count > 0 ? ` +${e.guest_count}` : ''}
+                        {formatGuestSuffix(e.guest_count)}
                       </div>
                       <div className="mt-0.5 text-xs text-zinc-500">
                         {e.first_name} {e.last_name} · {e.phone}

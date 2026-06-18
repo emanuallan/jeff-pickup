@@ -6,6 +6,7 @@ import { arrivalStatuses, arrivalStatusEmoji, type ArrivalStatus } from '@/lib/a
 import { fireConfetti } from '@/lib/confetti'
 import { arrowRight } from '@/lib/text-arrows'
 import { hexToRgba } from '@/lib/colors'
+import { formatGuestSuffix } from '@/lib/signups'
 import { PhoneInput } from '@/app/_components/phone-input'
 import type { Participant, MySignup } from '@/lib/participant'
 import type { RosterBadgeInfo } from '@/lib/badges'
@@ -434,7 +435,7 @@ export function RosterList(props: {
                   {arrivalStatusEmoji(e.arrival_status, props.isOnline)} {e.display_name}
                   <span className="text-zinc-400"> (you)</span>
                   {e.guest_count > 0 ? (
-                    <span className="text-zinc-400"> +{e.guest_count}</span>
+                    <span className="text-zinc-400">{formatGuestSuffix(e.guest_count)}</span>
                   ) : null}
                 </span>
                 {props.canLeave && props.orgSlug && props.eventId ? (
@@ -479,7 +480,7 @@ export function RosterList(props: {
                 {arrivalStatusEmoji(e.arrival_status, props.isOnline)} {e.display_name}
                 <RosterBadges badges={props.badgesByParticipantId?.[e.participant_id]} />
                 {e.guest_count > 0 ? (
-                  <span className="text-zinc-500"> +{e.guest_count}</span>
+                  <span className="text-zinc-500">{formatGuestSuffix(e.guest_count)}</span>
                 ) : null}
               </span>
             </li>
