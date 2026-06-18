@@ -47,7 +47,7 @@ export default function HomePage() {
             </Link>
           </div>
           <p className="text-center text-sm text-zinc-500">
-            Demo pickup soccer with a live roster, sign-ups, and leaderboard.
+            Demo pickup soccer in Nashville with a live roster, sign-ups, and leaderboard.
           </p>
         </div>
 

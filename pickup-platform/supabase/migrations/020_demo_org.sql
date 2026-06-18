@@ -8,7 +8,7 @@ declare
   v_loc_zoom uuid := 'a0000000-0000-4000-8000-000000000003';
   v_sched_pickup uuid := 'a0000000-0000-4000-8000-000000000004';
   v_sched_skills uuid := 'a0000000-0000-4000-8000-000000000005';
-  v_tz text := 'America/New_York';
+  v_tz text := 'America/Chicago';
 
   v_ev_live uuid := 'b0000000-0000-4000-8000-000000000001';
   v_ev_next uuid := 'b0000000-0000-4000-8000-000000000002';
@@ -42,12 +42,12 @@ begin
   values (
     v_org_id,
     'demo',
-    'Riverside Pickup',
-    'Pickup soccer — all skill levels, friendly games twice a week.',
+    'Music City Pickup',
+    'Pickup soccer in Nashville — all skill levels, friendly games twice a week.',
     'active',
     jsonb_build_object(
       'logo_url', null,
-      'accent_color', '#22c55e',
+      'accent_color', '#0080ff',
       'links', jsonb_build_array(
         'https://instagram.com/organizr.co',
         'https://chat.whatsapp.com/demo'
@@ -61,11 +61,11 @@ begin
     (
       v_loc_park,
       v_org_id,
-      'Pier 40 Soccer Fields',
-      '353 West St, New York, NY 10014',
-      'https://maps.google.com/?q=Pier+40+Soccer+Fields',
-      40.7272,
-      -74.0113,
+      'Two Rivers Park Soccer Fields',
+      '3120 Brogden Ave, Nashville, TN 37214',
+      'https://maps.google.com/?q=Two+Rivers+Park+Soccer+Fields+Nashville',
+      36.1889,
+      -86.7286,
       false,
       ''
     ),
@@ -128,7 +128,7 @@ begin
       24,
       14,
       'on',
-      'Bring a white and a dark shirt — we split teams at kickoff. Cleats recommended on turf.',
+      'Bring a white and a dark shirt — we split teams at kickoff. Park in the main lot off Brogden Ave.',
       v_tz,
       'DmPkLive'
     ),
