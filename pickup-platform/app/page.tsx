@@ -27,7 +27,7 @@ export default function HomePage() {
         <OrganizrLogo
           size={40}
           priority
-          wordmarkClassName="text-sm font-bold tracking-tight text-zinc-50"
+          wordmarkClassName="text-base font-bold tracking-tight text-zinc-50"
         />
         <h1 className="mt-6 text-4xl font-semibold tracking-tight text-zinc-50">
           Know who&apos;s coming.
@@ -41,22 +41,9 @@ export default function HomePage() {
           <Link href="/login" className={`${organizrBtnPrimary} text-center`}>
             Sign in / Create your group
           </Link>
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <a
-              href={demoUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={`${organizrBtnSecondary} text-center sm:flex-1`}
-            >
-              Try the demo
-            </a>
-            <Link href="/console" className={`${organizrBtnSecondary} text-center sm:flex-1`}>
-              Organizer console
-            </Link>
-          </div>
-          <p className="text-center text-sm text-zinc-500">
-            Demo pickup soccer in Nashville with a live roster, sign-ups, and leaderboard.
-          </p>
+          <Link href="/console" className={`${organizrBtnSecondary} text-center`}>
+            Organizer console
+          </Link>
         </div>
 
         <p className="mt-12 text-sm text-zinc-500">
