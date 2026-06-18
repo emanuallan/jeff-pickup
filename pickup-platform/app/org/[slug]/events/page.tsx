@@ -102,10 +102,14 @@ export default async function EventsPage({ params }: Props) {
       {next ? (
         <>
           {nextAvailable ? (
-            <ViewNextSessionLink href={`/events/${nextAvailable.short_id}`} accent={accent} />
+            <ViewNextSessionLink
+              href={`/events/${nextAvailable.short_id}`}
+              accent={accent}
+              className="mt-6 mb-1"
+            />
           ) : null}
 
-          <section className="mt-8">
+          <section className={nextAvailable ? 'mt-2' : 'mt-8'}>
             <div className="group relative overflow-hidden rounded-3xl border border-zinc-800 bg-linear-to-b from-zinc-900 to-zinc-950 p-6 transition-colors hover:border-zinc-700">
               <Link
                 href={`/events/${next.short_id}`}

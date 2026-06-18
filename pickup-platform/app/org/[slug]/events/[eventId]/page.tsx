@@ -130,10 +130,14 @@ export default async function EventPage({ params }: Props) {
       />
 
       {nextSession ? (
-        <ViewNextSessionLink href={`/events/${nextSession.short_id}`} accent={accent} />
+        <ViewNextSessionLink
+          href={`/events/${nextSession.short_id}`}
+          accent={accent}
+          className="mt-6 mb-1"
+        />
       ) : null}
 
-      <section className="mt-8">
+      <section className={nextSession ? 'mt-2' : 'mt-8'}>
         <div className="overflow-hidden rounded-3xl border border-zinc-800 bg-linear-to-b from-zinc-900 to-zinc-950 p-6">
           <div className="flex items-center justify-between gap-3">
             <EventTimingBadge event={event} accent={accent} cancelled={isCancelled} />
