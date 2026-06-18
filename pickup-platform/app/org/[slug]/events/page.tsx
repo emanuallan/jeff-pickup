@@ -3,12 +3,13 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { getOrgBySlug } from '@/lib/orgs'
 import { getUpcomingEventsForOrg, formatEventTime, formatEventDayLabel, isEventInProgress, isEventEnded } from '@/lib/events'
-import { buildOrgMetadata, rootBaseUrl } from '@/lib/og-metadata'
+import { buildOrgMetadata } from '@/lib/og-metadata'
+// import { rootBaseUrl } from '@/lib/og-metadata'
 import { getPublicRoster, rosterHeadcount } from '@/lib/signups'
 import { isLeaderboardUnlocked } from '@/lib/engagement'
 import { OrgHeader } from '../_components/org-header'
 import { OrgPageShell, OrgPageFooter, LeaderboardLink } from '../_components/org-page-shell'
-import { OrganizrLogo } from '../../../_components/organizr-logo'
+// import { OrganizrLogo } from '../../../_components/organizr-logo'
 import { SocialLinks } from '../_components/social-links'
 import { ShareButton } from '../share-button'
 import { arrowRight } from '@/lib/text-arrows'
@@ -77,7 +78,8 @@ export default async function EventsPage({ params }: Props) {
 
   return (
     <OrgPageShell>
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex justify-end">
+        {/* Organizr apex branding — re-enable when ready
         <a
           href={rootBaseUrl()}
           className="-ml-1 inline-flex shrink-0 rounded-lg p-1 text-zinc-500 transition-colors hover:text-zinc-300"
@@ -88,6 +90,7 @@ export default async function EventsPage({ params }: Props) {
             wordmarkClassName="text-sm font-semibold tracking-tight text-inherit"
           />
         </a>
+        */}
         <ShareButton title={org.name} text={`Join ${org.name} on Organizr`} />
       </div>
 
