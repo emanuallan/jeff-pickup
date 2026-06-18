@@ -3,6 +3,7 @@ import { getRootDomain } from '@/lib/tenancy/parse-host'
 import { rootBaseUrl } from '@/lib/og-metadata'
 import { arrowRight } from '@/lib/text-arrows'
 import { OrganizrLogo } from '../../../_components/organizr-logo'
+import { SocialLinks } from './social-links'
 
 export function OrgPageShell({ children }: { children: React.ReactNode }) {
   return (
@@ -10,9 +11,10 @@ export function OrgPageShell({ children }: { children: React.ReactNode }) {
   )
 }
 
-export function OrgPageFooter({ slug }: { slug: string }) {
+export function OrgPageFooter({ slug, links }: { slug: string; links: string[] }) {
   return (
-    <footer className="mt-6 flex flex-col items-center gap-2 text-center">
+    <footer className="mt-10 flex flex-col items-center gap-4 text-center">
+      <SocialLinks links={links} />
       <a
         href={rootBaseUrl()}
         className="inline-flex items-center gap-1.5 text-xs text-zinc-500 transition-colors hover:text-zinc-300"

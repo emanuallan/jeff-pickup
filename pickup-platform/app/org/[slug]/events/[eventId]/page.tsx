@@ -172,7 +172,7 @@ export default async function EventPage({ params }: Props) {
         <EventParticipation slug={slug} eventId={eventId} org={org} event={event} />
       </Suspense>
 
-      <OrgPageFooter slug={org.slug} />
+      <OrgPageFooter slug={org.slug} links={org.branding.links} />
     </OrgPageShell>
   )
 }

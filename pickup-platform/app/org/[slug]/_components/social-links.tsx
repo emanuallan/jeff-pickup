@@ -56,7 +56,7 @@ export function SocialLinks({ links }: { links: string[] }) {
   if (!links.length) return null
 
   return (
-    <nav aria-label="Social links" className="mt-4 flex flex-wrap items-center justify-center gap-2">
+    <nav aria-label="Social links" className="flex flex-wrap items-center justify-center gap-2">
       {links.map((url) => (
         <SocialLinkIcon key={url} url={url} />
       ))}

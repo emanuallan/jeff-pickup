@@ -196,7 +196,7 @@ export default async function EventsPage({ params }: Props) {
       )}
 
       {leaderboardUnlocked ? <LeaderboardLink accent={accent} /> : null}
-      <OrgPageFooter slug={org.slug} />
+      <OrgPageFooter slug={org.slug} links={org.branding.links} />
     </OrgPageShell>
   )
 }

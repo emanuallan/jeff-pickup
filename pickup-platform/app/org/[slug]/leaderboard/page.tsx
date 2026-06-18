@@ -184,7 +184,7 @@ export default async function LeaderboardPage({ params }: Props) {
         </Link>
       </p>
 
-      <OrgPageFooter slug={org.slug} />
+      <OrgPageFooter slug={org.slug} links={org.branding.links} />
     </OrgPageShell>
   )
 }
