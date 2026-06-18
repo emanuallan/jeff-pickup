@@ -291,8 +291,9 @@ function sessionDateChip(event: Pick<EventWithLocation, 'starts_at' | 'timezone'
   const zone = event.timezone || 'UTC'
   const d = new Date(event.starts_at)
   return {
-    weekday: d.toLocaleString('en-US', { weekday: 'short', timeZone: zone }),
+    month: d.toLocaleString('en-US', { month: 'short', timeZone: zone }),
     day: d.toLocaleString('en-US', { day: 'numeric', timeZone: zone }),
+    weekday: d.toLocaleString('en-US', { weekday: 'short', timeZone: zone }),
   }
 }
 
@@ -308,7 +309,7 @@ export function SessionRow({
   const ended = isEventEnded(event)
   const live = inProgress && event.status === 'on'
   const classes = cancelledEventClasses(cancelled)
-  const { weekday, day } = sessionDateChip(event)
+  const { month, day, weekday } = sessionDateChip(event)
 
   return (
     <div className="group relative flex items-center gap-3 rounded-xl border border-white/5 bg-zinc-950/40 px-3 py-2.5 transition-colors hover:border-zinc-700/60 hover:bg-zinc-900/40">
@@ -317,13 +318,14 @@ export function SessionRow({
         className="absolute inset-0 z-0 rounded-xl"
         aria-label={`${eventName(event)} on ${formatEventDayLabel(event)}`}
       />
-      <div className="relative z-10 flex w-11 shrink-0 flex-col items-center rounded-lg border border-white/5 bg-black/25 py-1.5 pointer-events-none">
+      <div className="relative z-10 flex w-12 shrink-0 flex-col items-center rounded-lg border border-white/5 bg-black/25 px-1 py-1.5 pointer-events-none">
         <span className="text-[10px] font-medium uppercase tracking-wide text-zinc-600">
-          {weekday}
+          {month}
         </span>
         <span className="text-sm font-semibold tabular-nums leading-tight text-zinc-400">
           {day}
         </span>
+        <span className="text-[9px] font-medium text-zinc-600">{weekday}</span>
       </div>
       <div className="relative z-10 min-w-0 flex-1 pointer-events-none">
         <div className="flex items-center justify-between gap-2">
