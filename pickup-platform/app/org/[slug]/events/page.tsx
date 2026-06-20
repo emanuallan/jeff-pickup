@@ -23,10 +23,9 @@ import {
   EventDateTimeRow,
   EventLocationRow,
   EventTimingBadge,
-  ViewNextSessionLink,
+  CancelledSessionNotice,
   eventName,
   isEventCancelled,
-  cancelledEventClasses,
 } from '../_components/event-ui'
 
 type Props = {
@@ -72,15 +71,14 @@ export default async function EventsPage({ params }: Props) {
   ])
   const accent = org.branding.accent_color
 
-  const next = events[0]
-  const rest = events.slice(1)
-  const nextCancelled = next ? isEventCancelled(next.status) : false
-  const nextAvailable = nextCancelled
-    ? rest.find((ev) => !isEventCancelled(ev.status)) ?? null
-    : null
-  const nextLive = next ? isEventInProgress(next) && next.status === 'on' : false
-  const nextEnded = next ? isEventEnded(next) : false
-  const cancelledClasses = cancelledEventClasses(nextCancelled)
+  const skippedCancelled =
+    events[0] && isEventCancelled(events[0].status) ? events[0] : null
+  const featured = skippedCancelled
+    ? events.find((ev) => !isEventCancelled(ev.status)) ?? null
+    : events[0] ?? null
+  const rest = featured ? events.filter((ev) => ev.id !== featured.id) : events
+  const featuredLive = featured ? isEventInProgress(featured) && featured.status === 'on' : false
+  const featuredEnded = featured ? isEventEnded(featured) : false
 
   return (
     <OrgPageShell>
@@ -99,71 +97,64 @@ export default async function EventsPage({ params }: Props) {
 
       <OrgHeader org={org} title={org.name} subtitle={org.activity} />
 
-      {next ? (
+      {events.length > 0 ? (
         <>
-          {nextAvailable ? (
-            <ViewNextSessionLink
-              href={`/events/${nextAvailable.short_id}`}
-              accent={accent}
-              className="mt-6 mb-1"
-            />
+          {skippedCancelled ? (
+            <CancelledSessionNotice href={`/events/${skippedCancelled.short_id}`} />
           ) : null}
 
-          <section className={nextAvailable ? 'mt-2' : 'mt-8'}>
-            <div className="group relative overflow-hidden rounded-3xl border border-zinc-800 bg-linear-to-b from-zinc-900 to-zinc-950 p-6 transition-colors hover:border-zinc-700">
-              <Link
-                href={`/events/${next.short_id}`}
-                className="absolute inset-0 z-0 rounded-3xl"
-                aria-label={`${eventName(next)} — ${formatEventDayLabel(next)}`}
-              />
-              <div className="relative z-10 pointer-events-none">
-              <div className="flex items-center justify-between gap-3">
-                {nextCancelled ? (
-                  <EventTimingBadge event={next} accent={accent} cancelled />
-                ) : (
-                  <EventTimingBadge
-                    event={next}
-                    accent={accent}
-                    cancelled={false}
-                    upcomingLabel="Next session"
+          {featured ? (
+            <section className={skippedCancelled ? 'mt-2' : 'mt-8'}>
+              <div className="group relative overflow-hidden rounded-3xl border border-zinc-800 bg-linear-to-b from-zinc-900 to-zinc-950 p-6 transition-colors hover:border-zinc-700">
+                <Link
+                  href={`/events/${featured.short_id}`}
+                  className="absolute inset-0 z-0 rounded-3xl"
+                  aria-label={`${eventName(featured)} — ${formatEventDayLabel(featured)}`}
+                />
+                <div className="relative z-10 pointer-events-none">
+                  <div className="flex items-center justify-between gap-3">
+                    <EventTimingBadge
+                      event={featured}
+                      accent={accent}
+                      cancelled={false}
+                      upcomingLabel="Next session"
+                    />
+                    <StatusPill
+                      status={featured.status}
+                      accent={accent}
+                      live={featuredLive}
+                      ended={featuredEnded}
+                    />
+                  </div>
+
+                  <h2 className="mt-4 text-2xl font-semibold tracking-tight text-zinc-50">
+                    {eventName(featured)}
+                  </h2>
+
+                  <EventDateTimeRow event={featured} cancelled={false} />
+
+                  <EventLocationRow
+                    event={featured}
+                    nestedInLink
+                    className="mt-3 flex gap-2 text-sm text-zinc-400"
                   />
-                )}
-                <StatusPill status={next.status} accent={accent} live={nextLive} ended={nextEnded} />
-              </div>
 
-              <h2 className={`mt-4 text-2xl font-semibold tracking-tight ${cancelledClasses.titleLg}`}>
-                {eventName(next)}
-              </h2>
+                  {featured.announcement ? (
+                    <p className="mt-4 rounded-xl border border-zinc-800 bg-black/30 px-3 py-2 text-sm text-zinc-300">
+                      {featured.announcement}
+                    </p>
+                  ) : null}
 
-              <EventDateTimeRow event={next} cancelled={nextCancelled} />
-
-              <EventLocationRow event={next} nestedInLink className="mt-3 flex gap-2 text-sm text-zinc-400" />
-
-              {next.announcement ? (
-                <p className="mt-4 rounded-xl border border-zinc-800 bg-black/30 px-3 py-2 text-sm text-zinc-300">
-                  {next.announcement}
-                </p>
-              ) : null}
-
-              <div className="mt-5 flex items-center justify-between border-t border-zinc-800 pt-4">
-                {nextCancelled ? (
-                  <>
-                    <span className="text-sm text-red-400">This session was cancelled</span>
-                    <span className="inline-flex items-center gap-1 text-sm font-medium text-zinc-400 transition-transform group-hover:translate-x-0.5">
-                      View details {arrowRight}
-                    </span>
-                  </>
-                ) : (
-                  <>
+                  <div className="mt-5 flex items-center justify-between border-t border-zinc-800 pt-4">
                     <span className="text-sm text-zinc-400">
                       <Suspense
                         fallback={
-                          <FeaturedEventHeadcountFallback capacity={next.capacity} />
+                          <FeaturedEventHeadcountFallback capacity={featured.capacity} />
                         }
                       >
                         <FeaturedEventHeadcount
-                          eventId={next.id}
-                          capacity={next.capacity}
+                          eventId={featured.id}
+                          capacity={featured.capacity}
                         />
                       </Suspense>
                     </span>
@@ -173,12 +164,11 @@ export default async function EventsPage({ params }: Props) {
                     >
                       Count me in {arrowRight}
                     </span>
-                  </>
-                )}
+                  </div>
+                </div>
               </div>
-              </div>
-            </div>
-          </section>
+            </section>
+          ) : null}
 
           {rest.length > 0 ? (
             <section className="mt-10 border-t border-white/5 pt-8">

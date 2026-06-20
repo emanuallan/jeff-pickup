@@ -183,6 +183,25 @@ export function EventDateTimeRow({
   )
 }
 
+export function CancelledSessionNotice({
+  href,
+  className = 'mt-6 mb-1',
+}: {
+  href: string
+  className?: string
+}) {
+  return (
+    <div className={`flex justify-end ${className}`}>
+      <Link
+        href={href}
+        className="inline-flex items-center gap-1 text-sm font-medium text-red-400 transition-opacity hover:opacity-80"
+      >
+        A session was cancelled {arrowRight}
+      </Link>
+    </div>
+  )
+}
+
 export function ViewNextSessionLink({
   href,
   accent,
