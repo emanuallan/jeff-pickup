@@ -76,7 +76,9 @@ export default async function EventsPage({ params }: Props) {
   const featured = skippedCancelled
     ? events.find((ev) => !isEventCancelled(ev.status)) ?? null
     : events[0] ?? null
-  const rest = featured ? events.filter((ev) => ev.id !== featured.id) : events
+  const rest = events.filter(
+    (ev) => ev.id !== featured?.id && ev.id !== skippedCancelled?.id,
+  )
   const featuredLive = featured ? isEventInProgress(featured) && featured.status === 'on' : false
   const featuredEnded = featured ? isEventEnded(featured) : false
 

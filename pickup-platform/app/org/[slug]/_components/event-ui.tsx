@@ -196,7 +196,7 @@ export function CancelledSessionNotice({
         href={href}
         className="inline-flex items-center gap-1 text-sm font-medium text-red-400 transition-opacity hover:opacity-80"
       >
-        A session was cancelled {arrowRight}
+        A previously scheduled session was cancelled {arrowRight}
       </Link>
     </div>
   )
