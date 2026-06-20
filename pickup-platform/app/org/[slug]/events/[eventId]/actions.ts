@@ -5,7 +5,7 @@ import { getOrgBySlug } from '@/lib/orgs'
 import { canUpdateArrivalStatus, getEventByRef } from '@/lib/events'
 import type { EventWithLocation } from '@/lib/events'
 import { createClient } from '@/lib/supabase/server'
-import { setSessionToken, getSessionToken } from '@/lib/participant-session'
+import { setSessionToken, getSessionToken, clearSessionToken } from '@/lib/participant-session'
 import type { ArrivalStatus } from '@/lib/arrival-status'
 import { normalizePhoneDigits, isValidPhoneDigits } from '@/lib/phone'
 
@@ -70,6 +70,16 @@ export async function joinEvent(
     await setSessionToken(String(result.session_token))
   }
 
+  revalidatePath(`/org/${orgSlug}/events/${eventId}`)
+  revalidatePath(`/org/${orgSlug}`)
+  return {}
+}
+
+export async function clearParticipantSession(
+  orgSlug: string,
+  eventId: string,
+): Promise<{ error?: string }> {
+  await clearSessionToken()
   revalidatePath(`/org/${orgSlug}/events/${eventId}`)
   revalidatePath(`/org/${orgSlug}`)
   return {}

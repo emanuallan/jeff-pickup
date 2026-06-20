@@ -1,7 +1,15 @@
 'use client'
 
 import { useRef, useState, useEffect } from 'react'
-import { joinEvent, leaveEvent, quickJoinEvent, recoverSession, updateArrivalStatus, updateGuestCount } from './actions'
+import {
+  joinEvent,
+  leaveEvent,
+  quickJoinEvent,
+  recoverSession,
+  clearParticipantSession,
+  updateArrivalStatus,
+  updateGuestCount,
+} from './actions'
 import { arrivalStatuses, arrivalStatusEmoji, arrivalStatusLabel, type ArrivalStatus } from '@/lib/arrival-status'
 import { fireConfetti } from '@/lib/confetti'
 import { arrowRight } from '@/lib/text-arrows'
@@ -223,6 +231,19 @@ export function JoinSection(props: Props) {
         >
           {loading ? 'Counting you in…' : `Count me in ${arrowRight}`}
         </button>
+        <div className="text-right">
+          <button
+            type="button"
+            disabled={loading}
+            onClick={async () => {
+              await clearParticipantSession(props.orgSlug, props.eventId)
+              window.location.reload()
+            }}
+            className="text-xs text-zinc-600 transition-colors hover:text-zinc-500 disabled:opacity-50"
+          >
+            Not you?
+          </button>
+        </div>
         {error ? <p className="text-sm text-red-300">{error}</p> : null}
       </div>
     )
