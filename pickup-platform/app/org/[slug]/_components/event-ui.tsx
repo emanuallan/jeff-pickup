@@ -194,9 +194,9 @@ export function CancelledSessionNotice({
     <div className={`flex justify-end ${className}`}>
       <Link
         href={href}
-        className="inline-flex items-center gap-1 text-sm font-medium text-red-400 transition-opacity hover:opacity-80"
+        className="text-sm text-zinc-500 transition-colors hover:text-zinc-300"
       >
-        A previously scheduled session was cancelled {arrowRight}
+        A previously scheduled session was cancelled.
       </Link>
     </div>
   )
