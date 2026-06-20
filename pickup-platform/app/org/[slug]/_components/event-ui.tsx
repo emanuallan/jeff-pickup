@@ -185,7 +185,7 @@ export function EventDateTimeRow({
 
 export function CancelledSessionNotice({
   href,
-  className = 'mt-6 mb-1',
+  className = 'mt-2',
 }: {
   href: string
   className?: string

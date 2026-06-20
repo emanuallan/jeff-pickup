@@ -101,12 +101,8 @@ export default async function EventsPage({ params }: Props) {
 
       {events.length > 0 ? (
         <>
-          {skippedCancelled ? (
-            <CancelledSessionNotice href={`/events/${skippedCancelled.short_id}`} />
-          ) : null}
-
           {featured ? (
-            <section className={skippedCancelled ? 'mt-2' : 'mt-8'}>
+            <section className="mt-8">
               <div className="group relative overflow-hidden rounded-3xl border border-zinc-800 bg-linear-to-b from-zinc-900 to-zinc-950 p-6 transition-colors hover:border-zinc-700">
                 <Link
                   href={`/events/${featured.short_id}`}
@@ -170,6 +166,13 @@ export default async function EventsPage({ params }: Props) {
                 </div>
               </div>
             </section>
+          ) : null}
+
+          {skippedCancelled ? (
+            <CancelledSessionNotice
+              href={`/events/${skippedCancelled.short_id}`}
+              className={featured ? 'mt-2' : 'mt-8'}
+            />
           ) : null}
 
           {rest.length > 0 ? (
