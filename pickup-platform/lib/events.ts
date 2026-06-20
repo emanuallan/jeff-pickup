@@ -319,7 +319,7 @@ export function formatEventTimeOnly(event: Pick<Event, 'starts_at' | 'timezone'>
 }
 
 /**
- * Fuzzy "when" phrase for an upcoming event, e.g. "in a couple hours", "today",
+ * Fuzzy "when" phrase for an upcoming event, e.g. "soon", "in a couple hours", "today",
  * "tomorrow", "this week", "next week", "next month", else "coming up soon".
  * Day/week/month boundaries are evaluated in the event's own timezone.
  */
@@ -329,7 +329,8 @@ export function formatEventHappening(event: Pick<Event, 'starts_at' | 'timezone'
   const start = new Date(event.starts_at)
   const hoursAway = (start.getTime() - now.getTime()) / 3_600_000
 
-  if (hoursAway >= 0 && hoursAway <= 3) return 'in a couple hours'
+  if (hoursAway >= 0 && hoursAway < 1) return 'soon'
+  if (hoursAway >= 1 && hoursAway <= 3) return 'in a couple hours'
 
   const nowKey = dayKeyInZone(now.toISOString(), zone)
   const startKey = dayKeyInZone(event.starts_at, zone)
