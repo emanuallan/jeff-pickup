@@ -34,7 +34,7 @@ export default function HomePage() {
         </h1>
         <p className="mt-4 text-lg text-zinc-400">
           Run recurring group activities — pickup sports, run clubs, meetups — and let
-          participants sign up in a tap.
+          participants sign up in a tap. It&apos;s free.
           <br />
           <span className="text-indigo-300">No more manual lists ;)</span>
         </p>
