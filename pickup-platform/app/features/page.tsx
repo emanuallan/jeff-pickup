@@ -1,8 +1,13 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { buildMarketingPageMetadata, orgBaseUrl } from '@/lib/og-metadata'
-import { organizrBtnPrimary, organizrBtnSecondary } from '../_components/organizr-shell'
-import { MarketingPage } from '../_components/marketing-page'
+import {
+  OrganizrBackdrop,
+  OrganizrMarketingHeader,
+  organizrBtnPrimary,
+  organizrBtnSecondary,
+} from '../_components/organizr-shell'
+import { MarketingFooter } from '../_components/marketing-page'
 
 export const metadata: Metadata = buildMarketingPageMetadata(
   '/features',
@@ -41,49 +46,68 @@ const sections = [
   },
 ]
 
+function Check() {
+  return (
+    <span className="mt-0.5 inline-flex h-4 w-4 shrink-0 items-center justify-center text-indigo-400" aria-hidden>
+      ✓
+    </span>
+  )
+}
+
 export default function FeaturesPage() {
   const demoUrl = orgBaseUrl('demo')
 
   return (
-    <MarketingPage
-      demoUrl={demoUrl}
-      title="Features"
-      actions={
-        <>
-          <Link href="/login" className={`${organizrBtnPrimary} flex-1 text-center`}>
+    <div className="relative min-h-dvh">
+      <OrganizrBackdrop />
+      <OrganizrMarketingHeader demoUrl={demoUrl} />
+
+      <main className="mx-auto max-w-lg px-6 py-10 sm:py-12">
+        <h1 className="text-2xl font-semibold tracking-tight text-zinc-50 sm:text-3xl">
+          Built for recurring groups
+        </h1>
+        <p className="mt-3 text-base leading-relaxed text-zinc-400">
+          Share a link. See who&apos;s coming. No app download — just the browser.
+        </p>
+
+        <div className="mt-8 space-y-8">
+          {sections.map(({ title, items }) => (
+            <section key={title}>
+              <h2 className="text-sm font-semibold text-zinc-100">{title}</h2>
+              <ul className="mt-3 space-y-2.5">
+                {items.map((item) => (
+                  <li key={item} className="flex gap-2.5 text-sm leading-snug text-zinc-400">
+                    <Check />
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ))}
+        </div>
+
+        <div className="mt-10 flex flex-col gap-3">
+          <Link href="/login" className={`${organizrBtnPrimary} text-center`}>
             Create your group
           </Link>
           <a
             href={demoUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className={`${organizrBtnSecondary} flex-1 text-center`}
+            className={`${organizrBtnSecondary} text-center`}
           >
             Try the demo
           </a>
-        </>
-      }
-    >
-      <p>
-        Share a link. See who&apos;s coming. No app download — just the browser.
-      </p>
-
-      {sections.map(({ title, items }) => (
-        <div key={title}>
-          <h2>{title}</h2>
-          <ul>
-            {items.map((item) => (
-              <li key={item}>{item}</li>
-            ))}
-          </ul>
         </div>
-      ))}
 
-      <p>
-        <Link href="/" className="text-indigo-300 hover:text-indigo-200">
-          ← Back to home
-        </Link>
-      </p>
-    </MarketingPage>
+        <p className="mt-8 text-center">
+          <Link href="/" className="text-sm text-zinc-500 transition-colors hover:text-zinc-300">
+            ← Back to home
+          </Link>
+        </p>
+
+        <MarketingFooter />
+      </main>
+    </div>
   )
 }
