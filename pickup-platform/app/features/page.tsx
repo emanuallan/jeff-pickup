@@ -150,6 +150,43 @@ export default function FeaturesPage() {
           </ul>
         </div>
 
+        <section className="mt-10">
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-zinc-500">
+            At a glance
+          </h2>
+          <div className="mt-3 overflow-x-auto rounded-2xl border border-zinc-800">
+            <table className="w-full min-w-[480px] border-collapse text-left text-sm">
+              <thead>
+                <tr className="border-b border-zinc-800 bg-zinc-900/60">
+                  <th className="px-4 py-3 font-medium text-zinc-300">Feature</th>
+                  <th className="px-3 py-3 text-center font-medium text-zinc-400">Players</th>
+                  <th className="px-3 py-3 text-center font-medium text-zinc-400">Organizers</th>
+                  <th className="px-3 py-3 text-center font-medium text-zinc-400">Regulars</th>
+                </tr>
+              </thead>
+              <tbody>
+                {matrixRows.map((row, i) => (
+                  <tr
+                    key={row.feature}
+                    className={i % 2 === 0 ? 'bg-zinc-950/30' : 'bg-transparent'}
+                  >
+                    <td className="px-4 py-2.5 text-zinc-400">{row.feature}</td>
+                    <td className="px-3 py-2.5 text-center">
+                      {row.players ? <Check /> : <Dash />}
+                    </td>
+                    <td className="px-3 py-2.5 text-center">
+                      {row.organizers ? <Check /> : <Dash />}
+                    </td>
+                    <td className="px-3 py-2.5 text-center">
+                      {row.community ? <Check /> : <Dash />}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
         <FeatureCard eyebrow="Why web first" title="A link beats an app download" className="mt-10">
           <p className="mt-2 text-sm leading-relaxed text-zinc-400">
             We built Organizr for the group chat moment — someone drops a link, people tap it, and
@@ -209,43 +246,6 @@ export default function FeaturesPage() {
             Cancelled sessions don&apos;t count toward caps or streaks.
           </p>
         </FeatureCard>
-
-        <section className="mt-10">
-          <h2 className="text-sm font-semibold uppercase tracking-wider text-zinc-500">
-            At a glance
-          </h2>
-          <div className="mt-3 overflow-x-auto rounded-2xl border border-zinc-800">
-            <table className="w-full min-w-[480px] border-collapse text-left text-sm">
-              <thead>
-                <tr className="border-b border-zinc-800 bg-zinc-900/60">
-                  <th className="px-4 py-3 font-medium text-zinc-300">Feature</th>
-                  <th className="px-3 py-3 text-center font-medium text-zinc-400">Players</th>
-                  <th className="px-3 py-3 text-center font-medium text-zinc-400">Organizers</th>
-                  <th className="px-3 py-3 text-center font-medium text-zinc-400">Regulars</th>
-                </tr>
-              </thead>
-              <tbody>
-                {matrixRows.map((row, i) => (
-                  <tr
-                    key={row.feature}
-                    className={i % 2 === 0 ? 'bg-zinc-950/30' : 'bg-transparent'}
-                  >
-                    <td className="px-4 py-2.5 text-zinc-400">{row.feature}</td>
-                    <td className="px-3 py-2.5 text-center">
-                      {row.players ? <Check /> : <Dash />}
-                    </td>
-                    <td className="px-3 py-2.5 text-center">
-                      {row.organizers ? <Check /> : <Dash />}
-                    </td>
-                    <td className="px-3 py-2.5 text-center">
-                      {row.community ? <Check /> : <Dash />}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
 
         <section className="mt-10">
           <div className="flex items-baseline justify-between gap-3">
