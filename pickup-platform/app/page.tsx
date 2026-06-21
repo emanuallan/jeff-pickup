@@ -36,15 +36,15 @@ export default function HomePage() {
           Run recurring group activities — pickup sports, run clubs, meetups — and let
           participants sign up in a tap.
           <br />
-          <span className="text-indigo-300">No more manual lists ;)</span>
+          <span className="text-indigo-300">No more manual lists and it&apos;s free</span>
         </p>
 
         <div className="mt-8 flex flex-col gap-3">
           <Link href="/login" className={`${organizrBtnPrimary} text-center`}>
-            Sign in / Create your group
+            Create your group
           </Link>
-          <Link href="/console" className={`${organizrBtnSecondary} text-center`}>
-            Organizer console
+          <Link href="/features" className={`${organizrBtnSecondary} text-center`}>
+            Learn more
           </Link>
         </div>
 
