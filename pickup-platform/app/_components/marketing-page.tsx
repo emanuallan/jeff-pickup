@@ -5,6 +5,9 @@ export function MarketingFooter() {
   return (
     <footer className="mt-16 border-t border-white/10 pt-8">
       <nav className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-sm text-zinc-500">
+        <Link href="/features" className="transition-colors hover:text-zinc-300">
+          Features
+        </Link>
         <Link href="/about" className="transition-colors hover:text-zinc-300">
           About
         </Link>
