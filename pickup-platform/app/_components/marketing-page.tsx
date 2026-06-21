@@ -36,17 +36,20 @@ export function MarketingFooter() {
 type MarketingPageProps = {
   title: string
   children: React.ReactNode
+  demoUrl?: string
+  actions?: React.ReactNode
 }
 
-export function MarketingPage({ title, children }: MarketingPageProps) {
+export function MarketingPage({ title, children, demoUrl, actions }: MarketingPageProps) {
   return (
     <div className="relative min-h-dvh">
       <OrganizrBackdrop />
-      <OrganizrMarketingHeader />
+      <OrganizrMarketingHeader demoUrl={demoUrl} />
 
       <main className="mx-auto max-w-2xl px-6 py-12 sm:px-8">
         <h1 className="text-3xl font-semibold tracking-tight text-zinc-50">{title}</h1>
         <div className="prose-organizr mt-8">{children}</div>
+        {actions ? <div className="mt-10 flex flex-col gap-3 sm:flex-row">{actions}</div> : null}
         <MarketingFooter />
       </main>
     </div>
