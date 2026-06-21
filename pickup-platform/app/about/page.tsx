@@ -42,6 +42,10 @@ export default function AboutPage() {
           About Organizr
         </h1>
         <p className="mt-3 text-base leading-relaxed text-zinc-400">
+          Organizr began the way a lot of good tools do — with a small group of people who just
+          wanted to spend less time coordinating and more time actually playing together.
+        </p>
+        <p className="mt-4 text-base leading-relaxed text-zinc-400">
           It started with a pickup soccer group in Jeffersonville, IN — tired of group texts and
           last-minute headcounts every week.
         </p>

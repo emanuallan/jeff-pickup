@@ -19,17 +19,17 @@ const sections = [
   {
     title: 'Web-first',
     items: [
-      'Drop a link in group chat — works on any phone',
-      'No app download for guests or one-timers',
+      'Drop a link in group chat — works on any device',
+      'No app download, no additional friction',
       'Open, join, see the roster',
     ],
   },
   {
     title: 'For players',
     items: [
-      'Tap to join with name + phone',
-      'Live roster, headcount, and arrival status',
-      'Leave anytime; recognized when you return',
+      'Tap to join after first visit',
+      'Live roster and headcounts',
+      'Status updates for each player',
     ],
   },
   {
@@ -42,7 +42,7 @@ const sections = [
   },
   {
     title: 'For regulars',
-    items: ['Caps, streaks, and leaderboards — cancelled sessions excluded'],
+    items: ['Caps, streaks, and leaderboards'],
   },
 ]
 
