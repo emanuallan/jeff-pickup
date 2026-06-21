@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { buildMarketingPageMetadata, orgBaseUrl } from '@/lib/og-metadata'
 import { organizrBtnPrimary, organizrBtnSecondary } from '../_components/organizr-shell'
-import { MarketingPage } from '../_components/marketing-page'
+import { MarketingCheck, MarketingPage } from '../_components/marketing-page'
 
 export const metadata: Metadata = buildMarketingPageMetadata(
   '/about',
@@ -42,10 +42,19 @@ export default function AboutPage() {
       </p>
 
       <h2>What we optimize for</h2>
-      <ul>
-        <li>Make showing up easy</li>
-        <li>Make headcount clear</li>
-        <li>Less logistics, more time together</li>
+      <ul className="checklist">
+        <li>
+          <MarketingCheck />
+          <span>Make showing up easy</span>
+        </li>
+        <li>
+          <MarketingCheck />
+          <span>Make headcount clear</span>
+        </li>
+        <li>
+          <MarketingCheck />
+          <span>Less logistics, more time together</span>
+        </li>
       </ul>
 
       <h2>Contact</h2>

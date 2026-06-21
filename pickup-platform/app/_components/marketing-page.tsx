@@ -1,6 +1,17 @@
 import Link from 'next/link'
 import { OrganizrBackdrop, OrganizrMarketingHeader } from './organizr-shell'
 
+export function MarketingCheck() {
+  return (
+    <span
+      className="mt-0.5 inline-flex h-4 w-4 shrink-0 items-center justify-center text-indigo-400"
+      aria-hidden
+    >
+      ✓
+    </span>
+  )
+}
+
 export function MarketingFooter() {
   return (
     <footer className="mt-16 border-t border-white/10 pt-8">
