@@ -2,7 +2,7 @@ import { ImageResponse } from 'next/og'
 import { readableTextColor, hexToRgba, accentOnDark } from '@/lib/colors'
 import { getOgFonts } from '@/lib/og-fonts'
 import { getOrganizrLogoDataUrl } from '@/lib/organizr-logo-server'
-import { arrowRight } from '@/lib/text-arrows'
+import { ogArrowRight } from '@/lib/text-arrows'
 
 export const ogImageSize = { width: 1200, height: 630 }
 export const ogImageContentType = 'image/png'
@@ -31,7 +31,7 @@ function DotGrid({ opacity = 0.35 }: { opacity?: number }) {
   )
 }
 
-function LocationMark({ accent, online }: { accent: string; online?: boolean }) {
+function LocationMark({ accentFg, online }: { accentFg: string; online?: boolean }) {
   if (online) {
     return (
       <div
@@ -40,8 +40,8 @@ function LocationMark({ accent, online }: { accent: string; online?: boolean }) 
           width: '28px',
           height: '28px',
           borderRadius: '8px',
-          backgroundColor: hexToRgba(accent, 0.16),
-          border: `1px solid ${hexToRgba(accent, 0.35)}`,
+          backgroundColor: hexToRgba(accentFg, 0.16),
+          border: `1px solid ${hexToRgba(accentFg, 0.35)}`,
           alignItems: 'center',
           justifyContent: 'center',
         }}
@@ -52,7 +52,7 @@ function LocationMark({ accent, online }: { accent: string; online?: boolean }) 
             width: '14px',
             height: '10px',
             borderRadius: '2px',
-            border: `2px solid ${accent}`,
+            border: `2px solid ${accentFg}`,
           }}
         />
       </div>
@@ -66,8 +66,8 @@ function LocationMark({ accent, online }: { accent: string; online?: boolean }) 
         width: '28px',
         height: '28px',
         borderRadius: '9999px',
-        backgroundColor: hexToRgba(accent, 0.16),
-        border: `1px solid ${hexToRgba(accent, 0.35)}`,
+        backgroundColor: hexToRgba(accentFg, 0.16),
+        border: `1px solid ${hexToRgba(accentFg, 0.35)}`,
         alignItems: 'center',
         justifyContent: 'center',
       }}
@@ -78,7 +78,7 @@ function LocationMark({ accent, online }: { accent: string; online?: boolean }) 
           width: '10px',
           height: '10px',
           borderRadius: '9999px',
-          backgroundColor: accent,
+          backgroundColor: accentFg,
         }}
       />
     </div>
@@ -185,7 +185,7 @@ export function MarketingOgCard({ logoSrc }: { logoSrc: string }) {
             boxShadow: `0 16px 48px ${hexToRgba(ORGANIZR_ACCENT, 0.35)}`,
           }}
         >
-          Create your group {arrowRight}
+          Create your group {ogArrowRight}
         </div>
         <div style={{ display: 'flex', ...font(400), fontSize: '22px', color: '#52525b' }}>
           organizr.co
@@ -330,8 +330,8 @@ export function OrgOgCard({
               gap: '10px',
               padding: '10px 20px',
               borderRadius: '9999px',
-              backgroundColor: hexToRgba(accent, 0.12),
-              border: `1px solid ${hexToRgba(accent, 0.28)}`,
+              backgroundColor: hexToRgba(accentFg, 0.12),
+              border: `1px solid ${hexToRgba(accentFg, 0.35)}`,
               flexShrink: 0,
             }}
           >
@@ -388,7 +388,7 @@ export function OrgOgCard({
               maxWidth: '920px',
             }}
           >
-            <LocationMark accent={accent} online={locationOnline} />
+            <LocationMark accentFg={accentFg} online={locationOnline} />
             <div
               style={{
                 display: 'flex',

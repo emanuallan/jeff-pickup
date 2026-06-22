@@ -1,7 +1,7 @@
 import { getOrgBySlug } from '@/lib/orgs'
 import { getOrgCapsLeaderboard, getOrgStreakLeaderboard } from '@/lib/engagement'
 import { renderOrgOgImage } from '@/lib/og-image'
-import { arrowRight } from '@/lib/text-arrows'
+import { ogArrowRight } from '@/lib/text-arrows'
 
 type Context = {
   params: Promise<{ slug: string }>
@@ -34,6 +34,6 @@ export async function GET(_request: Request, { params }: Context) {
     eyebrow: 'Leaderboard',
     headline,
     subline,
-    cta: `See the rankings ${arrowRight}`,
+    cta: `See the rankings ${ogArrowRight}`,
   })
 }

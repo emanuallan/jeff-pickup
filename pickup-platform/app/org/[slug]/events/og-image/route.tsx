@@ -1,7 +1,7 @@
 import { getOrgBySlug } from '@/lib/orgs'
 import { getUpcomingEventsForOrg, formatEventTime, eventDisplayName } from '@/lib/events'
 import { renderOrgOgImage } from '@/lib/og-image'
-import { arrowRight } from '@/lib/text-arrows'
+import { ogArrowRight } from '@/lib/text-arrows'
 
 type Context = {
   params: Promise<{ slug: string }>
@@ -26,6 +26,6 @@ export async function GET(_request: Request, { params }: Context) {
         (nextEvent.location_label ? ` · ${nextEvent.location_label}` : '')
       : org?.description,
     locationOnline: nextEvent?.location_is_online,
-    cta: nextEvent ? `Count me in ${arrowRight}` : undefined,
+    cta: nextEvent ? `Count me in ${ogArrowRight}` : undefined,
   })
 }
