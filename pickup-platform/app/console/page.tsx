@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { getUserOrgs } from '@/lib/orgs'
 import { getRootDomain } from '@/lib/tenancy/parse-host'
-import { orgBaseUrl } from '@/lib/og-metadata'
+import { orgEventsUrl } from '@/lib/og-metadata'
 import { ConsolePage, ConsoleHeader, EmptyState, btnAccent, btnPrimary } from './_components/console-ui'
 import { arrowNe } from '@/lib/text-arrows'
 
@@ -46,7 +46,7 @@ export default async function ConsolePage_() {
       ) : (
         <ul className="mt-8 grid grid-cols-1 gap-3 md:grid-cols-2">
           {orgs.map((org) => {
-            const orgPublicUrl = orgBaseUrl(org.slug)
+            const orgPublicUrl = orgEventsUrl(org.slug)
 
             return (
               <li key={org.id} className="min-w-0">

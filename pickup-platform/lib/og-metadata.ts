@@ -14,6 +14,11 @@ export function orgBaseUrl(slug: string): string {
   return `https://${slug}.${root}`
 }
 
+/** Public sessions list for an org — preferred entry point over the org root redirect. */
+export function orgEventsUrl(slug: string): string {
+  return `${orgBaseUrl(slug)}/events`
+}
+
 /** Canonical apex URL for the marketing/landing page (no org subdomain). */
 export function rootBaseUrl(): string {
   const root = process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? 'organizr.co'

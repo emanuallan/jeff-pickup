@@ -5,7 +5,7 @@ import { getLocationsForOrg } from '@/lib/locations'
 import { getSchedulesForOrg } from '@/lib/schedules'
 import { getUpcomingEventsForConsole, getPastEventsForConsole } from '@/lib/events'
 import { getParticipantHistoryForOrg } from '@/lib/participants'
-import { orgBaseUrl } from '@/lib/og-metadata'
+import { orgEventsUrl } from '@/lib/og-metadata'
 import { OrgConsoleHeader } from './org-console-header'
 import {
   IconSessions,
@@ -43,7 +43,7 @@ export default async function OrgConsolePage({ params }: Props) {
     getParticipantHistoryForOrg(org.id),
   ])
 
-  const orgUrl = orgBaseUrl(org.slug)
+  const orgUrl = orgEventsUrl(org.slug)
   const isSetup = locations.length > 0 && schedules.length > 0
   const base = `/console/${orgSlug}`
 
