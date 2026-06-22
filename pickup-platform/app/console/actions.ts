@@ -137,7 +137,7 @@ export async function createOrg(formData: FormData) {
   }
 
   revalidatePath('/console')
-  redirect(`/console/${slug}`)
+  redirect(`/console/${slug}/setup`)
 }
 
 export async function createLocation(orgSlug: string, formData: FormData): Promise<void> {
