@@ -49,6 +49,7 @@ export default async function OrgConsolePage({ params }: Props) {
   ])
 
   const regularCount = participants.filter((p) => p.session_count >= 2).length
+  const showAnalytics = pastEvents.some((event) => event.status !== 'cancelled')
 
   const orgUrl = orgEventsUrl(org.slug)
   const isSetup = locations.length > 0 && schedules.length > 0
@@ -133,13 +134,15 @@ export default async function OrgConsolePage({ params }: Props) {
         </ConsoleNavGrid>
       </div>
 
-      <Suspense fallback={<OrgConsoleAnalyticsFallback />}>
-        <OrgConsoleAnalyticsSection
-          orgId={org.id}
-          participantCount={participants.length}
-          regularCount={regularCount}
-        />
-      </Suspense>
+      {showAnalytics ? (
+        <Suspense fallback={<OrgConsoleAnalyticsFallback />}>
+          <OrgConsoleAnalyticsSection
+            orgId={org.id}
+            participantCount={participants.length}
+            regularCount={regularCount}
+          />
+        </Suspense>
+      ) : null}
     </ConsolePage>
   )
 }
