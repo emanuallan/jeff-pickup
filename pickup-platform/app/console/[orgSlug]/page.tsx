@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { Suspense } from 'react'
 import { notFound } from 'next/navigation'
 import { getOrgForMember } from '@/lib/orgs'
 import { getLocationsForOrg } from '@/lib/locations'
@@ -7,6 +8,10 @@ import { getUpcomingEventsForConsole, getPastEventsForConsole } from '@/lib/even
 import { getParticipantHistoryForOrg } from '@/lib/participants'
 import { orgEventsUrl } from '@/lib/og-metadata'
 import { OrgConsoleHeader } from './org-console-header'
+import {
+  OrgConsoleAnalyticsFallback,
+  OrgConsoleAnalyticsSection,
+} from './org-console-analytics'
 import {
   IconSessions,
   IconPastSessions,
@@ -42,6 +47,8 @@ export default async function OrgConsolePage({ params }: Props) {
     getPastEventsForConsole(org.id),
     getParticipantHistoryForOrg(org.id),
   ])
+
+  const regularCount = participants.filter((p) => p.session_count >= 2).length
 
   const orgUrl = orgEventsUrl(org.slug)
   const isSetup = locations.length > 0 && schedules.length > 0
@@ -125,6 +132,14 @@ export default async function OrgConsolePage({ params }: Props) {
           />
         </ConsoleNavGrid>
       </div>
+
+      <Suspense fallback={<OrgConsoleAnalyticsFallback />}>
+        <OrgConsoleAnalyticsSection
+          orgId={org.id}
+          participantCount={participants.length}
+          regularCount={regularCount}
+        />
+      </Suspense>
     </ConsolePage>
   )
 }
