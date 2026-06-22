@@ -42,27 +42,29 @@ export function SessionEventCard({
         eventId={event.short_id}
         announcement={event.announcement}
       />
-      <div className="mt-2.5 flex flex-wrap items-center gap-1 border-t border-white/5 pt-2">
-        {!past ? (
-          <EditSessionButton
+      <div className="mt-2.5 flex items-center justify-between gap-2 border-t border-white/5 pt-2">
+        <div className="flex flex-wrap items-center gap-1">
+          {!past ? (
+            <EditSessionButton
+              orgSlug={orgSlug}
+              event={event}
+              locations={locations}
+              updateSession={updateEvent}
+            />
+          ) : null}
+          <DeleteEventButton
             orgSlug={orgSlug}
-            event={event}
-            locations={locations}
-            updateSession={updateEvent}
+            eventId={event.short_id}
+            eventLabel={formatEventTime(event)}
+            recurring={!past && event.schedule_id != null}
           />
-        ) : null}
+        </div>
         <Link
           href={`/console/${orgSlug}/events/${event.short_id}`}
-          className={`${chipAction} text-indigo-300 hover:bg-indigo-500/10 hover:text-indigo-200`}
+          className={`${chipAction} shrink-0 text-indigo-300 hover:bg-indigo-500/10 hover:text-indigo-200`}
         >
           View analytics {arrowRight}
         </Link>
-        <DeleteEventButton
-          orgSlug={orgSlug}
-          eventId={event.short_id}
-          eventLabel={formatEventTime(event)}
-          recurring={!past && event.schedule_id != null}
-        />
       </div>
     </ConsoleCard>
   )
