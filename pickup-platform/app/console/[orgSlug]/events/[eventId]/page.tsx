@@ -84,9 +84,13 @@ export default async function ConsoleEventAnalyticsPage({ params }: Props) {
               label="Sign-up rate"
               value={analytics.conversionRate != null ? `${analytics.conversionRate}%` : '—'}
               hint={
-                analytics.uniqueVisitors > 0
-                  ? `${analytics.uniqueSignups} signed up`
-                  : 'Needs page views'
+                analytics.uniqueSignups > 0
+                  ? analytics.conversionCapped
+                    ? `${analytics.uniqueSignups} signed up · shared device`
+                    : `${analytics.uniqueSignups} signed up`
+                  : analytics.uniqueVisitors > 0
+                    ? 'No sign-ups yet'
+                    : 'Needs page views'
               }
             />
             <StatCard

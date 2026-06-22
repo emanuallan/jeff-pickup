@@ -12,10 +12,28 @@ export type EventAnalytics = {
   headcount: number
   totalGuests: number
   conversionRate: number | null
+  /** True when sign-ups exceed cookie-based visitors (e.g. shared phone). */
+  conversionCapped: boolean
   capacityFill: number | null
   arrivalStatusCounts: Partial<Record<ArrivalStatus, number>>
   firstSignupAt: string | null
   lastSignupAt: string | null
+}
+
+/** Visitors are tracked per browser cookie; sign-ups are per person — cap when they diverge. */
+export function computeConversionRate(
+  uniqueVisitors: number,
+  uniqueSignups: number,
+): { rate: number | null; capped: boolean } {
+  if (uniqueVisitors <= 0 && uniqueSignups <= 0) {
+    return { rate: null, capped: false }
+  }
+
+  const denominator = Math.max(uniqueVisitors, uniqueSignups, 1)
+  const raw = Math.round((uniqueSignups / denominator) * 100)
+  const capped = uniqueVisitors > 0 && uniqueSignups > uniqueVisitors
+
+  return { rate: Math.min(100, raw), capped }
 }
 
 export function buildRosterAnalytics(
@@ -47,10 +65,10 @@ export function buildRosterAnalytics(
   }
 
   const headcount = rosterHeadcount(roster)
-  const conversionRate =
-    db.uniqueVisitors > 0
-      ? Math.round((db.uniqueSignups / db.uniqueVisitors) * 100)
-      : null
+  const { rate: conversionRate, capped: conversionCapped } = computeConversionRate(
+    db.uniqueVisitors,
+    db.uniqueSignups,
+  )
   const capacityFill =
     capacity != null && capacity > 0 ? Math.round((headcount / capacity) * 100) : null
 
@@ -63,6 +81,7 @@ export function buildRosterAnalytics(
     headcount,
     totalGuests,
     conversionRate,
+    conversionCapped,
     capacityFill,
     arrivalStatusCounts,
     firstSignupAt,
