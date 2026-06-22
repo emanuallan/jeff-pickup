@@ -349,10 +349,10 @@ function TooltipBadge({
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   return (
-    <span className="relative inline-flex align-middle">
+    <span className="relative inline-flex items-center">
       <button
         type="button"
-        className={className}
+        className={[className, 'leading-none'].filter(Boolean).join(' ')}
         aria-label={tip}
         onClick={() => {
           setShow(true)
@@ -383,7 +383,7 @@ function ArrivalStatusIcon({
   if (!emoji) return null
 
   return (
-    <TooltipBadge tip={label} className="mr-1 inline-flex items-center">
+    <TooltipBadge tip={label} className="inline-flex items-center">
       {emoji}
     </TooltipBadge>
   )
@@ -393,7 +393,7 @@ function RosterBadges({ badges }: { badges: RosterBadgeInfo | undefined }) {
   if (!badges) return null
 
   return (
-    <span className="ml-1.5 inline-flex flex-wrap items-center gap-1">
+    <span className="inline-flex flex-wrap items-center gap-1">
       {badges.isCapsLeader ? (
         <TooltipBadge tip="Most caps on this roster" className="inline-flex items-center">
           🏅
@@ -471,10 +471,10 @@ export function RosterList(props: {
                   borderColor: hexToRgba(accentFg, 0.45),
                 }}
               >
-                <span className="min-w-0 font-semibold">
+                <span className="inline-flex min-w-0 flex-wrap items-center gap-x-1 gap-y-0.5 font-semibold">
                   <ArrivalStatusIcon status={e.arrival_status} isOnline={props.isOnline} />
-                  {e.display_name}
-                  <span className="text-zinc-400"> (you)</span>
+                  <span>{e.display_name}</span>
+                  <span className="text-zinc-400">(you)</span>
                   {e.guest_count > 0 ? (
                     <span className="text-zinc-400">{formatGuestSuffix(e.guest_count)}</span>
                   ) : null}
@@ -517,9 +517,9 @@ export function RosterList(props: {
               key={e.id}
               className="flex items-center justify-between gap-2 rounded-xl border border-zinc-800 bg-black/20 px-3 py-2 text-sm"
             >
-              <span className="min-w-0">
+              <span className="inline-flex min-w-0 flex-wrap items-center gap-x-1 gap-y-0.5">
                 <ArrivalStatusIcon status={e.arrival_status} isOnline={props.isOnline} />
-                {e.display_name}
+                <span>{e.display_name}</span>
                 <RosterBadges badges={props.badgesByParticipantId?.[e.participant_id]} />
                 {e.guest_count > 0 ? (
                   <span className="text-zinc-500">{formatGuestSuffix(e.guest_count)}</span>

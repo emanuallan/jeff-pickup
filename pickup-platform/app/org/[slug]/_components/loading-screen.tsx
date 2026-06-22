@@ -1,5 +1,5 @@
 type Props = {
-  variant?: 'list' | 'detail'
+  variant?: 'list' | 'detail' | 'leaderboard'
 }
 
 /**
@@ -32,7 +32,11 @@ export function LoadingScreen({ variant = 'list' }: Props) {
           ))}
         </div>
         <p className="text-sm text-zinc-500" role="status">
-          {variant === 'detail' ? 'Counting who\u2019s in…' : 'Gathering sessions…'}
+          {variant === 'detail'
+            ? 'Counting who\u2019s in…'
+            : variant === 'leaderboard'
+              ? 'Crunching numbers…'
+              : 'Gathering sessions…'}
         </p>
       </div>
 
