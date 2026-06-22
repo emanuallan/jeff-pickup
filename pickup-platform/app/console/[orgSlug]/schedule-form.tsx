@@ -12,11 +12,13 @@ type Props = {
     orgSlug: string,
     formData: FormData,
   ) => Promise<{ error?: string; ok?: boolean }>
+  onSuccess?: () => void
 }
 
-export function ScheduleForm({ orgSlug, locations, createSchedule }: Props) {
+export function ScheduleForm({ orgSlug, locations, createSchedule, onSuccess }: Props) {
   const [timezone, setTimezone] = useState('UTC')
   const [error, setError] = useState<string | null>(null)
+  const [pending, setPending] = useState(false)
 
   useEffect(() => {
     try {
@@ -28,11 +30,15 @@ export function ScheduleForm({ orgSlug, locations, createSchedule }: Props) {
 
   async function handleSubmit(formData: FormData) {
     setError(null)
+    setPending(true)
     formData.set('timezone', Intl.DateTimeFormat().resolvedOptions().timeZone)
     const result = await createSchedule(orgSlug, formData)
+    setPending(false)
     if (result?.error) {
       setError(result.error)
+      return
     }
+    onSuccess?.()
   }
 
   return (
@@ -41,8 +47,8 @@ export function ScheduleForm({ orgSlug, locations, createSchedule }: Props) {
 
       {error ? <p className="text-sm text-red-300">{error}</p> : null}
 
-      <button type="submit" className={`w-full sm:w-auto ${btnSecondary}`}>
-        Add schedule
+      <button type="submit" disabled={pending} className={`w-full sm:w-auto ${btnSecondary}`}>
+        {pending ? 'Adding…' : 'Add schedule'}
       </button>
     </form>
   )

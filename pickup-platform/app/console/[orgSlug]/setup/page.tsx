@@ -5,7 +5,7 @@ import { getLocationsForOrg } from '@/lib/locations'
 import { getSchedulesForOrg } from '@/lib/schedules'
 import { createLocation, createSchedule } from '../../actions'
 import { AddLocationButton } from '../add-location-button'
-import { ScheduleForm } from '../schedule-form'
+import { AddScheduleButton } from '../add-schedule-button'
 import { ConsolePage, ConsoleSection, ConsoleCard } from '../../_components/console-ui'
 
 type Props = {
@@ -118,11 +118,15 @@ export default async function SetupPage({ params }: Props) {
             }
             action={<StepBadge n={2} done={hasSchedule} locked={!hasLocation} />}
           >
-            {hasLocation ? (
-              <ScheduleForm orgSlug={orgSlug} locations={locations} createSchedule={createSchedule} />
-            ) : (
+            {hasLocation && !hasSchedule ? (
+              <AddScheduleButton
+                orgSlug={orgSlug}
+                locations={locations}
+                createSchedule={createSchedule}
+              />
+            ) : !hasLocation ? (
               <p className="text-sm text-zinc-600">Locked until you add a location.</p>
-            )}
+            ) : null}
           </ConsoleSection>
         </div>
       )}
