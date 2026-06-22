@@ -4,21 +4,26 @@ import {
   eventDisplayName,
   type EventWithLocation,
 } from '@/lib/events'
+import type { Location } from '@/lib/locations'
 import { arrowRight } from '@/lib/text-arrows'
 import { ConsoleCard, chipAction } from '../_components/console-ui'
 import { DeleteEventButton } from './delete-event-button'
+import { EditSessionButton } from './edit-session-button'
 import { EventStatusSelect } from './event-status-select'
 import { EventAnnouncementEditor } from './event-announcement-editor'
+import { updateEvent } from '../actions'
 
 const sessionFallback = 'Session'
 
 export function SessionEventCard({
   orgSlug,
   event,
+  locations,
   past,
 }: {
   orgSlug: string
   event: EventWithLocation
+  locations: Location[]
   past?: boolean
 }) {
   return (
@@ -38,6 +43,14 @@ export function SessionEventCard({
         announcement={event.announcement}
       />
       <div className="mt-2.5 flex flex-wrap items-center gap-1 border-t border-white/5 pt-2">
+        {!past ? (
+          <EditSessionButton
+            orgSlug={orgSlug}
+            event={event}
+            locations={locations}
+            updateSession={updateEvent}
+          />
+        ) : null}
         <Link
           href={`/console/${orgSlug}/events/${event.short_id}`}
           className={`${chipAction} text-indigo-300 hover:bg-indigo-500/10 hover:text-indigo-200`}

@@ -49,7 +49,7 @@ export default async function SessionsPage({ params }: Props) {
             <ul className="space-y-2">
               {upcomingEvents.map((ev) => (
                 <li key={ev.id}>
-                  <SessionEventCard orgSlug={orgSlug} event={ev} />
+                  <SessionEventCard orgSlug={orgSlug} event={ev} locations={locations} />
                 </li>
               ))}
             </ul>

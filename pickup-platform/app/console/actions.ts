@@ -11,7 +11,7 @@ import {
 } from '@/lib/schedules'
 import { geocodeAddress } from '@/lib/geocode'
 import { localDateTimeInZoneToUtcIso } from '@/lib/datetime'
-import { type EventStatus, initialEventStatus } from '@/lib/events'
+import { type EventStatus, initialEventStatus, getEventByRef, isEventEnded } from '@/lib/events'
 import { getOrgForMember } from '@/lib/orgs'
 import { isValidSlug, normalizeSlug } from '@/lib/tenancy/reserved-slugs'
 import { MAX_ORG_LINKS, normalizeLinkUrl } from '@/lib/social-links'
@@ -42,6 +42,65 @@ function parseOptionalMinParticipants(
     return { value: null, error: 'Min participants must be between 2 and 999.' }
   }
   return { value: n }
+}
+
+type ParsedSessionFields = {
+  title: string
+  locationId: string
+  startsAtIso: string
+  timezone: string
+  durationMin: number
+  capacity: number | null
+  minPlayers: number | null
+}
+
+function parseSessionFormData(
+  formData: FormData,
+): { ok: true; values: ParsedSessionFields } | { ok: false; error: string } {
+  const title = String(formData.get('title') ?? '').trim()
+  const locationId = String(formData.get('location_id') ?? '')
+  const startsAtLocal = String(formData.get('starts_at') ?? '')
+  const timezone = String(formData.get('timezone') ?? 'UTC').trim()
+  const durationMin = Number.parseInt(String(formData.get('duration_min') ?? '90'), 10)
+  const capacity = parseOptionalInt(formData.get('capacity'))
+  const minParticipants = parseOptionalMinParticipants(formData.get('min_players'))
+
+  if (!title || !locationId || !startsAtLocal) {
+    return { ok: false, error: 'Session name, location, and date are required.' }
+  }
+  if (!Number.isFinite(durationMin) || durationMin < 15 || durationMin > 480) {
+    return { ok: false, error: 'Duration must be between 15 and 480 minutes.' }
+  }
+  if (minParticipants.error) {
+    return { ok: false, error: minParticipants.error }
+  }
+  if (
+    minParticipants.value != null &&
+    capacity != null &&
+    minParticipants.value > capacity
+  ) {
+    return { ok: false, error: 'Min participants cannot exceed capacity.' }
+  }
+
+  let startsAtIso: string
+  try {
+    startsAtIso = localDateTimeInZoneToUtcIso(startsAtLocal, timezone)
+  } catch {
+    return { ok: false, error: 'Invalid date or time.' }
+  }
+
+  return {
+    ok: true,
+    values: {
+      title,
+      locationId,
+      startsAtIso,
+      timezone,
+      durationMin,
+      capacity,
+      minPlayers: minParticipants.value,
+    },
+  }
 }
 
 function parseScheduleFormData(
@@ -278,38 +337,12 @@ export async function createOneOffEvent(orgSlug: string, formData: FormData): Pr
   const org = await requireOrgAdmin(orgSlug)
   const supabase = await createClient()
 
-  const title = String(formData.get('title') ?? '').trim()
-  const locationId = String(formData.get('location_id') ?? '')
-  const startsAtLocal = String(formData.get('starts_at') ?? '')
-  const timezone = String(formData.get('timezone') ?? 'UTC').trim()
-  const durationMin = Number.parseInt(String(formData.get('duration_min') ?? '90'), 10)
-  const capacity = parseOptionalInt(formData.get('capacity'))
-  const minParticipants = parseOptionalMinParticipants(formData.get('min_players'))
-  const announcement = String(formData.get('announcement') ?? '').trim()
-
-  if (!title || !locationId || !startsAtLocal) {
+  const parsed = parseSessionFormData(formData)
+  if (!parsed.ok) {
     return
   }
-  if (!Number.isFinite(durationMin) || durationMin < 15 || durationMin > 480) {
-    return
-  }
-  if (minParticipants.error) {
-    return
-  }
-  if (
-    minParticipants.value != null &&
-    capacity != null &&
-    minParticipants.value > capacity
-  ) {
-    return
-  }
-
-  let startsAtIso: string
-  try {
-    startsAtIso = localDateTimeInZoneToUtcIso(startsAtLocal, timezone)
-  } catch {
-    return
-  }
+  const { title, locationId, startsAtIso, timezone, durationMin, capacity, minPlayers } =
+    parsed.values
 
   const { error } = await supabase.from('events').insert({
     org_id: org.id,
@@ -320,9 +353,9 @@ export async function createOneOffEvent(orgSlug: string, formData: FormData): Pr
     starts_at: startsAtIso,
     timezone,
     capacity,
-    min_players: minParticipants.value,
-    announcement,
-    status: initialEventStatus(minParticipants.value),
+    min_players: minPlayers,
+    announcement: '',
+    status: initialEventStatus(minPlayers),
   })
 
   if (error) {
@@ -331,6 +364,74 @@ export async function createOneOffEvent(orgSlug: string, formData: FormData): Pr
 
   revalidatePath(`/console/${orgSlug}`)
   revalidatePath(`/org/${orgSlug}`)
+}
+
+export async function updateEvent(
+  orgSlug: string,
+  eventId: string,
+  formData: FormData,
+): Promise<{ ok: true } | { error: string }> {
+  const org = await requireOrgAdmin(orgSlug)
+  const supabase = await createClient()
+
+  const event = await getEventByRef(eventId, org.id)
+  if (!event) {
+    return { error: 'Session not found.' }
+  }
+  if (isEventEnded(event)) {
+    return { error: 'Past sessions cannot be edited.' }
+  }
+
+  const parsed = parseSessionFormData(formData)
+  if (!parsed.ok) {
+    return { error: parsed.error }
+  }
+  const { title, locationId, startsAtIso, timezone, durationMin, capacity, minPlayers } =
+    parsed.values
+
+  if (event.schedule_id && event.starts_at !== startsAtIso) {
+    const { error: skipError } = await supabase.from('schedule_event_skips').upsert(
+      {
+        org_id: org.id,
+        schedule_id: event.schedule_id,
+        starts_at: event.starts_at,
+      },
+      { onConflict: 'schedule_id,starts_at', ignoreDuplicates: true },
+    )
+
+    if (skipError) {
+      return { error: skipError.message }
+    }
+  }
+
+  const { error } = await supabase
+    .from('events')
+    .update({
+      title,
+      location_id: locationId,
+      starts_at: startsAtIso,
+      timezone,
+      duration_min: durationMin,
+      capacity,
+      min_players: minPlayers,
+    })
+    .eq('id', event.id)
+    .eq('org_id', org.id)
+
+  if (error) {
+    if (error.code === '23505') {
+      return { error: 'Another session from this schedule already exists at that time.' }
+    }
+    return { error: error.message }
+  }
+
+  await supabase.rpc('maybe_promote_event', { p_event_id: event.id })
+
+  revalidatePath(`/console/${orgSlug}`)
+  revalidatePath(`/console/${orgSlug}/sessions`)
+  revalidatePath(`/org/${orgSlug}`)
+  revalidatePath(`/console/${orgSlug}/events/${eventId}`)
+  return { ok: true }
 }
 
 export async function cancelEvent(orgSlug: string, eventId: string): Promise<void> {

@@ -33,7 +33,7 @@ export default async function PastSessionsPage({ params }: Props) {
             <ul className="space-y-2">
               {pastEvents.map((ev) => (
                 <li key={ev.id}>
-                  <SessionEventCard orgSlug={orgSlug} event={ev} past />
+                  <SessionEventCard orgSlug={orgSlug} event={ev} locations={[]} past />
                 </li>
               ))}
             </ul>

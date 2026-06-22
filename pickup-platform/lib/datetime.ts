@@ -32,6 +32,23 @@ export function localDateTimeInZoneToUtcIso(localDateTime: string, timeZone: str
   return new Date(utc).toISOString()
 }
 
+/** datetime-local value (YYYY-MM-DDTHH:mm) for an instant in an IANA timezone. */
+export function utcIsoToLocalDateTimeInput(iso: string, timeZone: string): string {
+  const d = new Date(iso)
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  }).formatToParts(d)
+
+  const pick = (type: string) => parts.find((p) => p.type === type)?.value ?? '00'
+  return `${pick('year')}-${pick('month')}-${pick('day')}T${pick('hour')}:${pick('minute')}`
+}
+
 export function browserTimeZone(): string {
   try {
     return Intl.DateTimeFormat().resolvedOptions().timeZone
