@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { getUserOrgs } from '@/lib/orgs'
 import { getRootDomain } from '@/lib/tenancy/parse-host'
 import { orgBaseUrl } from '@/lib/og-metadata'
-import { ConsolePage, ConsoleHeader, EmptyState, btnPrimary } from './_components/console-ui'
+import { ConsolePage, ConsoleHeader, EmptyState, btnAccent, btnPrimary } from './_components/console-ui'
 import { arrowNe } from '@/lib/text-arrows'
 
 export default async function ConsolePage_() {
@@ -83,7 +83,7 @@ export default async function ConsolePage_() {
                   <div className="mt-4 flex flex-col gap-2 border-t border-white/5 pt-3 sm:flex-row sm:items-stretch">
                     <Link
                       href={`/console/${org.slug}`}
-                      className="inline-flex min-h-11 w-full items-center justify-center rounded-lg bg-indigo-500/15 px-3 py-2.5 text-sm font-semibold text-indigo-200 ring-1 ring-inset ring-indigo-500/25 transition hover:bg-indigo-500/25 sm:flex-1"
+                      className={`${btnAccent} w-full sm:flex-1`}
                     >
                       Manage
                     </Link>

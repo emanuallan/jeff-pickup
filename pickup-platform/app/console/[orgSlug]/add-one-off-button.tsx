@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import type { Location } from '@/lib/locations'
 import { OneOffEventForm } from './one-off-event-form'
 import {
-  btnOutline,
+  btnAccent,
   consoleModalBackdrop,
   consoleModalOverlay,
   consoleModalPanel,
@@ -30,7 +30,7 @@ export function AddOneOffButton({
 
   return (
     <>
-      <button type="button" onClick={() => setOpen(true)} className={btnOutline}>
+      <button type="button" onClick={() => setOpen(true)} className={btnAccent}>
         Add one-off session
       </button>
 

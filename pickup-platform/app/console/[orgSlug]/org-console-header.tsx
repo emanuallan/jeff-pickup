@@ -1,5 +1,5 @@
 import { arrowNe } from '@/lib/text-arrows'
-import { btnOutline } from '../_components/console-ui'
+import { btnAccent } from '../_components/console-ui'
 
 type Props = {
   orgName: string
@@ -26,7 +26,7 @@ export function OrgConsoleHeader({ orgName, orgActivity, logoUrl, publicUrl }: P
         href={publicUrl}
         target="_blank"
         rel="noreferrer"
-        className={`${btnOutline} w-full shrink-0 sm:w-auto`}
+        className={`${btnAccent} w-full shrink-0 sm:w-auto`}
       >
         View public page {arrowNe}
       </a>

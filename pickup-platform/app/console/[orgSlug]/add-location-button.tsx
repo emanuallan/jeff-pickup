@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { AddLocationForm } from './add-location-form'
 import {
-  btnOutline,
+  btnAccent,
   consoleModalBackdrop,
   consoleModalOverlay,
   consoleModalPanel,
@@ -27,7 +27,7 @@ export function AddLocationButton({
 
   return (
     <>
-      <button type="button" onClick={() => setOpen(true)} className={btnOutline}>
+      <button type="button" onClick={() => setOpen(true)} className={btnAccent}>
         Add location
       </button>
 

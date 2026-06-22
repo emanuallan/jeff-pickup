@@ -32,6 +32,10 @@ export const btnSecondary =
 export const btnOutline =
   'inline-flex min-h-11 items-center justify-center gap-1.5 rounded-lg border border-white/10 px-4 py-2.5 text-sm font-medium text-zinc-200 transition hover:border-white/20 hover:bg-white/5'
 
+/** Soft indigo CTA — matches the Manage button on the groups list. */
+export const btnAccent =
+  'inline-flex min-h-11 items-center justify-center gap-1.5 rounded-lg bg-indigo-500/15 px-3 py-2.5 text-sm font-semibold text-indigo-200 ring-1 ring-inset ring-indigo-500/25 transition hover:bg-indigo-500/25 disabled:opacity-50'
+
 /** Small padded chip for inline row actions — bigger hit area than bare text links. */
 export const chipAction =
   'inline-flex min-h-10 items-center gap-1 rounded-lg px-2.5 py-2 text-xs font-medium transition'

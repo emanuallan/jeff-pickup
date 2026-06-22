@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import type { Location } from '@/lib/locations'
 import { ScheduleForm } from './schedule-form'
 import {
-  btnOutline,
+  btnAccent,
   consoleModalBackdrop,
   consoleModalOverlay,
   consoleModalPanel,
@@ -39,7 +39,7 @@ export function AddScheduleButton({
 
   return (
     <>
-      <button type="button" onClick={() => setOpen(true)} className={btnOutline}>
+      <button type="button" onClick={() => setOpen(true)} className={btnAccent}>
         Add schedule
       </button>
 
