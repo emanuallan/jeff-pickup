@@ -278,14 +278,19 @@ export async function createOneOffEvent(orgSlug: string, formData: FormData): Pr
   const org = await requireOrgAdmin(orgSlug)
   const supabase = await createClient()
 
+  const title = String(formData.get('title') ?? '').trim()
   const locationId = String(formData.get('location_id') ?? '')
   const startsAtLocal = String(formData.get('starts_at') ?? '')
   const timezone = String(formData.get('timezone') ?? 'UTC').trim()
+  const durationMin = Number.parseInt(String(formData.get('duration_min') ?? '90'), 10)
   const capacity = parseOptionalInt(formData.get('capacity'))
   const minParticipants = parseOptionalMinParticipants(formData.get('min_players'))
   const announcement = String(formData.get('announcement') ?? '').trim()
 
-  if (!locationId || !startsAtLocal) {
+  if (!title || !locationId || !startsAtLocal) {
+    return
+  }
+  if (!Number.isFinite(durationMin) || durationMin < 15 || durationMin > 480) {
     return
   }
   if (minParticipants.error) {
@@ -310,6 +315,8 @@ export async function createOneOffEvent(orgSlug: string, formData: FormData): Pr
     org_id: org.id,
     schedule_id: null,
     location_id: locationId,
+    title,
+    duration_min: durationMin,
     starts_at: startsAtIso,
     timezone,
     capacity,

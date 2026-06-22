@@ -3,7 +3,10 @@
 import { useEffect, useState } from 'react'
 import type { Location } from '@/lib/locations'
 import { defaultOneOffStartsAtLocal } from '@/lib/one-off-datetime'
-import { consoleInput, btnSecondary } from '../_components/console-ui'
+import { consoleInput, consoleLabel, btnSecondary } from '../_components/console-ui'
+
+const DEFAULT_DURATION_MIN = 90
+const MAX_DURATION_MIN = 480
 
 type Props = {
   locations: Location[]
@@ -39,9 +42,25 @@ export function OneOffEventForm({ locations, createOneOff, onSuccess }: Props) {
   return (
     <form action={handleSubmit} className="space-y-3">
       <input type="hidden" name="timezone" value={timezone} />
+
       <label className="block">
-        <span className="text-xs text-zinc-500">Location</span>
-        <select name="location_id" required className={`mt-1 ${consoleInput}`} defaultValue={locations[0]?.id}>
+        <span className={consoleLabel}>Session name</span>
+        <input
+          name="title"
+          required
+          placeholder="e.g. Saturday pickup"
+          className={`mt-1 ${consoleInput}`}
+        />
+      </label>
+
+      <label className="block">
+        <span className={consoleLabel}>Location</span>
+        <select
+          name="location_id"
+          required
+          className={`mt-1 ${consoleInput}`}
+          defaultValue={locations[0]?.id}
+        >
           {locations.map((loc) => (
             <option key={loc.id} value={loc.id}>
               {loc.label}
@@ -49,8 +68,9 @@ export function OneOffEventForm({ locations, createOneOff, onSuccess }: Props) {
           ))}
         </select>
       </label>
+
       <label className="block">
-        <span className="text-xs text-zinc-500">Date &amp; time</span>
+        <span className={consoleLabel}>Date &amp; time</span>
         <input
           name="starts_at"
           type="datetime-local"
@@ -59,9 +79,23 @@ export function OneOffEventForm({ locations, createOneOff, onSuccess }: Props) {
           className={`mt-1 ${consoleInput}`}
         />
       </label>
+
+      <label className="block">
+        <span className={consoleLabel}>Duration (min)</span>
+        <input
+          name="duration_min"
+          type="number"
+          min={15}
+          max={MAX_DURATION_MIN}
+          defaultValue={DEFAULT_DURATION_MIN}
+          required
+          className={`mt-1 ${consoleInput}`}
+        />
+      </label>
+
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <label className="block">
-          <span className="text-xs text-zinc-500">Capacity (optional)</span>
+          <span className={consoleLabel}>Capacity (optional)</span>
           <input
             name="capacity"
             type="number"
@@ -72,7 +106,7 @@ export function OneOffEventForm({ locations, createOneOff, onSuccess }: Props) {
           />
         </label>
         <label className="block">
-          <span className="text-xs text-zinc-500">Min participants (optional)</span>
+          <span className={consoleLabel}>Min participants (optional)</span>
           <input
             name="min_players"
             type="number"
@@ -83,7 +117,9 @@ export function OneOffEventForm({ locations, createOneOff, onSuccess }: Props) {
           />
         </label>
       </div>
+
       <p className="text-xs text-zinc-500">Timezone: {timezone}</p>
+
       <button type="submit" disabled={pending} className={`w-full sm:w-auto ${btnSecondary} disabled:opacity-50`}>
         {pending ? 'Adding…' : 'Add session'}
       </button>

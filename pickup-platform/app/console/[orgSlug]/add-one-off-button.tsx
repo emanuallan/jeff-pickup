@@ -47,7 +47,7 @@ export function AddOneOffButton({
             aria-label="Close"
             onClick={() => setOpen(false)}
           />
-          <div className={`${consoleModalPanel} max-w-md`}>
+          <div className={consoleModalPanel}>
             <h2 id="one-off-title" className="text-lg font-semibold text-zinc-50">
               Add one-off session
             </h2>

@@ -69,15 +69,28 @@ function scheduleFromJoin(schedules: unknown): { title: string | null; duration_
   }
 }
 
+function eventOverridesFromRow(row: Record<string, unknown>): {
+  title: string | null
+  duration_min: number | null
+} {
+  const title = row.title
+  const duration = row.duration_min
+  return {
+    title: typeof title === 'string' && title.trim() ? title.trim() : null,
+    duration_min: typeof duration === 'number' && duration > 0 ? duration : null,
+  }
+}
+
 function mapEventRow(row: Record<string, unknown>): EventWithLocation {
   const loc = row.locations as LocationJoin
   const schedule = scheduleFromJoin(row.schedules)
+  const overrides = eventOverridesFromRow(row)
   const { locations: _locations, schedules: _schedules, ...event } = row
   return {
     ...(event as Event),
     timezone: String(event.timezone ?? 'UTC'),
-    title: schedule.title,
-    duration_min: schedule.duration_min,
+    title: overrides.title ?? schedule.title,
+    duration_min: overrides.duration_min ?? schedule.duration_min,
     location_label: loc?.label ?? 'Location',
     location_address: loc?.address ?? '',
     location_lat: loc?.lat ?? 0,
