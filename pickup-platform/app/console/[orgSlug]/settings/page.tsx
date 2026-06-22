@@ -38,7 +38,7 @@ export default async function OrgSettingsPage({ params }: Props) {
 
   return (
     <ConsolePage width="max-w-2xl">
-      <ConsoleHeader title="Personalize" backHref={`/console/${orgSlug}`} backLabel={org.name} />
+      <ConsoleHeader title="Personalize" backHref={`/console/${orgSlug}`} backLabel="Console" />
 
       <div className="mt-8 space-y-6">
         <ConsoleSection title="Group profile" description="Your group's name and what it's about.">

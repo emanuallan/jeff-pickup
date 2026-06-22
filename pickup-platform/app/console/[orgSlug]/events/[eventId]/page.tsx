@@ -62,7 +62,7 @@ export default async function ConsoleEventAnalyticsPage({ params }: Props) {
         title={formatEventTime(event)}
         description={event.location_label}
         backHref={`/console/${orgSlug}`}
-        backLabel={org.name}
+        backLabel="Console"
         actions={
           <a href={publicEventUrl} target="_blank" rel="noreferrer" className={btnOutline}>
             View public event {arrowNe}

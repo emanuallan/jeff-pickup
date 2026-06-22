@@ -215,3 +215,50 @@ export function EmptyState({
     </div>
   )
 }
+
+const navTileClass =
+  'flex aspect-square flex-col items-center justify-center rounded-xl border border-white/10 bg-zinc-900/50 p-3 text-center transition active:scale-[0.98] hover:border-indigo-500/30 hover:bg-zinc-900'
+
+/** Square nav tile for the org console hub — mobile-first grid entry point. */
+export function ConsoleNavTile({
+  href,
+  title,
+  icon,
+  badge,
+  external,
+}: {
+  href: string
+  title: string
+  icon: React.ReactNode
+  badge?: string | number
+  external?: boolean
+}) {
+  const content = (
+    <>
+      <div className="flex h-10 w-10 items-center justify-center text-indigo-300">{icon}</div>
+      <div className="mt-2 text-sm font-medium leading-tight text-zinc-100">{title}</div>
+      {badge != null && badge !== '' ? (
+        <div className="mt-1 text-xs text-zinc-500">{badge}</div>
+      ) : null}
+    </>
+  )
+
+  if (external) {
+    return (
+      <a href={href} target="_blank" rel="noreferrer" className={navTileClass}>
+        {content}
+      </a>
+    )
+  }
+
+  return (
+    <Link href={href} className={navTileClass}>
+      {content}
+    </Link>
+  )
+}
+
+/** Responsive grid of console section tiles. */
+export function ConsoleNavGrid({ children }: { children: React.ReactNode }) {
+  return <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">{children}</div>
+}

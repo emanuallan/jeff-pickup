@@ -24,7 +24,7 @@ export default async function ParticipantHistoryPage({ params }: Props) {
         title="Participant history"
         description="Everyone who has joined a session with contact info and attendance."
         backHref={`/console/${orgSlug}`}
-        backLabel={org.name}
+        backLabel="Console"
       />
 
       <div className="mt-8">
