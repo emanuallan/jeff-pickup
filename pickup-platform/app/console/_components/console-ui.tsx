@@ -223,6 +223,9 @@ export function EmptyState({
 const navTileClass =
   'flex aspect-square flex-col items-center justify-center rounded-xl border border-white/10 bg-zinc-900/50 p-3 text-center transition active:scale-[0.98] hover:border-indigo-500/30 hover:bg-zinc-900'
 
+const navTileDisabledClass =
+  'pointer-events-none flex aspect-square flex-col items-center justify-center rounded-xl border border-white/5 bg-zinc-900/30 p-3 text-center opacity-50'
+
 /** Square nav tile for the org console hub — mobile-first grid entry point. */
 export function ConsoleNavTile({
   href,
@@ -230,12 +233,14 @@ export function ConsoleNavTile({
   icon,
   badge,
   external,
+  disabled,
 }: {
   href: string
   title: string
   icon: React.ReactNode
   badge?: string | number
   external?: boolean
+  disabled?: boolean
 }) {
   const content = (
     <>
@@ -246,6 +251,14 @@ export function ConsoleNavTile({
       ) : null}
     </>
   )
+
+  if (disabled) {
+    return (
+      <div className={navTileDisabledClass} aria-disabled="true">
+        {content}
+      </div>
+    )
+  }
 
   if (external) {
     return (

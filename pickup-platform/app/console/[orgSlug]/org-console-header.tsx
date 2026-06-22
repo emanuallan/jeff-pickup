@@ -6,9 +6,22 @@ type Props = {
   orgActivity: string | null
   logoUrl: string | null
   publicUrl: string
+  publicPageDisabled?: boolean
 }
 
-export function OrgConsoleHeader({ orgName, orgActivity, logoUrl, publicUrl }: Props) {
+export function OrgConsoleHeader({
+  orgName,
+  orgActivity,
+  logoUrl,
+  publicUrl,
+  publicPageDisabled = false,
+}: Props) {
+  const publicPageButton = (
+    <>
+      View public page {arrowNe}
+    </>
+  )
+
   return (
     <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
       <div className="flex min-w-0 items-start gap-3">
@@ -22,14 +35,23 @@ export function OrgConsoleHeader({ orgName, orgActivity, logoUrl, publicUrl }: P
         </div>
       </div>
 
-      <a
-        href={publicUrl}
-        target="_blank"
-        rel="noreferrer"
-        className={`${btnAccent} w-full shrink-0 sm:w-auto`}
-      >
-        View public page {arrowNe}
-      </a>
+      {publicPageDisabled ? (
+        <span
+          className={`${btnAccent} pointer-events-none w-full shrink-0 opacity-50 sm:w-auto`}
+          aria-disabled="true"
+        >
+          {publicPageButton}
+        </span>
+      ) : (
+        <a
+          href={publicUrl}
+          target="_blank"
+          rel="noreferrer"
+          className={`${btnAccent} w-full shrink-0 sm:w-auto`}
+        >
+          {publicPageButton}
+        </a>
+      )}
     </div>
   )
 }
