@@ -54,7 +54,7 @@ After signing in once (so you have a `auth.users` row), create a test org:
 
 ```sql
 -- Replace YOUR_USER_ID with your auth.users id
-insert into public.orgs (slug, name, activity, created_by)
+insert into public.orgs (slug, name, description, created_by)
 values ('jeffsoccer', 'Jeff Soccer', 'Pickup soccer', 'YOUR_USER_ID');
 -- Trigger auto-adds you as owner via handle_new_org()
 ```

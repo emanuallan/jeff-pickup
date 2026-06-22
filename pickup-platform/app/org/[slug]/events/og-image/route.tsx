@@ -24,7 +24,7 @@ export async function GET(_request: Request, { params }: Context) {
     subline: nextEvent
       ? formatEventTime(nextEvent) +
         (nextEvent.location_label ? ` · ${nextEvent.location_label}` : '')
-      : org?.activity,
+      : org?.description,
     locationOnline: nextEvent?.location_is_online,
     cta: nextEvent ? `Count me in ${arrowRight}` : undefined,
   })

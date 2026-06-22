@@ -65,7 +65,7 @@ export default async function OrgConsolePage({ params }: Props) {
 
       <OrgConsoleHeader
         orgName={org.name}
-        orgActivity={org.activity || null}
+        orgDescription={org.description || null}
         logoUrl={org.branding.logo_url}
         publicUrl={orgUrl}
         publicPageDisabled={!isSetup}

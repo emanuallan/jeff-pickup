@@ -42,11 +42,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   const events = await getUpcomingEventsForOrg(org.id, 1)
   const nextEvent = events[0]
-  const activity = org.activity || 'group sessions'
+  const groupDescription = org.description || 'group sessions'
   const title = org.name
   const description = nextEvent
-    ? `Upcoming ${activity} with ${org.name}. Next up ${formatEventTime(nextEvent)} ${nextEvent.location_is_online ? 'on' : 'at'} ${nextEvent.location_label} — see who's coming and confirm you're in.`
-    : `See the schedule of upcoming ${activity} with ${org.name}. Check who's coming and confirm you're in — it only takes a few seconds.`
+    ? `Upcoming ${groupDescription} with ${org.name}. Next up ${formatEventTime(nextEvent)} ${nextEvent.location_is_online ? 'on' : 'at'} ${nextEvent.location_label} — see who's coming and confirm you're in.`
+    : `See the schedule of upcoming ${groupDescription} with ${org.name}. Check who's coming and confirm you're in — it only takes a few seconds.`
 
   return buildOrgMetadata({
     slug,
@@ -98,7 +98,7 @@ export default async function EventsPage({ params }: Props) {
         <ShareButton title={org.name} text={`Join ${org.name} on Organizr`} />
       </div>
 
-      <OrgHeader org={org} title={org.name} subtitle={org.activity} />
+      <OrgHeader org={org} title={org.name} subtitle={org.description} />
 
       {events.length > 0 ? (
         <>

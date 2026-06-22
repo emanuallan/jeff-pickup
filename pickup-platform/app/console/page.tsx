@@ -69,9 +69,9 @@ export default async function ConsolePage_() {
                     )}
                     <div className="min-w-0 flex-1">
                       <div className="truncate font-medium text-zinc-100">{org.name}</div>
-                      {org.activity ? (
+                      {org.description ? (
                         <p className="mt-0.5 line-clamp-2 text-xs leading-relaxed text-zinc-400">
-                          {org.activity}
+                          {org.description}
                         </p>
                       ) : null}
                       <p className="mt-1 break-all text-xs text-zinc-600">

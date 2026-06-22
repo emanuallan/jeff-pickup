@@ -7,10 +7,10 @@ import { consoleInput, btnSecondary } from '../_components/console-ui'
 type Props = {
   orgSlug: string
   name: string
-  activity: string
+  description: string
 }
 
-export function ProfileForm({ orgSlug, name, activity }: Props) {
+export function ProfileForm({ orgSlug, name, description }: Props) {
   const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
@@ -41,9 +41,9 @@ export function ProfileForm({ orgSlug, name, activity }: Props) {
       <label className="block">
         <span className="text-xs text-zinc-500">Description</span>
         <input
-          name="activity"
-          defaultValue={activity}
-          placeholder="Pickup soccer, run club, board games…"
+          name="description"
+          defaultValue={description}
+          placeholder="Weekly pickup soccer, Saturday morning run club…"
           className={`mt-1 ${consoleInput}`}
         />
       </label>

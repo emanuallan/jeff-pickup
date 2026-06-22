@@ -47,7 +47,7 @@ export default async function OrgSettingsPage({ params }: Props) {
 
       <div className="mt-8 space-y-6">
         <ConsoleSection title="Group profile" description="Your group's name and what it's about.">
-          <ProfileForm orgSlug={orgSlug} name={org.name} activity={org.activity} />
+          <ProfileForm orgSlug={orgSlug} name={org.name} description={org.description} />
         </ConsoleSection>
 
         <ConsoleSection

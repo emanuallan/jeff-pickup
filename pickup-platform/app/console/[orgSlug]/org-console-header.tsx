@@ -3,7 +3,7 @@ import { btnAccent } from '../_components/console-ui'
 
 type Props = {
   orgName: string
-  orgActivity: string | null
+  orgDescription: string | null
   logoUrl: string | null
   publicUrl: string
   publicPageDisabled?: boolean
@@ -11,7 +11,7 @@ type Props = {
 
 export function OrgConsoleHeader({
   orgName,
-  orgActivity,
+  orgDescription,
   logoUrl,
   publicUrl,
   publicPageDisabled = false,
@@ -31,7 +31,7 @@ export function OrgConsoleHeader({
         ) : null}
         <div className="min-w-0">
           <h1 className="text-xl font-semibold tracking-tight text-zinc-50 sm:text-2xl">{orgName}</h1>
-          {orgActivity ? <p className="mt-1 text-sm text-zinc-400">{orgActivity}</p> : null}
+          {orgDescription ? <p className="mt-1 text-sm text-zinc-400">{orgDescription}</p> : null}
         </div>
       </div>
 

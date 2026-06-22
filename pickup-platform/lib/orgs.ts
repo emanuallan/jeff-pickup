@@ -6,7 +6,7 @@ export type Org = {
   id: string
   slug: string
   name: string
-  activity: string
+  description: string
   status: string
   default_locale: string
   branding: {
@@ -27,7 +27,7 @@ function parseOrgRow(data: Record<string, unknown>): Org {
     id: String(data.id),
     slug: String(data.slug),
     name: String(data.name),
-    activity: String(data.activity ?? ''),
+    description: String(data.description ?? ''),
     status: String(data.status),
     default_locale: String(data.default_locale),
     branding: {
@@ -44,7 +44,7 @@ export const getOrgBySlug = cache(async (slug: string): Promise<Org | null> => {
 
   const { data, error } = await supabase
     .from('orgs')
-    .select('id, slug, name, activity, status, default_locale, branding')
+    .select('id, slug, name, description, status, default_locale, branding')
     .eq('slug', slug)
     .maybeSingle()
 
@@ -93,7 +93,7 @@ export async function getUserOrgs(): Promise<Org[]> {
 
   const { data: orgs, error: orgsError } = await supabase
     .from('orgs')
-    .select('id, slug, name, activity, status, default_locale, branding')
+    .select('id, slug, name, description, status, default_locale, branding')
     .in('id', orgIds)
 
   if (orgsError || !orgs) {

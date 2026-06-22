@@ -44,7 +44,7 @@ export function buildOrgJsonLd(org: Org) {
     '@type': 'SportsOrganization',
     name: org.name,
     url,
-    ...(org.activity ? { sport: org.activity } : {}),
+    ...(org.description ? { description: org.description } : {}),
     ...(org.branding.logo_url ? { logo: org.branding.logo_url } : {}),
   }
 }
@@ -72,8 +72,8 @@ export function buildEventJsonLd(org: Org, event: EventWithLocation, path: strin
     '@context': 'https://schema.org',
     '@type': 'Event',
     name: `${name} · ${org.name}`,
-    description: org.activity
-      ? `${org.activity} with ${org.name}`
+    description: org.description
+      ? `${org.description} with ${org.name}`
       : `Group session with ${org.name}`,
     startDate: event.starts_at,
     endDate: eventEndIso(event),

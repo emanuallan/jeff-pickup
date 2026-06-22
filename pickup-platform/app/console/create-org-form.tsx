@@ -75,11 +75,11 @@ export function CreateOrgForm() {
       </label>
 
       <label className="block">
-        <span className={consoleLabel}>Activity</span>
+        <span className={consoleLabel}>Description</span>
         <input
-          name="activity"
+          name="description"
           className={`mt-1 ${consoleInput}`}
-          placeholder="Pickup soccer, run club, board games…"
+          placeholder="Weekly pickup soccer, Saturday morning run club…"
         />
       </label>
 

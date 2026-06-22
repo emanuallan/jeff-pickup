@@ -110,7 +110,7 @@ export async function createOrg(formData: FormData) {
   }
 
   const name = String(formData.get('name') ?? '').trim()
-  const activity = String(formData.get('activity') ?? '').trim()
+  const description = String(formData.get('description') ?? '').trim()
   const slug = normalizeSlug(String(formData.get('slug') ?? ''))
   const defaultLocale = String(formData.get('default_locale') ?? 'en')
 
@@ -124,7 +124,7 @@ export async function createOrg(formData: FormData) {
   const { error } = await supabase.from('orgs').insert({
     slug,
     name,
-    activity,
+    description,
     default_locale: defaultLocale === 'es' ? 'es' : 'en',
     created_by: user.id,
   })
@@ -670,7 +670,7 @@ export async function updateOrgProfile(orgSlug: string, formData: FormData) {
   const supabase = await createClient()
 
   const name = String(formData.get('name') ?? '').trim()
-  const activity = String(formData.get('activity') ?? '').trim()
+  const description = String(formData.get('description') ?? '').trim()
 
   if (!name) {
     return { error: 'Group name is required.' }
@@ -678,7 +678,7 @@ export async function updateOrgProfile(orgSlug: string, formData: FormData) {
 
   const { error } = await supabase
     .from('orgs')
-    .update({ name, activity })
+    .update({ name, description })
     .eq('id', org.id)
 
   if (error) {
