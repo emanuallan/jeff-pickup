@@ -36,18 +36,21 @@ export function ScheduleFormFields({ locations, schedule, timezone }: Props) {
 				className={consoleInput}
 			/>
 
-			<select
-				name="location_id"
-				required
-				className={consoleInput}
-				defaultValue={schedule?.location_id ?? locations[0]?.id}
-			>
-				{locations.map((loc) => (
-					<option key={loc.id} value={loc.id}>
-						{loc.label}
-					</option>
-				))}
-			</select>
+			<label className="block">
+				<span className="text-xs text-zinc-500">Location</span>
+				<select
+					name="location_id"
+					required
+					className={`mt-1 ${consoleInput}`}
+					defaultValue={schedule?.location_id ?? locations[0]?.id}
+				>
+					{locations.map((loc) => (
+						<option key={loc.id} value={loc.id}>
+							{loc.label}
+						</option>
+					))}
+				</select>
+			</label>
 
 			<fieldset>
 				<legend className="mb-2 text-xs text-zinc-500">Days</legend>
