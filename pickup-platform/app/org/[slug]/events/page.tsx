@@ -12,6 +12,7 @@ import { OrgHeader } from '../_components/org-header'
 import { OrgPageShell, OrgPageFooter, LeaderboardLink } from '../_components/org-page-shell'
 import { ShareButton } from '../share-button-lazy'
 import { arrowRight } from '@/lib/text-arrows'
+import { accentOnDark } from '@/lib/colors'
 import { MoreSessions } from './more-sessions'
 import {
   FeaturedEventHeadcount,
@@ -158,7 +159,7 @@ export default async function EventsPage({ params }: Props) {
                     </span>
                     <span
                       className="inline-flex items-center gap-1 text-sm font-medium transition-transform group-hover:translate-x-0.5"
-                      style={{ color: accent }}
+                      style={{ color: accentOnDark(accent) }}
                     >
                       Count me in {arrowRight}
                     </span>

@@ -13,7 +13,7 @@ import {
 import { arrivalStatuses, arrivalStatusEmoji, arrivalStatusLabel, type ArrivalStatus } from '@/lib/arrival-status'
 import { fireConfetti } from '@/lib/confetti'
 import { arrowRight } from '@/lib/text-arrows'
-import { hexToRgba } from '@/lib/colors'
+import { hexToRgba, accentOnDark } from '@/lib/colors'
 import { formatGuestSuffix } from '@/lib/format-guest-suffix'
 import { PhoneInput } from '@/app/_components/phone-input'
 import type { Participant, MySignup } from '@/lib/participant'
@@ -449,6 +449,7 @@ export function RosterList(props: {
   const [leaving, setLeaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const accent = props.accent ?? '#2563eb'
+  const accentFg = accentOnDark(accent)
 
   if (props.entries.length === 0) {
     return <p className="text-sm text-zinc-500">No one signed up yet. Be the first!</p>
@@ -467,7 +468,7 @@ export function RosterList(props: {
                 className="flex items-center justify-between gap-2 rounded-xl border px-3 py-2.5 text-sm text-zinc-100"
                 style={{
                   backgroundImage: `linear-gradient(135deg, ${hexToRgba(accent, 0.18)}, ${hexToRgba(accent, 0.04)})`,
-                  borderColor: hexToRgba(accent, 0.45),
+                  borderColor: hexToRgba(accentFg, 0.45),
                 }}
               >
                 <span className="min-w-0 font-semibold">
@@ -641,9 +642,9 @@ export function ArrivalStatusPicker(props: {
               style={
                 selected
                   ? {
-                      borderColor: props.accent,
+                      borderColor: accentOnDark(props.accent),
                       backgroundColor: `${props.accent}1a`,
-                      color: props.accent,
+                      color: accentOnDark(props.accent),
                     }
                   : { borderColor: '#3f3f46', color: '#d4d4d8' }
               }

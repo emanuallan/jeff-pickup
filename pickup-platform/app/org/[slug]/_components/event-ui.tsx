@@ -11,6 +11,7 @@ import {
   type EventWithLocation,
 } from '@/lib/events'
 import { arrowNe, arrowRight } from '@/lib/text-arrows'
+import { accentOnDark } from '@/lib/colors'
 import { MapsLink } from './maps-link'
 
 export type EventLocationFields = Pick<
@@ -99,7 +100,7 @@ export function StatusPill({
 }
 
 export function LiveDot({ accent, live = false }: { accent: string; live?: boolean }) {
-  const color = live ? '#f87171' : accent
+  const color = live ? '#f87171' : accentOnDark(accent)
   return (
     <span className="relative flex h-2 w-2">
       <span
@@ -151,7 +152,7 @@ export function EventTimingBadge({
   const label = inProgress
     ? 'Happening now'
     : (upcomingLabel ?? `Happening ${formatEventHappening(event)}`)
-  const labelColor = inProgress ? '#f87171' : accent
+  const labelColor = inProgress ? '#f87171' : accentOnDark(accent)
 
   return (
     <span className="flex items-center gap-2">
@@ -216,7 +217,7 @@ export function ViewNextSessionLink({
       <Link
         href={href}
         className="inline-flex items-center gap-1 text-sm font-medium transition-opacity hover:opacity-80"
-        style={{ color: accent }}
+        style={{ color: accentOnDark(accent) }}
       >
         View next session {arrowRight}
       </Link>

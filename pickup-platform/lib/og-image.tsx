@@ -1,5 +1,5 @@
 import { ImageResponse } from 'next/og'
-import { readableTextColor, hexToRgba } from '@/lib/colors'
+import { readableTextColor, hexToRgba, accentOnDark } from '@/lib/colors'
 import { getOgFonts } from '@/lib/og-fonts'
 import { getOrganizrLogoDataUrl } from '@/lib/organizr-logo-server'
 import { arrowRight } from '@/lib/text-arrows'
@@ -220,6 +220,7 @@ export function OrgOgCard({
   logoUrl,
 }: OrgOgCardProps) {
   const accentText = readableTextColor(accent)
+  const accentFg = accentOnDark(accent)
   const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? 'organizr.co'
 
   return (
@@ -340,7 +341,7 @@ export function OrgOgCard({
                 width: '8px',
                 height: '8px',
                 borderRadius: '9999px',
-                backgroundColor: accent,
+                backgroundColor: accentFg,
               }}
             />
             <div
@@ -350,7 +351,7 @@ export function OrgOgCard({
                 fontSize: '17px',
                 letterSpacing: '0.1em',
                 textTransform: 'uppercase',
-                color: accent,
+                color: accentFg,
               }}
             >
               {eyebrow}

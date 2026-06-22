@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { getRootDomain } from '@/lib/tenancy/parse-host'
 import { rootBaseUrl } from '@/lib/og-metadata'
+import { accentOnDark } from '@/lib/colors'
 import { arrowRight } from '@/lib/text-arrows'
 import { OrganizrLogo } from '../../../_components/organizr-logo'
 import { SocialLinks } from './social-links'
@@ -36,7 +37,7 @@ export function LeaderboardLink({ accent }: { accent: string }) {
       <Link
         href="/leaderboard"
         className="text-sm transition-opacity hover:opacity-80"
-        style={{ color: accent }}
+        style={{ color: accentOnDark(accent) }}
       >
         View leaderboard {arrowRight}
       </Link>
