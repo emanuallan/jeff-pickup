@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { Suspense } from 'react'
-import { notFound } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
 import { getOrgBySlug } from '@/lib/orgs'
 import { getUpcomingEventsForOrg, formatEventTime, formatEventDayLabel, isEventInProgress, isEventEnded } from '@/lib/events'
 import { buildOrgMetadata, rootBaseUrl } from '@/lib/og-metadata'
@@ -71,6 +71,11 @@ export default async function EventsPage({ params }: Props) {
     isLeaderboardUnlocked(org.id),
   ])
   const accent = org.branding.accent_color
+
+  const activeUpcoming = events.filter((ev) => !isEventCancelled(ev.status))
+  if (activeUpcoming.length === 1) {
+    redirect(`/events/${activeUpcoming[0].short_id}`)
+  }
 
   const skippedCancelled =
     events[0] && isEventCancelled(events[0].status) ? events[0] : null
@@ -178,7 +183,10 @@ export default async function EventsPage({ params }: Props) {
 
           {rest.length > 0 ? (
             <section className="mt-10 border-t border-white/5 pt-8">
-              <h3 className="px-1 text-xs font-medium uppercase tracking-wide text-zinc-600">
+              <h3
+                className="px-1 text-xs font-medium uppercase tracking-wide"
+                style={{ color: accentOnDark(accent) }}
+              >
                 More sessions
               </h3>
               <MoreSessions count={rest.length}>

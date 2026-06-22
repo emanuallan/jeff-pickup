@@ -78,9 +78,10 @@ export default async function EventPage({ params }: Props) {
     notFound()
   }
 
-  const [event, tracking] = await Promise.all([
+  const [event, tracking, upcomingEvents] = await Promise.all([
     getEventByRef(eventId, org.id),
     resolvePageViewTrackingKeys(),
+    getUpcomingEventsForOrg(org.id, 20, true),
   ])
   if (!event) {
     notFound()
@@ -107,17 +108,23 @@ export default async function EventPage({ params }: Props) {
   const isEnded = isEventEnded(event)
   const shareText = `${org.name}: ${formatEventTime(event)} ${event.location_is_online ? 'on' : 'at'} ${event.location_label}. Join us!`
   const accent = org.branding.accent_color
+  const showAllSessionsLink =
+    upcomingEvents.filter((ev) => !isEventCancelled(ev.status)).length > 1
 
   return (
     <OrgPageShell>
       <JsonLd data={buildEventJsonLd(org, event, `/events/${eventId}`)} />
-      <div className="flex items-center justify-between gap-3">
-        <Link
-          href="/events"
-          className="inline-flex items-center gap-1 text-sm text-zinc-400 transition-colors hover:text-zinc-200"
-        >
-          <span aria-hidden>←</span> All sessions
-        </Link>
+      <div
+        className={`flex items-center gap-3 ${showAllSessionsLink ? 'justify-between' : 'justify-end'}`}
+      >
+        {showAllSessionsLink ? (
+          <Link
+            href="/events"
+            className="inline-flex items-center gap-1 text-sm text-zinc-400 transition-colors hover:text-zinc-200"
+          >
+            <span aria-hidden>←</span> All sessions
+          </Link>
+        ) : null}
         <ShareButton title={org.name} text={shareText} />
       </div>
 
