@@ -4,7 +4,7 @@ import { getOrgForMember } from '@/lib/orgs'
 import { getLocationsForOrg } from '@/lib/locations'
 import { getSchedulesForOrg } from '@/lib/schedules'
 import { createLocation, createSchedule } from '../../actions'
-import { AddLocationForm } from '../add-location-form'
+import { AddLocationButton } from '../add-location-button'
 import { ScheduleForm } from '../schedule-form'
 import { ConsolePage, ConsoleSection, ConsoleCard } from '../../_components/console-ui'
 
@@ -105,7 +105,7 @@ export default async function SetupPage({ params }: Props) {
           >
             <div className="space-y-4">
               {locationList}
-              {!hasLocation ? <AddLocationForm addLocation={addLocation} /> : null}
+              {!hasLocation ? <AddLocationButton addLocation={addLocation} /> : null}
             </div>
           </ConsoleSection>
 

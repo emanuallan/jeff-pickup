@@ -14,7 +14,6 @@ import {
   IconSchedule,
   IconBranding,
   IconParticipants,
-  IconPublic,
   IconSetup,
 } from './console-nav-icons'
 import { ConsolePage, ConsoleNavGrid, ConsoleNavTile } from '../_components/console-ui'
@@ -123,12 +122,6 @@ export default async function OrgConsolePage({ params }: Props) {
             title="Participants"
             icon={<IconParticipants />}
             badge={formatCount(participants.length, 'person', 'people')}
-          />
-          <ConsoleNavTile
-            href={orgUrl}
-            title="Public page"
-            icon={<IconPublic />}
-            external
           />
         </ConsoleNavGrid>
       </div>

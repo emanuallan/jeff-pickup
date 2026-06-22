@@ -5,13 +5,22 @@ import { consoleInput, btnSecondary } from '../_components/console-ui'
 
 type Props = {
   addLocation: (formData: FormData) => Promise<void>
+  onSuccess?: () => void
 }
 
-export function AddLocationForm({ addLocation }: Props) {
+export function AddLocationForm({ addLocation, onSuccess }: Props) {
   const [isOnline, setIsOnline] = useState(false)
+  const [pending, setPending] = useState(false)
+
+  async function handleSubmit(formData: FormData) {
+    setPending(true)
+    await addLocation(formData)
+    setPending(false)
+    onSuccess?.()
+  }
 
   return (
-    <form action={addLocation} className="space-y-3">
+    <form action={handleSubmit} className="space-y-3">
       <div className="flex rounded-lg border border-white/10 p-1 text-xs">
         <button
           type="button"
@@ -55,8 +64,8 @@ export function AddLocationForm({ addLocation }: Props) {
         </>
       )}
 
-      <button type="submit" className={`w-full sm:w-auto ${btnSecondary}`}>
-        Add location
+      <button type="submit" disabled={pending} className={`w-full sm:w-auto ${btnSecondary}`}>
+        {pending ? 'Adding…' : 'Add location'}
       </button>
     </form>
   )
