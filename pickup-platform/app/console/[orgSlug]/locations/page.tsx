@@ -1,8 +1,9 @@
 import { notFound } from 'next/navigation'
 import { getOrgForMember } from '@/lib/orgs'
 import { getLocationsForOrg } from '@/lib/locations'
-import { createLocation } from '../../actions'
+import { createLocation, updateLocation } from '../../actions'
 import { AddLocationButton } from '../add-location-button'
+import { EditLocationButton } from '../edit-location-button'
 import { DeleteLocationButton } from '../delete-location-button'
 import { ConsolePage, ConsoleHeader, ConsoleSection, ConsoleCard } from '../../_components/console-ui'
 
@@ -49,11 +50,18 @@ export default async function LocationsPage({ params }: Props) {
                           <div className="mt-0.5 text-xs text-zinc-500">{loc.address}</div>
                         ) : null}
                       </div>
-                      <DeleteLocationButton
-                        orgSlug={orgSlug}
-                        locationId={loc.id}
-                        locationLabel={loc.label}
-                      />
+                      <div className="flex shrink-0 flex-wrap gap-1 sm:justify-end">
+                        <EditLocationButton
+                          orgSlug={orgSlug}
+                          location={loc}
+                          updateLocation={updateLocation}
+                        />
+                        <DeleteLocationButton
+                          orgSlug={orgSlug}
+                          locationId={loc.id}
+                          locationLabel={loc.label}
+                        />
+                      </div>
                     </div>
                   </ConsoleCard>
                 </li>

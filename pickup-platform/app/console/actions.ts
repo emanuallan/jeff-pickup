@@ -204,15 +204,12 @@ export async function createLocation(orgSlug: string, formData: FormData): Promi
   const org = await requireOrgAdmin(orgSlug)
   const supabase = await createClient()
 
-  const label = String(formData.get('label') ?? '').trim()
-  const isOnline = formData.get('is_online') === 'on' || formData.get('is_online') === 'true'
-  const address = String(formData.get('address') ?? '').trim()
-  const mapsUrl = String(formData.get('maps_url') ?? '').trim()
-  const meetingUrl = String(formData.get('meeting_url') ?? '').trim()
-
-  if (!label) {
+  const parsed = parseLocationFormData(formData)
+  if (!parsed.ok) {
     return
   }
+
+  const { label, isOnline, address, mapsUrl, meetingUrl } = parsed.values
 
   // Online locations carry a meeting link instead of a physical address; skip
   // geocoding (no map/weather for online sessions).
@@ -234,6 +231,78 @@ export async function createLocation(orgSlug: string, formData: FormData): Promi
   }
 
   revalidatePath(`/console/${orgSlug}`)
+}
+
+function parseLocationFormData(formData: FormData) {
+  const label = String(formData.get('label') ?? '').trim()
+  const isOnline = formData.get('is_online') === 'on' || formData.get('is_online') === 'true'
+  const address = String(formData.get('address') ?? '').trim()
+  const mapsUrl = String(formData.get('maps_url') ?? '').trim()
+  const meetingUrl = String(formData.get('meeting_url') ?? '').trim()
+
+  if (!label) {
+    return { ok: false as const, error: 'Location name is required.' }
+  }
+
+  return {
+    ok: true as const,
+    values: { label, isOnline, address, mapsUrl, meetingUrl },
+  }
+}
+
+export async function updateLocation(
+  orgSlug: string,
+  locationId: string,
+  formData: FormData,
+): Promise<{ ok: true } | { error: string }> {
+  const org = await requireOrgAdmin(orgSlug)
+  const supabase = await createClient()
+
+  const parsed = parseLocationFormData(formData)
+  if (!parsed.ok) {
+    return { error: parsed.error }
+  }
+
+  const { label, isOnline, address, mapsUrl, meetingUrl } = parsed.values
+
+  const { data: existing, error: fetchError } = await supabase
+    .from('locations')
+    .select('id')
+    .eq('id', locationId)
+    .eq('org_id', org.id)
+    .maybeSingle()
+
+  if (fetchError) {
+    return { error: fetchError.message }
+  }
+  if (!existing) {
+    return { error: 'Location not found.' }
+  }
+
+  const geo = !isOnline && address ? await geocodeAddress(address) : null
+
+  const { error } = await supabase
+    .from('locations')
+    .update({
+      label,
+      is_online: isOnline,
+      meeting_url: isOnline ? meetingUrl : '',
+      address: isOnline ? '' : address,
+      maps_url: isOnline ? '' : mapsUrl,
+      lat: isOnline ? 0 : (geo?.lat ?? 0),
+      lon: isOnline ? 0 : (geo?.lon ?? 0),
+    })
+    .eq('id', locationId)
+    .eq('org_id', org.id)
+
+  if (error) {
+    return { error: error.message }
+  }
+
+  revalidatePath(`/console/${orgSlug}`)
+  revalidatePath(`/console/${orgSlug}/locations`)
+  revalidatePath(`/org/${orgSlug}`)
+  return { ok: true }
 }
 
 export async function deleteLocation(
