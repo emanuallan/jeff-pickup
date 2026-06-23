@@ -329,6 +329,7 @@ export async function createSchedule(orgSlug: string, formData: FormData) {
   }
 
   revalidatePath(`/console/${orgSlug}`)
+  revalidatePath(`/console/${orgSlug}/setup`)
   revalidatePath(`/org/${orgSlug}`)
   return { ok: true }
 }
@@ -363,6 +364,7 @@ export async function createOneOffEvent(orgSlug: string, formData: FormData): Pr
   }
 
   revalidatePath(`/console/${orgSlug}`)
+  revalidatePath(`/console/${orgSlug}/setup`)
   revalidatePath(`/org/${orgSlug}`)
 }
 

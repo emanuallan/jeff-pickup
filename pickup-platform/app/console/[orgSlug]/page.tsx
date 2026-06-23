@@ -7,6 +7,7 @@ import { getSchedulesForOrg } from '@/lib/schedules'
 import { getUpcomingEventsForConsole, getPastEventsForConsole } from '@/lib/events'
 import { getParticipantHistoryForOrg } from '@/lib/participants'
 import { orgEventsUrl } from '@/lib/og-metadata'
+import { isOrgConsoleSetupComplete } from '@/lib/org-setup'
 import { OrgConsoleHeader } from './org-console-header'
 import {
   OrgConsoleAnalyticsFallback,
@@ -51,7 +52,12 @@ export default async function OrgConsolePage({ params }: Props) {
   const showAnalytics = pastEvents.some((event) => event.status !== 'cancelled')
 
   const orgUrl = orgEventsUrl(org.slug)
-  const isSetup = locations.length > 0 && schedules.length > 0
+  const upcomingSessionCount = upcomingEvents.filter((ev) => ev.status !== 'cancelled').length
+  const isSetup = isOrgConsoleSetupComplete({
+    locationCount: locations.length,
+    scheduleCount: schedules.length,
+    upcomingSessionCount,
+  })
   const base = `/console/${orgSlug}`
 
   return (
@@ -75,7 +81,7 @@ export default async function OrgConsolePage({ params }: Props) {
         <div className="mt-6 rounded-xl border border-indigo-500/25 bg-indigo-500/5 px-4 py-3">
           <p className="text-sm font-medium text-indigo-200">Get started</p>
           <p className="mt-0.5 text-xs text-zinc-400">
-            Add a location and recurring schedule — sessions appear automatically.
+            Add a location and your first sessions — recurring or one-off.
           </p>
           <Link
             href={`${base}/setup`}

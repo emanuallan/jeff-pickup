@@ -3,10 +3,13 @@ import { notFound } from 'next/navigation'
 import { getOrgForMember } from '@/lib/orgs'
 import { getLocationsForOrg } from '@/lib/locations'
 import { getSchedulesForOrg } from '@/lib/schedules'
-import { createLocation, createSchedule } from '../../actions'
+import { getUpcomingEventsForConsole } from '@/lib/events'
+import { isOrgConsoleSetupComplete } from '@/lib/org-setup'
+import { createLocation, createSchedule, createOneOffEvent } from '../../actions'
 import { AddLocationButton } from '../add-location-button'
 import { AddScheduleButton } from '../add-schedule-button'
-import { ConsolePage, ConsoleSection, ConsoleCard } from '../../_components/console-ui'
+import { AddOneOffButton } from '../add-one-off-button'
+import { ConsolePage, ConsoleSection, ConsoleCard, btnSecondary } from '../../_components/console-ui'
 
 type Props = {
   params: Promise<{ orgSlug: string }>
@@ -41,15 +44,22 @@ export default async function SetupPage({ params }: Props) {
     notFound()
   }
 
-  const [locations, schedules] = await Promise.all([
+  const [locations, schedules, upcomingEvents] = await Promise.all([
     getLocationsForOrg(org.id),
     getSchedulesForOrg(org.id),
+    getUpcomingEventsForConsole(org.id),
   ])
 
   const hasLocation = locations.length > 0
-  const hasSchedule = schedules.length > 0
-  const isComplete = hasLocation && hasSchedule
+  const upcomingSessionCount = upcomingEvents.filter((ev) => ev.status !== 'cancelled').length
+  const hasSessions = schedules.length > 0 || upcomingSessionCount > 0
+  const isComplete = isOrgConsoleSetupComplete({
+    locationCount: locations.length,
+    scheduleCount: schedules.length,
+    upcomingSessionCount,
+  })
   const addLocation = createLocation.bind(null, orgSlug)
+  const createOneOff = createOneOffEvent.bind(null, orgSlug)
 
   const locationList =
     locations.length > 0 ? (
@@ -83,7 +93,7 @@ export default async function SetupPage({ params }: Props) {
         <p className="mt-1 text-sm text-zinc-400">
           {isComplete
             ? 'Your group is set up. Sessions will appear automatically.'
-            : 'Two quick steps to go live — then sessions roll in on their own.'}
+            : 'Two quick steps to go live — recurring or one-off sessions both work.'}
         </p>
       </div>
 
@@ -110,20 +120,27 @@ export default async function SetupPage({ params }: Props) {
           </ConsoleSection>
 
           <ConsoleSection
-            title="Step 2 · Set your recurring schedule"
+            title="Step 2 · Add sessions"
             description={
               hasLocation
-                ? "Pick the days and time. We'll create the upcoming sessions for you."
-                : 'Add a location above first — a schedule needs somewhere to meet.'
+                ? 'Set a recurring schedule, or add a one-off session to publish your first event.'
+                : 'Add a location above first — sessions need somewhere to meet.'
             }
-            action={<StepBadge n={2} done={hasSchedule} locked={!hasLocation} />}
+            action={<StepBadge n={2} done={hasSessions} locked={!hasLocation} />}
           >
-            {hasLocation && !hasSchedule ? (
-              <AddScheduleButton
-                orgSlug={orgSlug}
-                locations={locations}
-                createSchedule={createSchedule}
-              />
+            {hasLocation && !hasSessions ? (
+              <div className="flex flex-wrap gap-3">
+                <AddScheduleButton
+                  orgSlug={orgSlug}
+                  locations={locations}
+                  createSchedule={createSchedule}
+                />
+                <AddOneOffButton
+                  locations={locations}
+                  createOneOff={createOneOff}
+                  className={btnSecondary}
+                />
+              </div>
             ) : !hasLocation ? (
               <p className="text-sm text-zinc-600">Locked until you add a location.</p>
             ) : null}

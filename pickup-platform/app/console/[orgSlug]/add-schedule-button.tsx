@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import type { Location } from '@/lib/locations'
 import { ScheduleForm } from './schedule-form'
 import {
@@ -23,6 +24,7 @@ export function AddScheduleButton({
   ) => Promise<{ error?: string; ok?: boolean }>
 }) {
   const [open, setOpen] = useState(false)
+  const router = useRouter()
 
   useEffect(() => {
     if (!open) return
@@ -68,7 +70,10 @@ export function AddScheduleButton({
                 orgSlug={orgSlug}
                 locations={locations}
                 createSchedule={createSchedule}
-                onSuccess={() => setOpen(false)}
+                onSuccess={() => {
+                  setOpen(false)
+                  router.refresh()
+                }}
               />
             </div>
           </div>

@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import type { Location } from '@/lib/locations'
 import { OneOffEventForm } from './one-off-event-form'
 import {
@@ -13,11 +14,14 @@ import {
 export function AddOneOffButton({
   locations,
   createOneOff,
+  className = btnAccent,
 }: {
   locations: Location[]
   createOneOff: (formData: FormData) => Promise<void>
+  className?: string
 }) {
   const [open, setOpen] = useState(false)
+  const router = useRouter()
 
   useEffect(() => {
     if (!open) return
@@ -30,7 +34,7 @@ export function AddOneOffButton({
 
   return (
     <>
-      <button type="button" onClick={() => setOpen(true)} className={btnAccent}>
+      <button type="button" onClick={() => setOpen(true)} className={className}>
         Add one-off session
       </button>
 
@@ -58,7 +62,10 @@ export function AddOneOffButton({
               <OneOffEventForm
                 locations={locations}
                 createOneOff={createOneOff}
-                onSuccess={() => setOpen(false)}
+                onSuccess={() => {
+                  setOpen(false)
+                  router.refresh()
+                }}
               />
             </div>
           </div>
