@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { Suspense } from 'react'
 import { notFound, redirect } from 'next/navigation'
 import { getOrgBySlug } from '@/lib/orgs'
-import { getUpcomingEventsForOrg, formatEventWhenLine, pickFeaturedUpcomingEvent, formatEventDayLabel, isEventInProgress, isEventEnded } from '@/lib/events'
+import { getUpcomingEventsForOrg, formatEventTime, pickFeaturedUpcomingEvent, formatEventDayLabel, isEventInProgress, isEventEnded } from '@/lib/events'
 import { buildOrgMetadata, rootBaseUrl } from '@/lib/og-metadata'
 import { buildOrgJsonLd } from '@/lib/seo'
 import { JsonLd } from '@/app/_components/json-ld'
@@ -45,7 +45,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const groupDescription = org.description || 'group sessions'
   const title = org.name
   const description = nextEvent
-    ? `Upcoming ${groupDescription} with ${org.name}. Next up ${formatEventWhenLine(nextEvent)} ${nextEvent.location_is_online ? 'on' : 'at'} ${nextEvent.location_label} — see who's coming and confirm you're in.`
+    ? `Upcoming ${groupDescription} with ${org.name}. Next up ${formatEventTime(nextEvent)} ${nextEvent.location_is_online ? 'on' : 'at'} ${nextEvent.location_label} — see who's coming and confirm you're in.`
     : `See the schedule of upcoming ${groupDescription} with ${org.name}. Check who's coming and confirm you're in — it only takes a few seconds.`
 
   return buildOrgMetadata({
