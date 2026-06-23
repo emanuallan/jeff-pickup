@@ -1,3 +1,4 @@
+import { Suspense } from 'react'
 import type { Org } from '@/lib/orgs'
 import type { EventWithLocation } from '@/lib/events'
 import { canUpdateArrivalStatus, isEventEnded } from '@/lib/events'
@@ -5,14 +6,11 @@ import { readableTextColor } from '@/lib/colors'
 import { getPublicRoster, rosterHeadcount } from '@/lib/signups'
 import { getSessionToken } from '@/lib/participant-session'
 import { getSessionInfo } from '@/lib/participant'
-import {
-  getParticipantEngagementStats,
-  isLeaderboardUnlocked,
-  isOrgInauguralSession,
-} from '@/lib/engagement'
-import { buildRosterBadgeMap } from '@/lib/badges'
-import { EventParticipationInteractiveLazy } from './event-participation-interactive-lazy'
-import { LeaderboardLink } from '../../_components/org-page-shell'
+import { JoinSectionLazy } from './join-section-lazy'
+import { EventRosterWithBadges } from './event-roster-with-badges'
+import { LeaderboardLinkDeferred } from './leaderboard-link-deferred'
+import { RosterListFallback } from './roster-list-fallback'
+import { SignedInControlsLazy } from './signed-in-controls-lazy'
 import { CancelledCallout, isEventCancelled } from '../../_components/event-ui'
 
 type Props = {
@@ -29,25 +27,12 @@ export async function EventParticipation({ slug, eventId, org, event }: Props) {
   const accent = org.branding.accent_color
   const accentText = readableTextColor(accent)
 
-  const [roster, leaderboardUnlocked, isInauguralSession, token] = await Promise.all([
+  const [roster, { participant, mySignup }] = await Promise.all([
     getPublicRoster(event.id),
-    isLeaderboardUnlocked(org.id),
-    isOrgInauguralSession(org.id, event.id),
-    getSessionToken(),
+    getSessionToken().then((token) => getSessionInfo(token, org.id, event.id)),
   ])
 
   const headcount = rosterHeadcount(roster)
-  const participantIds = roster.map((e) => e.participant_id)
-
-  const [engagementStats, { participant, mySignup }] = await Promise.all([
-    getParticipantEngagementStats(org.id, participantIds),
-    getSessionInfo(token, org.id, event.id),
-  ])
-
-  const badgesByParticipantId = buildRosterBadgeMap(roster, engagementStats, {
-    capsLeaderUnlocked: leaderboardUnlocked,
-    newBadgeUnlocked: !isInauguralSession,
-  })
   const isFull = event.capacity != null && headcount >= event.capacity
   const spotsLeft = event.capacity != null ? Math.max(0, event.capacity - headcount) : null
 
@@ -55,26 +40,58 @@ export async function EventParticipation({ slug, eventId, org, event }: Props) {
     <>
       {isCancelled ? <CancelledCallout hasSignup={!!mySignup} /> : null}
 
-      <EventParticipationInteractiveLazy
-        slug={slug}
-        eventId={eventId}
-        org={org}
-        event={event}
-        isCancelled={isCancelled}
-        isEnded={isEnded}
-        canUpdateStatus={canUpdateStatus}
-        accent={accent}
-        accentText={accentText}
-        roster={roster}
-        headcount={headcount}
-        badgesByParticipantId={badgesByParticipantId}
-        isFull={isFull}
-        spotsLeft={spotsLeft}
-        participant={participant}
-        mySignup={mySignup}
-      />
+      {!isCancelled && !mySignup ? (
+        <JoinSectionLazy
+          orgSlug={slug}
+          orgId={org.id}
+          eventId={eventId}
+          accent={accent}
+          accentText={accentText}
+          isPast={isEnded}
+          isFull={isFull}
+          isOnline={event.location_is_online}
+          spotsLeft={spotsLeft}
+          participant={participant}
+          mySignup={mySignup}
+        />
+      ) : null}
 
-      {leaderboardUnlocked ? <LeaderboardLink accent={accent} /> : null}
+      <section className="mt-5 rounded-3xl border border-zinc-800 bg-zinc-900/50 p-5">
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-400">
+          Who&apos;s coming ({headcount})
+        </h2>
+        <div className="mt-4">
+          <Suspense fallback={<RosterListFallback />}>
+            <EventRosterWithBadges
+              roster={roster}
+              org={org}
+              event={event}
+              isOnline={event.location_is_online}
+              mySignupId={mySignup?.signup_id}
+              canLeave={!isEnded}
+              orgSlug={slug}
+              eventId={eventId}
+              accent={accent}
+            />
+          </Suspense>
+        </div>
+
+        {mySignup && canUpdateStatus && !isCancelled ? (
+          <SignedInControlsLazy
+            orgSlug={slug}
+            eventId={eventId}
+            signupId={mySignup.signup_id}
+            guestCount={mySignup.guest_count}
+            arrivalStatus={mySignup.arrival_status}
+            isOnline={event.location_is_online}
+            accent={accent}
+          />
+        ) : null}
+      </section>
+
+      <Suspense fallback={null}>
+        <LeaderboardLinkDeferred orgId={org.id} accent={accent} />
+      </Suspense>
     </>
   )
 }

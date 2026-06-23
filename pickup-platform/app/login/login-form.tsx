@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/client'
 import {
   OrganizrBackdrop,
   OrganizrMarketingHeader,
@@ -22,6 +21,7 @@ export function LoginForm() {
     setError(null)
 
     try {
+      const { createClient } = await import('@/lib/supabase/client')
       const supabase = createClient()
       const { error: authError } = await supabase.auth.signInWithOtp({
         email: email.trim(),

@@ -1,3 +1,4 @@
+import { cache } from 'react'
 import type { ArrivalStatus } from '@/lib/arrival-status'
 import { createClient } from '@/lib/supabase/server'
 
@@ -18,11 +19,11 @@ export type MySignup = {
 export type SessionInfo = { participant: Participant | null; mySignup: MySignup | null }
 
 /** Returning-participant lookup. Both RPCs share one client and run in parallel. */
-export async function getSessionInfo(
+export const getSessionInfo = cache(async (
   token: string | null,
   orgId: string,
   eventId: string,
-): Promise<SessionInfo> {
+): Promise<SessionInfo> => {
   if (!token) return { participant: null, mySignup: null }
 
   const supabase = await createClient()
@@ -35,4 +36,4 @@ export async function getSessionInfo(
     participant: (p as Participant | null) ?? null,
     mySignup: (s as MySignup | null) ?? null,
   }
-}
+})
