@@ -48,6 +48,9 @@ Under **Authentication → URL configuration**, add redirect URLs:
 
 Enable **Email** provider (magic link). Password auth is not needed.
 
+Custom **Magic Link** template: copy from [`templates/magic-link.html`](templates/magic-link.html) into
+**Authentication → Email Templates → Magic Link** in the Supabase dashboard.
+
 ## 4. Seed a test org (optional)
 
 After signing in once (so you have a `auth.users` row), create a test org:
