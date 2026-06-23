@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import type { ReactNode } from 'react'
 import {
   statusLabel,
   eventDisplayName,
@@ -12,7 +13,6 @@ import {
 } from '@/lib/events'
 import { arrowNe, arrowRight } from '@/lib/text-arrows'
 import { accentOnDark } from '@/lib/colors'
-import { MapsLink } from './maps-link'
 
 export type EventLocationFields = Pick<
   EventWithLocation,
@@ -242,6 +242,29 @@ export function CancelledCallout({ hasSignup }: { hasSignup: boolean }) {
 
 const mapsLinkClass = 'cursor-pointer transition-colors hover:text-zinc-200'
 
+function ExternalLocationLink({
+  href,
+  className,
+  nestedInLink,
+  children,
+}: {
+  href: string
+  className?: string
+  nestedInLink?: boolean
+  children: ReactNode
+}) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noreferrer"
+      className={`${className ?? ''}${nestedInLink ? ' pointer-events-auto' : ''}`}
+    >
+      {children}
+    </a>
+  )
+}
+
 export function EventLocationRow({
   event,
   nestedInLink = false,
@@ -257,7 +280,7 @@ export function EventLocationRow({
   const address = event.location_address.trim()
   const meetingUrl = event.location_meeting_url.trim()
   const hasMaps = Boolean(mapsUrl)
-  const linkClass = nestedInLink ? `${mapsLinkClass} pointer-events-auto` : mapsLinkClass
+  const linkClass = mapsLinkClass
 
   const rowClass =
     className ??
@@ -271,9 +294,13 @@ export function EventLocationRow({
         {!compact ? <OnlineIcon /> : null}
         <div className="min-w-0">
           {meetingUrl ? (
-            <MapsLink href={meetingUrl} nestedInLink={nestedInLink} className={`truncate ${linkClass}`}>
+            <ExternalLocationLink
+              href={meetingUrl}
+              nestedInLink={nestedInLink}
+              className={`truncate ${linkClass}`}
+            >
               {event.location_label} · Join online {arrowNe}
-            </MapsLink>
+            </ExternalLocationLink>
           ) : (
             <span className="truncate">{event.location_label} · Online</span>
           )}
@@ -286,9 +313,13 @@ export function EventLocationRow({
     return (
       <div className={rowClass}>
         {hasMaps ? (
-          <MapsLink href={mapsUrl} nestedInLink={nestedInLink} className={`truncate ${linkClass}`}>
+          <ExternalLocationLink
+            href={mapsUrl}
+            nestedInLink={nestedInLink}
+            className={`truncate ${linkClass}`}
+          >
             {event.location_label}
-          </MapsLink>
+          </ExternalLocationLink>
         ) : (
           <span className="truncate">{event.location_label}</span>
         )}
@@ -301,21 +332,25 @@ export function EventLocationRow({
       <PinIcon className="mt-0.5" />
       <div className="min-w-0">
         {hasMaps ? (
-          <MapsLink href={mapsUrl} nestedInLink={nestedInLink} className={`block truncate ${linkClass}`}>
+          <ExternalLocationLink
+            href={mapsUrl}
+            nestedInLink={nestedInLink}
+            className={`block truncate ${linkClass}`}
+          >
             {event.location_label}
-          </MapsLink>
+          </ExternalLocationLink>
         ) : (
           <span className="block truncate">{event.location_label}</span>
         )}
         {address ? (
           hasMaps ? (
-            <MapsLink
+            <ExternalLocationLink
               href={mapsUrl}
               nestedInLink={nestedInLink}
               className={`mt-0.5 block truncate text-xs text-zinc-500 ${linkClass}`}
             >
               {address}
-            </MapsLink>
+            </ExternalLocationLink>
           ) : (
             <span className="mt-0.5 block truncate text-xs text-zinc-500">{address}</span>
           )

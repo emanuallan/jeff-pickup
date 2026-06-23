@@ -16,9 +16,9 @@ export function isNewPlayer(totalSessions: number): boolean {
   return totalSessions === 1
 }
 
-/** Show streak fire when current weekly streak is 2+ */
+/** Show streak fire when current weekly streak is 3+ consecutive weeks. */
 export function hasActiveStreak(currentStreakWeeks: number): boolean {
-  return currentStreakWeeks >= 2
+  return currentStreakWeeks >= 3
 }
 
 export function rosterBadges(args: {

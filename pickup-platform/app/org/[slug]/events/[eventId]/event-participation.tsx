@@ -11,12 +11,7 @@ import {
   isOrgInauguralSession,
 } from '@/lib/engagement'
 import { buildRosterBadgeMap } from '@/lib/badges'
-import {
-  JoinSection,
-  RosterList,
-  ArrivalStatusPicker,
-  GuestCountEditor,
-} from './join-section'
+import { EventParticipationInteractiveLazy } from './event-participation-interactive-lazy'
 import { LeaderboardLink } from '../../_components/org-page-shell'
 import { CancelledCallout, isEventCancelled } from '../../_components/event-ui'
 
@@ -58,63 +53,26 @@ export async function EventParticipation({ slug, eventId, org, event }: Props) {
 
   return (
     <>
-      {isCancelled ? (
-        <CancelledCallout hasSignup={!!mySignup} />
-      ) : !mySignup ? (
-        <section className="mt-5 rounded-3xl border border-zinc-800 bg-zinc-900/50 p-5">
-          <JoinSection
-            orgSlug={slug}
-            orgId={org.id}
-            eventId={eventId}
-            accent={accent}
-            accentText={accentText}
-            isPast={isEnded}
-            isFull={isFull}
-            isOnline={event.location_is_online}
-            spotsLeft={spotsLeft}
-            participant={participant}
-            mySignup={mySignup}
-          />
-        </section>
-      ) : null}
+      {isCancelled ? <CancelledCallout hasSignup={!!mySignup} /> : null}
 
-      <section className="mt-5 rounded-3xl border border-zinc-800 bg-zinc-900/50 p-5">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-400">
-          Who&apos;s coming ({headcount})
-        </h2>
-        <div className="mt-4">
-          <RosterList
-            entries={roster}
-            badgesByParticipantId={badgesByParticipantId}
-            isOnline={event.location_is_online}
-            mySignupId={mySignup?.signup_id}
-            canLeave={!isEnded}
-            orgSlug={slug}
-            eventId={eventId}
-            accent={accent}
-          />
-        </div>
-
-        {mySignup && canUpdateStatus && !isCancelled ? (
-          <div className="mt-5 space-y-5 border-t border-zinc-800 pt-5">
-            <GuestCountEditor
-              orgSlug={slug}
-              eventId={eventId}
-              signupId={mySignup.signup_id}
-              currentCount={mySignup.guest_count}
-              accent={accent}
-            />
-            <ArrivalStatusPicker
-              orgSlug={slug}
-              eventId={eventId}
-              signupId={mySignup.signup_id}
-              currentStatus={mySignup.arrival_status}
-              isOnline={event.location_is_online}
-              accent={accent}
-            />
-          </div>
-        ) : null}
-      </section>
+      <EventParticipationInteractiveLazy
+        slug={slug}
+        eventId={eventId}
+        org={org}
+        event={event}
+        isCancelled={isCancelled}
+        isEnded={isEnded}
+        canUpdateStatus={canUpdateStatus}
+        accent={accent}
+        accentText={accentText}
+        roster={roster}
+        headcount={headcount}
+        badgesByParticipantId={badgesByParticipantId}
+        isFull={isFull}
+        spotsLeft={spotsLeft}
+        participant={participant}
+        mySignup={mySignup}
+      />
 
       {leaderboardUnlocked ? <LeaderboardLink accent={accent} /> : null}
     </>
