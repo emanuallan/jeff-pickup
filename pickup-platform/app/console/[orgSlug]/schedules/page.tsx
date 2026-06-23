@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation'
 import { getOrgForMember } from '@/lib/orgs'
 import { getLocationsForOrg } from '@/lib/locations'
-import { getSchedulesForOrg, formatWeekdays, formatTime, formatIntervalWeeks } from '@/lib/schedules'
+import { getSchedulesForOrg, formatWeekdays, formatTime, formatIntervalWeeks, getScheduleDeleteImpact } from '@/lib/schedules'
 import { createSchedule } from '../../actions'
 import { AddScheduleButton } from '../add-schedule-button'
 import { EditScheduleButton } from '../edit-schedule-button'
@@ -24,6 +24,16 @@ export default async function SchedulesPage({ params }: Props) {
     getLocationsForOrg(org.id),
     getSchedulesForOrg(org.id),
   ])
+
+  const deleteImpacts = await Promise.all(
+    schedules.map(async (s) => ({
+      scheduleId: s.id,
+      impact: await getScheduleDeleteImpact(org.id, s.id),
+    })),
+  )
+  const impactByScheduleId = Object.fromEntries(
+    deleteImpacts.map(({ scheduleId, impact }) => [scheduleId, impact]),
+  )
 
   return (
     <ConsolePage>
@@ -68,6 +78,7 @@ export default async function SchedulesPage({ params }: Props) {
                           orgSlug={orgSlug}
                           scheduleId={s.id}
                           scheduleTitle={s.title}
+                          impact={impactByScheduleId[s.id]}
                         />
                       </div>
                     </div>

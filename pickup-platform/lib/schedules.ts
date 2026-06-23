@@ -86,3 +86,73 @@ export async function getSchedulesForOrg(orgId: string): Promise<Schedule[]> {
 
   return data as Schedule[]
 }
+
+export type ScheduleDeleteImpact = {
+  upcomingEventCount: number
+  signupCount: number
+  headcount: number
+  nextEventLabel: string | null
+  nextEventSignupCount: number
+}
+
+/** Upcoming sessions and sign-ups that would be removed with with_future_events delete. */
+export async function getScheduleDeleteImpact(
+  orgId: string,
+  scheduleId: string,
+): Promise<ScheduleDeleteImpact> {
+  const supabase = await createClient()
+  const now = new Date().toISOString()
+
+  const { data: events, error } = await supabase
+    .from('events')
+    .select('id, starts_at, timezone, signups(guest_count)')
+    .eq('org_id', orgId)
+    .eq('schedule_id', scheduleId)
+    .gte('starts_at', now)
+    .order('starts_at', { ascending: true })
+
+  if (error || !events?.length) {
+    return {
+      upcomingEventCount: 0,
+      signupCount: 0,
+      headcount: 0,
+      nextEventLabel: null,
+      nextEventSignupCount: 0,
+    }
+  }
+
+  let signupCount = 0
+  let headcount = 0
+  let nextEventSignupCount = 0
+
+  for (const [index, event] of events.entries()) {
+    const signups = (event.signups ?? []) as { guest_count: number }[]
+    const eventSignupCount = signups.length
+    const eventHeadcount = signups.reduce((sum, s) => sum + 1 + (s.guest_count ?? 0), 0)
+    signupCount += eventSignupCount
+    headcount += eventHeadcount
+    if (index === 0) {
+      nextEventSignupCount = eventSignupCount
+    }
+  }
+
+  const first = events[0]
+  const nextEventLabel = first
+    ? new Date(first.starts_at).toLocaleString('en-US', {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+        timeZone: first.timezone || 'UTC',
+      })
+    : null
+
+  return {
+    upcomingEventCount: events.length,
+    signupCount,
+    headcount,
+    nextEventLabel,
+    nextEventSignupCount,
+  }
+}

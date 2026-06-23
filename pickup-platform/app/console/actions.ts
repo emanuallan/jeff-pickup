@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { materializeEvents } from '@/lib/materializer'
 import {
+  getScheduleDeleteImpact,
   isStructuralScheduleChange,
   type Schedule,
   type ScheduleFormValues,
@@ -702,6 +703,7 @@ export async function deleteSchedule(
   orgSlug: string,
   scheduleId: string,
   mode: DeleteScheduleMode,
+  options?: { acknowledgeSignupLoss?: boolean },
 ): Promise<{ ok: true } | { error: string }> {
   const org = await requireOrgAdmin(orgSlug)
   const supabase = await createClient()
@@ -721,6 +723,13 @@ export async function deleteSchedule(
   }
 
   if (mode === 'with_future_events') {
+    const impact = await getScheduleDeleteImpact(org.id, scheduleId)
+    if (impact.signupCount > 0 && !options?.acknowledgeSignupLoss) {
+      return {
+        error: 'Confirm that you want to delete sessions with existing sign-ups.',
+      }
+    }
+
     const now = new Date().toISOString()
     const { error: deleteEventsError } = await supabase
       .from('events')
