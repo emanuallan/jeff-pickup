@@ -1,6 +1,7 @@
 'use client'
 
 import { useRef, useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import {
   joinEvent,
   leaveEvent,
@@ -76,6 +77,7 @@ function RecoverSession({
   eventId: string
   accent: string
 }) {
+  const router = useRouter()
   const [open, setOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
@@ -111,7 +113,8 @@ function RecoverSession({
             setError(result.error)
             return
           }
-          window.location.reload()
+          setOpen(false)
+          router.refresh()
         }}
         className="mt-2 flex items-end gap-2"
       >
@@ -146,6 +149,7 @@ function RecoverSession({
 }
 
 export function JoinSection(props: Props) {
+  const router = useRouter()
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [guestCount, setGuestCount] = useState(0)
@@ -234,12 +238,11 @@ export function JoinSection(props: Props) {
         <div className="text-right">
           <button
             type="button"
-            disabled={loading}
             onClick={async () => {
               await clearParticipantSession(props.orgSlug, props.eventId)
-              window.location.reload()
+              router.refresh()
             }}
-            className="text-xs text-zinc-600 transition-colors hover:text-zinc-500 disabled:opacity-50"
+            className="text-xs text-zinc-600 transition-colors hover:text-zinc-500"
           >
             Not you?
           </button>
