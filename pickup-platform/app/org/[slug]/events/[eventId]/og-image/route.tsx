@@ -1,5 +1,5 @@
 import { getOrgBySlug } from '@/lib/orgs'
-import { getEventByRef, formatEventTime, eventDisplayName } from '@/lib/events'
+import { getEventByRef, formatEventWhenLine, eventDisplayName } from '@/lib/events'
 import { renderOrgOgImage } from '@/lib/og-image'
 import { ogArrowRight } from '@/lib/text-arrows'
 
@@ -21,7 +21,7 @@ export async function GET(_request: Request, { params }: Context) {
     eyebrow: event ? 'Upcoming session' : undefined,
     headline: event ? eventTitle : org?.name ?? 'Organizr',
     subline: event
-      ? formatEventTime(event) + (event.location_label ? ` · ${event.location_label}` : '')
+      ? formatEventWhenLine(event) + (event.location_label ? ` · ${event.location_label}` : '')
       : undefined,
     locationOnline: event?.location_is_online,
     cta: event ? `Count me in ${ogArrowRight}` : undefined,

@@ -8,7 +8,7 @@ import {
   getEventByRef,
   getNextActiveUpcomingEvent,
   hasMultipleActiveUpcomingEvents,
-  formatEventTime,
+  formatEventWhenLine,
   isEventInProgress,
   isEventEnded,
 } from '@/lib/events'
@@ -54,7 +54,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     return {}
   }
 
-  const when = formatEventTime(event)
+  const when = formatEventWhenLine(event)
   const title = `${when} · ${org.name}`
   const groupDescription = org.description || 'a session'
   const locationPreposition = event.location_is_online ? 'on' : 'at'
@@ -105,7 +105,7 @@ export default async function EventPage({ params }: Props) {
   const nextSession = isCancelled ? await getNextActiveUpcomingEvent(org.id) : null
   const isLive = isEventInProgress(event) && event.status === 'on'
   const isEnded = isEventEnded(event)
-  const shareText = `${org.name}: ${formatEventTime(event)} ${event.location_is_online ? 'on' : 'at'} ${event.location_label}. Join us!`
+  const shareText = `${org.name}: ${formatEventWhenLine(event)} ${event.location_is_online ? 'on' : 'at'} ${event.location_label}. Join us!`
   const accent = org.branding.accent_color
 
   return (

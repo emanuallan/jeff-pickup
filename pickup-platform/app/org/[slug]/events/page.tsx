@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { Suspense } from 'react'
 import { notFound, redirect } from 'next/navigation'
 import { getOrgBySlug } from '@/lib/orgs'
-import { getUpcomingEventsForOrg, formatEventTime, formatEventDayLabel, isEventInProgress, isEventEnded } from '@/lib/events'
+import { getUpcomingEventsForOrg, formatEventWhenLine, pickFeaturedUpcomingEvent, formatEventDayLabel, isEventInProgress, isEventEnded } from '@/lib/events'
 import { buildOrgMetadata, rootBaseUrl } from '@/lib/og-metadata'
 import { buildOrgJsonLd } from '@/lib/seo'
 import { JsonLd } from '@/app/_components/json-ld'
@@ -41,11 +41,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 
   const events = await getUpcomingEventsForOrg(org.id, 20, true)
-  const nextEvent = events[0]
+  const nextEvent = pickFeaturedUpcomingEvent(events)
   const groupDescription = org.description || 'group sessions'
   const title = org.name
   const description = nextEvent
-    ? `Upcoming ${groupDescription} with ${org.name}. Next up ${formatEventTime(nextEvent)} ${nextEvent.location_is_online ? 'on' : 'at'} ${nextEvent.location_label} — see who's coming and confirm you're in.`
+    ? `Upcoming ${groupDescription} with ${org.name}. Next up ${formatEventWhenLine(nextEvent)} ${nextEvent.location_is_online ? 'on' : 'at'} ${nextEvent.location_label} — see who's coming and confirm you're in.`
     : `See the schedule of upcoming ${groupDescription} with ${org.name}. Check who's coming and confirm you're in — it only takes a few seconds.`
 
   return buildOrgMetadata({
@@ -79,9 +79,7 @@ export default async function EventsPage({ params }: Props) {
 
   const skippedCancelled =
     events[0] && isEventCancelled(events[0].status) ? events[0] : null
-  const featured = skippedCancelled
-    ? events.find((ev) => !isEventCancelled(ev.status)) ?? null
-    : events[0] ?? null
+  const featured = pickFeaturedUpcomingEvent(events)
   const rest = events.filter(
     (ev) => ev.id !== featured?.id && ev.id !== skippedCancelled?.id,
   )

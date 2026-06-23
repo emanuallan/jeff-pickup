@@ -273,27 +273,47 @@ async function fetchActiveEventsForOrg(
     .slice(0, options.limit)
 }
 
+export function isEventCancelled(status: EventStatus | string): boolean {
+  return status === 'cancelled'
+}
+
+/** First upcoming session shown on the public schedule (skips cancelled). */
+export function pickFeaturedUpcomingEvent(
+  events: EventWithLocation[],
+): EventWithLocation | null {
+  return events.find((ev) => !isEventCancelled(ev.status)) ?? null
+}
+
+/** Format clock time for an instant in an IANA zone — e.g. "6:00 PM". */
+export function formatTimeInZone(iso: string, timeZone?: string): string {
+  return new Date(iso).toLocaleString('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+    timeZone: timeZone || 'UTC',
+  })
+}
+
 export function formatEventDateTime(iso: string, timeZone?: string): string {
-  const d = new Date(iso)
   const zone = timeZone || 'UTC'
   // "Weekday, Day @ Time" — e.g. "Monday, Jun 15 @ 6:00 PM"
-  const date = d.toLocaleString('en-US', {
+  const date = new Date(iso).toLocaleString('en-US', {
     weekday: 'long',
     month: 'short',
     day: 'numeric',
     timeZone: zone,
   })
-  const time = d.toLocaleString('en-US', {
-    hour: 'numeric',
-    minute: '2-digit',
-    timeZone: zone,
-  })
+  const time = formatTimeInZone(iso, zone)
   return `${date} @ ${time}`
 }
 
 /** Format an event's starts_at in its stored timezone. */
 export function formatEventTime(event: Pick<Event, 'starts_at' | 'timezone'>): string {
   return formatEventDateTime(event.starts_at, event.timezone)
+}
+
+/** Card-style when line — e.g. "Today · 6:00 PM" or "Monday, Jun 15 · 6:00 PM". */
+export function formatEventWhenLine(event: Pick<Event, 'starts_at' | 'timezone'>): string {
+  return `${formatEventDayLabel(event)} · ${formatEventTimeOnly(event)}`
 }
 
 /** Compact timestamp in a specific IANA zone — e.g. "Jun 17, 6:30 PM". */
@@ -355,6 +375,16 @@ export function canUpdateArrivalStatus(
   return !isEventEnded(event, now)
 }
 
+/** Calendar day after today in an IANA zone — YYYY-MM-DD. */
+function nextCalendarDayKeyInZone(timeZone: string, now = new Date()): string {
+  const todayKey = dayKeyInZone(now.toISOString(), timeZone)
+  for (let hours = 1; hours <= 30; hours++) {
+    const key = dayKeyInZone(new Date(now.getTime() + hours * 3_600_000).toISOString(), timeZone)
+    if (key !== todayKey) return key
+  }
+  return todayKey
+}
+
 /**
  * Relative day label in the event's zone: "Today", "Tomorrow", else
  * "Weekday, Mon D" (e.g. "Monday, Jun 15").
@@ -362,11 +392,10 @@ export function canUpdateArrivalStatus(
 export function formatEventDayLabel(event: Pick<Event, 'starts_at' | 'timezone'>): string {
   const zone = event.timezone || 'UTC'
   const now = new Date()
-  const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000)
 
   const eventKey = dayKeyInZone(event.starts_at, zone)
   if (eventKey === dayKeyInZone(now.toISOString(), zone)) return 'Today'
-  if (eventKey === dayKeyInZone(tomorrow.toISOString(), zone)) return 'Tomorrow'
+  if (eventKey === nextCalendarDayKeyInZone(zone, now)) return 'Tomorrow'
 
   return new Date(event.starts_at).toLocaleString('en-US', {
     weekday: 'long',
@@ -378,11 +407,7 @@ export function formatEventDayLabel(event: Pick<Event, 'starts_at' | 'timezone'>
 
 /** Just the time portion in the event's zone — e.g. "6:00 PM". */
 export function formatEventTimeOnly(event: Pick<Event, 'starts_at' | 'timezone'>): string {
-  return new Date(event.starts_at).toLocaleString('en-US', {
-    hour: 'numeric',
-    minute: '2-digit',
-    timeZone: event.timezone || 'UTC',
-  })
+  return formatTimeInZone(event.starts_at, event.timezone)
 }
 
 /**

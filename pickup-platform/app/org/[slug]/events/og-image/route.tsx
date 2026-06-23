@@ -1,5 +1,5 @@
 import { getOrgBySlug } from '@/lib/orgs'
-import { getUpcomingEventsForOrg, formatEventTime, eventDisplayName } from '@/lib/events'
+import { getUpcomingEventsForOrg, formatEventWhenLine, pickFeaturedUpcomingEvent, eventDisplayName } from '@/lib/events'
 import { renderOrgOgImage } from '@/lib/og-image'
 import { ogArrowRight } from '@/lib/text-arrows'
 
@@ -10,8 +10,8 @@ type Context = {
 export async function GET(_request: Request, { params }: Context) {
   const { slug } = await params
   const org = await getOrgBySlug(slug)
-  const events = org ? await getUpcomingEventsForOrg(org.id, 1) : []
-  const nextEvent = events[0]
+  const events = org ? await getUpcomingEventsForOrg(org.id, 20, true) : []
+  const nextEvent = pickFeaturedUpcomingEvent(events)
   const nextTitle = eventDisplayName(nextEvent?.title)
 
   return renderOrgOgImage({
@@ -22,7 +22,7 @@ export async function GET(_request: Request, { params }: Context) {
     eyebrow: nextEvent ? 'Next session' : 'Upcoming',
     headline: nextEvent ? nextTitle : 'Upcoming sessions',
     subline: nextEvent
-      ? formatEventTime(nextEvent) +
+      ? formatEventWhenLine(nextEvent) +
         (nextEvent.location_label ? ` · ${nextEvent.location_label}` : '')
       : org?.description,
     locationOnline: nextEvent?.location_is_online,

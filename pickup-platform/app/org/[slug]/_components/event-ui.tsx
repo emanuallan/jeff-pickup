@@ -5,7 +5,9 @@ import {
   eventDisplayName,
   formatEventDayLabel,
   formatEventTimeOnly,
+  formatEventWhenLine,
   formatEventHappening,
+  isEventCancelled,
   isEventEnded,
   isEventInProgress,
   type EventStatus,
@@ -13,6 +15,8 @@ import {
 } from '@/lib/events'
 import { arrowNe, arrowRight } from '@/lib/text-arrows'
 import { accentOnDark } from '@/lib/colors'
+
+export { isEventCancelled }
 
 export type EventLocationFields = Pick<
   EventWithLocation,
@@ -26,10 +30,6 @@ export type EventLocationFields = Pick<
 /** Event display name: recurring schedule title when present. */
 export function eventName(event: Pick<EventWithLocation, 'title'>): string {
   return eventDisplayName(event.title)
-}
-
-export function isEventCancelled(status: EventStatus): boolean {
-  return status === 'cancelled'
 }
 
 export function cancelledEventClasses(cancelled: boolean) {
@@ -177,9 +177,7 @@ export function EventDateTimeRow({
   const classes = cancelledEventClasses(cancelled)
   return (
     <div className={`mt-1.5 flex flex-wrap items-baseline gap-x-2 gap-y-1 ${classes.datetimeRow}`}>
-      <span className={`text-lg font-medium ${classes.day}`}>{formatEventDayLabel(event)}</span>
-      <span className="text-zinc-600">·</span>
-      <span className={`text-lg ${classes.time}`}>{formatEventTimeOnly(event)}</span>
+      <span className={`text-lg font-medium ${classes.day}`}>{formatEventWhenLine(event)}</span>
     </div>
   )
 }
