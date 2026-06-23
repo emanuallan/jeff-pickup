@@ -141,13 +141,67 @@ export const getEventById = cache(
   },
 )
 
-export async function getUpcomingEventsForOrg(
+/** Memoized per-request so metadata + page share one query for the same args. */
+export const getUpcomingEventsForOrg = cache(
+  async (
+    orgId: string,
+    limit = 20,
+    includeCancelled = false,
+  ): Promise<EventWithLocation[]> => {
+    return fetchActiveEventsForOrg(orgId, { limit, includeCancelled })
+  },
+)
+
+type EventSummary = Pick<Event, 'id' | 'short_id' | 'status' | 'starts_at' | 'duration_min'>
+
+async function fetchActiveUpcomingSummaries(
   orgId: string,
-  limit = 20,
-  includeCancelled = false,
-): Promise<EventWithLocation[]> {
-  return fetchActiveEventsForOrg(orgId, { limit, includeCancelled })
+  limit: number,
+  includeCancelled: boolean,
+): Promise<EventSummary[]> {
+  const supabase = await createClient()
+  const now = new Date()
+  const lookbackIso = new Date(
+    now.getTime() - MAX_EVENT_DURATION_MIN * 60_000,
+  ).toISOString()
+  const fetchLimit = Math.min(Math.max(limit * 2, limit + 10), 100)
+
+  let query = supabase
+    .from('events')
+    .select('id, short_id, status, starts_at, duration_min')
+    .eq('org_id', orgId)
+    .gte('starts_at', lookbackIso)
+
+  if (!includeCancelled) {
+    query = query.neq('status', 'cancelled')
+  }
+
+  const { data, error } = await query
+    .order('starts_at', { ascending: true })
+    .limit(fetchLimit)
+
+  if (error || !data) {
+    return []
+  }
+
+  return data
+    .filter((row) => !isEventEnded(row as EventSummary, now))
+    .slice(0, limit) as EventSummary[]
 }
+
+/** Whether the org has more than one non-cancelled upcoming session (for nav chrome). */
+export const hasMultipleActiveUpcomingEvents = cache(async (orgId: string): Promise<boolean> => {
+  const summaries = await fetchActiveUpcomingSummaries(orgId, 2, false)
+  return summaries.length > 1
+})
+
+/** Soonest non-cancelled upcoming session — e.g. link off a cancelled event page. */
+export const getNextActiveUpcomingEvent = cache(
+  async (orgId: string): Promise<Pick<Event, 'short_id'> | null> => {
+    const summaries = await fetchActiveUpcomingSummaries(orgId, 1, false)
+    return summaries[0] ?? null
+  },
+)
 
 /** Upcoming sessions for the organizer console (all statuses), soonest first. */
 export async function getUpcomingEventsForConsole(

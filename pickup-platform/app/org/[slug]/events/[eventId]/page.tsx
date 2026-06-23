@@ -6,7 +6,8 @@ import { after } from 'next/server'
 import { getOrgBySlug } from '@/lib/orgs'
 import {
   getEventByRef,
-  getUpcomingEventsForOrg,
+  getNextActiveUpcomingEvent,
+  hasMultipleActiveUpcomingEvents,
   formatEventTime,
   isEventInProgress,
   isEventEnded,
@@ -78,10 +79,10 @@ export default async function EventPage({ params }: Props) {
     notFound()
   }
 
-  const [event, tracking, upcomingEvents] = await Promise.all([
+  const [event, tracking, showAllSessionsLink] = await Promise.all([
     getEventByRef(eventId, org.id),
     resolvePageViewTrackingKeys(),
-    getUpcomingEventsForOrg(org.id, 20, true),
+    hasMultipleActiveUpcomingEvents(org.id),
   ])
   if (!event) {
     notFound()
@@ -101,15 +102,11 @@ export default async function EventPage({ params }: Props) {
 
   const isCancelled = isEventCancelled(event.status)
   const cancelledClasses = cancelledEventClasses(isCancelled)
-  const nextSession = isCancelled
-    ? (await getUpcomingEventsForOrg(org.id, 1))[0] ?? null
-    : null
+  const nextSession = isCancelled ? await getNextActiveUpcomingEvent(org.id) : null
   const isLive = isEventInProgress(event) && event.status === 'on'
   const isEnded = isEventEnded(event)
   const shareText = `${org.name}: ${formatEventTime(event)} ${event.location_is_online ? 'on' : 'at'} ${event.location_label}. Join us!`
   const accent = org.branding.accent_color
-  const showAllSessionsLink =
-    upcomingEvents.filter((ev) => !isEventCancelled(ev.status)).length > 1
 
   return (
     <OrgPageShell>

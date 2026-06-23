@@ -40,7 +40,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     return {}
   }
 
-  const events = await getUpcomingEventsForOrg(org.id, 1)
+  const events = await getUpcomingEventsForOrg(org.id, 20, true)
   const nextEvent = events[0]
   const groupDescription = org.description || 'group sessions'
   const title = org.name
@@ -103,7 +103,7 @@ export default async function EventsPage({ params }: Props) {
         <ShareButton title={org.name} text={`Join ${org.name} on Organizr`} />
       </div>
 
-      <OrgHeader org={org} title={org.name} subtitle={org.description} />
+      <OrgHeader org={org} title={org.name} subtitle={org.description} logoPriority />
 
       {events.length > 0 ? (
         <>

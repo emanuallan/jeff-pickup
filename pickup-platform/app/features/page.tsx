@@ -22,7 +22,7 @@ const sections = [
   {
     title: 'For players',
     items: [
-      'Tap to join after first visit',
+      'Tap to join',
       'Live roster and headcounts',
       'Status updates for each player',
     ],

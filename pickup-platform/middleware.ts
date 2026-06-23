@@ -35,6 +35,11 @@ function attachVisitorKey(request: NextRequest, requestHeaders: Headers): string
   return visitorKey
 }
 
+/** Apex paths like /org/demo/events — public tenant pages, no auth refresh needed. */
+function isApexPublicOrgRoute(pathname: string): boolean {
+  return /^\/org\/[^/]+(\/|$)/.test(pathname)
+}
+
 export async function middleware(request: NextRequest) {
   const host = request.headers.get('host') ?? ''
   const orgSlug = parseOrgSlugFromHost(host)
@@ -62,6 +67,20 @@ export async function middleware(request: NextRequest) {
 
     const response = NextResponse.rewrite(url, { request: { headers: requestHeaders } })
     response.headers.set('x-org-slug', orgSlug)
+
+    if (isNewVisitor && visitorKey) {
+      response.cookies.set(VISITOR_COOKIE, visitorKey, VISITOR_COOKIE_OPTIONS)
+    }
+
+    return response
+  }
+
+  if (isApexPublicOrgRoute(pathname)) {
+    const requestHeaders = new Headers(request.headers)
+    const visitorKey = attachVisitorKey(request, requestHeaders)
+    const isNewVisitor = visitorKey != null && !request.cookies.get(VISITOR_COOKIE)?.value
+
+    const response = NextResponse.next({ request: { headers: requestHeaders } })
 
     if (isNewVisitor && visitorKey) {
       response.cookies.set(VISITOR_COOKIE, visitorKey, VISITOR_COOKIE_OPTIONS)
