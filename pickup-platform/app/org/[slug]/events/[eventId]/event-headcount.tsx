@@ -1,21 +1,38 @@
 import { getPublicRoster, rosterHeadcount } from '@/lib/signups'
+import { LiveHeadcountPill } from './live-headcount-pill'
 
 type Props = {
+  orgSlug: string
+  eventRef: string
   eventId: string
   capacity: number | null
   minPlayers: number | null
+  accent: string
+  pollActive: boolean
 }
 
-export async function EventHeadcount({ eventId, capacity, minPlayers }: Props) {
+export async function EventHeadcount({
+  orgSlug,
+  eventRef,
+  eventId,
+  capacity,
+  minPlayers,
+  accent,
+  pollActive,
+}: Props) {
   const roster = await getPublicRoster(eventId)
   const headcount = rosterHeadcount(roster)
 
   return (
     <>
-      <span className="rounded-lg bg-zinc-800/60 px-2.5 py-1 text-zinc-300">
-        <span className="font-semibold text-zinc-100">{headcount}</span>
-        {capacity != null ? ` / ${capacity}` : ''} coming
-      </span>
+      <LiveHeadcountPill
+        orgSlug={orgSlug}
+        eventRef={eventRef}
+        initialHeadcount={headcount}
+        capacity={capacity}
+        accent={accent}
+        active={pollActive}
+      />
       {minPlayers != null ? (
         <span className="rounded-lg bg-zinc-800/60 px-2.5 py-1 text-zinc-400">
           min {minPlayers} participants

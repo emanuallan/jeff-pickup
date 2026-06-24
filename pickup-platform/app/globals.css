@@ -68,3 +68,19 @@ body {
   font-weight: 600;
   color: #e4e4e7;
 }
+
+@keyframes headcount-tick {
+  0% {
+    transform: scale(1);
+  }
+  45% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.headcount-pulse {
+  animation: headcount-tick 650ms ease-out;
+}
