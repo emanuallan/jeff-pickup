@@ -38,10 +38,7 @@ export function OrgPageFooter({
   return (
     <footer className="mt-12 border-t border-zinc-800/70 pt-8">
       {hasOrgNav ? (
-        <nav
-          aria-label="Group links"
-          className="flex flex-col items-center gap-4 sm:flex-row sm:flex-wrap sm:justify-center sm:gap-x-6 sm:gap-y-3"
-        >
+        <nav aria-label="Group links" className="flex flex-col items-center gap-5">
           {leaderboard}
           {links.length > 0 ? <SocialLinks links={links} /> : null}
         </nav>
