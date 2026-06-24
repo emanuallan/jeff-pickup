@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { hexToRgba } from '@/lib/colors'
+import { ResponsiveSheetDialog } from '@/app/_components/responsive-sheet-dialog'
 import {
   dismissPostRsvpShare,
   isPostRsvpSharePending,
@@ -12,19 +12,26 @@ type Props = {
   title: string
   text: string
   accent: string
+  accentText: string
 }
 
-export function PostRsvpSharePrompt({ eventId, title, text, accent }: Props) {
-  const [visible, setVisible] = useState(false)
+export function PostRsvpSharePrompt({
+  eventId,
+  title,
+  text,
+  accent,
+  accentText,
+}: Props) {
+  const [open, setOpen] = useState(false)
   const [copied, setCopied] = useState(false)
 
   useEffect(() => {
-    setVisible(isPostRsvpSharePending(eventId))
+    setOpen(isPostRsvpSharePending(eventId))
   }, [eventId])
 
   function dismiss() {
     dismissPostRsvpShare(eventId)
-    setVisible(false)
+    setOpen(false)
   }
 
   async function handleShare() {
@@ -52,20 +59,18 @@ export function PostRsvpSharePrompt({ eventId, title, text, accent }: Props) {
     }
   }
 
-  if (!visible) return null
-
   return (
-    <div
-      className="mb-4 rounded-2xl border px-4 py-3.5"
-      style={{
-        borderColor: hexToRgba(accent, 0.28),
-        backgroundColor: hexToRgba(accent, 0.08),
-      }}
+    <ResponsiveSheetDialog
+      open={open}
+      onClose={dismiss}
+      titleId="post-rsvp-share-title"
     >
-      <div className="flex items-start gap-3">
-        <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold text-zinc-100">You&apos;re in!</p>
-          <p className="mt-1 text-xs leading-relaxed text-zinc-400">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h2 id="post-rsvp-share-title" className="text-lg font-semibold text-zinc-50">
+            You&apos;re in!
+          </h2>
+          <p className="mt-1.5 text-sm leading-relaxed text-zinc-400">
             Know someone who&apos;d come? Share the link in your group chat.
           </p>
         </div>
@@ -73,10 +78,10 @@ export function PostRsvpSharePrompt({ eventId, title, text, accent }: Props) {
           type="button"
           onClick={dismiss}
           aria-label="Dismiss"
-          className="-mr-1 -mt-0.5 shrink-0 rounded-lg p-1 text-zinc-500 transition-colors hover:text-zinc-300"
+          className="-mr-1 -mt-1 hidden shrink-0 rounded-lg p-1.5 text-zinc-500 transition-colors hover:text-zinc-300 sm:block"
         >
           <svg
-            className="h-4 w-4"
+            className="h-5 w-5"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -88,15 +93,21 @@ export function PostRsvpSharePrompt({ eventId, title, text, accent }: Props) {
           </svg>
         </button>
       </div>
+
       <button
         type="button"
         onClick={handleShare}
-        className="mt-3 inline-flex items-center gap-1.5 rounded-xl border border-zinc-700 bg-zinc-900/80 px-3.5 py-2 text-xs font-medium text-zinc-100 transition-colors hover:border-zinc-600 hover:bg-zinc-900"
+        className="mt-5 flex w-full min-h-11 items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold shadow-lg transition-opacity hover:opacity-90"
+        style={{
+          backgroundColor: accent,
+          color: accentText,
+          boxShadow: `0 10px 30px -12px ${accent}`,
+        }}
       >
         {copied ? (
           <>
             <svg
-              className="h-3.5 w-3.5"
+              className="h-4 w-4"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -112,7 +123,7 @@ export function PostRsvpSharePrompt({ eventId, title, text, accent }: Props) {
         ) : (
           <>
             <svg
-              className="h-3.5 w-3.5"
+              className="h-4 w-4"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -130,6 +141,14 @@ export function PostRsvpSharePrompt({ eventId, title, text, accent }: Props) {
           </>
         )}
       </button>
-    </div>
+
+      <button
+        type="button"
+        onClick={dismiss}
+        className="mt-3 w-full py-2.5 text-sm text-zinc-500 transition-colors hover:text-zinc-300"
+      >
+        Not now
+      </button>
+    </ResponsiveSheetDialog>
   )
 }

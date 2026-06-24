@@ -57,15 +57,17 @@ export async function EventParticipation({ slug, eventId, org, event }: Props) {
         />
       ) : null}
 
+      {mySignup && !isCancelled && !isEnded ? (
+        <PostRsvpSharePrompt
+          eventId={eventId}
+          title={org.name}
+          text={shareText}
+          accent={accent}
+          accentText={accentText}
+        />
+      ) : null}
+
       <section className="mt-5 rounded-3xl border border-zinc-800 bg-zinc-900/50 p-5">
-        {mySignup && !isCancelled && !isEnded ? (
-          <PostRsvpSharePrompt
-            eventId={eventId}
-            title={org.name}
-            text={shareText}
-            accent={accent}
-          />
-        ) : null}
         <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-400">
           Who&apos;s coming ({headcount})
         </h2>
