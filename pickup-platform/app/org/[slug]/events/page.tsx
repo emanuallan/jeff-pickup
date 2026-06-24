@@ -9,7 +9,7 @@ import { buildOrgJsonLd } from '@/lib/seo'
 import { JsonLd } from '@/app/_components/json-ld'
 import { isLeaderboardUnlocked } from '@/lib/engagement'
 import { OrgHeader } from '../_components/org-header'
-import { OrgPageShell, OrgPageFooter, LeaderboardLink } from '../_components/org-page-shell'
+import { OrgPageShell, OrgPageFooter } from '../_components/org-page-shell'
 import { ShareButton } from '../share-button-lazy'
 import { arrowRight } from '@/lib/text-arrows'
 import { accentOnDark } from '@/lib/colors'
@@ -206,8 +206,12 @@ export default async function EventsPage({ params }: Props) {
         </section>
       )}
 
-      {leaderboardUnlocked ? <LeaderboardLink accent={accent} /> : null}
-      <OrgPageFooter slug={org.slug} links={org.branding.links} />
+      <OrgPageFooter
+        slug={org.slug}
+        links={org.branding.links}
+        showLeaderboard={leaderboardUnlocked}
+        accent={accent}
+      />
     </OrgPageShell>
   )
 }

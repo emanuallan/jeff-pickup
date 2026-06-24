@@ -8,7 +8,6 @@ import { getSessionToken } from '@/lib/participant-session'
 import { getSessionInfo } from '@/lib/participant'
 import { JoinSectionLazy } from './join-section-lazy'
 import { EventRosterWithBadges } from './event-roster-with-badges'
-import { LeaderboardLinkDeferred } from './leaderboard-link-deferred'
 import { RosterListFallback } from './roster-list-fallback'
 import { SignedInControlsLazy } from './signed-in-controls-lazy'
 import { CancelledCallout, isEventCancelled } from '../../_components/event-ui'
@@ -88,10 +87,6 @@ export async function EventParticipation({ slug, eventId, org, event }: Props) {
           />
         ) : null}
       </section>
-
-      <Suspense fallback={null}>
-        <LeaderboardLinkDeferred orgId={org.id} accent={accent} />
-      </Suspense>
     </>
   )
 }

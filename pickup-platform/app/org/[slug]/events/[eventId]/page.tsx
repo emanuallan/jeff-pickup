@@ -24,6 +24,7 @@ import { WeatherPill } from './weather-pill'
 import { EventHeadcount, EventHeadcountFallback } from './event-headcount'
 import { EventParticipation } from './event-participation'
 import { ParticipationFallback } from './participation-fallback'
+import { LeaderboardLinkDeferred } from './leaderboard-link-deferred'
 import { ShareButton } from '../../share-button-lazy'
 import { OrgHeader } from '../../_components/org-header'
 import { OrgPageShell, OrgPageFooter } from '../../_components/org-page-shell'
@@ -192,7 +193,16 @@ export default async function EventPage({ params }: Props) {
         <EventParticipation slug={slug} eventId={eventId} org={org} event={event} />
       </Suspense>
 
-      <OrgPageFooter slug={org.slug} links={org.branding.links} />
+      <OrgPageFooter
+        slug={org.slug}
+        links={org.branding.links}
+        accent={accent}
+        leaderboardSlot={
+          <Suspense fallback={null}>
+            <LeaderboardLinkDeferred orgId={org.id} accent={accent} />
+          </Suspense>
+        }
+      />
     </OrgPageShell>
   )
 }
