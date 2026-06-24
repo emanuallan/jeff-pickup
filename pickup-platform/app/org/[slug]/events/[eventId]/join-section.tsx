@@ -12,7 +12,6 @@ import { fireConfetti } from '@/lib/confetti'
 import { arrowRight } from '@/lib/text-arrows'
 import { PhoneInput } from '@/app/_components/phone-input'
 import type { Participant, MySignup } from '@/lib/participant'
-import { FirstToRsvpNudge } from './first-to-rsvp'
 
 export type { Participant, MySignup }
 
@@ -28,7 +27,6 @@ type Props = {
   spotsLeft: number | null
   participant: Participant | null
   mySignup: MySignup | null
-  rosterEmpty: boolean
 }
 
 const inputClass =
@@ -178,17 +176,14 @@ export function JoinSection(props: Props) {
   if (props.participant) {
     return (
       <div className="space-y-3">
-        {props.rosterEmpty ? <FirstToRsvpNudge accent={props.accent} /> : null}
         <div>
           <h2 className="text-lg font-semibold text-zinc-100">
             Welcome back, {props.participant.display_name}
           </h2>
           <p className="mt-0.5 text-sm text-zinc-400">
-            {props.rosterEmpty
-              ? 'The list is empty — tap below to be the first name on it.'
-              : props.spotsLeft != null && props.spotsLeft <= 5
-                ? `Only ${props.spotsLeft} spot${props.spotsLeft === 1 ? '' : 's'} left — tap to lock yours in.`
-                : 'Tap below to lock in your spot.'}
+            {props.spotsLeft != null && props.spotsLeft <= 5
+              ? `Only ${props.spotsLeft} spot${props.spotsLeft === 1 ? '' : 's'} left — tap to lock yours in.`
+              : 'Tap below to lock in your spot.'}
           </p>
         </div>
 
@@ -231,7 +226,7 @@ export function JoinSection(props: Props) {
             boxShadow: `0 10px 30px -12px ${props.accent}`,
           }}
         >
-          {loading ? 'Counting you in…' : props.rosterEmpty ? `Be the first ${arrowRight}` : `Count me in ${arrowRight}`}
+          {loading ? 'Counting you in…' : `Count me in ${arrowRight}`}
         </button>
         <div className="text-right">
           <button
@@ -252,7 +247,6 @@ export function JoinSection(props: Props) {
 
   return (
     <div className="space-y-4">
-      {props.rosterEmpty ? <FirstToRsvpNudge accent={props.accent} /> : null}
       <form
         action={async (formData) => {
           setLoading(true)
@@ -267,11 +261,9 @@ export function JoinSection(props: Props) {
       <div>
         <h2 className="text-lg font-semibold text-zinc-100">Save your spot</h2>
         <p className="mt-0.5 text-sm text-zinc-400">
-          {props.rosterEmpty
-            ? 'Add your name — you only have to do this once.'
-            : props.spotsLeft != null && props.spotsLeft <= 5
-              ? `Only ${props.spotsLeft} spot${props.spotsLeft === 1 ? '' : 's'} left. Add your name — you only have to do this once.`
-              : 'Add your name so everyone knows you\u2019re coming. You only have to do this once.'}
+          {props.spotsLeft != null && props.spotsLeft <= 5
+            ? `Only ${props.spotsLeft} spot${props.spotsLeft === 1 ? '' : 's'} left. Add your name — you only have to do this once.`
+            : 'Add your name so everyone knows you\u2019re coming. You only have to do this once.'}
         </p>
       </div>
 
@@ -331,7 +323,7 @@ export function JoinSection(props: Props) {
           boxShadow: `0 10px 30px -12px ${props.accent}`,
         }}
       >
-        {loading ? 'Counting you in…' : props.rosterEmpty ? `Be the first ${arrowRight}` : `Count me in ${arrowRight}`}
+        {loading ? 'Counting you in…' : `Count me in ${arrowRight}`}
       </button>
       </form>
 

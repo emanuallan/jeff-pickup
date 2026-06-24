@@ -127,11 +127,7 @@ export function RosterList(props: {
   const accentFg = accentOnDark(accent)
 
   if (props.entries.length === 0) {
-    return (
-      <p className="text-sm text-zinc-500">
-        No RSVPs yet — the join form above is open if you&apos;re ready.
-      </p>
-    )
+    return <p className="text-sm text-zinc-500">No one signed up yet. Be the first!</p>
   }
 
   return (
