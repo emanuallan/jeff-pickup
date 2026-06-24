@@ -71,12 +71,10 @@ export function LeaderboardLink({ accent }: { accent: string }) {
   return (
     <Link
       href="/leaderboard"
-      className="inline-flex items-center gap-1 text-sm text-zinc-400 transition-colors hover:text-zinc-200"
+      className="inline-flex items-center gap-1 text-sm transition-opacity hover:opacity-80"
+      style={{ color: accentOnDark(accent) }}
     >
-      View leaderboard
-      <span style={{ color: accentOnDark(accent) }} aria-hidden>
-        {arrowRight}
-      </span>
+      View leaderboard {arrowRight}
     </Link>
   )
 }
