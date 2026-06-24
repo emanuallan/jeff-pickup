@@ -167,9 +167,13 @@ export default async function EventPage({ params }: Props) {
               }
             >
               <EventHeadcount
+                orgSlug={slug}
+                eventRef={eventId}
+                scheduleId={event.schedule_id}
                 eventId={event.id}
                 capacity={event.capacity}
                 minPlayers={event.min_players}
+                accent={accent}
               />
             </Suspense>
             <Suspense fallback={null}>

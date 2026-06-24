@@ -10,6 +10,7 @@ import { JoinSectionLazy } from './join-section-lazy'
 import { EventRosterWithBadges } from './event-roster-with-badges'
 import { RosterListFallback } from './roster-list-fallback'
 import { SignedInControlsLazy } from './signed-in-controls-lazy'
+import { FirstChairHero } from './first-chair-hero'
 import { CancelledCallout, isEventCancelled } from '../../_components/event-ui'
 
 type Props = {
@@ -32,6 +33,8 @@ export async function EventParticipation({ slug, eventId, org, event }: Props) {
   ])
 
   const headcount = rosterHeadcount(roster)
+  const isFirstChair =
+    !isCancelled && !isEnded && mySignup != null && headcount === 1
   const isFull = event.capacity != null && headcount >= event.capacity
   const spotsLeft = event.capacity != null ? Math.max(0, event.capacity - headcount) : null
 
@@ -59,6 +62,7 @@ export async function EventParticipation({ slug, eventId, org, event }: Props) {
         <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-400">
           Who&apos;s coming ({headcount})
         </h2>
+        {isFirstChair ? <FirstChairHero accent={accent} /> : null}
         <div className="mt-4">
           <Suspense fallback={<RosterListFallback />}>
             <EventRosterWithBadges

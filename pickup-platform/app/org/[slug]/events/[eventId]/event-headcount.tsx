@@ -1,27 +1,37 @@
 import { getPublicRoster, rosterHeadcount } from '@/lib/signups'
+import { HeadcountInteractive } from './headcount-interactive'
 
 type Props = {
+  orgSlug: string
+  eventRef: string
+  scheduleId: string | null
   eventId: string
   capacity: number | null
   minPlayers: number | null
+  accent: string
 }
 
-export async function EventHeadcount({ eventId, capacity, minPlayers }: Props) {
+export async function EventHeadcount({
+  orgSlug,
+  eventRef,
+  scheduleId,
+  eventId,
+  capacity,
+  minPlayers,
+  accent,
+}: Props) {
   const roster = await getPublicRoster(eventId)
   const headcount = rosterHeadcount(roster)
 
   return (
-    <>
-      <span className="rounded-lg bg-zinc-800/60 px-2.5 py-1 text-zinc-300">
-        <span className="font-semibold text-zinc-100">{headcount}</span>
-        {capacity != null ? ` / ${capacity}` : ''} coming
-      </span>
-      {minPlayers != null ? (
-        <span className="rounded-lg bg-zinc-800/60 px-2.5 py-1 text-zinc-400">
-          min {minPlayers} participants
-        </span>
-      ) : null}
-    </>
+    <HeadcountInteractive
+      orgSlug={orgSlug}
+      eventRef={eventRef}
+      headcount={headcount}
+      capacity={capacity}
+      minPlayers={minPlayers}
+      accent={accent}
+    />
   )
 }
 
