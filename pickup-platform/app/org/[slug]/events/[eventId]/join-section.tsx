@@ -9,6 +9,7 @@ import {
   clearParticipantSession,
 } from './actions'
 import { fireConfetti } from '@/lib/confetti'
+import { markPostRsvpSharePending } from '@/lib/post-rsvp-share'
 import { arrowRight } from '@/lib/text-arrows'
 import { PhoneInput } from '@/app/_components/phone-input'
 import type { Participant, MySignup } from '@/lib/participant'
@@ -217,7 +218,11 @@ export function JoinSection(props: Props) {
             )
             setLoading(false)
             if (result.error) setError(result.error)
-            else void fireConfetti(props.accent)
+            else {
+              markPostRsvpSharePending(props.eventId)
+              void fireConfetti(props.accent)
+              router.refresh()
+            }
           }}
           className="w-full rounded-xl px-4 py-3.5 text-sm font-semibold shadow-lg transition-opacity hover:opacity-90 disabled:opacity-50"
           style={{
@@ -254,7 +259,11 @@ export function JoinSection(props: Props) {
           const result = await joinEvent(props.orgSlug, props.eventId, formData)
           setLoading(false)
           if (result.error) setError(result.error)
-          else void fireConfetti(props.accent)
+          else {
+            markPostRsvpSharePending(props.eventId)
+            void fireConfetti(props.accent)
+            router.refresh()
+          }
         }}
         className="space-y-4"
       >
