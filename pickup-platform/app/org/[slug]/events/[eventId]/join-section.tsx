@@ -4,9 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   joinEvent,
-  quickJoinEvent,
   recoverSession,
-  clearParticipantSession,
 } from './actions'
 import { fireConfetti } from '@/lib/confetti'
 import { markPostRsvpSharePending } from '@/lib/post-rsvp-share'
@@ -146,7 +144,6 @@ export function JoinSection(props: Props) {
   const router = useRouter()
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
-  const [guestCount, setGuestCount] = useState(0)
 
   if (props.isPast) {
     return (
@@ -170,82 +167,6 @@ export function JoinSection(props: Props) {
         <p className="mt-2 text-sm text-zinc-500">
           This session is at capacity. Check back in case a spot opens up.
         </p>
-      </div>
-    )
-  }
-
-  if (props.participant) {
-    return (
-      <div className="space-y-3">
-        <div>
-          <h2 className="text-lg font-semibold text-zinc-100">
-            Welcome back, {props.participant.display_name}
-          </h2>
-          <p className="mt-0.5 text-sm text-zinc-400">
-            {props.spotsLeft != null && props.spotsLeft <= 5
-              ? `Only ${props.spotsLeft} spot${props.spotsLeft === 1 ? '' : 's'} left — tap to lock yours in.`
-              : 'Tap below to lock in your spot.'}
-          </p>
-        </div>
-
-        <label className="block">
-          <span className="text-xs text-zinc-500">Guests</span>
-          <input
-            type="number"
-            min={0}
-            max={20}
-            value={guestCount}
-            onChange={(e) => {
-              const n = Number.parseInt(e.target.value, 10)
-              setGuestCount(Number.isFinite(n) ? Math.max(0, Math.min(20, n)) : 0)
-            }}
-            className={inputClass}
-            style={{ '--tw-ring-color': props.accent } as React.CSSProperties}
-          />
-        </label>
-
-        <button
-          type="button"
-          disabled={loading}
-          onClick={async () => {
-            setLoading(true)
-            setError(null)
-            const result = await quickJoinEvent(
-              props.orgSlug,
-              props.eventId,
-              props.orgId,
-              guestCount,
-            )
-            setLoading(false)
-            if (result.error) setError(result.error)
-            else {
-              markPostRsvpSharePending(props.eventId)
-              void fireConfetti(props.accent)
-              router.refresh()
-            }
-          }}
-          className="w-full rounded-xl px-4 py-3.5 text-sm font-semibold shadow-lg transition-opacity hover:opacity-90 disabled:opacity-50"
-          style={{
-            backgroundColor: props.accent,
-            color: props.accentText,
-            boxShadow: `0 10px 30px -12px ${props.accent}`,
-          }}
-        >
-          {loading ? 'Counting you in…' : `Count me in ${arrowRight}`}
-        </button>
-        <div className="text-right">
-          <button
-            type="button"
-            onClick={async () => {
-              await clearParticipantSession(props.orgSlug, props.eventId)
-              router.refresh()
-            }}
-            className="text-xs text-zinc-600 transition-colors hover:text-zinc-500"
-          >
-            Not you?
-          </button>
-        </div>
-        {error ? <p className="text-sm text-red-300">{error}</p> : null}
       </div>
     )
   }
