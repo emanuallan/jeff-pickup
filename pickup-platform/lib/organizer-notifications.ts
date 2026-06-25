@@ -32,7 +32,7 @@ function namesPreview(names: string[], count: number): string {
   return `${names[0]} and ${remaining} other${remaining === 1 ? '' : 's'}`
 }
 
-/** Human-readable copy keyed to notification kind (distinct new vs returning). */
+/** Human-readable copy — badge carries category; title is who did what. */
 export function formatOrganizerNotificationCopy(n: OrganizerNotification): {
   title: string
   detail: string
@@ -42,40 +42,41 @@ export function formatOrganizerNotificationCopy(n: OrganizerNotification): {
 
   switch (n.kind) {
     case 'new_signup_batch':
+      if (count === 1) {
+        return {
+          title: preview ? `${preview} signed up` : '1 player signed up',
+          detail: event_label,
+        }
+      }
       return {
-        title:
-          count === 1
-            ? preview
-              ? `${preview} signed up (new player)`
-              : '1 new player signed up'
-            : `${count} new players signed up`,
+        title: preview ? `${preview} signed up` : `${count} players signed up`,
         detail: event_label,
       }
     case 'returning_signup_batch':
+      if (count === 1) {
+        return {
+          title: preview ? `${preview} signed up` : '1 player signed up',
+          detail: event_label,
+        }
+      }
       return {
-        title:
-          count === 1
-            ? preview
-              ? `${preview} rejoined (returning player)`
-              : '1 returning player rejoined'
-            : preview
-              ? `${preview} rejoined (returning players)`
-              : `${count} returning players rejoined`,
+        title: preview ? `${preview} signed up` : `${count} players signed up`,
         detail: event_label,
       }
     case 'unregister_immediate':
       return {
-        title: preview ? `${preview} unregistered` : 'Player unregistered',
-        detail: `${event_label} · starting soon`,
+        title: preview ? `${preview} can't make it` : "1 player can't make it",
+        detail: event_label,
       }
     case 'unregister_batch':
+      if (count === 1) {
+        return {
+          title: preview ? `${preview} can't make it` : "1 player can't make it",
+          detail: event_label,
+        }
+      }
       return {
-        title:
-          count === 1
-            ? preview
-              ? `${preview} unregistered`
-              : '1 player unregistered'
-            : `${count} players unregistered`,
+        title: `${count} players can't make it`,
         detail: event_label,
       }
     default:

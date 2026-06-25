@@ -45,7 +45,7 @@ function kindBadge(kind: OrganizerNotification["kind"]): {
 			};
 		case "unregister_immediate":
 			return {
-				label: "Left · soon",
+				label: "Soon",
 				className: "bg-amber-500/15 text-amber-300 ring-amber-500/30",
 			};
 		case "unregister_batch":
@@ -242,6 +242,9 @@ export function ConsoleNotificationBell({
 									const href = organizerNotificationHref(n);
 									const isUnread = !n.read_at;
 									const isActive = pathname === href;
+									const when = formatNotificationTime(n.created_at);
+									const context = showOrgName ? `${n.org_name} · ${detail}` : detail;
+									const subtitle = `${context} · ${when}`;
 
 									return (
 										<li
@@ -266,12 +269,7 @@ export function ConsoleNotificationBell({
 													</span>
 													<div className="min-w-0 flex-1">
 														<p className="text-sm leading-snug text-zinc-100">{title}</p>
-														<p className="mt-0.5 truncate text-xs text-zinc-400">
-															{showOrgName ? `${n.org_name} · ${detail}` : detail}
-														</p>
-														<p className="mt-1 text-[11px] text-zinc-600">
-															{formatNotificationTime(n.created_at)}
-														</p>
+														<p className="mt-0.5 truncate text-xs text-zinc-400">{subtitle}</p>
 													</div>
 													{isUnread ? (
 														<span
