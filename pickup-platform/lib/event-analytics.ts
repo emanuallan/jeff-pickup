@@ -89,45 +89,53 @@ export function buildRosterAnalytics(
   }
 }
 
+type EventAnalyticsDb = {
+  pageViews: number
+  uniqueVisitors: number
+  uniqueSignups: number
+  uniqueLeft: number
+}
+
+const EMPTY_EVENT_ANALYTICS_DB: EventAnalyticsDb = {
+  pageViews: 0,
+  uniqueVisitors: 0,
+  uniqueSignups: 0,
+  uniqueLeft: 0,
+}
+
+/** DB-side aggregates via existing RPC — avoids loading every page view / activity row. */
+export async function fetchEventAnalyticsDb(eventId: string): Promise<EventAnalyticsDb> {
+  const supabase = await createClient()
+
+  const { data, error } = await supabase.rpc('get_event_analytics', {
+    p_event_id: eventId,
+  })
+
+  if (error) {
+    console.error('get_event_analytics RPC failed:', error.message)
+    return EMPTY_EVENT_ANALYTICS_DB
+  }
+
+  const row = data as {
+    page_views?: number
+    unique_visitors?: number
+    unique_signups?: number
+    unique_left?: number
+  } | null
+
+  return {
+    pageViews: Number(row?.page_views ?? 0),
+    uniqueVisitors: Number(row?.unique_visitors ?? 0),
+    uniqueSignups: Number(row?.unique_signups ?? 0),
+    uniqueLeft: Number(row?.unique_left ?? 0),
+  }
+}
+
 export async function getEventAnalytics(
   eventId: string,
   roster: RosterEntry[],
   capacity: number | null,
 ): Promise<EventAnalytics> {
-  const supabase = await createClient()
-
-  const [viewsRes, joinedRes, leftRes] = await Promise.all([
-    supabase.from('event_page_views').select('viewer_key').eq('event_id', eventId),
-    supabase
-      .from('event_signup_activity')
-      .select('participant_id')
-      .eq('event_id', eventId)
-      .eq('action', 'joined'),
-    supabase
-      .from('event_signup_activity')
-      .select('participant_id')
-      .eq('event_id', eventId)
-      .eq('action', 'left'),
-  ])
-
-  if (viewsRes.error) {
-    console.error('event_page_views read failed:', viewsRes.error.message)
-  }
-  if (joinedRes.error) {
-    console.error('event_signup_activity (joined) read failed:', joinedRes.error.message)
-  }
-  if (leftRes.error) {
-    console.error('event_signup_activity (left) read failed:', leftRes.error.message)
-  }
-
-  const views = viewsRes.data ?? []
-  const joined = joinedRes.data ?? []
-  const left = leftRes.data ?? []
-
-  return buildRosterAnalytics(roster, capacity, {
-    pageViews: views.length,
-    uniqueVisitors: new Set(views.map((v) => v.viewer_key)).size,
-    uniqueSignups: new Set(joined.map((r) => r.participant_id)).size,
-    uniqueLeft: new Set(left.map((r) => r.participant_id)).size,
-  })
+  const db = await fetchEventAnalyticsDb(eventId)
+  return buildRosterAnalytics(roster, capacity, db)
 }

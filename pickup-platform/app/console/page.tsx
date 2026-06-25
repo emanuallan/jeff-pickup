@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
+import { getAuthUser } from '@/lib/auth'
 import { getUserOrgs } from '@/lib/orgs'
 import { getRootDomain } from '@/lib/tenancy/parse-host'
 import { orgEventsUrl } from '@/lib/og-metadata'
@@ -8,8 +8,7 @@ import { ConsolePage, ConsoleHeader, EmptyState, btnAccent, btnPrimary } from '.
 import { arrowNe } from '@/lib/text-arrows'
 
 export default async function ConsolePage_() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getAuthUser()
 
   if (!user) {
     redirect('/login?next=/console')

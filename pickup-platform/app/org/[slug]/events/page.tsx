@@ -7,7 +7,6 @@ import { getUpcomingEventsForOrg, formatEventTime, pickFeaturedUpcomingEvent, fo
 import { buildOrgMetadata, rootBaseUrl } from '@/lib/og-metadata'
 import { buildOrgJsonLd } from '@/lib/seo'
 import { JsonLd } from '@/app/_components/json-ld'
-import { isLeaderboardUnlocked } from '@/lib/engagement'
 import { OrgHeader } from '../_components/org-header'
 import { OrgPageShell, OrgPageFooter } from '../_components/org-page-shell'
 import { ShareButton } from '../share-button-lazy'
@@ -18,6 +17,7 @@ import {
   FeaturedEventHeadcount,
   FeaturedEventHeadcountFallback,
 } from './[eventId]/event-headcount'
+import { LeaderboardLinkDeferred } from './[eventId]/leaderboard-link-deferred'
 import {
   StatusPill,
   SessionRow,
@@ -66,10 +66,7 @@ export default async function EventsPage({ params }: Props) {
     notFound()
   }
 
-  const [events, leaderboardUnlocked] = await Promise.all([
-    getUpcomingEventsForOrg(org.id, 20, true),
-    isLeaderboardUnlocked(org.id),
-  ])
+  const events = await getUpcomingEventsForOrg(org.id, 20, true)
   const accent = org.branding.accent_color
 
   const activeUpcoming = events.filter((ev) => !isEventCancelled(ev.status))
@@ -209,8 +206,12 @@ export default async function EventsPage({ params }: Props) {
       <OrgPageFooter
         slug={org.slug}
         links={org.branding.links}
-        showLeaderboard={leaderboardUnlocked}
         accent={accent}
+        leaderboardSlot={
+          <Suspense fallback={null}>
+            <LeaderboardLinkDeferred orgId={org.id} accent={accent} />
+          </Suspense>
+        }
       />
     </OrgPageShell>
   )

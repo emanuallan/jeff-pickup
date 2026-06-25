@@ -2,10 +2,7 @@ import Link from 'next/link'
 import { Suspense } from 'react'
 import { notFound } from 'next/navigation'
 import { getOrgForMember } from '@/lib/orgs'
-import { getLocationsForOrg } from '@/lib/locations'
-import { getSchedulesForOrg } from '@/lib/schedules'
-import { getUpcomingEventsForConsole, getPastEventsForConsole } from '@/lib/events'
-import { getParticipantHistoryForOrg } from '@/lib/participants'
+import { getOrgConsoleNavCounts } from '@/lib/org-console-counts'
 import { orgEventsUrl } from '@/lib/og-metadata'
 import { isOrgConsoleSetupComplete } from '@/lib/org-setup'
 import { OrgConsoleHeader } from './org-console-header'
@@ -40,23 +37,13 @@ export default async function OrgConsolePage({ params }: Props) {
     notFound()
   }
 
-  const [locations, schedules, upcomingEvents, pastEvents, participants] = await Promise.all([
-    getLocationsForOrg(org.id),
-    getSchedulesForOrg(org.id),
-    getUpcomingEventsForConsole(org.id),
-    getPastEventsForConsole(org.id),
-    getParticipantHistoryForOrg(org.id),
-  ])
-
-  const regularCount = participants.filter((p) => p.session_count >= 2).length
-  const showAnalytics = pastEvents.some((event) => event.status !== 'cancelled')
+  const counts = await getOrgConsoleNavCounts(org.id)
 
   const orgUrl = orgEventsUrl(org.slug)
-  const upcomingSessionCount = upcomingEvents.filter((ev) => ev.status !== 'cancelled').length
   const isSetup = isOrgConsoleSetupComplete({
-    locationCount: locations.length,
-    scheduleCount: schedules.length,
-    upcomingSessionCount,
+    locationCount: counts.locationCount,
+    scheduleCount: counts.scheduleCount,
+    upcomingSessionCount: counts.upcomingActiveCount,
   })
   const base = `/console/${orgSlug}`
 
@@ -98,28 +85,28 @@ export default async function OrgConsolePage({ params }: Props) {
             href={`${base}/sessions`}
             title="Sessions"
             icon={<IconSessions />}
-            badge={formatCount(upcomingEvents.length, 'upcoming')}
+            badge={formatCount(counts.upcomingCount, 'upcoming')}
             disabled={!isSetup}
           />
           <ConsoleNavTile
             href={`${base}/sessions/past`}
             title="Past sessions"
             icon={<IconPastSessions />}
-            badge={formatCount(pastEvents.length, 'session')}
+            badge={formatCount(counts.pastSessionCount, 'session')}
             disabled={!isSetup}
           />
           <ConsoleNavTile
             href={`${base}/locations`}
             title="Locations"
             icon={<IconLocation />}
-            badge={formatCount(locations.length, 'location')}
+            badge={formatCount(counts.locationCount, 'location')}
             disabled={!isSetup}
           />
           <ConsoleNavTile
             href={`${base}/schedules`}
             title="Schedules"
             icon={<IconSchedule />}
-            badge={formatCount(schedules.length, 'schedule')}
+            badge={formatCount(counts.scheduleCount, 'schedule')}
             disabled={!isSetup}
           />
           <ConsoleNavTile
@@ -132,19 +119,15 @@ export default async function OrgConsolePage({ params }: Props) {
             href={`${base}/participants`}
             title="Participants"
             icon={<IconParticipants />}
-            badge={formatCount(participants.length, 'person', 'people')}
+            badge={formatCount(counts.participantCount, 'person', 'people')}
             disabled={!isSetup}
           />
         </ConsoleNavGrid>
       </div>
 
-      {showAnalytics ? (
+      {counts.pastSessionCount > 0 ? (
         <Suspense fallback={<OrgConsoleAnalyticsFallback />}>
-          <OrgConsoleAnalyticsSection
-            orgId={org.id}
-            participantCount={participants.length}
-            regularCount={regularCount}
-          />
+          <OrgConsoleAnalyticsSection orgId={org.id} />
         </Suspense>
       ) : null}
     </ConsolePage>

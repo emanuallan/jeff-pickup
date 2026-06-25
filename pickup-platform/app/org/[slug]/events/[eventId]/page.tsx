@@ -1,13 +1,11 @@
 import { Suspense } from 'react'
 import type { Metadata } from 'next'
-import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { after } from 'next/server'
 import { getOrgBySlug } from '@/lib/orgs'
 import {
   getEventByRef,
   getNextActiveUpcomingEvent,
-  hasMultipleActiveUpcomingEvents,
   formatEventTime,
   isEventInProgress,
   isEventEnded,
@@ -25,6 +23,7 @@ import { EventHeadcount, EventHeadcountFallback } from './event-headcount'
 import { EventParticipation } from './event-participation'
 import { ParticipationFallback } from './participation-fallback'
 import { LeaderboardLinkDeferred } from './leaderboard-link-deferred'
+import { AllSessionsLinkDeferred } from './all-sessions-link-deferred'
 import { ShareButton } from '../../share-button-lazy'
 import { OrgHeader } from '../../_components/org-header'
 import { OrgPageShell, OrgPageFooter } from '../../_components/org-page-shell'
@@ -80,10 +79,10 @@ export default async function EventPage({ params }: Props) {
     notFound()
   }
 
-  const [event, tracking, showAllSessionsLink] = await Promise.all([
+  const [event, tracking, nextSession] = await Promise.all([
     getEventByRef(eventId, org.id),
     resolvePageViewTrackingKeys(),
-    hasMultipleActiveUpcomingEvents(org.id),
+    getNextActiveUpcomingEvent(org.id),
   ])
   if (!event) {
     notFound()
@@ -103,7 +102,7 @@ export default async function EventPage({ params }: Props) {
 
   const isCancelled = isEventCancelled(event.status)
   const cancelledClasses = cancelledEventClasses(isCancelled)
-  const nextSession = isCancelled ? await getNextActiveUpcomingEvent(org.id) : null
+  const nextActiveSession = isCancelled ? nextSession : null
   const isLive = isEventInProgress(event) && event.status === 'on'
   const isEnded = isEventEnded(event)
   const shareText = `${org.name}: ${formatEventTime(event)} ${event.location_is_online ? 'on' : 'at'} ${event.location_label}. Join us!`
@@ -112,17 +111,10 @@ export default async function EventPage({ params }: Props) {
   return (
     <OrgPageShell>
       <JsonLd data={buildEventJsonLd(org, event, `/events/${eventId}`)} />
-      <div
-        className={`flex items-center gap-3 ${showAllSessionsLink ? 'justify-between' : 'justify-end'}`}
-      >
-        {showAllSessionsLink ? (
-          <Link
-            href="/events"
-            className="inline-flex items-center gap-1 text-sm text-zinc-400 transition-colors hover:text-zinc-200"
-          >
-            <span aria-hidden>←</span> All sessions
-          </Link>
-        ) : null}
+      <div className="flex items-center justify-end gap-3">
+        <Suspense fallback={null}>
+          <AllSessionsLinkDeferred orgId={org.id} />
+        </Suspense>
         <ShareButton title={org.name} text={shareText} />
       </div>
 
@@ -134,15 +126,15 @@ export default async function EventPage({ params }: Props) {
         logoPriority
       />
 
-      {nextSession ? (
+      {nextActiveSession ? (
         <ViewNextSessionLink
-          href={`/events/${nextSession.short_id}`}
+          href={`/events/${nextActiveSession.short_id}`}
           accent={accent}
           className="mt-6 mb-1"
         />
       ) : null}
 
-      <section className={nextSession ? 'mt-2' : 'mt-8'}>
+      <section className={nextActiveSession ? 'mt-2' : 'mt-8'}>
         <div className="overflow-hidden rounded-3xl border border-zinc-800 bg-linear-to-b from-zinc-900 to-zinc-950 p-6">
           <div className="flex items-center justify-between gap-3">
             <EventTimingBadge event={event} accent={accent} cancelled={isCancelled} />

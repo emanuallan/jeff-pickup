@@ -3,7 +3,7 @@ import { getOrgForMember } from '@/lib/orgs'
 import { getEventByRef, formatEventTime, formatInstantInZone, statusLabel } from '@/lib/events'
 import { getRosterWithContact } from '@/lib/signups'
 import { formatGuestSuffix } from '@/lib/format-guest-suffix'
-import { getEventAnalytics } from '@/lib/event-analytics'
+import { buildRosterAnalytics, fetchEventAnalyticsDb } from '@/lib/event-analytics'
 import { arrivalStatusEmoji } from '@/lib/arrival-status'
 import { orgBaseUrl } from '@/lib/og-metadata'
 import { arrowNe } from '@/lib/text-arrows'
@@ -52,8 +52,11 @@ export default async function ConsoleEventAnalyticsPage({ params }: Props) {
     notFound()
   }
 
-  const roster = await getRosterWithContact(event.id)
-  const analytics = await getEventAnalytics(event.id, roster, event.capacity)
+  const [roster, dbAnalytics] = await Promise.all([
+    getRosterWithContact(event.id),
+    fetchEventAnalyticsDb(event.id),
+  ])
+  const analytics = buildRosterAnalytics(roster, event.capacity, dbAnalytics)
   const publicEventUrl = `${orgBaseUrl(orgSlug)}/events/${event.short_id}`
 
   return (

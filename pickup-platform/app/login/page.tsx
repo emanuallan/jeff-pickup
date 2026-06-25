@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
+import { Suspense } from 'react'
 import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
+import { getAuthUser } from '@/lib/auth'
 import { ROBOTS_PRIVATE } from '@/lib/seo'
 import { LoginForm } from './login-form'
 
@@ -20,14 +21,24 @@ function safeNext(next: string | undefined): string {
   return '/console'
 }
 
+async function RedirectIfLoggedIn({ next }: { next: string }) {
+  const user = await getAuthUser()
+  if (user) {
+    redirect(next)
+  }
+  return null
+}
+
 export default async function LoginPage({ searchParams }: Props) {
   const { next } = await searchParams
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const destination = safeNext(next)
 
-  if (user) {
-    redirect(safeNext(next))
-  }
-
-  return <LoginForm />
+  return (
+    <>
+      <Suspense fallback={null}>
+        <RedirectIfLoggedIn next={destination} />
+      </Suspense>
+      <LoginForm />
+    </>
+  )
 }

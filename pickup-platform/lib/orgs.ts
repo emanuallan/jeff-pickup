@@ -1,4 +1,5 @@
 import { cache } from 'react'
+import { getAuthUser } from '@/lib/auth'
 import { createClient } from '@/lib/supabase/server'
 import { MAX_ORG_LINKS } from '@/lib/social-links'
 
@@ -73,12 +74,13 @@ export async function getActivePublicOrgSlugs(): Promise<string[]> {
 }
 
 export async function getUserOrgs(): Promise<Org[]> {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getAuthUser()
 
   if (!user) {
     return []
   }
+
+  const supabase = await createClient()
 
   const { data: memberships, error: memberError } = await supabase
     .from('org_members')
@@ -103,9 +105,8 @@ export async function getUserOrgs(): Promise<Org[]> {
   return orgs.map((row) => parseOrgRow(row))
 }
 
-export async function getOrgForMember(slug: string): Promise<Org | null> {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+export const getOrgForMember = cache(async (slug: string): Promise<Org | null> => {
+  const user = await getAuthUser()
 
   if (!user) {
     return null
@@ -116,6 +117,7 @@ export async function getOrgForMember(slug: string): Promise<Org | null> {
     return null
   }
 
+  const supabase = await createClient()
   const { data: membership } = await supabase
     .from('org_members')
     .select('role')
@@ -128,4 +130,4 @@ export async function getOrgForMember(slug: string): Promise<Org | null> {
   }
 
   return org
-}
+})

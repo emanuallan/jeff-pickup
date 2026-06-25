@@ -1,5 +1,6 @@
 import { ConsoleCard, ConsoleSection } from '../_components/console-ui'
 import { getOrgAnalytics } from '@/lib/org-analytics'
+import { getParticipantHistoryForOrg } from '@/lib/participants'
 import type { OrgAnalytics } from '@/lib/org-analytics'
 
 function StatCard({
@@ -129,16 +130,14 @@ export function OrgConsoleAnalyticsFallback() {
 }
 
 /** Fetches org-wide analytics off the critical path (wrapped in Suspense on the hub page). */
-export async function OrgConsoleAnalyticsSection({
-  orgId,
-  participantCount,
-  regularCount,
-}: {
-  orgId: string
-  participantCount: number
-  regularCount: number
-}) {
-  const analytics = await getOrgAnalytics(orgId)
+export async function OrgConsoleAnalyticsSection({ orgId }: { orgId: string }) {
+  const [analytics, participants] = await Promise.all([
+    getOrgAnalytics(orgId),
+    getParticipantHistoryForOrg(orgId),
+  ])
+  const participantCount = participants.length
+  const regularCount = participants.filter((p) => p.session_count >= 2).length
+
   return (
     <OrgConsoleAnalytics
       analytics={analytics}
