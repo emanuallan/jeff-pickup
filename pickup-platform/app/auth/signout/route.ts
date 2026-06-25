@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createRouteHandlerClient } from '@/lib/supabase/route-handler'
 
 export async function POST(request: Request) {
-  const supabase = await createClient()
-  await supabase.auth.signOut()
-
   // 303 forces GET on the next request — default 307 would re-POST to / and break the page.
-  return NextResponse.redirect(new URL('/', request.url), { status: 303 })
+  const response = NextResponse.redirect(new URL('/', request.url), { status: 303 })
+  const supabase = await createRouteHandlerClient(response)
+  await supabase.auth.signOut()
+  return response
 }
