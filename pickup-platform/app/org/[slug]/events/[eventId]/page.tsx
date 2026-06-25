@@ -101,9 +101,9 @@ export default async function EventPage({ params }: Props) {
 
   const isCancelled = isEventCancelled(event.status)
   const cancelledClasses = cancelledEventClasses(isCancelled)
-  const nextActiveSession = isCancelled ? nextSession : null
   const isLive = isEventInProgress(event) && event.status === 'on'
   const isEnded = isEventEnded(event)
+  const nextActiveSession = isCancelled || isEnded ? nextSession : null
   const shareText = `${org.name}: ${formatEventTime(event)} ${event.location_is_online ? 'on' : 'at'} ${event.location_label}. Join us!`
   const accent = org.branding.accent_color
 

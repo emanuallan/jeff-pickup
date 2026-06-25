@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from 'next/server'
 import { updateSession } from '@/lib/supabase/middleware'
+import { safeNextPath } from '@/lib/safe-next'
 import { parseOrgSlugFromHost } from '@/lib/tenancy/parse-host'
 import { VISITOR_COOKIE } from '@/lib/visitor-cookie'
 
@@ -94,8 +95,19 @@ export async function middleware(request: NextRequest) {
   const isNewVisitor = visitorKey != null && !request.cookies.get(VISITOR_COOKIE)?.value
 
   const sessionResponse = await updateSession(request)
+
+  if (pathname === '/login' && sessionResponse.user) {
+    const destination = safeNextPath(request.nextUrl.searchParams.get('next'))
+    const redirectResponse = NextResponse.redirect(new URL(destination, request.url))
+    copyCookies(sessionResponse.response, redirectResponse)
+    if (isNewVisitor && visitorKey) {
+      redirectResponse.cookies.set(VISITOR_COOKIE, visitorKey, VISITOR_COOKIE_OPTIONS)
+    }
+    return redirectResponse
+  }
+
   const response = NextResponse.next({ request: { headers: requestHeaders } })
-  copyCookies(sessionResponse, response)
+  copyCookies(sessionResponse.response, response)
 
   if (isNewVisitor && visitorKey) {
     response.cookies.set(VISITOR_COOKIE, visitorKey, VISITOR_COOKIE_OPTIONS)
