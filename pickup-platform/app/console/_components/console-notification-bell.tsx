@@ -257,27 +257,25 @@ export function ConsoleNotificationBell({
 													if (isUnread) void handleMarkRead(n.id);
 													setOpen(false);
 												}}
-												className={`min-w-0 flex-1 px-4 py-3 transition hover:bg-white/5 ${
+												className={`flex min-w-0 flex-1 items-start gap-2 px-4 py-3 transition hover:bg-white/5 ${
 													isActive ? "bg-indigo-500/5" : ""
 												} ${isUnread ? "bg-white/2" : ""}`}
 											>
-												<div className="flex items-start gap-2">
+												<div className="min-w-0 flex-1">
 													<span
-														className={`mt-0.5 shrink-0 rounded-md px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide ring-1 ring-inset ${badge.className}`}
+														className={`inline-flex rounded-md px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide ring-1 ring-inset ${badge.className}`}
 													>
 														{badge.label}
 													</span>
-													<div className="min-w-0 flex-1">
-														<p className="text-sm leading-snug text-zinc-100">{title}</p>
-														<p className="mt-0.5 truncate text-xs text-zinc-400">{subtitle}</p>
-													</div>
-													{isUnread ? (
-														<span
-															aria-hidden
-															className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-indigo-500"
-														/>
-													) : null}
+													<p className="mt-1.5 text-sm leading-snug text-zinc-100">{title}</p>
+													<p className="mt-0.5 truncate text-xs text-zinc-400">{subtitle}</p>
 												</div>
+												{isUnread ? (
+													<span
+														aria-hidden
+														className="mt-1 h-2 w-2 shrink-0 rounded-full bg-indigo-500"
+													/>
+												) : null}
 											</Link>
 											<button
 												type="button"
