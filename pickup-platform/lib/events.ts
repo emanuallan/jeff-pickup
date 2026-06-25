@@ -81,7 +81,7 @@ function eventOverridesFromRow(row: Record<string, unknown>): {
   }
 }
 
-function mapEventRow(row: Record<string, unknown>): EventWithLocation {
+export function mapEventRow(row: Record<string, unknown>): EventWithLocation {
   const loc = row.locations as LocationJoin
   const schedule = scheduleFromJoin(row.schedules)
   const overrides = eventOverridesFromRow(row)

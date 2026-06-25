@@ -1,4 +1,4 @@
-import { getOrgBySlug } from '@/lib/orgs'
+import { getPublicOrgBySlug } from '@/lib/public-data'
 import { getOrgCapsLeaderboard, getOrgStreakLeaderboard } from '@/lib/engagement'
 import { renderOrgOgImage } from '@/lib/og-image'
 import { ogArrowRight } from '@/lib/text-arrows'
@@ -9,7 +9,7 @@ type Context = {
 
 export async function GET(_request: Request, { params }: Context) {
   const { slug } = await params
-  const org = await getOrgBySlug(slug)
+  const org = await getPublicOrgBySlug(slug)
   const [capsRows, streakRows] = org
     ? await Promise.all([getOrgCapsLeaderboard(org.id), getOrgStreakLeaderboard(org.id)])
     : [[], []]

@@ -1,6 +1,5 @@
-import { getOrgBySlug } from '@/lib/orgs'
-import { getEventByRef } from '@/lib/events'
-import { getPublicRoster, rosterHeadcount } from '@/lib/signups'
+import { getPublicOrgAndEvent, getPublicRosterLive } from '@/lib/public-data'
+import { rosterHeadcount } from '@/lib/signups'
 
 type Props = {
   params: Promise<{ slug: string; eventId: string }>
@@ -8,21 +7,16 @@ type Props = {
 
 export async function GET(_request: Request, { params }: Props) {
   const { slug, eventId } = await params
-  const org = await getOrgBySlug(slug)
+  const result = await getPublicOrgAndEvent(slug, eventId)
 
-  if (!org || org.status !== 'active') {
+  if (!result?.org || result.org.status !== 'active' || !result.event) {
     return Response.json({ error: 'Not found' }, { status: 404 })
   }
 
-  const event = await getEventByRef(eventId, org.id)
-  if (!event) {
-    return Response.json({ error: 'Not found' }, { status: 404 })
-  }
-
-  const roster = await getPublicRoster(event.id)
+  const roster = await getPublicRosterLive(result.event.id)
 
   return Response.json(
-    { headcount: rosterHeadcount(roster), status: event.status },
+    { headcount: rosterHeadcount(roster), status: result.event.status },
     {
       headers: {
         'Cache-Control': 'no-store',

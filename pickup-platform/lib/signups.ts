@@ -1,4 +1,4 @@
-import { cache } from 'react'
+import { getPublicRosterCached } from '@/lib/public-data'
 import { createClient } from '@/lib/supabase/server'
 import type { ArrivalStatus } from '@/lib/arrival-status'
 
@@ -19,21 +19,9 @@ export type SignupWithContact = RosterEntry & {
 }
 
 /** Memoized per-request so headcount + roster panels share one query. */
-export const getPublicRoster = cache(async (eventId: string): Promise<RosterEntry[]> => {
-  const supabase = await createClient()
-
-  const { data, error } = await supabase
-    .from('event_roster_public')
-    .select('id, event_id, participant_id, display_name, guest_count, arrival_status, created_at')
-    .eq('event_id', eventId)
-    .order('created_at', { ascending: true })
-
-  if (error || !data) {
-    return []
-  }
-
-  return data as RosterEntry[]
-})
+export async function getPublicRoster(eventId: string): Promise<RosterEntry[]> {
+  return getPublicRosterCached(eventId)
+}
 
 export async function getRosterWithContact(eventId: string): Promise<SignupWithContact[]> {
   const supabase = await createClient()

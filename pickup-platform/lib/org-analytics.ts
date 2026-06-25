@@ -15,7 +15,56 @@ export type OrgAnalytics = {
   topAttendee: { name: string; caps: number } | null
 }
 
+type OrgAnalyticsRpcRow = {
+  page_views?: number
+  unique_visitors?: number
+  unique_signups?: number
+  unique_left?: number
+  past_sessions?: number
+  avg_attendance?: number | null
+  active_signups?: number
+}
+
 export async function getOrgAnalytics(orgId: string): Promise<OrgAnalytics> {
+  const supabase = await createClient()
+
+  const [analyticsRes, topCaps] = await Promise.all([
+    supabase.rpc('get_org_analytics', { p_org_id: orgId }),
+    getOrgCapsLeaderboard(orgId, 1),
+  ])
+
+  if (analyticsRes.error) {
+    console.error('get_org_analytics RPC failed:', analyticsRes.error.message)
+    return getOrgAnalyticsLegacy(orgId)
+  }
+
+  const row = (analyticsRes.data ?? {}) as OrgAnalyticsRpcRow
+  const uniqueVisitors = Number(row.unique_visitors ?? 0)
+  const uniqueSignups = Number(row.unique_signups ?? 0)
+  const { rate: conversionRate, capped: conversionCapped } = computeConversionRate(
+    uniqueVisitors,
+    uniqueSignups,
+  )
+
+  const top = topCaps[0]
+
+  return {
+    pageViews: Number(row.page_views ?? 0),
+    uniqueVisitors,
+    uniqueSignups,
+    uniqueLeft: Number(row.unique_left ?? 0),
+    conversionRate,
+    conversionCapped,
+    pastSessions: Number(row.past_sessions ?? 0),
+    avgAttendance:
+      row.avg_attendance != null ? Number(row.avg_attendance) : null,
+    activeSignups: Number(row.active_signups ?? 0),
+    topAttendee: top ? { name: top.display_name, caps: top.caps } : null,
+  }
+}
+
+/** Pre-RPC fallback when migration 027 is not applied. */
+async function getOrgAnalyticsLegacy(orgId: string): Promise<OrgAnalytics> {
   const supabase = await createClient()
   const now = new Date().toISOString()
 
@@ -48,16 +97,6 @@ export async function getOrgAnalytics(orgId: string): Promise<OrgAnalytics> {
       getOrgCapsLeaderboard(orgId, 1),
     ])
 
-  if (viewsRes.error) {
-    console.error('event_page_views (org) read failed:', viewsRes.error.message)
-  }
-  if (joinedRes.error) {
-    console.error('event_signup_activity (org joined) read failed:', joinedRes.error.message)
-  }
-  if (leftRes.error) {
-    console.error('event_signup_activity (org left) read failed:', leftRes.error.message)
-  }
-
   const views = viewsRes.data ?? []
   const joined = joinedRes.data ?? []
   const left = leftRes.data ?? []
@@ -65,7 +104,6 @@ export async function getOrgAnalytics(orgId: string): Promise<OrgAnalytics> {
 
   const uniqueVisitors = new Set(views.map((v) => v.viewer_key)).size
   const uniqueSignups = new Set(joined.map((r) => r.participant_id)).size
-  const uniqueLeft = new Set(left.map((r) => r.participant_id)).size
   const { rate: conversionRate, capped: conversionCapped } = computeConversionRate(
     uniqueVisitors,
     uniqueSignups,
@@ -103,7 +141,7 @@ export async function getOrgAnalytics(orgId: string): Promise<OrgAnalytics> {
     pageViews: views.length,
     uniqueVisitors,
     uniqueSignups,
-    uniqueLeft,
+    uniqueLeft: new Set(left.map((r) => r.participant_id)).size,
     conversionRate,
     conversionCapped,
     pastSessions: pastEventIds.size,

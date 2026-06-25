@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { getOrgBySlug } from '@/lib/orgs'
+import { getPublicOrgBySlug } from '@/lib/public-data'
 import { getOrgCapsLeaderboard, getOrgStreakLeaderboard } from '@/lib/engagement'
 import { readableTextColor } from '@/lib/colors'
 import { buildOrgMetadata } from '@/lib/og-metadata'
@@ -15,7 +15,7 @@ type Props = {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params
-  const org = await getOrgBySlug(slug)
+  const org = await getPublicOrgBySlug(slug)
   if (!org || org.status !== 'active') {
     return {}
   }
@@ -68,7 +68,7 @@ function RankBadge({ rank, accent }: { rank: number; accent: string }) {
 
 export default async function LeaderboardPage({ params }: Props) {
   const { slug } = await params
-  const org = await getOrgBySlug(slug)
+  const org = await getPublicOrgBySlug(slug)
 
   if (!org || org.status !== 'active') {
     notFound()

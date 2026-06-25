@@ -1,8 +1,8 @@
 import type { MetadataRoute } from 'next'
 import { headers } from 'next/headers'
-import { getUpcomingEventsForOrg } from '@/lib/events'
-import { isLeaderboardUnlocked } from '@/lib/engagement'
-import { getActivePublicOrgSlugs, getOrgBySlug } from '@/lib/orgs'
+import { getPublicUpcomingEventsForOrg, getPublicOrgBySlug, getPublicOrgPastSessionCount } from '@/lib/public-data'
+import { LEADERBOARD_MIN_SESSIONS } from '@/lib/engagement'
+import { getActivePublicOrgSlugs } from '@/lib/orgs'
 import { orgBaseUrl, rootBaseUrl } from '@/lib/og-metadata'
 import { parseOrgSlugFromHost } from '@/lib/tenancy/parse-host'
 
@@ -34,16 +34,17 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     return entries
   }
 
-  const org = await getOrgBySlug(slug)
+  const org = await getPublicOrgBySlug(slug)
   if (!org || org.status !== 'active') {
     return []
   }
 
   const base = orgBaseUrl(slug)
-  const [events, leaderboardUnlocked] = await Promise.all([
-    getUpcomingEventsForOrg(org.id, 50, true),
-    isLeaderboardUnlocked(org.id),
+  const [events, pastSessionCount] = await Promise.all([
+    getPublicUpcomingEventsForOrg(org.id, 50, true),
+    getPublicOrgPastSessionCount(org.id),
   ])
+  const leaderboardUnlocked = pastSessionCount >= LEADERBOARD_MIN_SESSIONS
 
   const entries: MetadataRoute.Sitemap = [
     {

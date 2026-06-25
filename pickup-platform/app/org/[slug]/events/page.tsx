@@ -2,8 +2,14 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { Suspense } from 'react'
 import { notFound, redirect } from 'next/navigation'
-import { getOrgBySlug } from '@/lib/orgs'
-import { getUpcomingEventsForOrg, formatEventTime, pickFeaturedUpcomingEvent, formatEventDayLabel, isEventInProgress, isEventEnded } from '@/lib/events'
+import { getPublicOrgBySlug, getPublicUpcomingEventsForOrg } from '@/lib/public-data'
+import {
+  formatEventTime,
+  pickFeaturedUpcomingEvent,
+  formatEventDayLabel,
+  isEventInProgress,
+  isEventEnded,
+} from '@/lib/events'
 import { buildOrgMetadata, rootBaseUrl } from '@/lib/og-metadata'
 import { buildOrgJsonLd } from '@/lib/seo'
 import { JsonLd } from '@/app/_components/json-ld'
@@ -35,12 +41,12 @@ type Props = {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params
-  const org = await getOrgBySlug(slug)
+  const org = await getPublicOrgBySlug(slug)
   if (!org || org.status !== 'active') {
     return {}
   }
 
-  const events = await getUpcomingEventsForOrg(org.id, 20, true)
+  const events = await getPublicUpcomingEventsForOrg(org.id, 20, true)
   const nextEvent = pickFeaturedUpcomingEvent(events)
   const groupDescription = org.description || 'group sessions'
   const title = org.name
@@ -60,13 +66,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function EventsPage({ params }: Props) {
   const { slug } = await params
-  const org = await getOrgBySlug(slug)
+  const org = await getPublicOrgBySlug(slug)
 
   if (!org || org.status !== 'active') {
     notFound()
   }
 
-  const events = await getUpcomingEventsForOrg(org.id, 20, true)
+  const events = await getPublicUpcomingEventsForOrg(org.id, 20, true)
   const accent = org.branding.accent_color
 
   const activeUpcoming = events.filter((ev) => !isEventCancelled(ev.status))

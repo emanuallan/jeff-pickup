@@ -2,10 +2,11 @@ import { Suspense } from 'react'
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { after } from 'next/server'
-import { getOrgBySlug } from '@/lib/orgs'
 import {
-  getEventByRef,
-  getNextActiveUpcomingEvent,
+  getPublicOrgAndEvent,
+  getPublicNextActiveUpcomingEvent,
+} from '@/lib/public-data'
+import {
   formatEventTime,
   isEventInProgress,
   isEventEnded,
@@ -44,12 +45,12 @@ type Props = {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug, eventId } = await params
-  const org = await getOrgBySlug(slug)
-  if (!org || org.status !== 'active') {
+  const result = await getPublicOrgAndEvent(slug, eventId)
+  if (!result?.org || result.org.status !== 'active') {
     return {}
   }
 
-  const event = await getEventByRef(eventId, org.id)
+  const { org, event } = result
   if (!event) {
     return {}
   }
@@ -73,20 +74,18 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function EventPage({ params }: Props) {
   const { slug, eventId } = await params
-  const org = await getOrgBySlug(slug)
 
-  if (!org || org.status !== 'active') {
+  const result = await getPublicOrgAndEvent(slug, eventId)
+  if (!result?.org || result.org.status !== 'active' || !result.event) {
     notFound()
   }
 
-  const [event, tracking, nextSession] = await Promise.all([
-    getEventByRef(eventId, org.id),
+  const { org, event } = result
+
+  const [tracking, nextSession] = await Promise.all([
     resolvePageViewTrackingKeys(),
-    getNextActiveUpcomingEvent(org.id),
+    getPublicNextActiveUpcomingEvent(org.id),
   ])
-  if (!event) {
-    notFound()
-  }
 
   const { viewerKey, sessionToken } = tracking
   if (viewerKey) {

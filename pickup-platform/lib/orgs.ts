@@ -17,7 +17,7 @@ export type Org = {
   }
 }
 
-function parseOrgRow(data: Record<string, unknown>): Org {
+export function parseOrgRow(data: Record<string, unknown>): Org {
   const branding = data.branding as Partial<Org['branding']> | null
   const rawLinks = Array.isArray(branding?.links) ? branding.links : []
   const links = rawLinks

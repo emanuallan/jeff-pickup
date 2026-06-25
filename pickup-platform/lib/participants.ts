@@ -9,8 +9,7 @@ export type OrgParticipantHistory = {
   session_count: number
 }
 
-/** All participants for an org with signup counts (organizer console; RLS-gated). */
-export async function getParticipantHistoryForOrg(
+async function getParticipantHistoryLegacy(
   orgId: string,
 ): Promise<OrgParticipantHistory[]> {
   const supabase = await createClient()
@@ -41,5 +40,32 @@ export async function getParticipantHistoryForOrg(
     display_name: p.display_name,
     phone: p.phone,
     session_count: sessionCounts.get(p.id) ?? 0,
+  }))
+}
+
+/** All participants for an org with signup counts (organizer console; RLS-gated). */
+export async function getParticipantHistoryForOrg(
+  orgId: string,
+): Promise<OrgParticipantHistory[]> {
+  const supabase = await createClient()
+
+  const { data, error } = await supabase.rpc('get_org_participant_history', {
+    p_org_id: orgId,
+  })
+
+  if (error) {
+    console.error('get_org_participant_history RPC failed:', error.message)
+    return getParticipantHistoryLegacy(orgId)
+  }
+
+  if (!data) return []
+
+  return (data as Array<Record<string, unknown>>).map((row) => ({
+    id: String(row.id),
+    first_name: String(row.first_name),
+    last_name: String(row.last_name),
+    display_name: String(row.display_name),
+    phone: String(row.phone),
+    session_count: Number(row.session_count ?? 0),
   }))
 }

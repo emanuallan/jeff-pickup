@@ -1,5 +1,5 @@
-import { getOrgBySlug } from '@/lib/orgs'
-import { getEventByRef, formatEventWhenLine, eventDisplayName } from '@/lib/events'
+import { getPublicOrgAndEvent } from '@/lib/public-data'
+import { formatEventWhenLine, eventDisplayName } from '@/lib/events'
 import { renderOrgOgImage } from '@/lib/og-image'
 import { ogArrowRight } from '@/lib/text-arrows'
 
@@ -9,8 +9,9 @@ type Context = {
 
 export async function GET(_request: Request, { params }: Context) {
   const { slug, eventId } = await params
-  const org = await getOrgBySlug(slug)
-  const event = org ? await getEventByRef(eventId, org.id) : null
+  const result = await getPublicOrgAndEvent(slug, eventId)
+  const org = result?.org ?? null
+  const event = result?.event ?? null
   const eventTitle = eventDisplayName(event?.title)
 
   return renderOrgOgImage({

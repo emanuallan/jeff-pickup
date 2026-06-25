@@ -1,4 +1,5 @@
-import { isLeaderboardUnlocked } from '@/lib/engagement'
+import { LEADERBOARD_MIN_SESSIONS } from '@/lib/engagement'
+import { getPublicOrgPastSessionCount } from '@/lib/public-data'
 import { LeaderboardLink } from '../../_components/org-page-shell'
 
 type Props = {
@@ -8,7 +9,8 @@ type Props = {
 
 /** Leaderboard nav is non-critical; load after the join/roster shell. */
 export async function LeaderboardLinkDeferred({ orgId, accent }: Props) {
-  const unlocked = await isLeaderboardUnlocked(orgId)
+  const pastSessions = await getPublicOrgPastSessionCount(orgId)
+  const unlocked = pastSessions >= LEADERBOARD_MIN_SESSIONS
   if (!unlocked) return null
   return <LeaderboardLink accent={accent} />
 }

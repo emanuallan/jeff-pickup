@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { hasMultipleActiveUpcomingEvents } from '@/lib/events'
+import { getPublicHasMultipleActiveUpcomingEvents } from '@/lib/public-data'
 
 type Props = {
   orgId: string
@@ -7,7 +7,7 @@ type Props = {
 
 /** Non-critical nav chrome — load after the event card shell. */
 export async function AllSessionsLinkDeferred({ orgId }: Props) {
-  const show = await hasMultipleActiveUpcomingEvents(orgId)
+  const show = await getPublicHasMultipleActiveUpcomingEvents(orgId)
   if (!show) return null
 
   return (
