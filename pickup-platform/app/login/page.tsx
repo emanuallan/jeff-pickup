@@ -11,11 +11,11 @@ export const metadata: Metadata = {
 }
 
 type Props = {
-  searchParams: Promise<{ next?: string }>
+  searchParams: Promise<{ next?: string; error?: string }>
 }
 
 export default async function LoginPage({ searchParams }: Props) {
-  const { next } = await searchParams
+  const { next, error } = await searchParams
   const destination = safeNextPath(next)
 
   const user = await getAuthUser()
@@ -23,5 +23,5 @@ export default async function LoginPage({ searchParams }: Props) {
     redirect(destination)
   }
 
-  return <LoginForm />
+  return <LoginForm authError={error} />
 }
