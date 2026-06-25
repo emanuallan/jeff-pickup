@@ -10,6 +10,8 @@ import {
 	organizerNotificationHref,
 } from "@/lib/organizer-notifications";
 import {
+	dismissAllOrganizerNotifications,
+	dismissOrganizerNotification,
 	markAllOrganizerNotificationsRead,
 	markOrganizerNotificationRead,
 } from "../notification-actions";
@@ -82,10 +84,27 @@ export function ConsoleNotificationBell({
 	const [unreadCount, setUnreadCount] = useState(scopedUnreadFromServer);
 	const panelRef = useRef<HTMLDivElement>(null);
 
+	const scopedOrgId = useMemo(
+		() =>
+			orgSlug
+				? (notifications.find((n) => n.org_slug === orgSlug)?.org_id ?? null)
+				: null,
+		[orgSlug, notifications],
+	);
+
 	useEffect(() => {
 		setNotifications(scopedFromServer);
 		setUnreadCount(scopedUnreadFromServer);
 	}, [scopedFromServer, scopedUnreadFromServer]);
+
+	useEffect(() => {
+		if (!open) return;
+		const prev = document.body.style.overflow;
+		document.body.style.overflow = "hidden";
+		return () => {
+			document.body.style.overflow = prev;
+		};
+	}, [open]);
 
 	useEffect(() => {
 		function onDocClick(e: MouseEvent) {
@@ -117,13 +136,30 @@ export function ConsoleNotificationBell({
 			})),
 		);
 		setUnreadCount(0);
-		const orgId = orgSlug
-			? (notifications.find((n) => n.org_slug === orgSlug)?.org_id ?? null)
-			: null;
-		await markAllOrganizerNotificationsRead(orgId);
-	}, [orgSlug, notifications]);
+		await markAllOrganizerNotificationsRead(scopedOrgId);
+	}, [scopedOrgId]);
+
+	const handleDismiss = useCallback(async (id: string) => {
+		setNotifications((prev) => {
+			const dismissed = prev.find((n) => n.id === id);
+			if (dismissed && !dismissed.read_at) {
+				setUnreadCount((c) => Math.max(0, c - 1));
+			}
+			return prev.filter((n) => n.id !== id);
+		});
+		await dismissOrganizerNotification(id);
+	}, []);
+
+	const handleDismissAll = useCallback(async () => {
+		setNotifications([]);
+		setUnreadCount(0);
+		await dismissAllOrganizerNotifications(scopedOrgId);
+	}, [scopedOrgId]);
 
 	const showOrgName = !orgSlug;
+
+	const panelClassName =
+		"fixed inset-x-0 top-0 z-50 flex max-h-[min(85dvh,28rem)] w-full flex-col overflow-hidden rounded-b-2xl border border-t-0 border-white/10 bg-zinc-950/95 shadow-xl shadow-black/40 backdrop-blur-md animate-[notification-sheet-in_220ms_ease-out] pt-[env(safe-area-inset-top,0px)] sm:absolute sm:inset-x-auto sm:right-0 sm:top-full sm:mt-2 sm:max-h-none sm:w-[min(100vw-2rem,22rem)] sm:animate-none sm:rounded-xl sm:border sm:pt-0";
 
 	return (
 		<div ref={panelRef} className="relative">
@@ -160,86 +196,118 @@ export function ConsoleNotificationBell({
 			</button>
 
 			{open ? (
-				<div className="absolute right-0 top-full z-50 mt-2 w-[min(100vw-2rem,22rem)] overflow-hidden rounded-xl border border-white/10 bg-zinc-950/95 shadow-xl shadow-black/40 backdrop-blur-md">
-					<div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
-						<div>
-							<p className="text-sm font-semibold text-zinc-100">
-								Notifications
-							</p>
-							<p className="text-xs text-zinc-500">
-								Roster updates · next 14 days
-							</p>
+				<>
+					<div
+						aria-hidden
+						className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm sm:hidden"
+						onClick={() => setOpen(false)}
+					/>
+					<div role="dialog" aria-label="Notifications" className={panelClassName}>
+						<div className="flex items-center justify-between gap-3 border-b border-white/10 px-4 py-3">
+							<div className="min-w-0">
+								<p className="text-sm font-semibold text-zinc-100">Notifications</p>
+								<p className="text-xs text-zinc-500">Roster updates · next 14 days</p>
+							</div>
+							{notifications.length > 0 ? (
+								<div className="flex shrink-0 items-center gap-3">
+									{unreadCount > 0 ? (
+										<button
+											type="button"
+											onClick={() => void handleMarkAllRead()}
+											className="text-xs font-medium text-zinc-400 transition hover:text-zinc-200"
+										>
+											Mark read
+										</button>
+									) : null}
+									<button
+										type="button"
+										onClick={() => void handleDismissAll()}
+										className="text-xs font-medium text-indigo-300 transition hover:text-indigo-200"
+									>
+										Clear all
+									</button>
+								</div>
+							) : null}
 						</div>
-						{unreadCount > 0 ? (
+
+						{notifications.length === 0 ? (
+							<p className="px-4 py-8 text-center text-sm text-zinc-500">
+								No notifications yet.
+							</p>
+						) : (
+							<ul className="min-h-0 flex-1 overflow-y-auto sm:max-h-80">
+								{notifications.map((n) => {
+									const { title, detail } = formatOrganizerNotificationCopy(n);
+									const badge = kindBadge(n.kind);
+									const href = organizerNotificationHref(n);
+									const isUnread = !n.read_at;
+									const isActive = pathname === href;
+
+									return (
+										<li
+											key={n.id}
+											className="flex border-b border-white/5 last:border-0"
+										>
+											<Link
+												href={href}
+												onClick={() => {
+													if (isUnread) void handleMarkRead(n.id);
+													setOpen(false);
+												}}
+												className={`min-w-0 flex-1 px-4 py-3 transition hover:bg-white/5 ${
+													isActive ? "bg-indigo-500/5" : ""
+												} ${isUnread ? "bg-white/2" : ""}`}
+											>
+												<div className="flex items-start gap-2">
+													<span
+														className={`mt-0.5 shrink-0 rounded-md px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide ring-1 ring-inset ${badge.className}`}
+													>
+														{badge.label}
+													</span>
+													<div className="min-w-0 flex-1">
+														<p className="text-sm leading-snug text-zinc-100">{title}</p>
+														<p className="mt-0.5 truncate text-xs text-zinc-400">
+															{showOrgName ? `${n.org_name} · ${detail}` : detail}
+														</p>
+														<p className="mt-1 text-[11px] text-zinc-600">
+															{formatNotificationTime(n.created_at)}
+														</p>
+													</div>
+													{isUnread ? (
+														<span
+															aria-hidden
+															className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-indigo-500"
+														/>
+													) : null}
+												</div>
+											</Link>
+											<button
+												type="button"
+												aria-label="Clear notification"
+												onClick={() => void handleDismiss(n.id)}
+												className="shrink-0 px-3 py-3 text-zinc-500 transition hover:bg-white/5 hover:text-zinc-300"
+											>
+												<span aria-hidden className="text-lg leading-none">
+													×
+												</span>
+											</button>
+										</li>
+									);
+								})}
+							</ul>
+						)}
+
+						<div className="border-t border-white/5 px-4 py-2 sm:hidden">
 							<button
 								type="button"
-								onClick={() => void handleMarkAllRead()}
-								className="text-xs font-medium text-indigo-300 transition hover:text-indigo-200"
+								onClick={() => setOpen(false)}
+								className="flex min-h-10 w-full items-center justify-center rounded-lg text-sm font-medium text-zinc-400 transition hover:bg-white/5 hover:text-zinc-200"
 							>
-								Mark all read
+								Close
 							</button>
-						) : null}
+						</div>
 					</div>
-
-					{notifications.length === 0 ? (
-						<p className="px-4 py-8 text-center text-sm text-zinc-500">
-							No notifications yet.
-						</p>
-					) : (
-						<ul className="max-h-80 overflow-y-auto">
-							{notifications.map((n) => {
-								const { title, detail } = formatOrganizerNotificationCopy(n);
-								const badge = kindBadge(n.kind);
-								const href = organizerNotificationHref(n);
-								const isUnread = !n.read_at;
-								const isActive = pathname === href;
-
-								return (
-									<li
-										key={n.id}
-										className="border-b border-white/5 last:border-0"
-									>
-										<Link
-											href={href}
-											onClick={() => {
-												if (isUnread) void handleMarkRead(n.id);
-												setOpen(false);
-											}}
-											className={`block px-4 py-3 transition hover:bg-white/5 ${
-												isActive ? "bg-indigo-500/5" : ""
-											} ${isUnread ? "bg-white/[0.02]" : ""}`}
-										>
-											<div className="flex items-start gap-2">
-												<span
-													className={`mt-0.5 shrink-0 rounded-md px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide ring-1 ring-inset ${badge.className}`}
-												>
-													{badge.label}
-												</span>
-												<div className="min-w-0 flex-1">
-													<p className="text-sm leading-snug text-zinc-100">
-														{title}
-													</p>
-													<p className="mt-0.5 truncate text-xs text-zinc-400">
-														{showOrgName ? `${n.org_name} · ${detail}` : detail}
-													</p>
-													<p className="mt-1 text-[11px] text-zinc-600">
-														{formatNotificationTime(n.created_at)}
-													</p>
-												</div>
-												{isUnread ? (
-													<span
-														aria-hidden
-														className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-indigo-500"
-													/>
-												) : null}
-											</div>
-										</Link>
-									</li>
-								);
-							})}
-						</ul>
-					)}
-				</div>
+				</>
 			) : null}
 		</div>
 	);
