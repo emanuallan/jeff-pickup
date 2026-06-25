@@ -5,7 +5,6 @@ export const PUBLIC_CACHE_ENABLED = process.env.DISABLE_PUBLIC_CACHE !== '1'
 
 export const PUBLIC_ORG_REVALIDATE = 60
 export const PUBLIC_EVENTS_REVALIDATE = 30
-export const PUBLIC_ROSTER_REVALIDATE = 15
 
 export function withPublicCache<T>(
   keyParts: string[],

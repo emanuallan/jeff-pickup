@@ -3,7 +3,6 @@ import { createPublicClient } from '@/lib/supabase/public'
 import {
   PUBLIC_EVENTS_REVALIDATE,
   PUBLIC_ORG_REVALIDATE,
-  PUBLIC_ROSTER_REVALIDATE,
   withPublicCache,
 } from '@/lib/public-cache'
 import { parseOrgRow, type Org } from '@/lib/orgs'
@@ -184,15 +183,10 @@ async function fetchPublicRoster(eventId: string): Promise<RosterEntry[]> {
   return data as RosterEntry[]
 }
 
-/** Public roster for SSR — short cache; live polling uses the headcount API. */
-export const getPublicRosterCached = cache(async (eventId: string): Promise<RosterEntry[]> => {
-  return withPublicCache(
-    ['public-roster', eventId],
-    PUBLIC_ROSTER_REVALIDATE,
-    [`roster:${eventId}`],
-    () => fetchPublicRoster(eventId),
-  )
-})
+/** Always fresh — roster changes on every join/leave and must not use unstable_cache. */
+export async function getPublicRosterLive(eventId: string): Promise<RosterEntry[]> {
+  return fetchPublicRoster(eventId)
+}
 
 async function fetchPublicPastSessionCount(orgId: string): Promise<number> {
   const supabase = createPublicClient()
@@ -218,11 +212,6 @@ export const getPublicOrgPastSessionCount = cache(async (orgId: string): Promise
     () => fetchPublicPastSessionCount(orgId),
   )
 })
-
-/** Uncached roster for live headcount polling. */
-export async function getPublicRosterLive(eventId: string): Promise<RosterEntry[]> {
-  return fetchPublicRoster(eventId)
-}
 
 type EventSummary = Pick<
   EventWithLocation,

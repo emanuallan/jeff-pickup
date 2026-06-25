@@ -1,6 +1,6 @@
 'use server'
 
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, revalidateTag } from 'next/cache'
 import { getOrgBySlug } from '@/lib/orgs'
 import { canUpdateArrivalStatus, getEventByRef } from '@/lib/events'
 import type { EventWithLocation } from '@/lib/events'
@@ -12,7 +12,7 @@ import { normalizePhoneDigits, isValidPhoneDigits } from '@/lib/phone'
 async function getOpenEvent(
   orgSlug: string,
   eventRef: string,
-): Promise<{ event: EventWithLocation } | { error: string }> {
+): Promise<{ event: EventWithLocation; orgId: string } | { error: string }> {
   const org = await getOrgBySlug(orgSlug)
   if (!org) {
     return { error: 'Organization not found.' }
@@ -27,7 +27,32 @@ async function getOpenEvent(
     return { error: 'This session has ended.' }
   }
 
-  return { event }
+  return { event, orgId: org.id }
+}
+
+function revalidatePublicEvent(orgSlug: string, eventRef: string, eventId: string, orgId: string) {
+  revalidatePath(`/org/${orgSlug}/events/${eventRef}`)
+  revalidatePath(`/org/${orgSlug}`)
+  revalidateTag(`org-events:${orgId}`)
+  revalidateTag(`event:${orgSlug}:${eventRef}`)
+}
+
+async function revalidatePublicEventByRef(orgSlug: string, eventRef: string) {
+  const org = await getOrgBySlug(orgSlug)
+  if (!org) {
+    revalidatePath(`/org/${orgSlug}/events/${eventRef}`)
+    revalidatePath(`/org/${orgSlug}`)
+    return
+  }
+
+  const event = await getEventByRef(eventRef, org.id)
+  if (event) {
+    revalidatePublicEvent(orgSlug, eventRef, event.id, org.id)
+  } else {
+    revalidatePath(`/org/${orgSlug}/events/${eventRef}`)
+    revalidatePath(`/org/${orgSlug}`)
+    revalidateTag(`org-events:${org.id}`)
+  }
 }
 
 export async function joinEvent(
@@ -70,8 +95,7 @@ export async function joinEvent(
     await setSessionToken(String(result.session_token))
   }
 
-  revalidatePath(`/org/${orgSlug}/events/${eventId}`)
-  revalidatePath(`/org/${orgSlug}`)
+  revalidatePublicEvent(orgSlug, eventId, open.event.id, open.orgId)
   return {}
 }
 
@@ -80,8 +104,7 @@ export async function clearParticipantSession(
   eventId: string,
 ): Promise<{ error?: string }> {
   await clearSessionToken()
-  revalidatePath(`/org/${orgSlug}/events/${eventId}`)
-  revalidatePath(`/org/${orgSlug}`)
+  await revalidatePublicEventByRef(orgSlug, eventId)
   return {}
 }
 
@@ -115,8 +138,7 @@ export async function recoverSession(
     await setSessionToken(String(result.session_token))
   }
 
-  revalidatePath(`/org/${orgSlug}/events/${eventId}`)
-  revalidatePath(`/org/${orgSlug}`)
+  await revalidatePublicEventByRef(orgSlug, eventId)
   return {}
 }
 
@@ -174,8 +196,7 @@ export async function quickJoinEvent(
     await setSessionToken(String(result.session_token))
   }
 
-  revalidatePath(`/org/${orgSlug}/events/${eventId}`)
-  revalidatePath(`/org/${orgSlug}`)
+  revalidatePublicEvent(orgSlug, eventId, open.event.id, open.orgId)
   return {}
 }
 
@@ -208,8 +229,7 @@ export async function updateGuestCount(
     return { error: error.message }
   }
 
-  revalidatePath(`/org/${orgSlug}/events/${eventId}`)
-  revalidatePath(`/org/${orgSlug}`)
+  revalidatePublicEvent(orgSlug, eventId, open.event.id, open.orgId)
   return {}
 }
 
@@ -238,8 +258,7 @@ export async function leaveEvent(
     return { error: error.message }
   }
 
-  revalidatePath(`/org/${orgSlug}/events/${eventId}`)
-  revalidatePath(`/org/${orgSlug}`)
+  revalidatePublicEvent(orgSlug, eventId, open.event.id, open.orgId)
   return {}
 }
 
@@ -270,7 +289,6 @@ export async function updateArrivalStatus(
     return { error: error.message }
   }
 
-  revalidatePath(`/org/${orgSlug}/events/${eventId}`)
-  revalidatePath(`/org/${orgSlug}`)
+  revalidatePublicEvent(orgSlug, eventId, open.event.id, open.orgId)
   return {}
 }
