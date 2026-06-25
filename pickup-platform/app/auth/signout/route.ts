@@ -5,6 +5,6 @@ export async function POST(request: Request) {
   const supabase = await createClient()
   await supabase.auth.signOut()
 
-  const { origin } = new URL(request.url)
-  return NextResponse.redirect(`${origin}/`)
+  // 303 forces GET on the next request — default 307 would re-POST to / and break the page.
+  return NextResponse.redirect(new URL('/', request.url), { status: 303 })
 }
