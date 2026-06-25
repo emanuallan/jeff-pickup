@@ -49,8 +49,7 @@ Under **Authentication → URL configuration**, add redirect URLs:
 Enable **Email** provider (magic link). Password auth is not needed.
 
 Custom **Magic Link** template: copy from [`templates/magic-link.html`](templates/magic-link.html) into
-**Authentication → Email Templates → Magic Link** in the Supabase dashboard. The template must include
-`{{ .Token }}` so organizers can enter the 6-digit code on any device (not only the one that requested it).
+**Authentication → Email Templates → Magic Link** in the Supabase dashboard.
 
 ## 4. Seed a test org (optional)
 
