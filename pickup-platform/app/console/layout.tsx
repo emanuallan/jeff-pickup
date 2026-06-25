@@ -1,11 +1,22 @@
 import type { Metadata } from 'next'
+import { Suspense } from 'react'
 import { OrganizrBackdrop } from '../_components/organizr-shell'
 import { OrganizrLogo } from '../_components/organizr-logo'
 import { ROBOTS_PRIVATE } from '@/lib/seo'
+import { ConsoleNotificationBellSlot } from './console-notification-bell-slot'
 
 export const metadata: Metadata = {
   title: 'Console',
   robots: ROBOTS_PRIVATE,
+}
+
+function NotificationBellFallback() {
+  return (
+    <div
+      aria-hidden
+      className="h-10 w-10 animate-pulse rounded-lg border border-white/10 bg-zinc-900/50"
+    />
+  )
 }
 
 /**
@@ -26,14 +37,19 @@ export default function ConsoleLayout({ children }: { children: React.ReactNode 
               Console
             </span>
           </div>
-          <form action="/auth/signout" method="post">
-            <button
-              type="submit"
-              className="inline-flex min-h-10 items-center rounded-lg border border-white/10 px-3 py-2 text-xs font-medium text-zinc-300 transition hover:border-white/20 hover:bg-white/5"
-            >
-              Sign out
-            </button>
-          </form>
+          <div className="flex items-center gap-2">
+            <Suspense fallback={<NotificationBellFallback />}>
+              <ConsoleNotificationBellSlot />
+            </Suspense>
+            <form action="/auth/signout" method="post">
+              <button
+                type="submit"
+                className="inline-flex min-h-10 items-center rounded-lg border border-white/10 px-3 py-2 text-xs font-medium text-zinc-300 transition hover:border-white/20 hover:bg-white/5"
+              >
+                Sign out
+              </button>
+            </form>
+          </div>
         </div>
       </header>
 
