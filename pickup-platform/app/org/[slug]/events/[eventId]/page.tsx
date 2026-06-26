@@ -22,6 +22,7 @@ import {
 import { WeatherPill } from './weather-pill'
 import { EventHeadcount, EventHeadcountFallback } from './event-headcount'
 import { EventParticipation } from './event-participation'
+import { EventPageHelpHint } from './event-page-help-hint'
 import { ParticipationFallback } from './participation-fallback'
 import { LeaderboardLinkDeferred } from './leaderboard-link-deferred'
 import { AllSessionsLinkDeferred } from './all-sessions-link-deferred'
@@ -108,6 +109,12 @@ export default async function EventPage({ params }: Props) {
   const shareText = `${org.name}: ${formatEventTime(event)} ${event.location_is_online ? 'on' : 'at'} ${event.location_label}. Join us!`
   const accent = org.branding.accent_color
 
+  const helpMessage = isCancelled
+    ? 'Cancelled session — details for reference.'
+    : isEnded
+      ? 'Past session — see who came below.'
+      : 'Sign up below to join the roster.'
+
   return (
     <OrgPageShell>
       <JsonLd data={buildEventJsonLd(org, event, `/events/${eventId}`)} />
@@ -139,13 +146,7 @@ export default async function EventPage({ params }: Props) {
       ) : null}
 
       <section className={nextActiveSession ? 'mt-2' : 'mt-8'}>
-        <p className="mb-3 px-1 text-xs text-zinc-500">
-          {isCancelled
-            ? 'Cancelled session — details for reference.'
-            : isEnded
-              ? 'Past session — see who came below.'
-              : 'Sign up below to join the roster.'}
-        </p>
+        <EventPageHelpHint message={helpMessage} />
         <div className="overflow-hidden rounded-3xl border border-zinc-800 bg-linear-to-b from-zinc-900 to-zinc-950 p-6">
           <div className="flex items-center justify-between gap-3">
             <EventTimingBadge event={event} accent={accent} cancelled={isCancelled} />
