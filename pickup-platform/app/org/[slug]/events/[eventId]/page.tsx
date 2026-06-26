@@ -27,6 +27,7 @@ import { LeaderboardLinkDeferred } from './leaderboard-link-deferred'
 import { AllSessionsLinkDeferred } from './all-sessions-link-deferred'
 import { ShareButton } from '../../share-button-lazy'
 import { OrgHeader } from '../../_components/org-header'
+import { BackToOrganizrLink } from '../../_components/back-to-organizr-link'
 import { OrgPageShell, OrgPageFooter } from '../../_components/org-page-shell'
 import {
   StatusPill,
@@ -110,10 +111,13 @@ export default async function EventPage({ params }: Props) {
   return (
     <OrgPageShell>
       <JsonLd data={buildEventJsonLd(org, event, `/events/${eventId}`)} />
-      <div className="flex items-center justify-end gap-3">
-        <Suspense fallback={null}>
-          <AllSessionsLinkDeferred orgId={org.id} />
-        </Suspense>
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          {slug === 'demo' ? <BackToOrganizrLink /> : null}
+          <Suspense fallback={null}>
+            <AllSessionsLinkDeferred orgId={org.id} />
+          </Suspense>
+        </div>
         <ShareButton title={org.name} text={shareText} />
       </div>
 

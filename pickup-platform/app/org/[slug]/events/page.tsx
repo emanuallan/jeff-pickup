@@ -10,10 +10,11 @@ import {
   isEventInProgress,
   isEventEnded,
 } from '@/lib/events'
-import { buildOrgMetadata, rootBaseUrl } from '@/lib/og-metadata'
+import { buildOrgMetadata } from '@/lib/og-metadata'
 import { buildOrgJsonLd } from '@/lib/seo'
 import { JsonLd } from '@/app/_components/json-ld'
 import { OrgHeader } from '../_components/org-header'
+import { BackToOrganizrLink } from '../_components/back-to-organizr-link'
 import { OrgPageShell, OrgPageFooter } from '../_components/org-page-shell'
 import { ShareButton } from '../share-button-lazy'
 import { arrowRight } from '@/lib/text-arrows'
@@ -93,14 +94,7 @@ export default async function EventsPage({ params }: Props) {
     <OrgPageShell>
       <JsonLd data={buildOrgJsonLd(org)} />
       <div className={`flex items-center ${slug === 'demo' ? 'justify-between' : 'justify-end'}`}>
-        {slug === 'demo' ? (
-          <a
-            href={rootBaseUrl()}
-            className="text-sm text-zinc-500 transition-colors hover:text-zinc-300"
-          >
-            ← Back to Organizr
-          </a>
-        ) : null}
+        {slug === 'demo' ? <BackToOrganizrLink /> : null}
         <ShareButton title={org.name} text={`Join ${org.name} on Organizr`} />
       </div>
 
