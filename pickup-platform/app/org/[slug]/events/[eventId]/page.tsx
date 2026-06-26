@@ -8,7 +8,6 @@ import {
 } from '@/lib/public-data'
 import {
   formatEventTime,
-  formatEventWhenLine,
   isEventInProgress,
   isEventEnded,
 } from '@/lib/events'
@@ -121,8 +120,8 @@ export default async function EventPage({ params }: Props) {
       <OrgHeader
         org={org}
         eyebrow="Session"
-        title={eventName(event)}
-        subtitle={`${org.name} · ${formatEventWhenLine(event)}`}
+        title={org.name}
+        subtitle={org.description}
         className="mt-4"
         logoPriority
       />
