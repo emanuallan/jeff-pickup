@@ -1,6 +1,8 @@
 -- Refresh demo org (slug: demo) — same seed as 020, schema-current after 024.
 -- Re-run safe: deletes and recreates the demo org (cascades all child rows).
 -- Use this migration (or re-run its SQL) to keep relative demo dates fresh.
+-- Event dates snap to each schedule's weekday(s); titles omit day names so re-runs
+-- look correct no matter which day you execute on.
 
 do $$
 declare
@@ -37,7 +39,50 @@ declare
   p_leo uuid := 'c0000000-0000-4000-8000-00000000000c';
   p_rachel uuid := 'c0000000-0000-4000-8000-00000000000d';
   p_ben uuid := 'c0000000-0000-4000-8000-00000000000e';
+
+  v_today date;
+  v_pickup_days int[] := array[2, 4]; -- Tue / Thu
+  v_ev_next_day date;
+  v_ev_cancel_day date;
+  v_ev_tent_day date;
+  v_ev_online_day date;
+  v_ev_past1_day date;
+  v_ev_past2_day date;
+  v_ev_past3_day date;
+  v_ev_past4_day date;
 begin
+  v_today := (now() at time zone v_tz)::date;
+
+  -- Snap relative offsets to each schedule's weekday(s) so titles and dates stay aligned.
+  select v_today + 4 + min((d - extract(dow from v_today + 4)::int + 7) % 7)::int
+  into v_ev_next_day
+  from unnest(v_pickup_days) as d;
+
+  select v_today + 6 + min((d - extract(dow from v_today + 6)::int + 7) % 7)::int
+  into v_ev_cancel_day
+  from unnest(v_pickup_days) as d;
+
+  select v_today + 11 + ((6 - extract(dow from v_today + 11)::int + 7) % 7)::int
+  into v_ev_tent_day;
+
+  select v_today + 8 + ((3 - extract(dow from v_today + 8)::int + 7) % 7)::int
+  into v_ev_online_day;
+
+  select (v_today - 7) - min((extract(dow from v_today - 7)::int - d + 7) % 7)::int
+  into v_ev_past1_day
+  from unnest(v_pickup_days) as d;
+
+  select (v_today - 14) - min((extract(dow from v_today - 14)::int - d + 7) % 7)::int
+  into v_ev_past2_day
+  from unnest(v_pickup_days) as d;
+
+  select (v_today - 21) - min((extract(dow from v_today - 21)::int - d + 7) % 7)::int
+  into v_ev_past3_day
+  from unnest(v_pickup_days) as d;
+
+  select (v_today - 28) - ((extract(dow from v_today - 28)::int - 6 + 7) % 7)::int
+  into v_ev_past4_day;
+
   delete from public.orgs where slug = 'demo';
 
   insert into public.orgs (id, slug, name, description, status, branding, created_by)
@@ -92,7 +137,7 @@ begin
       v_sched_pickup,
       v_org_id,
       v_loc_park,
-      'Tue / Thu Evening Pickup',
+      'Evening Pickup',
       array[2, 4],
       '18:30',
       90,
@@ -105,7 +150,7 @@ begin
       v_sched_skills,
       v_org_id,
       v_loc_park,
-      'Saturday Skills & Scrimmage',
+      'Skills & Scrimmage',
       array[6],
       '10:00',
       75,
@@ -152,7 +197,7 @@ begin
       v_org_id,
       v_sched_pickup,
       v_loc_park,
-      ((current_date + 4) + time '18:30') at time zone v_tz,
+      (v_ev_next_day + time '18:30') at time zone v_tz,
       24,
       14,
       'on',
@@ -165,7 +210,7 @@ begin
       v_org_id,
       v_sched_skills,
       v_loc_park,
-      ((current_date + 11) + time '10:00') at time zone v_tz,
+      (v_ev_tent_day + time '10:00') at time zone v_tz,
       20,
       10,
       'tentative',
@@ -178,7 +223,7 @@ begin
       v_org_id,
       v_sched_pickup,
       v_loc_park,
-      ((current_date + 6) + time '18:30') at time zone v_tz,
+      (v_ev_cancel_day + time '18:30') at time zone v_tz,
       24,
       14,
       'cancelled',
@@ -191,7 +236,7 @@ begin
       v_org_id,
       v_sched_volunteers,
       v_loc_zoom,
-      ((current_date + 8) + time '19:00') at time zone v_tz,
+      (v_ev_online_day + time '19:00') at time zone v_tz,
       16,
       8,
       'tentative',
@@ -204,7 +249,7 @@ begin
       v_org_id,
       v_sched_pickup,
       v_loc_park,
-      ((current_date - 7) + time '18:30') at time zone v_tz,
+      (v_ev_past1_day + time '18:30') at time zone v_tz,
       24,
       14,
       'on',
@@ -217,7 +262,7 @@ begin
       v_org_id,
       v_sched_pickup,
       v_loc_park,
-      ((current_date - 14) + time '18:30') at time zone v_tz,
+      (v_ev_past2_day + time '18:30') at time zone v_tz,
       24,
       14,
       'on',
@@ -230,7 +275,7 @@ begin
       v_org_id,
       v_sched_pickup,
       v_loc_park,
-      ((current_date - 21) + time '18:30') at time zone v_tz,
+      (v_ev_past3_day + time '18:30') at time zone v_tz,
       24,
       14,
       'on',
@@ -243,7 +288,7 @@ begin
       v_org_id,
       v_sched_skills,
       v_loc_park,
-      ((current_date - 28) + time '10:00') at time zone v_tz,
+      (v_ev_past4_day + time '10:00') at time zone v_tz,
       20,
       10,
       'on',
