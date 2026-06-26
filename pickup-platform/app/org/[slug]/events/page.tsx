@@ -188,7 +188,7 @@ export default async function EventsPage({ params }: Props) {
                 className="px-1 text-xs font-medium uppercase tracking-wide"
                 style={{ color: accentOnDark(accent) }}
               >
-                More sessions
+                Upcoming sessions
               </h3>
               <MoreSessions count={rest.length}>
                 <ul className="space-y-2">
