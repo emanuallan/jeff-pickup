@@ -17,8 +17,10 @@ export function OrganizrLogo({
   wordmarkClassName = 'text-sm font-bold tracking-tight text-zinc-50',
   href,
   priority,
-  className = 'inline-flex items-center gap-1',
+  className = '',
 }: Props) {
+  const layoutClass = `inline-flex items-center gap-1 ${className}`.trim()
+
   const mark = (
     <Image
       src={ORGANIZR_LOGO_PATH}
@@ -40,11 +42,11 @@ export function OrganizrLogo({
 
   if (href) {
     return (
-      <Link href={href} className={className}>
+      <Link href={href} className={layoutClass}>
         {content}
       </Link>
     )
   }
 
-  return <div className={className}>{content}</div>
+  return <div className={layoutClass}>{content}</div>
 }
