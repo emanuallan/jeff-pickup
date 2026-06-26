@@ -8,6 +8,7 @@ import {
 } from '@/lib/public-data'
 import {
   formatEventTime,
+  formatEventWhenLine,
   isEventInProgress,
   isEventEnded,
 } from '@/lib/events'
@@ -119,8 +120,9 @@ export default async function EventPage({ params }: Props) {
 
       <OrgHeader
         org={org}
-        title={org.name}
-        subtitle={org.description}
+        eyebrow="Session"
+        title={eventName(event)}
+        subtitle={`${org.name} · ${formatEventWhenLine(event)}`}
         className="mt-4"
         logoPriority
       />
@@ -134,6 +136,13 @@ export default async function EventPage({ params }: Props) {
       ) : null}
 
       <section className={nextActiveSession ? 'mt-2' : 'mt-8'}>
+        <p className="mb-3 px-1 text-xs text-zinc-500">
+          {isCancelled
+            ? 'Cancelled session — details for reference.'
+            : isEnded
+              ? 'Past session — see who came below.'
+              : 'Sign up below to join the roster.'}
+        </p>
         <div className="overflow-hidden rounded-3xl border border-zinc-800 bg-linear-to-b from-zinc-900 to-zinc-950 p-6">
           <div className="flex items-center justify-between gap-3">
             <EventTimingBadge event={event} accent={accent} cancelled={isCancelled} />

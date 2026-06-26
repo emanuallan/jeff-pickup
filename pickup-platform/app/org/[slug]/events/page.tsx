@@ -104,12 +104,21 @@ export default async function EventsPage({ params }: Props) {
         <ShareButton title={org.name} text={`Join ${org.name} on Organizr`} />
       </div>
 
-      <OrgHeader org={org} title={org.name} subtitle={org.description} logoPriority />
+      <OrgHeader
+        org={org}
+        eyebrow="Upcoming sessions"
+        title={org.name}
+        subtitle={org.description}
+        logoPriority
+      />
 
       {events.length > 0 ? (
         <>
           {featured ? (
             <section className="mt-8">
+              <p className="mb-3 px-1 text-xs text-zinc-500">
+                Tap a session to open it and join the roster.
+              </p>
               <div className="group relative overflow-hidden rounded-3xl border border-zinc-800 bg-linear-to-b from-zinc-900 to-zinc-950 p-6 transition-colors hover:border-zinc-700">
                 <Link
                   href={`/events/${featured.short_id}`}
@@ -167,7 +176,7 @@ export default async function EventsPage({ params }: Props) {
                       className="inline-flex items-center gap-1 text-sm font-medium transition-transform group-hover:translate-x-0.5"
                       style={{ color: accentOnDark(accent) }}
                     >
-                      Count me in {arrowRight}
+                      View session {arrowRight}
                     </span>
                   </div>
                 </div>
