@@ -9,6 +9,7 @@ type Props = {
   minPlayers: number | null
   accent: string
   pollActive: boolean
+  ended?: boolean
 }
 
 export async function EventHeadcount({
@@ -19,6 +20,7 @@ export async function EventHeadcount({
   minPlayers,
   accent,
   pollActive,
+  ended = false,
 }: Props) {
   const roster = await getPublicRoster(eventId)
   const headcount = rosterHeadcount(roster)
@@ -32,6 +34,7 @@ export async function EventHeadcount({
         capacity={capacity}
         accent={accent}
         active={pollActive}
+        ended={ended}
       />
       {minPlayers != null ? (
         <span className="rounded-lg bg-zinc-800/60 px-2.5 py-1 text-zinc-400">
@@ -72,15 +75,17 @@ export function FeaturedEventHeadcountFallback({ capacity }: { capacity: number 
 export function EventHeadcountFallback({
   capacity,
   minPlayers,
+  ended = false,
 }: {
   capacity: number | null
   minPlayers: number | null
+  ended?: boolean
 }) {
   return (
     <>
       <span className="rounded-lg bg-zinc-800/60 px-2.5 py-1 text-zinc-500">
         <span className="inline-block h-4 w-8 animate-pulse rounded bg-zinc-700/80" />
-        {capacity != null ? ` / ${capacity}` : ''} coming
+        {capacity != null ? ` / ${capacity}` : ''} {ended ? 'came' : 'coming'}
       </span>
       {minPlayers != null ? (
         <span className="rounded-lg bg-zinc-800/60 px-2.5 py-1 text-zinc-500">

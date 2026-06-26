@@ -15,6 +15,8 @@ type Props = {
   accent: string
   /** Stop polling when the session ended or was cancelled. */
   active: boolean
+  /** Past session — show "came" instead of "coming". */
+  ended?: boolean
 }
 
 export function LiveHeadcountPill({
@@ -24,6 +26,7 @@ export function LiveHeadcountPill({
   capacity,
   accent,
   active,
+  ended = false,
 }: Props) {
   const router = useRouter()
   const [headcount, setHeadcount] = useState(initialHeadcount)
@@ -109,7 +112,7 @@ export function LiveHeadcountPill({
       <span key={headcount} className="font-semibold text-zinc-100 tabular-nums">
         {headcount}
       </span>
-      {capacity != null ? ` / ${capacity}` : ''} coming
+      {capacity != null ? ` / ${capacity}` : ''} {ended ? 'came' : 'coming'}
     </span>
   )
 }

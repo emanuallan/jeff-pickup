@@ -154,6 +154,7 @@ export default async function EventPage({ params }: Props) {
                 <EventHeadcountFallback
                   capacity={event.capacity}
                   minPlayers={event.min_players}
+                  ended={isEnded}
                 />
               }
             >
@@ -165,6 +166,7 @@ export default async function EventPage({ params }: Props) {
                 minPlayers={event.min_players}
                 accent={accent}
                 pollActive={!isCancelled && !isEnded}
+                ended={isEnded}
               />
             </Suspense>
             <Suspense fallback={null}>

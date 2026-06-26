@@ -57,7 +57,7 @@ export async function EventParticipation({ slug, eventId, org, event }: Props) {
 
       <section className="mt-5 rounded-3xl border border-zinc-800 bg-zinc-900/50 p-5">
         <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-400">
-          Who&apos;s coming ({headcount})
+          {isEnded ? 'Who came' : "Who's coming"} ({headcount})
         </h2>
         <div className="mt-4">
           <Suspense fallback={<RosterListFallback />}>
