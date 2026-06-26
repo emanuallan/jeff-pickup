@@ -14,7 +14,7 @@ import {
   type EventWithLocation,
 } from '@/lib/events'
 import { arrowNe, arrowRight } from '@/lib/text-arrows'
-import { accentOnDark } from '@/lib/colors'
+import { accentOnDark, hexToRgba } from '@/lib/colors'
 
 export { isEventCancelled }
 
@@ -353,6 +353,85 @@ export function EventLocationRow({
             <span className="mt-0.5 block truncate text-xs text-zinc-500">{address}</span>
           )
         ) : null}
+      </div>
+    </div>
+  )
+}
+
+/** Prominent but compact row for the next session on the schedule page. */
+export function FeaturedSessionRow({
+  event,
+  accent,
+  headcount,
+}: {
+  event: EventWithLocation
+  accent: string
+  headcount: ReactNode
+}) {
+  const cancelled = isEventCancelled(event.status)
+  const inProgress = isEventInProgress(event)
+  const ended = isEventEnded(event)
+  const live = inProgress && event.status === 'on'
+  const classes = cancelledEventClasses(cancelled)
+  const { month, day, weekday } = sessionDateChip(event)
+
+  return (
+    <div
+      className="group relative overflow-hidden rounded-2xl border bg-zinc-950/50 transition-colors hover:bg-zinc-900/40"
+      style={{ borderColor: hexToRgba(accent, 0.35) }}
+    >
+      <Link
+        href={`/events/${event.short_id}`}
+        className="absolute inset-0 z-0 rounded-2xl"
+        aria-label={`View ${eventName(event)} on ${formatEventDayLabel(event)}`}
+      />
+      <div className="relative z-10 p-4 pointer-events-none">
+        <div className="flex items-center justify-between gap-3">
+          <EventTimingBadge
+            event={event}
+            accent={accent}
+            cancelled={cancelled}
+            upcomingLabel="Next up"
+          />
+          <StatusPill status={event.status} accent={accent} live={live} ended={ended} compact />
+        </div>
+
+        <div className="mt-3 flex items-center gap-3">
+          <div className="flex w-12 shrink-0 flex-col items-center rounded-lg border border-white/5 bg-black/25 px-1 py-1.5">
+            <span className="text-[10px] font-medium uppercase tracking-wide text-zinc-600">
+              {month}
+            </span>
+            <span className="text-sm font-semibold tabular-nums leading-tight text-zinc-300">
+              {day}
+            </span>
+            <span className="text-[9px] font-medium text-zinc-600">{weekday}</span>
+          </div>
+          <div className="min-w-0 flex-1">
+            <h2 className={`truncate text-lg font-semibold tracking-tight ${classes.titleSm}`}>
+              {eventName(event)}
+            </h2>
+            <div className="mt-0.5 flex min-w-0 flex-wrap items-center gap-x-1.5 text-xs text-zinc-500">
+              <span className="shrink-0 tabular-nums">{formatEventTimeOnly(event)}</span>
+              <span className="shrink-0 text-zinc-700">·</span>
+              <EventLocationRow
+                event={event}
+                nestedInLink
+                compact
+                className="min-w-0 text-zinc-500"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-3 flex items-center justify-between gap-3 border-t border-zinc-800/80 pt-3">
+          <span className="text-sm text-zinc-400">{headcount}</span>
+          <span
+            className="inline-flex items-center gap-1 text-sm font-medium transition-transform group-hover:translate-x-0.5"
+            style={{ color: accentOnDark(accent) }}
+          >
+            View session {arrowRight}
+          </span>
+        </div>
       </div>
     </div>
   )
