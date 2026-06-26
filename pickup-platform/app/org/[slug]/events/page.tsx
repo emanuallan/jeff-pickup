@@ -15,6 +15,7 @@ import { buildOrgJsonLd } from '@/lib/seo'
 import { JsonLd } from '@/app/_components/json-ld'
 import { OrgHeader } from '../_components/org-header'
 import { BackToOrganizrLink } from '../_components/back-to-organizr-link'
+import { PageHelpHint } from '../_components/page-help-hint'
 import { OrgPageShell, OrgPageFooter } from '../_components/org-page-shell'
 import { ShareButton } from '../share-button-lazy'
 import { arrowRight } from '@/lib/text-arrows'
@@ -108,11 +109,12 @@ export default async function EventsPage({ params }: Props) {
 
       {events.length > 0 ? (
         <>
+          <div className="mt-8">
+            <PageHelpHint message="Tap a session to open it and join the roster." />
+          </div>
+
           {featured ? (
-            <section className="mt-8">
-              <p className="mb-3 px-1 text-xs text-zinc-500">
-                Tap a session to open it and join the roster.
-              </p>
+            <section>
               <div className="group relative overflow-hidden rounded-3xl border border-zinc-800 bg-linear-to-b from-zinc-900 to-zinc-950 p-6 transition-colors hover:border-zinc-700">
                 <Link
                   href={`/events/${featured.short_id}`}

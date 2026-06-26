@@ -22,7 +22,7 @@ import {
 import { WeatherPill } from './weather-pill'
 import { EventHeadcount, EventHeadcountFallback } from './event-headcount'
 import { EventParticipation } from './event-participation'
-import { EventPageHelpHint } from './event-page-help-hint'
+import { PageHelpHint } from '../../_components/page-help-hint'
 import { ParticipationFallback } from './participation-fallback'
 import { LeaderboardLinkDeferred } from './leaderboard-link-deferred'
 import { AllSessionsLinkDeferred } from './all-sessions-link-deferred'
@@ -146,7 +146,7 @@ export default async function EventPage({ params }: Props) {
       ) : null}
 
       <section className={nextActiveSession ? 'mt-2' : 'mt-8'}>
-        <EventPageHelpHint message={helpMessage} />
+        <PageHelpHint message={helpMessage} />
         <div className="overflow-hidden rounded-3xl border border-zinc-800 bg-linear-to-b from-zinc-900 to-zinc-950 p-6">
           <div className="flex items-center justify-between gap-3">
             <EventTimingBadge event={event} accent={accent} cancelled={isCancelled} />
