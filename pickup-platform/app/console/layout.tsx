@@ -4,6 +4,7 @@ import { OrganizrBackdrop } from '../_components/organizr-shell'
 import { OrganizrLogo } from '../_components/organizr-logo'
 import { ROBOTS_PRIVATE } from '@/lib/seo'
 import { ConsoleNotificationBellSlot } from './console-notification-bell-slot'
+import { ConsoleSignOutButton } from './_components/console-sign-out-button'
 
 export const metadata: Metadata = {
   title: 'Console',
@@ -41,14 +42,7 @@ export default function ConsoleLayout({ children }: { children: React.ReactNode 
             <Suspense fallback={<NotificationBellFallback />}>
               <ConsoleNotificationBellSlot />
             </Suspense>
-            <form action="/auth/signout" method="post">
-              <button
-                type="submit"
-                className="inline-flex min-h-10 items-center rounded-lg border border-white/10 px-3 py-2 text-xs font-medium text-zinc-300 transition hover:border-white/20 hover:bg-white/5"
-              >
-                Sign out
-              </button>
-            </form>
+            <ConsoleSignOutButton />
           </div>
         </div>
       </header>
