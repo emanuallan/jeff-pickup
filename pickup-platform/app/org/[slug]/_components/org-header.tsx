@@ -6,7 +6,7 @@ type Props = {
   org: Org
   title: string
   subtitle?: string | null
-  /** Small label above the title — e.g. "Upcoming sessions" or a date line. */
+  /** Small label above the title — e.g. "Home" or a date line. */
   eyebrow?: string | null
   className?: string
   /** Preload logo on above-the-fold pages (event detail). */

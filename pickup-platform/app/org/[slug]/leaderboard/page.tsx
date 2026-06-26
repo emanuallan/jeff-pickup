@@ -65,7 +65,7 @@ export default async function LeaderboardPage({ params }: Props) {
           href="/events"
           className="inline-flex items-center gap-1 text-sm text-zinc-400 transition-colors hover:text-zinc-200"
         >
-          <span aria-hidden>←</span> All sessions
+          <span aria-hidden>←</span> Home
         </Link>
       </div>
 
