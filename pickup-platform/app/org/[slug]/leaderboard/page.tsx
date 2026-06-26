@@ -3,10 +3,15 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { getPublicOrgBySlug } from '@/lib/public-data'
 import { getOrgCapsLeaderboard, getOrgStreakLeaderboard } from '@/lib/engagement'
-import { readableTextColor } from '@/lib/colors'
+import { accentOnDark } from '@/lib/colors'
 import { buildOrgMetadata } from '@/lib/og-metadata'
 import { OrgHeader } from '../_components/org-header'
 import { OrgPageShell, OrgPageFooter } from '../_components/org-page-shell'
+import {
+  CapsLeaderboard,
+  LeaderboardSummary,
+  StreakLeaderboard,
+} from '../_components/leaderboard-ui'
 import { arrowRight } from '@/lib/text-arrows'
 
 type Props = {
@@ -37,35 +42,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   })
 }
 
-/** Circular rank badge — accent-filled for #1, subtle medal tints for #2/#3. */
-function RankBadge({ rank, accent }: { rank: number; accent: string }) {
-  if (rank === 1) {
-    return (
-      <span
-        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold tabular-nums"
-        style={{ backgroundColor: accent, color: readableTextColor(accent) }}
-      >
-        1
-      </span>
-    )
-  }
-
-  const medal =
-    rank === 2
-      ? 'bg-zinc-300/15 text-zinc-200'
-      : rank === 3
-        ? 'bg-amber-600/15 text-amber-300'
-        : 'bg-zinc-800/80 text-zinc-400'
-
-  return (
-    <span
-      className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-semibold tabular-nums ${medal}`}
-    >
-      {rank}
-    </span>
-  )
-}
-
 export default async function LeaderboardPage({ params }: Props) {
   const { slug } = await params
   const org = await getPublicOrgBySlug(slug)
@@ -80,7 +56,7 @@ export default async function LeaderboardPage({ params }: Props) {
   ])
 
   const accent = org.branding.accent_color
-  const topCaps = capsRows[0]?.caps ?? 0
+  const topCaps = capsRows[0]
 
   return (
     <OrgPageShell>
@@ -95,91 +71,23 @@ export default async function LeaderboardPage({ params }: Props) {
 
       <OrgHeader org={org} title="Leaderboard" subtitle={org.name} className="mt-4" />
 
-      <section className="mt-8 rounded-3xl border border-zinc-800 bg-linear-to-b from-zinc-900 to-zinc-950 p-6">
-        <div className="flex items-baseline justify-between gap-3">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-400">Caps</h2>
-          <span className="text-xs text-zinc-600">Distinct sessions attended</span>
-        </div>
+      <LeaderboardSummary
+        playerCount={capsRows.length}
+        topName={topCaps?.display_name ?? null}
+        topCaps={topCaps?.caps ?? 0}
+        accent={accent}
+      />
 
-        {capsRows.length === 0 ? (
-          <p className="mt-4 text-sm text-zinc-500">No sessions attended yet.</p>
-        ) : (
-          <ol className="mt-4 space-y-2">
-            {capsRows.map((row, idx) => {
-              const prev = capsRows[idx - 1]
-              const rank = !prev
-                ? 1
-                : prev.caps === row.caps
-                  ? capsRows.slice(0, idx).filter((r) => r.caps > row.caps).length + 1
-                  : idx + 1
-              const isTop = row.caps > 0 && row.caps === topCaps
+      <CapsLeaderboard rows={capsRows} accent={accent} />
 
-              return (
-                <li
-                  key={row.participant_id}
-                  className="flex items-center gap-3 rounded-2xl border border-zinc-800 bg-black/20 px-3 py-2.5 text-sm"
-                >
-                  <RankBadge rank={rank} accent={accent} />
-                  <span className="min-w-0 flex-1 truncate font-medium text-zinc-100">
-                    {row.display_name}
-                    {isTop ? <span className="ml-1.5" aria-hidden>🏅</span> : null}
-                  </span>
-                  <span className="shrink-0 tabular-nums text-zinc-400">
-                    {row.caps} {row.caps === 1 ? 'cap' : 'caps'}
-                  </span>
-                </li>
-              )
-            })}
-          </ol>
-        )}
-      </section>
-
-      <section className="mt-5 rounded-3xl border border-zinc-800 bg-zinc-900/50 p-6">
-        <div className="flex items-baseline justify-between gap-3">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-400">
-            Weekly streaks
-          </h2>
-          <span className="text-xs text-zinc-600">Consecutive weeks</span>
-        </div>
-
-        {streakRows.length === 0 ? (
-          <p className="mt-4 text-sm text-zinc-500">No active streaks this week.</p>
-        ) : (
-          <ol className="mt-4 space-y-2">
-            {streakRows.map((row, idx) => {
-              const prev = streakRows[idx - 1]
-              const rank = !prev
-                ? 1
-                : prev.current_streak_weeks === row.current_streak_weeks
-                  ? streakRows
-                      .slice(0, idx)
-                      .filter((r) => r.current_streak_weeks > row.current_streak_weeks).length + 1
-                  : idx + 1
-              const isTop = idx === 0
-
-              return (
-                <li
-                  key={row.participant_id}
-                  className="flex items-center gap-3 rounded-2xl border border-zinc-800 bg-black/20 px-3 py-2.5 text-sm"
-                >
-                  <RankBadge rank={rank} accent={accent} />
-                  <span className="min-w-0 flex-1 truncate font-medium text-zinc-100">
-                    {row.display_name}
-                    {isTop ? <span className="ml-1.5" aria-hidden>🔥</span> : null}
-                  </span>
-                  <span className="shrink-0 text-right text-xs text-zinc-500">
-                    <span className="tabular-nums text-zinc-300">{row.current_streak_weeks}w</span>
-                    <span className="text-zinc-600"> · best {row.best_streak_weeks}w</span>
-                  </span>
-                </li>
-              )
-            })}
-          </ol>
-        )}
-      </section>
+      <StreakLeaderboard rows={streakRows} accent={accent} />
 
       <p className="mt-10 text-center">
-        <Link href="/events" className="text-sm text-zinc-400 hover:text-zinc-200">
+        <Link
+          href="/events"
+          className="inline-flex items-center gap-1.5 rounded-full border border-zinc-800 bg-zinc-900/60 px-4 py-2 text-sm text-zinc-300 transition-colors hover:border-zinc-700 hover:bg-zinc-800/60 hover:text-zinc-100"
+          style={{ borderColor: `${accentOnDark(accent)}33` }}
+        >
           View sessions {arrowRight}
         </Link>
       </p>
