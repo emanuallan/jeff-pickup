@@ -8,7 +8,6 @@ import {
 } from '@/lib/public-data'
 import {
   formatEventTime,
-  formatEventWhenLine,
   isEventInProgress,
   isEventEnded,
 } from '@/lib/events'
@@ -120,8 +119,8 @@ export default async function EventPage({ params }: Props) {
 
       <OrgHeader
         org={org}
-        title={eventName(event)}
-        subtitle={`${org.name} · ${formatEventWhenLine(event)}`}
+        title={org.name}
+        subtitle={org.description}
         className="mt-4"
         logoPriority
       />
@@ -134,14 +133,7 @@ export default async function EventPage({ params }: Props) {
         />
       ) : null}
 
-      <Suspense fallback={<ParticipationFallback />}>
-        <EventParticipation slug={slug} eventId={eventId} org={org} event={event} />
-      </Suspense>
-
-      <section className={nextActiveSession ? 'mt-8' : 'mt-6'}>
-        <h2 className="mb-3 px-1 text-xs font-medium uppercase tracking-wide text-zinc-500">
-          Session details
-        </h2>
+      <section className={nextActiveSession ? 'mt-2' : 'mt-8'}>
         <div className="overflow-hidden rounded-3xl border border-zinc-800 bg-linear-to-b from-zinc-900 to-zinc-950 p-6">
           <div className="flex items-center justify-between gap-3">
             <EventTimingBadge event={event} accent={accent} cancelled={isCancelled} />
@@ -193,6 +185,10 @@ export default async function EventPage({ params }: Props) {
           ) : null}
         </div>
       </section>
+
+      <Suspense fallback={<ParticipationFallback />}>
+        <EventParticipation slug={slug} eventId={eventId} org={org} event={event} />
+      </Suspense>
 
       <OrgPageFooter
         slug={org.slug}

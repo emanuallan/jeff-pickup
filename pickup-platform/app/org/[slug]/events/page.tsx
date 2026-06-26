@@ -1,14 +1,23 @@
 import type { Metadata } from 'next'
+import Link from 'next/link'
 import { Suspense } from 'react'
 import { notFound, redirect } from 'next/navigation'
 import { getPublicOrgBySlug, getPublicUpcomingEventsForOrg } from '@/lib/public-data'
-import { formatEventTime, pickFeaturedUpcomingEvent } from '@/lib/events'
+import {
+  formatEventTime,
+  pickFeaturedUpcomingEvent,
+  formatEventDayLabel,
+  isEventInProgress,
+  isEventEnded,
+} from '@/lib/events'
 import { buildOrgMetadata, rootBaseUrl } from '@/lib/og-metadata'
 import { buildOrgJsonLd } from '@/lib/seo'
 import { JsonLd } from '@/app/_components/json-ld'
 import { OrgHeader } from '../_components/org-header'
 import { OrgPageShell, OrgPageFooter } from '../_components/org-page-shell'
 import { ShareButton } from '../share-button-lazy'
+import { arrowRight } from '@/lib/text-arrows'
+import { accentOnDark } from '@/lib/colors'
 import { MoreSessions } from './more-sessions'
 import {
   FeaturedEventHeadcount,
@@ -16,9 +25,13 @@ import {
 } from './[eventId]/event-headcount'
 import { LeaderboardLinkDeferred } from './[eventId]/leaderboard-link-deferred'
 import {
-  FeaturedSessionRow,
+  StatusPill,
   SessionRow,
+  EventDateTimeRow,
+  EventLocationRow,
+  EventTimingBadge,
   CancelledSessionNotice,
+  eventName,
   isEventCancelled,
 } from '../_components/event-ui'
 
@@ -36,7 +49,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const events = await getPublicUpcomingEventsForOrg(org.id, 20, true)
   const nextEvent = pickFeaturedUpcomingEvent(events)
   const groupDescription = org.description || 'group sessions'
-  const title = `Schedule · ${org.name}`
+  const title = org.name
   const description = nextEvent
     ? `Upcoming ${groupDescription} with ${org.name}. Next up ${formatEventTime(nextEvent)} ${nextEvent.location_is_online ? 'on' : 'at'} ${nextEvent.location_label} — see who's coming and confirm you're in.`
     : `See the schedule of upcoming ${groupDescription} with ${org.name}. Check who's coming and confirm you're in — it only takes a few seconds.`
@@ -73,6 +86,8 @@ export default async function EventsPage({ params }: Props) {
   const rest = events.filter(
     (ev) => ev.id !== featured?.id && ev.id !== skippedCancelled?.id,
   )
+  const featuredLive = featured ? isEventInProgress(featured) && featured.status === 'on' : false
+  const featuredEnded = featured ? isEventEnded(featured) : false
 
   return (
     <OrgPageShell>
@@ -89,36 +104,74 @@ export default async function EventsPage({ params }: Props) {
         <ShareButton title={org.name} text={`Join ${org.name} on Organizr`} />
       </div>
 
-      <OrgHeader org={org} title="Schedule" subtitle={org.name} logoPriority />
-
-      <p className="mt-3 text-center text-sm text-zinc-500">
-        Pick a session to see who&apos;s coming and join in.
-      </p>
-
-      {activeUpcoming.length > 0 ? (
-        <p className="mt-1 text-center text-xs text-zinc-600">
-          {activeUpcoming.length} upcoming {activeUpcoming.length === 1 ? 'session' : 'sessions'}
-        </p>
-      ) : null}
+      <OrgHeader org={org} title={org.name} subtitle={org.description} logoPriority />
 
       {events.length > 0 ? (
         <>
           {featured ? (
             <section className="mt-8">
-              <FeaturedSessionRow
-                event={featured}
-                accent={accent}
-                headcount={
-                  <Suspense
-                    fallback={<FeaturedEventHeadcountFallback capacity={featured.capacity} />}
-                  >
-                    <FeaturedEventHeadcount
-                      eventId={featured.id}
-                      capacity={featured.capacity}
+              <div className="group relative overflow-hidden rounded-3xl border border-zinc-800 bg-linear-to-b from-zinc-900 to-zinc-950 p-6 transition-colors hover:border-zinc-700">
+                <Link
+                  href={`/events/${featured.short_id}`}
+                  className="absolute inset-0 z-0 rounded-3xl"
+                  aria-label={`${eventName(featured)} — ${formatEventDayLabel(featured)}`}
+                />
+                <div className="relative z-10 pointer-events-none">
+                  <div className="flex items-center justify-between gap-3">
+                    <EventTimingBadge
+                      event={featured}
+                      accent={accent}
+                      cancelled={false}
+                      upcomingLabel="Next session"
                     />
-                  </Suspense>
-                }
-              />
+                    <StatusPill
+                      status={featured.status}
+                      accent={accent}
+                      live={featuredLive}
+                      ended={featuredEnded}
+                    />
+                  </div>
+
+                  <h2 className="mt-4 text-2xl font-semibold tracking-tight text-zinc-50">
+                    {eventName(featured)}
+                  </h2>
+
+                  <EventDateTimeRow event={featured} cancelled={false} />
+
+                  <EventLocationRow
+                    event={featured}
+                    nestedInLink
+                    className="mt-3 flex gap-2 text-sm text-zinc-400"
+                  />
+
+                  {featured.announcement ? (
+                    <p className="mt-4 rounded-xl border border-zinc-800 bg-black/30 px-3 py-2 text-sm text-zinc-300">
+                      {featured.announcement}
+                    </p>
+                  ) : null}
+
+                  <div className="mt-5 flex items-center justify-between border-t border-zinc-800 pt-4">
+                    <span className="text-sm text-zinc-400">
+                      <Suspense
+                        fallback={
+                          <FeaturedEventHeadcountFallback capacity={featured.capacity} />
+                        }
+                      >
+                        <FeaturedEventHeadcount
+                          eventId={featured.id}
+                          capacity={featured.capacity}
+                        />
+                      </Suspense>
+                    </span>
+                    <span
+                      className="inline-flex items-center gap-1 text-sm font-medium transition-transform group-hover:translate-x-0.5"
+                      style={{ color: accentOnDark(accent) }}
+                    >
+                      Count me in {arrowRight}
+                    </span>
+                  </div>
+                </div>
+              </div>
             </section>
           ) : null}
 
@@ -130,10 +183,13 @@ export default async function EventsPage({ params }: Props) {
           ) : null}
 
           {rest.length > 0 ? (
-            <section className="mt-8 border-t border-white/5 pt-8">
-              <h2 className="px-1 text-xs font-medium uppercase tracking-wide text-zinc-500">
+            <section className="mt-10 border-t border-white/5 pt-8">
+              <h3
+                className="px-1 text-xs font-medium uppercase tracking-wide"
+                style={{ color: accentOnDark(accent) }}
+              >
                 More sessions
-              </h2>
+              </h3>
               <MoreSessions count={rest.length}>
                 <ul className="space-y-2">
                   {rest.map((ev) => (
