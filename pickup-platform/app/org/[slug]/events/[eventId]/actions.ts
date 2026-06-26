@@ -8,6 +8,7 @@ import { createClient } from '@/lib/supabase/server'
 import { setSessionToken, getSessionToken, clearSessionToken } from '@/lib/participant-session'
 import type { ArrivalStatus } from '@/lib/arrival-status'
 import { normalizePhoneDigits, isValidPhoneDigits } from '@/lib/phone'
+import { validateDemoParticipantNames } from '@/lib/participant-name-moderation'
 
 async function getOpenEvent(
   orgSlug: string,
@@ -70,6 +71,15 @@ export async function joinEvent(
 
   if (!isValidPhoneDigits(phone)) {
     return { error: 'Enter a valid 10-digit phone number.' }
+  }
+
+  const nameError = validateDemoParticipantNames(orgSlug, {
+    firstName,
+    lastName,
+    displayName: displayName || null,
+  })
+  if (nameError) {
+    return { error: nameError }
   }
 
   const open = await getOpenEvent(orgSlug, eventId)
