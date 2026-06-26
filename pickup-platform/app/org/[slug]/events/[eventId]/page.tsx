@@ -107,6 +107,12 @@ export default async function EventPage({ params }: Props) {
   const shareText = `${org.name}: ${formatEventTime(event)} ${event.location_is_online ? 'on' : 'at'} ${event.location_label}. Join us!`
   const accent = org.branding.accent_color
 
+  const pageIntro = isCancelled
+    ? 'This session was cancelled — details are below for reference.'
+    : isEnded
+      ? 'This session has ended — see who came below.'
+      : "You're on a single session — join below to add your name, or see who's already in."
+
   return (
     <OrgPageShell>
       <JsonLd data={buildEventJsonLd(org, event, `/events/${eventId}`)} />
@@ -124,6 +130,8 @@ export default async function EventPage({ params }: Props) {
         className="mt-4"
         logoPriority
       />
+
+      <p className="mt-3 text-center text-sm text-zinc-500">{pageIntro}</p>
 
       {nextActiveSession ? (
         <ViewNextSessionLink

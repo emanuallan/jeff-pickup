@@ -106,6 +106,10 @@ export default async function EventsPage({ params }: Props) {
 
       <OrgHeader org={org} title={org.name} subtitle={org.description} logoPriority />
 
+      <p className="mt-3 text-center text-sm text-zinc-500">
+        Browse upcoming sessions — tap one to see who&apos;s coming and join in.
+      </p>
+
       {events.length > 0 ? (
         <>
           {featured ? (
@@ -188,7 +192,7 @@ export default async function EventsPage({ params }: Props) {
                 className="px-1 text-xs font-medium uppercase tracking-wide"
                 style={{ color: accentOnDark(accent) }}
               >
-                More sessions
+                Upcoming sessions
               </h3>
               <MoreSessions count={rest.length}>
                 <ul className="space-y-2">
