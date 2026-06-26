@@ -94,10 +94,12 @@ export default async function EventsPage({ params }: Props) {
   return (
     <OrgPageShell>
       <JsonLd data={buildOrgJsonLd(org)} />
-      <div className={`flex items-center ${slug === 'demo' ? 'justify-between' : 'justify-end'}`}>
+      <nav
+        className={`flex min-h-9 items-center gap-3 ${slug === 'demo' ? 'justify-between' : 'justify-end'}`}
+      >
         {slug === 'demo' ? <BackToOrganizrLink /> : null}
         <ShareButton title={org.name} text={`Join ${org.name} on Organizr`} />
-      </div>
+      </nav>
 
       <OrgHeader
         org={org}
