@@ -18,6 +18,9 @@ export type StreakLeaderboardRow = {
 /** Sessions held before the leaderboard is worth showing (avoids empty/sparse boards). */
 export const LEADERBOARD_MIN_SESSIONS = 3
 
+/** Minimum consecutive weeks to appear on the public streak leaderboard. */
+export const LEADERBOARD_MIN_STREAK_WEEKS = 2
+
 /** Count of an org's past, non-cancelled sessions (i.e. sessions that have happened). */
 export const getOrgPastSessionCount = cache(async (orgId: string): Promise<number> => {
   const supabase = await createClient()
@@ -92,11 +95,13 @@ export const getOrgStreakLeaderboard = cache(
 
     if (error || !data) return []
 
-    return (data as StreakLeaderboardRow[]).map((row) => ({
-      ...row,
-      current_streak_weeks: Number(row.current_streak_weeks),
-      best_streak_weeks: Number(row.best_streak_weeks),
-    }))
+    return (data as StreakLeaderboardRow[])
+      .map((row) => ({
+        ...row,
+        current_streak_weeks: Number(row.current_streak_weeks),
+        best_streak_weeks: Number(row.best_streak_weeks),
+      }))
+      .filter((row) => row.current_streak_weeks >= LEADERBOARD_MIN_STREAK_WEEKS)
   },
 )
 

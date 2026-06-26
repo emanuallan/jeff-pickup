@@ -68,17 +68,8 @@ function TrophyIcon({ className }: { className?: string }) {
   )
 }
 
-function FlameIcon({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden>
-      <path
-        d="M12 22c4-2.5 6.5-6 6.5-10a6.5 6.5 0 0 0-11-4.7C5.5 9.5 5 12 6 14c-2.5-1-3.5-4-2-6.5C2 10.5 4.5 16 8 18c-.5-2 .5-4 2-5.5-1 3 1 6.5 2 9.5Z"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinejoin="round"
-      />
-    </svg>
-  )
+function formatWeeks(weeks: number): string {
+  return `${weeks} ${weeks === 1 ? 'week' : 'weeks'}`
 }
 
 function SectionHeader({
@@ -87,7 +78,7 @@ function SectionHeader({
   title,
   subtitle,
 }: {
-  icon: 'trophy' | 'flame'
+  icon: 'trophy' | 'streak'
   iconClassName: string
   title: string
   subtitle: string
@@ -95,13 +86,9 @@ function SectionHeader({
   return (
     <div className="flex items-center gap-3">
       <span
-        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl ${iconClassName}`}
+        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl text-lg ${iconClassName}`}
       >
-        {icon === 'trophy' ? (
-          <TrophyIcon className="h-5 w-5" />
-        ) : (
-          <FlameIcon className="h-5 w-5" />
-        )}
+        {icon === 'trophy' ? <TrophyIcon className="h-5 w-5" /> : <span aria-hidden>🔥</span>}
       </span>
       <div className="min-w-0">
         <h2 className="text-base font-semibold tracking-tight text-zinc-100">{title}</h2>
@@ -265,12 +252,9 @@ function StreakRow({
         <RankBadge rank={rank} accent={accent} />
         <span className="min-w-0 flex-1 truncate font-medium text-zinc-100">{row.display_name}</span>
         <div className="shrink-0 text-right">
-          <span className="inline-flex items-center gap-1 tabular-nums font-semibold text-orange-200">
-            {weeks > 0 ? <FlameIcon className="h-3.5 w-3.5 text-orange-400" /> : null}
-            {weeks}w
-          </span>
+          <span className="tabular-nums font-semibold text-orange-200">{formatWeeks(weeks)}</span>
           <span className="block text-[11px] tabular-nums text-zinc-600">
-            best {row.best_streak_weeks}w
+            Best: {formatWeeks(row.best_streak_weeks)}
           </span>
         </div>
       </div>
@@ -381,10 +365,10 @@ export function StreakLeaderboard({
   return (
     <section className="mt-5 overflow-hidden rounded-3xl border border-zinc-800 bg-zinc-900/50 p-6">
       <SectionHeader
-        icon="flame"
-        iconClassName="bg-orange-500/10 text-orange-400"
+        icon="streak"
+        iconClassName="bg-orange-500/10"
         title="Weekly streaks"
-        subtitle="Consecutive weeks with a session"
+        subtitle="2+ consecutive weeks with a session"
       />
 
       {rows.length === 0 ? (
