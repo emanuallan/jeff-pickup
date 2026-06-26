@@ -284,7 +284,7 @@ export function LeaderboardSummary({
     >
       <div className="flex items-center justify-between gap-4">
         <div className="min-w-0">
-          <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">Ranked</p>
+          <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">Have attended</p>
           <p className="mt-0.5 text-2xl font-bold tabular-nums text-zinc-50">{playerCount}</p>
         </div>
         {topName && topCaps > 0 ? (
