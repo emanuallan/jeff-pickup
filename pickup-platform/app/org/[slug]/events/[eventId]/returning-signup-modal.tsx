@@ -31,6 +31,7 @@ type Props = {
   eventId: string
   accent: string
   accentText: string
+  displayName: string
   eventTitle: string
   eventWhen: string
   locationLabel: string
@@ -88,6 +89,7 @@ export function ReturningSignupModal({
   eventId,
   accent,
   accentText,
+  displayName,
   eventTitle,
   eventWhen,
   locationLabel,
@@ -144,9 +146,10 @@ export function ReturningSignupModal({
           id="returning-signup-title"
           className="text-lg font-semibold tracking-tight text-zinc-50"
         >
-          {eventTitle}
+          {displayName}, you in?
         </h2>
-        <p className="mt-1 text-sm text-zinc-400">{eventWhen}</p>
+        <p className="mt-1 text-sm text-zinc-400">{eventTitle}</p>
+        <p className="mt-0.5 text-sm text-zinc-400">{eventWhen}</p>
         <div className="mt-2 flex items-start gap-2 text-sm text-zinc-400">
           <PinIcon className="mt-0.5" />
           {locationMapsUrl ? (
@@ -165,15 +168,7 @@ export function ReturningSignupModal({
           )}
         </div>
 
-        <div className="mt-5 border-t border-zinc-800 pt-5">
-          <p
-            className="text-2xl font-semibold tracking-tight"
-            style={{ color: accentOnDark(accent) }}
-          >
-            You in?
-          </p>
-          <p className="mt-1 text-sm text-zinc-500">One tap lets the group know.</p>
-        </div>
+        <p className="mt-5 text-sm text-zinc-500">One tap lets the group know.</p>
 
         <div className="mt-5 space-y-3">
           <button
