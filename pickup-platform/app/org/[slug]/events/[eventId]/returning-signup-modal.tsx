@@ -31,7 +31,7 @@ type Props = {
   eventId: string
   accent: string
   accentText: string
-  displayName: string
+  firstName: string
   eventTitle: string
   eventWhen: string
   locationLabel: string
@@ -89,7 +89,7 @@ export function ReturningSignupModal({
   eventId,
   accent,
   accentText,
-  displayName,
+  firstName,
   eventTitle,
   eventWhen,
   locationLabel,
@@ -172,7 +172,7 @@ export function ReturningSignupModal({
             className="text-2xl font-semibold tracking-tight"
             style={{ color: accentOnDark(accent) }}
           >
-            {displayName}, you in?
+            {firstName}, you in?
           </p>
           <p className="mt-1 text-sm text-zinc-500">One tap lets the group know.</p>
         </div>
