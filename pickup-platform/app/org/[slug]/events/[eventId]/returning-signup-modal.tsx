@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { useRouter } from 'next/navigation'
 import { quickJoinEvent } from './actions'
 import { fireConfetti } from '@/lib/confetti'
@@ -97,6 +97,10 @@ export function ReturningSignupModal({
   const [open, setOpen] = useState<boolean | null>(null)
   const [loading, setLoading] = useState<'confirmed' | 'maybe' | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [dragY, setDragY] = useState(0)
+  const [isDragging, setIsDragging] = useState(false)
+  const dragStartY = useRef<number | null>(null)
+  const dragYRef = useRef(0)
 
   const markSeen = useCallback(() => {
     markReturningSignupSeen(orgSlug, eventId)
@@ -110,7 +114,37 @@ export function ReturningSignupModal({
     markSeen()
     setOpen(false)
     setError(null)
+    setDragY(0)
+    setIsDragging(false)
+    dragStartY.current = null
+    dragYRef.current = 0
   }, [markSeen])
+
+  const onDragStart = useCallback((clientY: number) => {
+    if (loading !== null) return
+    dragStartY.current = clientY
+    setIsDragging(true)
+  }, [loading])
+
+  const onDragMove = useCallback((clientY: number) => {
+    if (dragStartY.current === null) return
+    const delta = Math.max(0, clientY - dragStartY.current)
+    dragYRef.current = delta
+    setDragY(delta)
+  }, [])
+
+  const onDragEnd = useCallback(() => {
+    if (dragStartY.current === null) return
+    const shouldDismiss = dragYRef.current > 72
+    dragStartY.current = null
+    setIsDragging(false)
+    if (shouldDismiss) {
+      dismiss()
+    } else {
+      dragYRef.current = 0
+      setDragY(0)
+    }
+  }, [dismiss])
 
   useEffect(() => {
     if (!open) return
@@ -161,12 +195,31 @@ export function ReturningSignupModal({
             role="dialog"
             aria-modal="true"
             aria-labelledby="returning-signup-title"
-            className="absolute inset-x-0 bottom-0 mx-auto w-full max-w-lg overflow-hidden rounded-t-3xl border border-b-0 border-zinc-800 bg-linear-to-b from-zinc-900 to-zinc-950 px-5 pt-3 shadow-2xl animate-[bottom-sheet-in_280ms_cubic-bezier(0.32,0.72,0,1)] pb-[max(1.25rem,env(safe-area-inset-bottom))]"
+            className="absolute inset-x-0 bottom-0 mx-auto w-full max-w-lg overflow-hidden rounded-t-3xl border border-b-0 border-zinc-800 bg-linear-to-b from-zinc-900 to-zinc-950 px-5 pt-1 shadow-2xl pb-[max(1.25rem,env(safe-area-inset-bottom))]"
             style={{
               boxShadow: `0 -8px 40px -8px rgba(0, 0, 0, 0.5), inset 0 1px 0 0 ${hexToRgba(accent, 0.2)}`,
+              transform: dragY > 0 ? `translateY(${dragY}px)` : undefined,
+              transition: isDragging
+                ? 'none'
+                : dragY === 0
+                  ? 'transform 280ms cubic-bezier(0.32, 0.72, 0, 1)'
+                  : undefined,
+              animation: dragY === 0 && !isDragging
+                ? 'bottom-sheet-in 280ms cubic-bezier(0.32, 0.72, 0, 1)'
+                : undefined,
             }}
           >
-            <div className="flex justify-center pb-1 pt-1">
+            <div
+              className="flex cursor-grab touch-none justify-center py-3 active:cursor-grabbing"
+              onPointerDown={(e) => {
+                if (e.button !== 0) return
+                onDragStart(e.clientY)
+                e.currentTarget.setPointerCapture(e.pointerId)
+              }}
+              onPointerMove={(e) => onDragMove(e.clientY)}
+              onPointerUp={() => onDragEnd()}
+              onPointerCancel={() => onDragEnd()}
+            >
               <div className="h-1 w-10 rounded-full bg-zinc-700" aria-hidden />
             </div>
 
@@ -235,14 +288,6 @@ export function ReturningSignupModal({
             </div>
 
             {error ? <p className="mt-4 text-sm text-red-300">{error}</p> : null}
-
-            <button
-              type="button"
-              onClick={dismiss}
-              className="mt-4 flex min-h-10 w-full items-center justify-center text-sm font-medium text-zinc-500 transition-colors hover:text-zinc-300"
-            >
-              Not now
-            </button>
           </div>
         </div>
       ) : null}
