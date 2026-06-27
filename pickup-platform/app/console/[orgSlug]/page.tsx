@@ -42,17 +42,24 @@ function pastSessionsNavBadge(sessionCount: number, cancelledCount: number) {
   )
 }
 
-function sessionsNavBadge(liveCount: number, upcomingCount: number) {
-  if (liveCount > 0) {
-    return (
-      <div className="space-y-0.5">
-        <div className="font-medium text-red-400">{formatCount(liveCount, 'live')}</div>
-        <div>{`${upcomingCount} upcoming`}</div>
-      </div>
-    )
+function sessionsNavBadge(
+  liveCount: number,
+  upcomingCount: number,
+  cancelledCount: number,
+) {
+  if (liveCount === 0 && upcomingCount === 0 && cancelledCount === 0) {
+    return 'None yet'
   }
 
-  return formatCount(upcomingCount, 'upcoming')
+  return (
+    <div className="space-y-0.5">
+      {liveCount > 0 ? (
+        <div className="font-medium text-red-400">{formatCount(liveCount, 'live')}</div>
+      ) : null}
+      <div>{`${upcomingCount} upcoming`}</div>
+      {cancelledCount > 0 ? <div>{`${cancelledCount} cancelled`}</div> : null}
+    </div>
+  )
 }
 
 export default async function OrgConsolePage({ params }: Props) {
@@ -111,7 +118,11 @@ export default async function OrgConsolePage({ params }: Props) {
             href={`${base}/sessions`}
             title="Sessions"
             icon={<IconSessions />}
-            badge={sessionsNavBadge(counts.liveSessionCount, counts.upcomingSessionCount)}
+            badge={sessionsNavBadge(
+              counts.liveSessionCount,
+              counts.upcomingSessionCount,
+              counts.activeCancelledSessionCount,
+            )}
             live={counts.liveSessionCount > 0}
             disabled={!isSetup}
           />

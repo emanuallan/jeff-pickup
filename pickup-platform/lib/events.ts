@@ -260,6 +260,8 @@ export type OrgSessionCounts = {
 	pastCount: number;
 	/** Cancelled sessions whose duration has elapsed. */
 	pastCancelledCount: number;
+	/** Cancelled sessions that have not ended yet (upcoming or in progress). */
+	activeCancelledCount: number;
 	/** Live sessions with status "on". */
 	liveCount: number;
 };
@@ -274,7 +276,8 @@ export const getOrgSessionCounts = cache(
 			now.getTime() - MAX_EVENT_DURATION_MIN * 60_000,
 		).toISOString();
 
-		const [futureRes, inProgressRes, pastStartedRes] = await Promise.all([
+		const [futureRes, inProgressRes, pastStartedRes, activeCancelledRes] =
+			await Promise.all([
 			supabase
 				.from("events")
 				.select("id", { count: "exact", head: true })
@@ -293,6 +296,12 @@ export const getOrgSessionCounts = cache(
 				.select("starts_at, duration_min, status")
 				.eq("org_id", orgId)
 				.lt("starts_at", nowIso),
+			supabase
+				.from("events")
+				.select("starts_at, duration_min")
+				.eq("org_id", orgId)
+				.eq("status", "cancelled")
+				.gte("starts_at", lookbackIso),
 		]);
 
 		const inProgress = (inProgressRes.data ?? []).filter((event) =>
@@ -309,9 +318,19 @@ export const getOrgSessionCounts = cache(
 		const pastCancelledCount = pastEnded.filter(
 			(event) => event.status === "cancelled",
 		).length;
+		const activeCancelledCount = (activeCancelledRes.data ?? []).filter(
+			(event) => !isEventEnded(event, now),
+		).length;
 		const liveCount = inProgress.filter((event) => event.status === "on").length;
 
-		return { activeCount, upcomingCount, pastCount, pastCancelledCount, liveCount };
+		return {
+			activeCount,
+			upcomingCount,
+			pastCount,
+			pastCancelledCount,
+			activeCancelledCount,
+			liveCount,
+		};
 	},
 );
 

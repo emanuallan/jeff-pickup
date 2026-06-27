@@ -13,6 +13,8 @@ export type OrgConsoleNavCounts = {
   oneOffEventCount: number
   pastSessionCount: number
   pastCancelledSessionCount: number
+  /** Cancelled sessions that have not ended yet. */
+  activeCancelledSessionCount: number
   /** Live sessions with status "on". */
   liveSessionCount: number
   participantCount: number
@@ -59,6 +61,7 @@ export const getOrgConsoleNavCounts = cache(
       oneOffEventCount: oneOffEventRes.count ?? 0,
       pastSessionCount: sessionCounts.pastCount,
       pastCancelledSessionCount: sessionCounts.pastCancelledCount,
+      activeCancelledSessionCount: sessionCounts.activeCancelledCount,
       liveSessionCount: sessionCounts.liveCount,
       participantCount: participantRes.count ?? 0,
     }
