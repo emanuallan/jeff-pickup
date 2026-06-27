@@ -13,6 +13,8 @@ type Props = {
   accentText: string
   eventTitle: string
   eventWhen: string
+  locationLabel: string
+  locationMapsUrl: string | null
   children: ReactNode
 }
 
@@ -48,6 +50,8 @@ export function ReturningSignupModal({
   accentText,
   eventTitle,
   eventWhen,
+  locationLabel,
+  locationMapsUrl,
   children,
 }: Props) {
   const router = useRouter()
@@ -117,14 +121,36 @@ export function ReturningSignupModal({
                 {eventTitle}
               </h2>
               <p className="mt-1 text-sm text-zinc-400">{eventWhen}</p>
+              {locationMapsUrl ? (
+                <a
+                  href={locationMapsUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-1 block truncate text-sm text-zinc-400 transition-colors hover:text-zinc-200"
+                >
+                  {locationLabel}
+                </a>
+              ) : (
+                <p className="mt-1 truncate text-sm text-zinc-400">{locationLabel}</p>
+              )}
             </div>
 
             <div className="mt-8">
-              <p className="text-lg font-medium text-zinc-100">You in?</p>
-              <p className="mt-0.5 text-sm text-zinc-400">Let the group know.</p>
+              <p className="text-lg font-medium text-zinc-100">Can you make it? 👋</p>
+              <p className="mt-0.5 text-sm text-zinc-400">One tap lets the group know.</p>
             </div>
 
             <div className="mt-6 space-y-3">
+              <button
+                type="button"
+                disabled={loading !== null}
+                onClick={() => void handleJoin('maybe')}
+                className="flex w-full items-center justify-center gap-2 rounded-2xl bg-zinc-800 px-4 py-4 text-base font-semibold text-zinc-100 transition-colors hover:bg-zinc-700 disabled:opacity-50"
+              >
+                <MaybeIcon />
+                {loading === 'maybe' ? 'Saving…' : 'Maybe'}
+              </button>
+
               <button
                 type="button"
                 disabled={loading !== null}
@@ -138,16 +164,6 @@ export function ReturningSignupModal({
               >
                 <CheckIcon />
                 {loading === 'confirmed' ? 'Counting you in…' : "I'm in"}
-              </button>
-
-              <button
-                type="button"
-                disabled={loading !== null}
-                onClick={() => void handleJoin('maybe')}
-                className="flex w-full items-center justify-center gap-2 rounded-2xl bg-zinc-800 px-4 py-4 text-base font-semibold text-zinc-100 transition-colors hover:bg-zinc-700 disabled:opacity-50"
-              >
-                <MaybeIcon />
-                {loading === 'maybe' ? 'Saving…' : 'Maybe'}
               </button>
             </div>
 

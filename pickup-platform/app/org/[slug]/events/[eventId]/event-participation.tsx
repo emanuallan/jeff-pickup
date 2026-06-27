@@ -55,6 +55,10 @@ export async function EventParticipation({ slug, eventId, org, event }: Props) {
           mySignup={mySignup}
           eventTitle={eventName(event)}
           eventWhen={formatEventWhenLine(event)}
+          locationLabel={event.location_label}
+          locationMapsUrl={
+            event.location_is_online ? null : event.location_maps_url.trim() || null
+          }
         />
       ) : null}
 

@@ -30,6 +30,8 @@ type Props = {
   mySignup: MySignup | null
   eventTitle: string
   eventWhen: string
+  locationLabel: string
+  locationMapsUrl: string | null
 }
 
 const inputClass =
@@ -186,6 +188,8 @@ export function JoinSection(props: Props) {
         accentText={props.accentText}
         eventTitle={props.eventTitle}
         eventWhen={props.eventWhen}
+        locationLabel={props.locationLabel}
+        locationMapsUrl={props.locationMapsUrl}
       >
         <div className="space-y-3">
           <div>
