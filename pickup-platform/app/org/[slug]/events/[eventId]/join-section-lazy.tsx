@@ -24,7 +24,8 @@ const JoinSectionInner = dynamic(
 type Props = ComponentProps<typeof JoinSectionInner>
 
 export function JoinSectionLazy(props: Props) {
-  const isReturningPrompt = props.participant && !props.mySignup
+  const isReturningPrompt =
+    props.participant && !props.mySignup && props.returningSignupModalEnabled
 
   if (isReturningPrompt) {
     return <JoinSectionInner {...props} />

@@ -35,6 +35,21 @@ export async function EventRosterWithBadges({
 }: Props) {
   const participantIds = roster.map((e) => e.participant_id)
 
+  if (!org.settings.features.user_badges) {
+    return (
+      <RosterListLazy
+        entries={roster}
+        badgesByParticipantId={{}}
+        isOnline={isOnline}
+        mySignupId={mySignupId}
+        canLeave={canLeave}
+        orgSlug={orgSlug}
+        eventId={eventId}
+        accent={accent}
+      />
+    )
+  }
+
   const [engagementStats, leaderboardUnlocked, isInauguralSession] = await Promise.all([
     getParticipantEngagementStats(org.id, participantIds),
     isLeaderboardUnlocked(org.id),

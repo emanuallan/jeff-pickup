@@ -22,7 +22,7 @@ async function fetchPublicOrgBySlug(slug: string): Promise<Org | null> {
 
   const { data, error } = await supabase
     .from('orgs')
-    .select('id, slug, name, description, status, default_locale, branding')
+    .select('id, slug, name, description, status, default_locale, branding, settings')
     .eq('slug', slug)
     .eq('status', 'active')
     .maybeSingle()

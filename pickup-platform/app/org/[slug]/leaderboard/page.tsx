@@ -21,7 +21,7 @@ type Props = {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params
   const org = await getPublicOrgBySlug(slug)
-  if (!org || org.status !== 'active') {
+  if (!org || org.status !== 'active' || !org.settings.features.leaderboard) {
     return {}
   }
 
@@ -47,6 +47,10 @@ export default async function LeaderboardPage({ params }: Props) {
   const org = await getPublicOrgBySlug(slug)
 
   if (!org || org.status !== 'active') {
+    notFound()
+  }
+
+  if (!org.settings.features.leaderboard) {
     notFound()
   }
 

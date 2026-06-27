@@ -63,7 +63,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     })
   }
 
-  if (leaderboardUnlocked) {
+  if (leaderboardUnlocked && org.settings.features.leaderboard) {
     entries.push({
       url: `${base}/leaderboard`,
       changeFrequency: 'weekly',

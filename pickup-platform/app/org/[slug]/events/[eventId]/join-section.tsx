@@ -32,6 +32,7 @@ type Props = {
   eventWhen: string
   locationLabel: string
   locationMapsUrl: string | null
+  returningSignupModalEnabled: boolean
 }
 
 const inputClass =
@@ -179,87 +180,95 @@ export function JoinSection(props: Props) {
   }
 
   if (props.participant) {
-    return (
-      <ReturningSignupModal
-        orgSlug={props.orgSlug}
-        orgId={props.orgId}
-        eventId={props.eventId}
-        accent={props.accent}
-        accentText={props.accentText}
-        eventTitle={props.eventTitle}
-        eventWhen={props.eventWhen}
-        locationLabel={props.locationLabel}
-        locationMapsUrl={props.locationMapsUrl}
-      >
-        <div className="space-y-3">
-          <div>
-            <h2 className="text-lg font-semibold text-zinc-100">
-              Welcome back, {props.participant.display_name}
-            </h2>
-            <p className="mt-0.5 text-sm text-zinc-400">
-              {props.spotsLeft != null && props.spotsLeft <= 5
-                ? `Only ${props.spotsLeft} spot${props.spotsLeft === 1 ? '' : 's'} left — tap to lock yours in.`
-                : 'Tap below to lock in your spot.'}
-            </p>
-          </div>
+    const welcomeBack = (
+      <div className="space-y-3">
+        <div>
+          <h2 className="text-lg font-semibold text-zinc-100">
+            Welcome back, {props.participant.display_name}
+          </h2>
+          <p className="mt-0.5 text-sm text-zinc-400">
+            {props.spotsLeft != null && props.spotsLeft <= 5
+              ? `Only ${props.spotsLeft} spot${props.spotsLeft === 1 ? '' : 's'} left — tap to lock yours in.`
+              : 'Tap below to lock in your spot.'}
+          </p>
+        </div>
 
-          <label className="block">
-            <span className="text-xs text-zinc-500">Guests</span>
-            <input
-              type="number"
-              min={0}
-              max={20}
-              value={guestCount}
-              onChange={(e) => {
-                const n = Number.parseInt(e.target.value, 10)
-                setGuestCount(Number.isFinite(n) ? Math.max(0, Math.min(20, n)) : 0)
-              }}
-              className={inputClass}
-              style={{ '--tw-ring-color': props.accent } as React.CSSProperties}
-            />
-          </label>
+        <label className="block">
+          <span className="text-xs text-zinc-500">Guests</span>
+          <input
+            type="number"
+            min={0}
+            max={20}
+            value={guestCount}
+            onChange={(e) => {
+              const n = Number.parseInt(e.target.value, 10)
+              setGuestCount(Number.isFinite(n) ? Math.max(0, Math.min(20, n)) : 0)
+            }}
+            className={inputClass}
+            style={{ '--tw-ring-color': props.accent } as React.CSSProperties}
+          />
+        </label>
 
+        <button
+          type="button"
+          disabled={loading}
+          onClick={async () => {
+            setLoading(true)
+            setError(null)
+            const result = await quickJoinEvent(
+              props.orgSlug,
+              props.eventId,
+              props.orgId,
+              guestCount,
+            )
+            setLoading(false)
+            if (result.error) setError(result.error)
+            else void fireConfetti(props.accent)
+          }}
+          className="w-full rounded-xl px-4 py-3.5 text-sm font-semibold shadow-lg transition-opacity hover:opacity-90 disabled:opacity-50"
+          style={{
+            backgroundColor: props.accent,
+            color: props.accentText,
+            boxShadow: `0 10px 30px -12px ${props.accent}`,
+          }}
+        >
+          {loading ? 'Counting you in…' : `Count me in ${arrowRight}`}
+        </button>
+        <div className="text-right">
           <button
             type="button"
-            disabled={loading}
             onClick={async () => {
-              setLoading(true)
-              setError(null)
-              const result = await quickJoinEvent(
-                props.orgSlug,
-                props.eventId,
-                props.orgId,
-                guestCount,
-              )
-              setLoading(false)
-              if (result.error) setError(result.error)
-              else void fireConfetti(props.accent)
+              await clearParticipantSession(props.orgSlug, props.eventId)
+              router.refresh()
             }}
-            className="w-full rounded-xl px-4 py-3.5 text-sm font-semibold shadow-lg transition-opacity hover:opacity-90 disabled:opacity-50"
-            style={{
-              backgroundColor: props.accent,
-              color: props.accentText,
-              boxShadow: `0 10px 30px -12px ${props.accent}`,
-            }}
+            className="text-xs text-zinc-600 transition-colors hover:text-zinc-500"
           >
-            {loading ? 'Counting you in…' : `Count me in ${arrowRight}`}
+            Not you?
           </button>
-          <div className="text-right">
-            <button
-              type="button"
-              onClick={async () => {
-                await clearParticipantSession(props.orgSlug, props.eventId)
-                router.refresh()
-              }}
-              className="text-xs text-zinc-600 transition-colors hover:text-zinc-500"
-            >
-              Not you?
-            </button>
-          </div>
-          {error ? <p className="text-sm text-red-300">{error}</p> : null}
         </div>
-      </ReturningSignupModal>
+        {error ? <p className="text-sm text-red-300">{error}</p> : null}
+      </div>
     )
+
+    if (props.returningSignupModalEnabled) {
+      return (
+        <ReturningSignupModal
+          orgSlug={props.orgSlug}
+          orgId={props.orgId}
+          eventId={props.eventId}
+          accent={props.accent}
+          accentText={props.accentText}
+          eventTitle={props.eventTitle}
+          eventWhen={props.eventWhen}
+          locationLabel={props.locationLabel}
+          locationMapsUrl={props.locationMapsUrl}
+        >
+          {welcomeBack}
+        </ReturningSignupModal>
+      )
+    }
+
+    return welcomeBack
   }
 
   return (

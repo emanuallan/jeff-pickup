@@ -16,6 +16,7 @@ import { type EventStatus, initialEventStatus, getEventByRef, isEventEnded } fro
 import { getOrgForMember } from '@/lib/orgs'
 import { isValidSlug, normalizeSlug } from '@/lib/tenancy/reserved-slugs'
 import { MAX_ORG_LINKS, normalizeLinkUrl } from '@/lib/social-links'
+import type { OrgFeatures } from '@/lib/org-features'
 
 async function requireOrgAdmin(slug: string) {
   const org = await getOrgForMember(slug)
@@ -927,6 +928,33 @@ export async function updateOrgLinks(orgSlug: string, formData: FormData) {
 
   revalidatePath(`/console/${orgSlug}`)
   revalidatePath(`/console/${orgSlug}/branding`)
+  revalidatePath(`/org/${orgSlug}`)
+  return { ok: true }
+}
+
+export async function updateOrgFeatures(orgSlug: string, formData: FormData) {
+  const org = await requireOrgAdmin(orgSlug)
+  const supabase = await createClient()
+
+  const features: OrgFeatures = {
+    user_badges: formData.get('user_badges') === 'on',
+    leaderboard: formData.get('leaderboard') === 'on',
+    returning_signup_modal: formData.get('returning_signup_modal') === 'on',
+  }
+
+  const { error } = await supabase
+    .from('orgs')
+    .update({
+      settings: { ...org.settings, features },
+    })
+    .eq('id', org.id)
+
+  if (error) {
+    return { error: error.message }
+  }
+
+  revalidatePath(`/console/${orgSlug}`)
+  revalidatePath(`/console/${orgSlug}/settings`)
   revalidatePath(`/org/${orgSlug}`)
   return { ok: true }
 }

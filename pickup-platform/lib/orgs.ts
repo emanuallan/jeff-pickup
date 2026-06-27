@@ -2,6 +2,7 @@ import { cache } from 'react'
 import { getAuthUser } from '@/lib/auth'
 import { createClient } from '@/lib/supabase/server'
 import { MAX_ORG_LINKS } from '@/lib/social-links'
+import { parseOrgSettings, type OrgSettings } from '@/lib/org-features'
 
 export type Org = {
   id: string
@@ -15,6 +16,7 @@ export type Org = {
     accent_color: string
     links: string[]
   }
+  settings: OrgSettings
 }
 
 export function parseOrgRow(data: Record<string, unknown>): Org {
@@ -36,6 +38,7 @@ export function parseOrgRow(data: Record<string, unknown>): Org {
       accent_color: branding?.accent_color ?? '#2563eb',
       links,
     },
+    settings: parseOrgSettings(data.settings),
   }
 }
 
@@ -45,7 +48,7 @@ export const getOrgBySlug = cache(async (slug: string): Promise<Org | null> => {
 
   const { data, error } = await supabase
     .from('orgs')
-    .select('id, slug, name, description, status, default_locale, branding')
+    .select('id, slug, name, description, status, default_locale, branding, settings')
     .eq('slug', slug)
     .maybeSingle()
 
@@ -95,7 +98,7 @@ export async function getUserOrgs(): Promise<Org[]> {
 
   const { data: orgs, error: orgsError } = await supabase
     .from('orgs')
-    .select('id, slug, name, description, status, default_locale, branding')
+    .select('id, slug, name, description, status, default_locale, branding, settings')
     .in('id', orgIds)
 
   if (orgsError || !orgs) {

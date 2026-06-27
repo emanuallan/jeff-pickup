@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { getRootDomain } from '@/lib/tenancy/parse-host'
 import { MaterializeButton } from '../materialize-button'
 import { DeleteOrgSection } from '../delete-org-section'
+import { FeatureTogglesForm } from '../feature-toggles-form'
 import { ConsolePage, ConsoleHeader, ConsoleSection } from '../../_components/console-ui'
 
 type Props = {
@@ -42,6 +43,13 @@ export default async function OrgSettingsPage({ params }: Props) {
       />
 
       <div className="mt-8 space-y-6">
+        <ConsoleSection
+          title="Features"
+          description="Turn optional public features on or off for your group."
+        >
+          <FeatureTogglesForm orgSlug={orgSlug} features={org.settings.features} />
+        </ConsoleSection>
+
         <ConsoleSection
           title="Sessions"
           description="Upcoming sessions are created automatically from your recurring schedule. You shouldn't need this."

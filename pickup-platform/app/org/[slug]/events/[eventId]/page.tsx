@@ -226,7 +226,11 @@ export default async function EventPage({ params }: Props) {
 				accent={accent}
 				leaderboardSlot={
 					<Suspense fallback={null}>
-						<LeaderboardLinkDeferred orgId={org.id} accent={accent} />
+						<LeaderboardLinkDeferred
+							orgId={org.id}
+							accent={accent}
+							enabled={org.settings.features.leaderboard}
+						/>
 					</Suspense>
 				}
 			/>
