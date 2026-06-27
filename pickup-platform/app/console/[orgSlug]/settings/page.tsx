@@ -53,7 +53,7 @@ export default async function OrgSettingsPage({ params }: Props) {
 
         <ConsoleSection
           title="Sessions"
-          description="Upcoming sessions are created automatically from your recurring schedule. You shouldn't need this."
+          description="Sessions are normally generated automatically every day. Use this only if upcoming sessions look out of date. Safe to run again — duplicates are skipped."
         >
           <MaterializeButton orgSlug={orgSlug} />
         </ConsoleSection>
