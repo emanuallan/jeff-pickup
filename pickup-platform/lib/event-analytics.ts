@@ -107,13 +107,14 @@ const EMPTY_EVENT_ANALYTICS_DB: EventAnalyticsDb = {
 export async function fetchEventAnalyticsDb(eventId: string): Promise<EventAnalyticsDb> {
   const supabase = await createClient()
 
-  const { data, error } = await supabase.rpc('get_event_analytics', {
-    p_event_id: eventId,
-  })
+  const [{ data, error }, uniqueLeft] = await Promise.all([
+    supabase.rpc('get_event_analytics', { p_event_id: eventId }),
+    fetchNetUnregisteredCount(eventId),
+  ])
 
   if (error) {
     console.error('get_event_analytics RPC failed:', error.message)
-    return EMPTY_EVENT_ANALYTICS_DB
+    return { ...EMPTY_EVENT_ANALYTICS_DB, uniqueLeft }
   }
 
   const row = data as {
@@ -127,7 +128,7 @@ export async function fetchEventAnalyticsDb(eventId: string): Promise<EventAnaly
     pageViews: Number(row?.page_views ?? 0),
     uniqueVisitors: Number(row?.unique_visitors ?? 0),
     uniqueSignups: Number(row?.unique_signups ?? 0),
-    uniqueLeft: Number(row?.unique_left ?? 0),
+    uniqueLeft,
   }
 }
 
@@ -149,7 +150,41 @@ export type EventUnregisteredPerson = {
   leftAt: string
 }
 
-/** Distinct participants who unregistered — most recent leave first. */
+type SignupActivityRow = {
+  participant_id: string
+  action: string
+  created_at: string
+}
+
+/** Latest activity per participant must be "left" (excludes re-registrations). */
+function netUnregisteredActivityRows<T extends SignupActivityRow>(rows: T[]): T[] {
+  const latestByParticipant = new Map<string, T>()
+  for (const row of rows) {
+    if (!latestByParticipant.has(row.participant_id)) {
+      latestByParticipant.set(row.participant_id, row)
+    }
+  }
+  return [...latestByParticipant.values()].filter((row) => row.action === 'left')
+}
+
+async function fetchNetUnregisteredCount(eventId: string): Promise<number> {
+  const supabase = await createClient()
+
+  const { data, error } = await supabase
+    .from('event_signup_activity')
+    .select('participant_id, action, created_at')
+    .eq('event_id', eventId)
+    .order('created_at', { ascending: false })
+
+  if (error || !data) {
+    console.error('fetchNetUnregisteredCount failed:', error?.message)
+    return 0
+  }
+
+  return netUnregisteredActivityRows(data).length
+}
+
+/** Distinct participants who left and did not re-register — most recent leave first. */
 export async function getEventUnregisteredPeople(
   eventId: string,
 ): Promise<EventUnregisteredPerson[]> {
@@ -158,10 +193,9 @@ export async function getEventUnregisteredPeople(
   const { data, error } = await supabase
     .from('event_signup_activity')
     .select(
-      'participant_id, created_at, participants(first_name, last_name, phone, display_name)',
+      'participant_id, action, created_at, participants(first_name, last_name, phone, display_name)',
     )
     .eq('event_id', eventId)
-    .eq('action', 'left')
     .order('created_at', { ascending: false })
 
   if (error || !data) {
@@ -169,13 +203,7 @@ export async function getEventUnregisteredPeople(
     return []
   }
 
-  const seen = new Set<string>()
-  const people: EventUnregisteredPerson[] = []
-
-  for (const row of data) {
-    if (seen.has(row.participant_id)) continue
-    seen.add(row.participant_id)
-
+  const people: EventUnregisteredPerson[] = netUnregisteredActivityRows(data).map((row) => {
     const raw = row.participants
     const p = (Array.isArray(raw) ? raw[0] : raw) as {
       first_name: string
@@ -184,15 +212,16 @@ export async function getEventUnregisteredPeople(
       display_name: string
     } | null
 
-    people.push({
+    return {
       participantId: row.participant_id,
       displayName: p?.display_name ?? 'Unknown',
       firstName: p?.first_name ?? '',
       lastName: p?.last_name ?? '',
       phone: p?.phone ?? '',
       leftAt: row.created_at,
-    })
-  }
+    }
+  })
 
+  people.sort((a, b) => b.leftAt.localeCompare(a.leftAt))
   return people
 }

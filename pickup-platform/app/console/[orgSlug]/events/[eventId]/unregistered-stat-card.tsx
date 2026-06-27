@@ -42,7 +42,7 @@ function StatCardContent({
       <div className="tabular-nums text-2xl font-semibold text-zinc-50">{count}</div>
       <div className="text-xs font-medium text-zinc-400">Unregistered</div>
       <div className="text-[11px] text-zinc-600">
-        {interactive ? 'Tap to see who left' : 'Unique people who left'}
+        {interactive ? 'Tap to see who left' : "People who left and didn't return"}
       </div>
     </>
   )
@@ -121,7 +121,7 @@ export function UnregisteredStatCard({ orgSlug, eventId, count, timezone }: Prop
         <h2 id="unregistered-sheet-title" className="text-lg font-semibold text-zinc-50">
           Unregistered ({count})
         </h2>
-        <p className="mt-1 text-sm text-zinc-400">People who left this session.</p>
+        <p className="mt-1 text-sm text-zinc-400">People who left and didn&apos;t come back.</p>
 
         <div className="mt-4">
           {loading ? (
