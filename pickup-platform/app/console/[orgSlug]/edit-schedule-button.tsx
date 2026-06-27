@@ -1,10 +1,11 @@
 'use client'
 
-import { useEffect, useState, useTransition } from 'react'
+import { useState, useTransition } from 'react'
 import type { Location } from '@/lib/locations'
 import type { Schedule } from '@/lib/schedules'
 import { updateSchedule, type UpdateScheduleMode } from '../actions'
-import { chipAction, consoleModalBackdrop, consoleModalOverlay, consoleModalPanel } from '../_components/console-ui'
+import { chipAction } from '../_components/console-ui'
+import { BottomSheet } from '@/app/_components/bottom-sheet'
 import { ScheduleFormFields } from './schedule-form-fields'
 
 type Props = {
@@ -18,17 +19,6 @@ export function EditScheduleButton({ orgSlug, schedule, locations }: Props) {
   const [mode, setMode] = useState<UpdateScheduleMode | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [pending, startTransition] = useTransition()
-
-  useEffect(() => {
-    if (!open) return
-    function onKeyDown(e: KeyboardEvent) {
-      if (e.key === 'Escape' && !pending) {
-        closeModal()
-      }
-    }
-    window.addEventListener('keydown', onKeyDown)
-    return () => window.removeEventListener('keydown', onKeyDown)
-  }, [open, pending])
 
   function closeModal() {
     if (pending) return
@@ -62,29 +52,21 @@ export function EditScheduleButton({ orgSlug, schedule, locations }: Props) {
         Edit
       </button>
 
-      {open ? (
-        <div
-          className={consoleModalOverlay}
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="edit-schedule-title"
-        >
-          <button
-            type="button"
-            className={consoleModalBackdrop}
-            aria-label="Close"
-            onClick={closeModal}
-          />
-          <div className={consoleModalPanel}>
-            <h3 id="edit-schedule-title" className="text-lg font-semibold text-zinc-50">
-              Edit recurring schedule
-            </h3>
-            <p className="mt-2 text-sm text-zinc-400">
-              Update <span className="font-medium text-zinc-200">{schedule.title}</span>. Choose
-              whether changes apply to sessions already on your calendar.
-            </p>
+      <BottomSheet
+        open={open}
+        onClose={closeModal}
+        dismissDisabled={pending}
+        ariaLabelledby="edit-schedule-title"
+      >
+        <h3 id="edit-schedule-title" className="text-lg font-semibold text-zinc-50">
+          Edit recurring schedule
+        </h3>
+        <p className="mt-2 text-sm text-zinc-400">
+          Update <span className="font-medium text-zinc-200">{schedule.title}</span>. Choose
+          whether changes apply to sessions already on your calendar.
+        </p>
 
-            <form onSubmit={handleSubmit} className="mt-5 space-y-4">
+        <form onSubmit={handleSubmit} className="mt-5 space-y-4">
               <ScheduleFormFields
                 locations={locations}
                 schedule={schedule}
@@ -155,9 +137,7 @@ export function EditScheduleButton({ orgSlug, schedule, locations }: Props) {
                 </button>
               </div>
             </form>
-          </div>
-        </div>
-      ) : null}
+      </BottomSheet>
     </>
   )
 }

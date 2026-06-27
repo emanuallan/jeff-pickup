@@ -1,8 +1,9 @@
 'use client'
 
-import { useEffect, useState, useTransition } from 'react'
+import { useState, useTransition } from 'react'
 import { deleteOrg } from '../actions'
-import { consoleInput, chipAction, consoleModalBackdrop, consoleModalOverlay, consoleModalPanel } from '../_components/console-ui'
+import { consoleInput, chipAction } from '../_components/console-ui'
+import { BottomSheet } from '@/app/_components/bottom-sheet'
 import { normalizeSlug } from '@/lib/tenancy/reserved-slugs'
 
 type Props = {
@@ -17,19 +18,6 @@ export function DeleteOrgSection({ orgSlug, rootDomain }: Props) {
   const [pending, startTransition] = useTransition()
 
   const slugMatches = normalizeSlug(confirmSlug) === orgSlug
-
-  useEffect(() => {
-    if (!open) return
-    function onKeyDown(e: KeyboardEvent) {
-      if (e.key === 'Escape' && !pending) {
-        setOpen(false)
-        setConfirmSlug('')
-        setError(null)
-      }
-    }
-    window.addEventListener('keydown', onKeyDown)
-    return () => window.removeEventListener('keydown', onKeyDown)
-  }, [open, pending])
 
   function closeModal() {
     if (pending) return
@@ -62,23 +50,16 @@ export function DeleteOrgSection({ orgSlug, rootDomain }: Props) {
         Delete group
       </button>
 
-      {open ? (
-        <div
-          className={consoleModalOverlay}
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="delete-org-title"
-        >
-          <button
-            type="button"
-            className={consoleModalBackdrop}
-            aria-label="Close"
-            onClick={closeModal}
-          />
-          <div className={`${consoleModalPanel} max-w-md border-red-500/30`}>
-            <h3 id="delete-org-title" className="text-lg font-semibold text-zinc-50">
-              Delete this group?
-            </h3>
+      <BottomSheet
+        open={open}
+        onClose={closeModal}
+        dismissDisabled={pending}
+        ariaLabelledby="delete-org-title"
+        panelClassName="max-w-md border-red-500/30"
+      >
+        <h3 id="delete-org-title" className="text-lg font-semibold text-zinc-50">
+          Delete this group?
+        </h3>
             <p className="mt-3 text-sm leading-relaxed text-zinc-400">
               All session history and participant history will be erased permanently. The slug{' '}
               <span className="font-medium text-zinc-200">
@@ -125,9 +106,7 @@ export function DeleteOrgSection({ orgSlug, rootDomain }: Props) {
                 {pending ? 'Deleting…' : 'Delete permanently'}
               </button>
             </div>
-          </div>
-        </div>
-      ) : null}
+      </BottomSheet>
     </>
   )
 }

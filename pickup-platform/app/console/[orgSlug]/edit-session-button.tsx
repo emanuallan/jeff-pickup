@@ -1,16 +1,12 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import type { Location } from '@/lib/locations'
 import type { EventWithLocation } from '@/lib/events'
 import { sessionFormInitialFromEvent } from '@/lib/session-form-values'
 import { SessionForm } from './session-form'
-import {
-  chipAction,
-  consoleModalBackdrop,
-  consoleModalOverlay,
-  consoleModalPanel,
-} from '../_components/console-ui'
+import { chipAction } from '../_components/console-ui'
+import { BottomSheet } from '@/app/_components/bottom-sheet'
 
 export function EditSessionButton({
   orgSlug,
@@ -30,15 +26,6 @@ export function EditSessionButton({
   const [open, setOpen] = useState(false)
   const boundUpdate = updateSession.bind(null, orgSlug, event.short_id)
 
-  useEffect(() => {
-    if (!open) return
-    function onKeyDown(e: KeyboardEvent) {
-      if (e.key === 'Escape') setOpen(false)
-    }
-    window.addEventListener('keydown', onKeyDown)
-    return () => window.removeEventListener('keydown', onKeyDown)
-  }, [open])
-
   return (
     <>
       <button
@@ -49,43 +36,32 @@ export function EditSessionButton({
         Edit
       </button>
 
-      {open ? (
-        <div
-          className={consoleModalOverlay}
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="edit-session-title"
-        >
-          <button
-            type="button"
-            className={consoleModalBackdrop}
-            aria-label="Close"
-            onClick={() => setOpen(false)}
+      <BottomSheet
+        open={open}
+        onClose={() => setOpen(false)}
+        ariaLabelledby="edit-session-title"
+      >
+        <h2 id="edit-session-title" className="text-lg font-semibold text-zinc-50">
+          Edit session
+        </h2>
+        <p className="mt-1 text-sm text-zinc-400">
+          {event.schedule_id
+            ? 'Changes apply to this session only — your recurring schedule is unchanged.'
+            : 'Update this one-off session.'}
+        </p>
+        <div className="mt-5">
+          <SessionForm
+            key={event.id}
+            locations={locations}
+            initial={sessionFormInitialFromEvent(event)}
+            onSubmit={boundUpdate}
+            onSuccess={() => setOpen(false)}
+            submitLabel="Save changes"
+            pendingLabel="Saving…"
+            useBrowserTimezone={false}
           />
-          <div className={consoleModalPanel}>
-            <h2 id="edit-session-title" className="text-lg font-semibold text-zinc-50">
-              Edit session
-            </h2>
-            <p className="mt-1 text-sm text-zinc-400">
-              {event.schedule_id
-                ? 'Changes apply to this session only — your recurring schedule is unchanged.'
-                : 'Update this one-off session.'}
-            </p>
-            <div className="mt-5">
-              <SessionForm
-                key={event.id}
-                locations={locations}
-                initial={sessionFormInitialFromEvent(event)}
-                onSubmit={boundUpdate}
-                onSuccess={() => setOpen(false)}
-                submitLabel="Save changes"
-                pendingLabel="Saving…"
-                useBrowserTimezone={false}
-              />
-            </div>
-          </div>
         </div>
-      ) : null}
+      </BottomSheet>
     </>
   )
 }

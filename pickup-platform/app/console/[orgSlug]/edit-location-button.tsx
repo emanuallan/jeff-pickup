@@ -1,14 +1,10 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import type { Location } from '@/lib/locations'
 import { LocationForm } from './location-form'
-import {
-  chipAction,
-  consoleModalBackdrop,
-  consoleModalOverlay,
-  consoleModalPanel,
-} from '../_components/console-ui'
+import { chipAction } from '../_components/console-ui'
+import { BottomSheet } from '@/app/_components/bottom-sheet'
 
 type Props = {
   orgSlug: string
@@ -24,15 +20,6 @@ export function EditLocationButton({ orgSlug, location, updateLocation }: Props)
   const [open, setOpen] = useState(false)
   const boundUpdate = updateLocation.bind(null, orgSlug, location.id)
 
-  useEffect(() => {
-    if (!open) return
-    function onKeyDown(e: KeyboardEvent) {
-      if (e.key === 'Escape') setOpen(false)
-    }
-    window.addEventListener('keydown', onKeyDown)
-    return () => window.removeEventListener('keydown', onKeyDown)
-  }, [open])
-
   return (
     <>
       <button
@@ -43,39 +30,29 @@ export function EditLocationButton({ orgSlug, location, updateLocation }: Props)
         Edit
       </button>
 
-      {open ? (
-        <div
-          className={consoleModalOverlay}
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="edit-location-title"
-        >
-          <button
-            type="button"
-            className={consoleModalBackdrop}
-            aria-label="Close"
-            onClick={() => setOpen(false)}
+      <BottomSheet
+        open={open}
+        onClose={() => setOpen(false)}
+        ariaLabelledby="edit-location-title"
+        panelClassName="max-w-md"
+      >
+        <h2 id="edit-location-title" className="text-lg font-semibold text-zinc-50">
+          Edit location
+        </h2>
+        <p className="mt-1 text-sm text-zinc-400">
+          Updates apply to this location everywhere it&apos;s used.
+        </p>
+        <div className="mt-5">
+          <LocationForm
+            key={location.id}
+            location={location}
+            saveLocation={boundUpdate}
+            onSuccess={() => setOpen(false)}
+            submitLabel="Save changes"
+            pendingLabel="Saving…"
           />
-          <div className={`${consoleModalPanel} max-w-md`}>
-            <h2 id="edit-location-title" className="text-lg font-semibold text-zinc-50">
-              Edit location
-            </h2>
-            <p className="mt-1 text-sm text-zinc-400">
-              Updates apply to this location everywhere it&apos;s used.
-            </p>
-            <div className="mt-5">
-              <LocationForm
-                key={location.id}
-                location={location}
-                saveLocation={boundUpdate}
-                onSuccess={() => setOpen(false)}
-                submitLabel="Save changes"
-                pendingLabel="Saving…"
-              />
-            </div>
-          </div>
         </div>
-      ) : null}
+      </BottomSheet>
     </>
   )
 }

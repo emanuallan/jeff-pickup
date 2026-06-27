@@ -1,9 +1,10 @@
 'use client'
 
-import { useEffect, useState, useTransition } from 'react'
+import { useState, useTransition } from 'react'
 import { deleteSchedule, type DeleteScheduleMode } from '../actions'
 import type { ScheduleDeleteImpact } from '@/lib/schedules'
-import { chipAction, consoleModalBackdrop, consoleModalOverlay, consoleModalPanel } from '../_components/console-ui'
+import { chipAction } from '../_components/console-ui'
+import { BottomSheet } from '@/app/_components/bottom-sheet'
 
 type Props = {
   orgSlug: string
@@ -21,17 +22,6 @@ export function DeleteScheduleButton({ orgSlug, scheduleId, scheduleTitle, impac
 
   const needsSignupAck =
     mode === 'with_future_events' && impact.signupCount > 0
-
-  useEffect(() => {
-    if (!open) return
-    function onKeyDown(e: KeyboardEvent) {
-      if (e.key === 'Escape' && !pending) {
-        closeModal()
-      }
-    }
-    window.addEventListener('keydown', onKeyDown)
-    return () => window.removeEventListener('keydown', onKeyDown)
-  }, [open, pending])
 
   function openModal() {
     setMode('schedule_only')
@@ -74,23 +64,16 @@ export function DeleteScheduleButton({ orgSlug, scheduleId, scheduleTitle, impac
         Delete
       </button>
 
-      {open ? (
-        <div
-          className={consoleModalOverlay}
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="delete-schedule-title"
-        >
-          <button
-            type="button"
-            className={consoleModalBackdrop}
-            aria-label="Close"
-            onClick={closeModal}
-          />
-          <div className={`${consoleModalPanel} max-w-md border-red-500/30`}>
-            <h3 id="delete-schedule-title" className="text-lg font-semibold text-zinc-50">
-              Delete recurring schedule?
-            </h3>
+      <BottomSheet
+        open={open}
+        onClose={closeModal}
+        dismissDisabled={pending}
+        ariaLabelledby="delete-schedule-title"
+        panelClassName="max-w-md border-red-500/30"
+      >
+        <h3 id="delete-schedule-title" className="text-lg font-semibold text-zinc-50">
+          Delete recurring schedule?
+        </h3>
             <p className="mt-2 text-sm text-zinc-400">
               <span className="font-medium text-zinc-200">{scheduleTitle}</span> will stop
               generating new sessions. Choose what to do with sessions already on your calendar.
@@ -203,9 +186,7 @@ export function DeleteScheduleButton({ orgSlug, scheduleId, scheduleTitle, impac
                 {pending ? 'Deleting…' : 'Delete'}
               </button>
             </div>
-          </div>
-        </div>
-      ) : null}
+      </BottomSheet>
     </>
   )
 }

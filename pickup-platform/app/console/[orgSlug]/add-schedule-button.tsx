@@ -1,15 +1,11 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import type { Location } from '@/lib/locations'
 import { ScheduleForm } from './schedule-form'
-import {
-  btnAccent,
-  consoleModalBackdrop,
-  consoleModalOverlay,
-  consoleModalPanel,
-} from '../_components/console-ui'
+import { btnAccent } from '../_components/console-ui'
+import { BottomSheet } from '@/app/_components/bottom-sheet'
 
 export function AddScheduleButton({
   orgSlug,
@@ -26,15 +22,6 @@ export function AddScheduleButton({
   const [open, setOpen] = useState(false)
   const router = useRouter()
 
-  useEffect(() => {
-    if (!open) return
-    function onKeyDown(e: KeyboardEvent) {
-      if (e.key === 'Escape') setOpen(false)
-    }
-    window.addEventListener('keydown', onKeyDown)
-    return () => window.removeEventListener('keydown', onKeyDown)
-  }, [open])
-
   if (locations.length === 0) {
     return null
   }
@@ -45,40 +32,29 @@ export function AddScheduleButton({
         Add schedule
       </button>
 
-      {open ? (
-        <div
-          className={consoleModalOverlay}
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="add-schedule-title"
-        >
-          <button
-            type="button"
-            className={consoleModalBackdrop}
-            aria-label="Close"
-            onClick={() => setOpen(false)}
+      <BottomSheet
+        open={open}
+        onClose={() => setOpen(false)}
+        ariaLabelledby="add-schedule-title"
+      >
+        <h2 id="add-schedule-title" className="text-lg font-semibold text-zinc-50">
+          Add recurring schedule
+        </h2>
+        <p className="mt-1 text-sm text-zinc-400">
+          Pick the days and time — upcoming sessions are created automatically.
+        </p>
+        <div className="mt-5">
+          <ScheduleForm
+            orgSlug={orgSlug}
+            locations={locations}
+            createSchedule={createSchedule}
+            onSuccess={() => {
+              setOpen(false)
+              router.refresh()
+            }}
           />
-          <div className={consoleModalPanel}>
-            <h2 id="add-schedule-title" className="text-lg font-semibold text-zinc-50">
-              Add recurring schedule
-            </h2>
-            <p className="mt-1 text-sm text-zinc-400">
-              Pick the days and time — upcoming sessions are created automatically.
-            </p>
-            <div className="mt-5">
-              <ScheduleForm
-                orgSlug={orgSlug}
-                locations={locations}
-                createSchedule={createSchedule}
-                onSuccess={() => {
-                  setOpen(false)
-                  router.refresh()
-                }}
-              />
-            </div>
-          </div>
         </div>
-      ) : null}
+      </BottomSheet>
     </>
   )
 }
