@@ -28,7 +28,19 @@ export default async function ParticipantHistoryPage({ params }: Props) {
       />
 
       <div className="mt-8">
-        <ConsoleSection title={`Participants (${participants.length})`}>
+        <ConsoleSection
+          title={`Participants (${participants.length})`}
+          action={
+            participants.length > 0 ? (
+              <a
+                href={`/api/console/${orgSlug}/participants`}
+                className="text-xs font-medium text-indigo-300 hover:text-indigo-200"
+              >
+                Export CSV
+              </a>
+            ) : undefined
+          }
+        >
           {participants.length === 0 ? (
             <p className="text-sm text-zinc-500">
               No participants yet. They&apos;ll appear here after someone joins a session.
