@@ -12,6 +12,12 @@ import {
 const DISMISS_THRESHOLD = 72
 const SHEET_EASING = 'cubic-bezier(0.32, 0.72, 0, 1)'
 
+function initialSwipeEnabled(variant: 'console' | 'fixed' | 'top') {
+  if (variant === 'fixed' || variant === 'top') return true
+  if (typeof window === 'undefined') return false
+  return window.matchMedia('(max-width: 639px)').matches
+}
+
 type Props = {
   open: boolean
   onClose: () => void
@@ -66,7 +72,7 @@ export function BottomSheet({
   const dragUp = variant === 'top'
   const [dragOffset, setDragOffset] = useState(0)
   const [isDragging, setIsDragging] = useState(false)
-  const [swipeEnabled, setSwipeEnabled] = useState(variant === 'fixed' || variant === 'top')
+  const [swipeEnabled, setSwipeEnabled] = useState(() => initialSwipeEnabled(variant))
   const dragStartY = useRef<number | null>(null)
   const dragOffsetRef = useRef(0)
 
@@ -177,9 +183,11 @@ export function BottomSheet({
     dragOffset === 0 && !isDragging
       ? variant === 'top'
         ? `notification-sheet-in 220ms ease-out`
-        : variant === 'fixed'
+        : variant === 'fixed' || (variant === 'console' && swipeEnabled)
           ? `bottom-sheet-in 280ms ${SHEET_EASING}`
-          : undefined
+          : variant === 'console'
+            ? `dialog-in 200ms ${SHEET_EASING}`
+            : undefined
       : undefined
 
   const dragStyle: CSSProperties = {
