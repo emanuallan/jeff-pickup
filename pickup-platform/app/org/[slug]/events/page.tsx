@@ -111,7 +111,7 @@ export default async function EventsPage({ params }: Props) {
 
       {events.length > 0 ? (
         <>
-          <div className="mt-8">
+          <div className="mt-8 mb-3">
             <PageHelpHint message="Tap a session to open it and join the roster." />
           </div>
 

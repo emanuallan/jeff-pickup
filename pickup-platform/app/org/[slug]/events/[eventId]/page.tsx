@@ -133,16 +133,18 @@ export default async function EventPage({ params }: Props) {
 				logoPriority
 			/>
 
-			{nextActiveSession ? (
-				<ViewNextSessionLink
-					href={`/events/${nextActiveSession.short_id}`}
-					accent={accent}
-					className="mt-6 mb-1"
-				/>
-			) : null}
-
-			<section className={nextActiveSession ? "mt-2" : "mt-8"}>
-				<PageHelpHint message={helpMessage} />
+			<section className={nextActiveSession ? "mt-6" : "mt-8"}>
+				<div className="mb-3 flex items-center justify-between gap-3">
+					<PageHelpHint message={helpMessage} fullWidth={false} className="min-w-0" />
+					{nextActiveSession ? (
+						<ViewNextSessionLink
+							href={`/events/${nextActiveSession.short_id}`}
+							accent={accent}
+							inline
+							className="shrink-0"
+						/>
+					) : null}
+				</div>
 				<div className="overflow-hidden rounded-3xl border border-zinc-800 bg-linear-to-b from-zinc-900 to-zinc-950 p-6">
 					<div className="flex items-center justify-between gap-3">
 						<EventTimingBadge

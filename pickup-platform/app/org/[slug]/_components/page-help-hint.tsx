@@ -4,20 +4,23 @@ import { useState } from 'react'
 
 type Props = {
   message: string
+  /** When false, the control sizes to its label (for use in a horizontal toolbar row). */
+  fullWidth?: boolean
+  className?: string
 }
 
-const hintClass =
-  'm-0 block w-full px-1 text-left text-xs leading-4 text-zinc-500'
+const hintBaseClass = 'm-0 block px-1 text-left text-xs leading-4 text-zinc-500'
 
 /**
  * Left-aligned Help control that reveals contextual copy.
  * Button and message share identical typography so toggling does not shift layout.
  */
-export function PageHelpHint({ message }: Props) {
+export function PageHelpHint({ message, fullWidth = true, className = '' }: Props) {
   const [open, setOpen] = useState(false)
+  const hintClass = fullWidth ? `${hintBaseClass} w-full` : hintBaseClass
 
   return (
-    <div className="mb-3">
+    <div className={className}>
       {open ? (
         <p className={hintClass}>{message}</p>
       ) : (

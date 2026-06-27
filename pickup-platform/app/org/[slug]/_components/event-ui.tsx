@@ -205,20 +205,31 @@ export function ViewNextSessionLink({
   href,
   accent,
   className = 'mt-6',
+  inline = false,
 }: {
   href: string
   accent: string
   className?: string
+  /** When true, omit the right-align wrapper (for use in a shared toolbar row). */
+  inline?: boolean
 }) {
+  const link = (
+    <Link
+      href={href}
+      className="inline-flex items-center gap-1 text-sm font-medium transition-opacity hover:opacity-80"
+      style={{ color: accentOnDark(accent) }}
+    >
+      View next session {arrowRight}
+    </Link>
+  )
+
+  if (inline) {
+    return <div className={className}>{link}</div>
+  }
+
   return (
     <div className={`flex justify-end ${className}`}>
-      <Link
-        href={href}
-        className="inline-flex items-center gap-1 text-sm font-medium transition-opacity hover:opacity-80"
-        style={{ color: accentOnDark(accent) }}
-      >
-        View next session {arrowRight}
-      </Link>
+      {link}
     </div>
   )
 }
