@@ -2,6 +2,7 @@ import Link from 'next/link'
 import {
   formatEventTime,
   eventDisplayName,
+  isEventInProgress,
   type EventWithLocation,
 } from '@/lib/events'
 import type { Location } from '@/lib/locations'
@@ -26,13 +27,24 @@ export function SessionEventCard({
   locations: Location[]
   past?: boolean
 }) {
+  const isLive = !past && isEventInProgress(event) && event.status === 'on'
+
   return (
     <ConsoleCard className="min-w-0 text-sm">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
         <div className="min-w-0">
           <div className="font-medium text-zinc-100">{formatEventTime(event)}</div>
-          <div className="mt-0.5 text-xs text-zinc-500">
-            {eventDisplayName(event.title, sessionFallback)} · {event.location_label}
+          <div className="mt-0.5 flex items-center gap-1.5 text-xs text-zinc-500">
+            {isLive ? (
+              <span
+                className="h-2 w-2 shrink-0 rounded-full bg-red-500 ring-2 ring-red-500/25"
+                aria-hidden
+              />
+            ) : null}
+            <span>
+              {eventDisplayName(event.title, sessionFallback)} · {event.location_label}
+            </span>
+            {isLive ? <span className="sr-only"> — live</span> : null}
           </div>
         </div>
         <EventStatusSelect orgSlug={orgSlug} eventId={event.short_id} status={event.status} />
