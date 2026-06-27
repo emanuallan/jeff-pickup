@@ -258,7 +258,6 @@ export function JoinSection(props: Props) {
           eventId={props.eventId}
           accent={props.accent}
           accentText={props.accentText}
-          displayName={props.participant.display_name}
           eventTitle={props.eventTitle}
           eventWhen={props.eventWhen}
           locationLabel={props.locationLabel}
