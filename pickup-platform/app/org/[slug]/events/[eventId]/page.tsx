@@ -7,6 +7,7 @@ import {
 	getPublicNextActiveUpcomingEvent,
 } from "@/lib/public-data";
 import { formatEventTime, isEventInProgress, isEventEnded } from "@/lib/events";
+import { orgFeatures } from "@/lib/org-features";
 import { buildOrgMetadata } from "@/lib/og-metadata";
 import { buildEventJsonLd } from "@/lib/seo";
 import { JsonLd } from "@/app/_components/json-ld";
@@ -229,7 +230,7 @@ export default async function EventPage({ params }: Props) {
 						<LeaderboardLinkDeferred
 							orgId={org.id}
 							accent={accent}
-							enabled={org.settings.features.leaderboard}
+							enabled={orgFeatures(org).leaderboard}
 						/>
 					</Suspense>
 				}

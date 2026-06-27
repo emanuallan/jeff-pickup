@@ -31,6 +31,15 @@ export function parseOrgSettings(raw: unknown): OrgSettings {
   }
 }
 
+/** Safe accessor — handles stale cached org rows missing settings. */
+export function orgSettings(org: { settings?: OrgSettings | null }): OrgSettings {
+  return org.settings ?? DEFAULT_ORG_SETTINGS
+}
+
+export function orgFeatures(org: { settings?: OrgSettings | null }): OrgFeatures {
+  return orgSettings(org).features
+}
+
 export type OrgFeatureDefinition = {
   key: keyof OrgFeatures
   label: string

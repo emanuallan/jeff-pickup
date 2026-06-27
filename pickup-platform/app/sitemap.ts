@@ -3,6 +3,7 @@ import { headers } from 'next/headers'
 import { getPublicUpcomingEventsForOrg, getPublicOrgBySlug, getPublicOrgPastSessionCount } from '@/lib/public-data'
 import { LEADERBOARD_MIN_SESSIONS } from '@/lib/engagement'
 import { getActivePublicOrgSlugs } from '@/lib/orgs'
+import { orgFeatures } from '@/lib/org-features'
 import { orgBaseUrl, rootBaseUrl } from '@/lib/og-metadata'
 import { parseOrgSlugFromHost } from '@/lib/tenancy/parse-host'
 
@@ -63,7 +64,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     })
   }
 
-  if (leaderboardUnlocked && org.settings.features.leaderboard) {
+  if (leaderboardUnlocked && orgFeatures(org).leaderboard) {
     entries.push({
       url: `${base}/leaderboard`,
       changeFrequency: 'weekly',

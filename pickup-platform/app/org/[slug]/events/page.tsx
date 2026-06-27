@@ -20,6 +20,7 @@ import { OrgPageShell, OrgPageFooter } from '../_components/org-page-shell'
 import { ShareButton } from '../share-button-lazy'
 import { arrowRight } from '@/lib/text-arrows'
 import { accentOnDark } from '@/lib/colors'
+import { orgFeatures } from '@/lib/org-features'
 import { MoreSessions } from './more-sessions'
 import {
   FeaturedEventHeadcount,
@@ -225,7 +226,7 @@ export default async function EventsPage({ params }: Props) {
             <LeaderboardLinkDeferred
               orgId={org.id}
               accent={accent}
-              enabled={org.settings.features.leaderboard}
+              enabled={orgFeatures(org).leaderboard}
             />
           </Suspense>
         }

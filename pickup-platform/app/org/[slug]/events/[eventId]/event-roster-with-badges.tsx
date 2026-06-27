@@ -7,6 +7,7 @@ import {
   isOrgInauguralSession,
 } from '@/lib/engagement'
 import { buildRosterBadgeMap } from '@/lib/badges'
+import { orgFeatures } from '@/lib/org-features'
 import { RosterListLazy } from './roster-list-lazy'
 
 type Props = {
@@ -35,7 +36,7 @@ export async function EventRosterWithBadges({
 }: Props) {
   const participantIds = roster.map((e) => e.participant_id)
 
-  if (!org.settings.features.user_badges) {
+  if (!orgFeatures(org).user_badges) {
     return (
       <RosterListLazy
         entries={roster}

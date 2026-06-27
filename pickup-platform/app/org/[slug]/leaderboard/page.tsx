@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { getPublicOrgBySlug } from '@/lib/public-data'
 import { getOrgCapsLeaderboard, getOrgStreakLeaderboard } from '@/lib/engagement'
+import { orgFeatures } from '@/lib/org-features'
 import { accentOnDark } from '@/lib/colors'
 import { buildOrgMetadata } from '@/lib/og-metadata'
 import { OrgHeader } from '../_components/org-header'
@@ -21,7 +22,7 @@ type Props = {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params
   const org = await getPublicOrgBySlug(slug)
-  if (!org || org.status !== 'active' || !org.settings.features.leaderboard) {
+  if (!org || org.status !== 'active' || !orgFeatures(org).leaderboard) {
     return {}
   }
 
@@ -50,7 +51,7 @@ export default async function LeaderboardPage({ params }: Props) {
     notFound()
   }
 
-  if (!org.settings.features.leaderboard) {
+  if (!orgFeatures(org).leaderboard) {
     notFound()
   }
 

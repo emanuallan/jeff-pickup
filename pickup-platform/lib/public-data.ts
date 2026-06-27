@@ -37,7 +37,7 @@ async function fetchPublicOrgBySlug(slug: string): Promise<Org | null> {
 /** Active org by slug — cookie-less client + cross-request cache for public pages. */
 export const getPublicOrgBySlug = cache(async (slug: string): Promise<Org | null> => {
   return withPublicCache(
-    ['public-org', slug],
+    ['public-org-v2', slug],
     PUBLIC_ORG_REVALIDATE,
     [`org:${slug}`],
     () => fetchPublicOrgBySlug(slug),
@@ -107,7 +107,7 @@ async function fetchPublicOrgAndEvent(
 export const getPublicOrgAndEvent = cache(
   async (slug: string, eventRef: string): Promise<PublicOrgAndEvent | null> => {
     return withPublicCache(
-      ['public-org-event', slug, eventRef],
+      ['public-org-event-v2', slug, eventRef],
       PUBLIC_EVENTS_REVALIDATE,
       [`org:${slug}`, `event:${slug}:${eventRef}`],
       () => fetchPublicOrgAndEvent(slug, eventRef),

@@ -16,7 +16,7 @@ import { type EventStatus, initialEventStatus, getEventByRef, isEventEnded } fro
 import { getOrgForMember } from '@/lib/orgs'
 import { isValidSlug, normalizeSlug } from '@/lib/tenancy/reserved-slugs'
 import { MAX_ORG_LINKS, normalizeLinkUrl } from '@/lib/social-links'
-import type { OrgFeatures } from '@/lib/org-features'
+import { orgSettings, type OrgFeatures } from '@/lib/org-features'
 
 async function requireOrgAdmin(slug: string) {
   const org = await getOrgForMember(slug)
@@ -945,7 +945,7 @@ export async function updateOrgFeatures(orgSlug: string, formData: FormData) {
   const { error } = await supabase
     .from('orgs')
     .update({
-      settings: { ...org.settings, features },
+      settings: { ...orgSettings(org), features },
     })
     .eq('id', org.id)
 

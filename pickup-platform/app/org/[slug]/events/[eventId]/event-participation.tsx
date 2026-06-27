@@ -12,6 +12,7 @@ import { RosterListFallback } from './roster-list-fallback'
 import { SignedInControlsLazy } from './signed-in-controls-lazy'
 import { CancelledCallout, isEventCancelled, eventName } from '../../_components/event-ui'
 import { formatEventWhenLine } from '@/lib/events'
+import { orgFeatures } from '@/lib/org-features'
 
 type Props = {
   slug: string
@@ -59,7 +60,7 @@ export async function EventParticipation({ slug, eventId, org, event }: Props) {
           locationMapsUrl={
             event.location_is_online ? null : event.location_maps_url.trim() || null
           }
-          returningSignupModalEnabled={org.settings.features.returning_signup_modal}
+          returningSignupModalEnabled={orgFeatures(org).returning_signup_modal}
         />
       ) : null}
 

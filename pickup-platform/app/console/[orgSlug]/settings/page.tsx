@@ -5,6 +5,7 @@ import { getRootDomain } from '@/lib/tenancy/parse-host'
 import { MaterializeButton } from '../materialize-button'
 import { DeleteOrgSection } from '../delete-org-section'
 import { FeatureTogglesForm } from '../feature-toggles-form'
+import { orgFeatures } from '@/lib/org-features'
 import { ConsolePage, ConsoleHeader, ConsoleSection } from '../../_components/console-ui'
 
 type Props = {
@@ -47,7 +48,7 @@ export default async function OrgSettingsPage({ params }: Props) {
           title="Features"
           description="Turn optional public features on or off for your group."
         >
-          <FeatureTogglesForm orgSlug={orgSlug} features={org.settings.features} />
+          <FeatureTogglesForm orgSlug={orgSlug} features={orgFeatures(org)} />
         </ConsoleSection>
 
         <ConsoleSection
