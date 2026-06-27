@@ -123,6 +123,15 @@ export function ReturningSignupModal({
     return () => document.removeEventListener('keydown', onKeyDown)
   }, [dismiss, open])
 
+  useEffect(() => {
+    if (!open) return
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = prev
+    }
+  }, [open])
+
   async function handleJoin(status: 'confirmed' | 'maybe') {
     markSeen()
     setLoading(status)
@@ -141,34 +150,27 @@ export function ReturningSignupModal({
   return (
     <>
       {open ? (
-        <div className="fixed inset-0 z-50 flex items-end justify-center p-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:items-center sm:pb-4">
+        <div className="fixed inset-0 z-50">
           <button
             type="button"
             aria-label="Dismiss"
-            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-[backdrop-in_200ms_ease-out]"
             onClick={dismiss}
           />
           <div
             role="dialog"
             aria-modal="true"
             aria-labelledby="returning-signup-title"
-            className="relative w-full max-w-sm overflow-hidden rounded-3xl border border-zinc-800 bg-linear-to-b from-zinc-900 to-zinc-950 p-6 shadow-2xl"
+            className="absolute inset-x-0 bottom-0 mx-auto w-full max-w-lg overflow-hidden rounded-t-3xl border border-b-0 border-zinc-800 bg-linear-to-b from-zinc-900 to-zinc-950 px-5 pt-3 shadow-2xl animate-[bottom-sheet-in_280ms_cubic-bezier(0.32,0.72,0,1)] pb-[max(1.25rem,env(safe-area-inset-bottom))]"
             style={{
-              boxShadow: `0 25px 50px -12px rgba(0, 0, 0, 0.55), 0 0 0 1px ${hexToRgba(accent, 0.12)}`,
+              boxShadow: `0 -8px 40px -8px rgba(0, 0, 0, 0.5), inset 0 1px 0 0 ${hexToRgba(accent, 0.2)}`,
             }}
           >
-            <button
-              type="button"
-              aria-label="Close"
-              onClick={dismiss}
-              className="absolute right-4 top-4 rounded-lg p-1.5 text-zinc-500 transition-colors hover:bg-white/5 hover:text-zinc-300"
-            >
-              <svg aria-hidden className="size-5" viewBox="0 0 20 20" fill="currentColor">
-                <path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z" />
-              </svg>
-            </button>
+            <div className="flex justify-center pb-1 pt-1">
+              <div className="h-1 w-10 rounded-full bg-zinc-700" aria-hidden />
+            </div>
 
-            <div className="pr-8">
+            <div className="pt-2">
               <h2
                 id="returning-signup-title"
                 className="text-lg font-semibold tracking-tight text-zinc-50"
@@ -195,7 +197,7 @@ export function ReturningSignupModal({
               </div>
             </div>
 
-            <div className="mt-6 border-t border-zinc-800 pt-6">
+            <div className="mt-5 border-t border-zinc-800 pt-5">
               <p
                 className="text-2xl font-semibold tracking-tight"
                 style={{ color: accentOnDark(accent) }}
@@ -233,6 +235,14 @@ export function ReturningSignupModal({
             </div>
 
             {error ? <p className="mt-4 text-sm text-red-300">{error}</p> : null}
+
+            <button
+              type="button"
+              onClick={dismiss}
+              className="mt-4 flex min-h-10 w-full items-center justify-center text-sm font-medium text-zinc-500 transition-colors hover:text-zinc-300"
+            >
+              Not now
+            </button>
           </div>
         </div>
       ) : null}
