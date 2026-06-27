@@ -1,6 +1,7 @@
 import { cache } from 'react'
 import { createClient } from '@/lib/supabase/server'
 import type { EngagementStats } from '@/lib/badges'
+import { getOrgSessionCounts } from '@/lib/events'
 
 export type CapsLeaderboardRow = {
   participant_id: string
@@ -21,20 +22,10 @@ export const LEADERBOARD_MIN_SESSIONS = 3
 /** Minimum consecutive weeks to appear on the public streak leaderboard. */
 export const LEADERBOARD_MIN_STREAK_WEEKS = 2
 
-/** Count of an org's past, non-cancelled sessions (i.e. sessions that have happened). */
+/** Count of an org's past, non-cancelled sessions (i.e. sessions that have ended). */
 export const getOrgPastSessionCount = cache(async (orgId: string): Promise<number> => {
-  const supabase = await createClient()
-  const now = new Date().toISOString()
-
-  const { count, error } = await supabase
-    .from('events')
-    .select('id', { count: 'exact', head: true })
-    .eq('org_id', orgId)
-    .neq('status', 'cancelled')
-    .lt('starts_at', now)
-
-  if (error || count == null) return 0
-  return count
+  const counts = await getOrgSessionCounts(orgId)
+  return counts.pastCount
 })
 
 /**

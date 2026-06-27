@@ -1,15 +1,17 @@
 import { cache } from 'react'
 import { createClient } from '@/lib/supabase/server'
-import { getOrgPastSessionCount } from '@/lib/engagement'
+import { getOrgSessionCounts } from '@/lib/events'
 
 export type OrgConsoleNavCounts = {
   locationCount: number
   scheduleCount: number
-  upcomingCount: number
-  upcomingActiveCount: number
+  /** Non-cancelled sessions that have not ended yet (live + upcoming). */
+  activeSessionCount: number
   /** Non-cancelled one-off sessions (schedule_id is null). */
   oneOffEventCount: number
   pastSessionCount: number
+  /** Live sessions with status "on". */
+  liveSessionCount: number
   participantCount: number
 }
 
@@ -17,15 +19,12 @@ export type OrgConsoleNavCounts = {
 export const getOrgConsoleNavCounts = cache(
   async (orgId: string): Promise<OrgConsoleNavCounts> => {
     const supabase = await createClient()
-    const nowIso = new Date().toISOString()
 
     const [
       locationRes,
       scheduleRes,
-      upcomingRes,
-      upcomingActiveRes,
       oneOffEventRes,
-      pastSessionCount,
+      sessionCounts,
       participantRes,
     ] = await Promise.all([
       supabase
@@ -40,20 +39,9 @@ export const getOrgConsoleNavCounts = cache(
         .from('events')
         .select('id', { count: 'exact', head: true })
         .eq('org_id', orgId)
-        .gte('starts_at', nowIso),
-      supabase
-        .from('events')
-        .select('id', { count: 'exact', head: true })
-        .eq('org_id', orgId)
-        .gte('starts_at', nowIso)
-        .neq('status', 'cancelled'),
-      supabase
-        .from('events')
-        .select('id', { count: 'exact', head: true })
-        .eq('org_id', orgId)
         .is('schedule_id', null)
         .neq('status', 'cancelled'),
-      getOrgPastSessionCount(orgId),
+      getOrgSessionCounts(orgId),
       supabase
         .from('participants')
         .select('id', { count: 'exact', head: true })
@@ -63,10 +51,10 @@ export const getOrgConsoleNavCounts = cache(
     return {
       locationCount: locationRes.count ?? 0,
       scheduleCount: scheduleRes.count ?? 0,
-      upcomingCount: upcomingRes.count ?? 0,
-      upcomingActiveCount: upcomingActiveRes.count ?? 0,
+      activeSessionCount: sessionCounts.activeCount,
       oneOffEventCount: oneOffEventRes.count ?? 0,
-      pastSessionCount,
+      pastSessionCount: sessionCounts.pastCount,
+      liveSessionCount: sessionCounts.liveCount,
       participantCount: participantRes.count ?? 0,
     }
   },

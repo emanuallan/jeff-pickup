@@ -234,6 +234,7 @@ export function ConsoleNavTile({
   badge,
   external,
   disabled,
+  live,
 }: {
   href: string
   title: string
@@ -241,11 +242,21 @@ export function ConsoleNavTile({
   badge?: string | number
   external?: boolean
   disabled?: boolean
+  live?: boolean
 }) {
   const content = (
     <>
       <div className="flex h-10 w-10 items-center justify-center text-indigo-300">{icon}</div>
-      <div className="mt-2 text-sm font-medium leading-tight text-zinc-100">{title}</div>
+      <div className="mt-2 flex items-center justify-center gap-1.5">
+        {live ? (
+          <span
+            className="h-2 w-2 shrink-0 rounded-full bg-red-500 ring-2 ring-red-500/25"
+            aria-hidden
+          />
+        ) : null}
+        <span className="text-sm font-medium leading-tight text-zinc-100">{title}</span>
+        {live ? <span className="sr-only"> — live session</span> : null}
+      </div>
       {badge != null && badge !== '' ? (
         <div className="mt-1 text-xs text-zinc-500">{badge}</div>
       ) : null}

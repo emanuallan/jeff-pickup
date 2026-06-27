@@ -85,7 +85,8 @@ export default async function OrgConsolePage({ params }: Props) {
             href={`${base}/sessions`}
             title="Sessions"
             icon={<IconSessions />}
-            badge={formatCount(counts.upcomingCount, 'upcoming')}
+            badge={formatCount(counts.activeSessionCount, 'upcoming')}
+            live={counts.liveSessionCount > 0}
             disabled={!isSetup}
           />
           <ConsoleNavTile

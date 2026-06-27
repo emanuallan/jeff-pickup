@@ -251,6 +251,60 @@ export async function getPastEventsForConsole(
 		.slice(0, limit);
 }
 
+export type OrgSessionCounts = {
+	/** Non-cancelled sessions that have not ended yet (live + upcoming). */
+	activeCount: number;
+	/** Non-cancelled sessions whose duration has elapsed. */
+	pastCount: number;
+	/** Live sessions with status "on". */
+	liveCount: number;
+};
+
+/** Console nav counts — sessions are active until duration ends, not when they start. */
+export const getOrgSessionCounts = cache(
+	async (orgId: string): Promise<OrgSessionCounts> => {
+		const supabase = await createClient();
+		const now = new Date();
+		const nowIso = now.toISOString();
+		const lookbackIso = new Date(
+			now.getTime() - MAX_EVENT_DURATION_MIN * 60_000,
+		).toISOString();
+
+		const [futureRes, inProgressRes, pastStartedRes] = await Promise.all([
+			supabase
+				.from("events")
+				.select("id", { count: "exact", head: true })
+				.eq("org_id", orgId)
+				.neq("status", "cancelled")
+				.gte("starts_at", nowIso),
+			supabase
+				.from("events")
+				.select("starts_at, duration_min, status")
+				.eq("org_id", orgId)
+				.neq("status", "cancelled")
+				.gte("starts_at", lookbackIso)
+				.lt("starts_at", nowIso),
+			supabase
+				.from("events")
+				.select("starts_at, duration_min")
+				.eq("org_id", orgId)
+				.neq("status", "cancelled")
+				.lt("starts_at", nowIso),
+		]);
+
+		const inProgress = (inProgressRes.data ?? []).filter((event) =>
+			isEventInProgress(event, now),
+		);
+		const activeCount = (futureRes.count ?? 0) + inProgress.length;
+		const pastCount = (pastStartedRes.data ?? []).filter((event) =>
+			isEventEnded(event, now),
+		).length;
+		const liveCount = inProgress.filter((event) => event.status === "on").length;
+
+		return { activeCount, pastCount, liveCount };
+	},
+);
+
 async function fetchActiveEventsForOrg(
 	orgId: string,
 	options: { limit: number; includeCancelled?: boolean },
