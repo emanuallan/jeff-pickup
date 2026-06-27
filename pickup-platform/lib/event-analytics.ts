@@ -225,3 +225,104 @@ export async function getEventUnregisteredPeople(
   people.sort((a, b) => b.leftAt.localeCompare(a.leftAt))
   return people
 }
+
+export type EventKnownVisitor = {
+  participantId: string
+  displayName: string
+  firstName: string
+  lastName: string
+  phone: string
+  viewCount: number
+}
+
+export type EventGuestVisitors = {
+  visitorCount: number
+  viewCount: number
+}
+
+export type EventUniqueVisitorsBreakdown = {
+  known: EventKnownVisitor[]
+  guests: EventGuestVisitors
+}
+
+/** Per-person view counts for known participants; anonymous visitors rolled into guests. */
+export async function getEventUniqueVisitorsBreakdown(
+  eventId: string,
+): Promise<EventUniqueVisitorsBreakdown> {
+  const supabase = await createClient()
+
+  const { data, error } = await supabase
+    .from('event_page_views')
+    .select(
+      'viewer_key, participant_id, participants(first_name, last_name, phone, display_name)',
+    )
+    .eq('event_id', eventId)
+
+  if (error || !data) {
+    console.error('getEventUniqueVisitorsBreakdown failed:', error?.message)
+    return { known: [], guests: { visitorCount: 0, viewCount: 0 } }
+  }
+
+  const byViewer = new Map<
+    string,
+    { viewCount: number; participantId: string | null; participant: (typeof data)[number]['participants'] }
+  >()
+
+  for (const row of data) {
+    const existing = byViewer.get(row.viewer_key)
+    if (existing) {
+      existing.viewCount += 1
+      if (row.participant_id && !existing.participantId) {
+        existing.participantId = row.participant_id
+        existing.participant = row.participants
+      }
+    } else {
+      byViewer.set(row.viewer_key, {
+        viewCount: 1,
+        participantId: row.participant_id,
+        participant: row.participants,
+      })
+    }
+  }
+
+  const byParticipant = new Map<string, EventKnownVisitor>()
+  let guestVisitorCount = 0
+  let guestViewCount = 0
+
+  for (const { viewCount, participantId, participant } of byViewer.values()) {
+    if (participantId) {
+      const existing = byParticipant.get(participantId)
+      if (existing) {
+        existing.viewCount += viewCount
+        continue
+      }
+
+      const raw = participant
+      const p = (Array.isArray(raw) ? raw[0] : raw) as {
+        first_name: string
+        last_name: string
+        phone: string
+        display_name: string
+      } | null
+
+      byParticipant.set(participantId, {
+        participantId,
+        displayName: p?.display_name ?? 'Unknown',
+        firstName: p?.first_name ?? '',
+        lastName: p?.last_name ?? '',
+        phone: p?.phone ?? '',
+        viewCount,
+      })
+    } else {
+      guestVisitorCount += 1
+      guestViewCount += viewCount
+    }
+  }
+
+  const known = [...byParticipant.values()].sort((a, b) => b.viewCount - a.viewCount)
+
+  return {
+    known,
+    guests: { visitorCount: guestVisitorCount, viewCount: guestViewCount },
+  }
+}

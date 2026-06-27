@@ -15,6 +15,7 @@ import {
   btnOutline,
 } from '../../../_components/console-ui'
 import { UnregisteredStatCard } from './unregistered-stat-card'
+import { UniqueVisitorsStatCard } from './unique-visitors-stat-card'
 
 type Props = {
   params: Promise<{ orgSlug: string; eventId: string }>
@@ -86,7 +87,11 @@ export default async function ConsoleEventAnalyticsPage({ params }: Props) {
         <ConsoleSection title="Engagement" description="Traffic and sign-up funnel for this session.">
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             <StatCard label="Page views" value={String(analytics.pageViews)} />
-            <StatCard label="Unique visitors" value={String(analytics.uniqueVisitors)} />
+            <UniqueVisitorsStatCard
+              orgSlug={orgSlug}
+              eventId={eventId}
+              count={analytics.uniqueVisitors}
+            />
             <StatCard
               label="Sign-up rate"
               value={analytics.conversionRate != null ? `${analytics.conversionRate}%` : '—'}

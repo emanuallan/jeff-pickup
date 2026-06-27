@@ -12,7 +12,7 @@ export const metadata: Metadata = buildMarketingPageMetadata(
 export default function PrivacyPage() {
   return (
     <MarketingPage title="Privacy Policy">
-      <p className="text-sm text-zinc-500">Last updated: June 17, 2026</p>
+      <p className="text-sm text-zinc-500">Last updated: June 26, 2026</p>
 
       <p>
         Organizr (&ldquo;we,&rdquo; &ldquo;us&rdquo;) operates organizr.co and related
@@ -44,6 +44,11 @@ export default function PrivacyPage() {
       <p>
         Organizers of a group can see participant contact information (including phone numbers) for
         people signed up to their sessions, so they can run their group.
+      </p>
+      <p>
+        Organizers can also see session engagement analytics in the console — for example, how many
+        times a known participant viewed a session page. Visitors who have not registered are counted
+        anonymously and are not identified by name.
       </p>
 
       <h2>How we use information</h2>
