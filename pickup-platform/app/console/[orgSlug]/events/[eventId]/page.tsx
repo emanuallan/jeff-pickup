@@ -68,7 +68,8 @@ export default async function ConsoleEventAnalyticsPage({ params }: Props) {
         live={isLive}
         description={event.location_label}
         backHref={`/console/${orgSlug}/sessions`}
-        backLabel="Sessions"
+        backLabel="Back"
+        useHistoryBack
         actions={
           <a href={publicEventUrl} target="_blank" rel="noreferrer" className={btnOutline}>
             View public event {arrowNe}

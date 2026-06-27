@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import type { ReactNode } from 'react'
+import { ConsoleHistoryBackLink } from './console-history-back-link'
 
 /**
  * Console design language — deliberately distinct from the org-branded public
@@ -58,6 +59,7 @@ export function ConsoleHeader({
   description,
   backHref,
   backLabel,
+  useHistoryBack = false,
   actions,
   live,
 }: {
@@ -65,12 +67,16 @@ export function ConsoleHeader({
   description?: string | null
   backHref?: string
   backLabel?: string
+  /** When true, back uses browser history with backHref as a direct-link fallback. */
+  useHistoryBack?: boolean
   actions?: React.ReactNode
   live?: boolean
 }) {
   return (
     <div>
-      {backHref ? (
+      {backHref && useHistoryBack ? (
+        <ConsoleHistoryBackLink fallbackHref={backHref} label={backLabel ?? 'Back'} />
+      ) : backHref ? (
         <Link
           href={backHref}
           className="inline-flex min-h-9 items-center gap-1 text-sm text-zinc-400 transition-colors hover:text-zinc-200"
