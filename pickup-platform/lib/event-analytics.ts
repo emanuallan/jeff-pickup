@@ -139,3 +139,60 @@ export async function getEventAnalytics(
   const db = await fetchEventAnalyticsDb(eventId)
   return buildRosterAnalytics(roster, capacity, db)
 }
+
+export type EventUnregisteredPerson = {
+  participantId: string
+  displayName: string
+  firstName: string
+  lastName: string
+  phone: string
+  leftAt: string
+}
+
+/** Distinct participants who unregistered — most recent leave first. */
+export async function getEventUnregisteredPeople(
+  eventId: string,
+): Promise<EventUnregisteredPerson[]> {
+  const supabase = await createClient()
+
+  const { data, error } = await supabase
+    .from('event_signup_activity')
+    .select(
+      'participant_id, created_at, participants(first_name, last_name, phone, display_name)',
+    )
+    .eq('event_id', eventId)
+    .eq('action', 'left')
+    .order('created_at', { ascending: false })
+
+  if (error || !data) {
+    console.error('getEventUnregisteredPeople failed:', error?.message)
+    return []
+  }
+
+  const seen = new Set<string>()
+  const people: EventUnregisteredPerson[] = []
+
+  for (const row of data) {
+    if (seen.has(row.participant_id)) continue
+    seen.add(row.participant_id)
+
+    const raw = row.participants
+    const p = (Array.isArray(raw) ? raw[0] : raw) as {
+      first_name: string
+      last_name: string
+      phone: string
+      display_name: string
+    } | null
+
+    people.push({
+      participantId: row.participant_id,
+      displayName: p?.display_name ?? 'Unknown',
+      firstName: p?.first_name ?? '',
+      lastName: p?.last_name ?? '',
+      phone: p?.phone ?? '',
+      leftAt: row.created_at,
+    })
+  }
+
+  return people
+}

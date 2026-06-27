@@ -14,6 +14,7 @@ import {
   ConsoleCard,
   btnOutline,
 } from '../../../_components/console-ui'
+import { UnregisteredStatCard } from './unregistered-stat-card'
 
 type Props = {
   params: Promise<{ orgSlug: string; eventId: string }>
@@ -108,10 +109,11 @@ export default async function ConsoleEventAnalyticsPage({ params }: Props) {
               value={String(analytics.currentSignups)}
               hint={`${analytics.headcount} total headcount`}
             />
-            <StatCard
-              label="Unregistered"
-              value={String(analytics.uniqueLeft)}
-              hint="Unique people who left"
+            <UnregisteredStatCard
+              orgSlug={orgSlug}
+              eventId={eventId}
+              count={analytics.uniqueLeft}
+              timezone={event.timezone}
             />
           </div>
 
