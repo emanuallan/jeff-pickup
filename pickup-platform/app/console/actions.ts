@@ -833,6 +833,7 @@ export async function materializeOrgEvents(orgSlug: string) {
   try {
     const count = await materializeEvents({ orgId: org.id })
     revalidatePath(`/console/${orgSlug}`)
+    revalidatePath(`/console/${orgSlug}/settings`)
     revalidatePath(`/org/${orgSlug}`)
     return { ok: true, count }
   } catch (e) {
@@ -867,7 +868,7 @@ export async function updateOrgProfile(orgSlug: string, formData: FormData) {
   }
 
   revalidatePath(`/console/${orgSlug}`)
-  revalidatePath(`/console/${orgSlug}/settings`)
+  revalidatePath(`/console/${orgSlug}/branding`)
   revalidatePath(`/org/${orgSlug}`)
   return { ok: true }
 }
@@ -894,6 +895,7 @@ export async function updateBranding(orgSlug: string, formData: FormData) {
   }
 
   revalidatePath(`/console/${orgSlug}`)
+  revalidatePath(`/console/${orgSlug}/branding`)
   revalidatePath(`/org/${orgSlug}`)
   return { ok: true }
 }
@@ -924,7 +926,7 @@ export async function updateOrgLinks(orgSlug: string, formData: FormData) {
   }
 
   revalidatePath(`/console/${orgSlug}`)
-  revalidatePath(`/console/${orgSlug}/settings`)
+  revalidatePath(`/console/${orgSlug}/branding`)
   revalidatePath(`/org/${orgSlug}`)
   return { ok: true }
 }

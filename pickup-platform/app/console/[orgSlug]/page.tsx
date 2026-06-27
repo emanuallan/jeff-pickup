@@ -16,6 +16,7 @@ import {
   IconLocation,
   IconSchedule,
   IconBranding,
+  IconSettings,
   IconParticipants,
 } from './console-nav-icons'
 import { ConsolePage, ConsoleNavGrid, ConsoleNavTile } from '../_components/console-ui'
@@ -151,9 +152,15 @@ export default async function OrgConsolePage({ params }: Props) {
             disabled={!isSetup}
           />
           <ConsoleNavTile
-            href={`${base}/settings`}
+            href={`${base}/branding`}
             title="Branding"
             icon={<IconBranding />}
+            disabled={!isSetup}
+          />
+          <ConsoleNavTile
+            href={`${base}/settings`}
+            title="Settings"
+            icon={<IconSettings />}
             disabled={!isSetup}
           />
           <ConsoleNavTile
