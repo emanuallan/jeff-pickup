@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation'
 import { getOrgForMember } from '@/lib/orgs'
-import { getEventByRef, formatEventTime, formatInstantInZone, statusLabel } from '@/lib/events'
+import { getEventByRef, formatEventTime, formatInstantInZone, statusLabel, isEventInProgress } from '@/lib/events'
 import { getRosterWithContact } from '@/lib/signups'
 import { formatGuestSuffix } from '@/lib/format-guest-suffix'
 import { buildRosterAnalytics, fetchEventAnalyticsDb } from '@/lib/event-analytics'
@@ -58,11 +58,13 @@ export default async function ConsoleEventAnalyticsPage({ params }: Props) {
   ])
   const analytics = buildRosterAnalytics(roster, event.capacity, dbAnalytics)
   const publicEventUrl = `${orgBaseUrl(orgSlug)}/events/${event.short_id}`
+  const isLive = isEventInProgress(event) && event.status === 'on'
 
   return (
     <ConsolePage width="max-w-2xl">
       <ConsoleHeader
         title={formatEventTime(event)}
+        live={isLive}
         description={event.location_label}
         backHref={`/console/${orgSlug}/sessions`}
         backLabel="Sessions"

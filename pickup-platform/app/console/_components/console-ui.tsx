@@ -59,12 +59,14 @@ export function ConsoleHeader({
   backHref,
   backLabel,
   actions,
+  live,
 }: {
   title: string
   description?: string | null
   backHref?: string
   backLabel?: string
   actions?: React.ReactNode
+  live?: boolean
 }) {
   return (
     <div>
@@ -83,7 +85,16 @@ export function ConsoleHeader({
         }`}
       >
         <div className="min-w-0">
-          <h1 className="text-2xl font-semibold tracking-tight text-zinc-50">{title}</h1>
+          <h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight text-zinc-50">
+            {live ? (
+              <span
+                className="h-2.5 w-2.5 shrink-0 rounded-full bg-red-500 ring-2 ring-red-500/25"
+                aria-hidden
+              />
+            ) : null}
+            <span>{title}</span>
+            {live ? <span className="sr-only"> — live</span> : null}
+          </h1>
           {description ? <p className="mt-1 text-sm text-zinc-400">{description}</p> : null}
         </div>
         {actions ? (
