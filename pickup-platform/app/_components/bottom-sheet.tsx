@@ -16,8 +16,8 @@ type Props = {
   open: boolean
   onClose: () => void
   children: ReactNode
-  /** Console: bottom sheet on mobile, centered dialog on sm+. Fixed: always bottom-anchored. */
-  variant?: 'console' | 'fixed'
+  /** Console: bottom sheet on mobile, centered dialog on sm+. Fixed: bottom-anchored. Top: top-anchored. */
+  variant?: 'console' | 'fixed' | 'top'
   panelClassName?: string
   panelStyle?: CSSProperties
   ariaLabelledby?: string
@@ -26,7 +26,7 @@ type Props = {
   dismissDisabled?: boolean
 }
 
-function BottomSheetHandle({
+function SheetHandle({
   onDragStart,
   onDragMove,
   onDragEnd,
@@ -37,7 +37,7 @@ function BottomSheetHandle({
 }) {
   return (
     <div
-      className="flex cursor-grab touch-none justify-center py-3 active:cursor-grabbing"
+      className="flex shrink-0 cursor-grab touch-none justify-center py-3 active:cursor-grabbing"
       onPointerDown={(e) => {
         if (e.button !== 0) return
         onDragStart(e.clientY)
@@ -63,11 +63,12 @@ export function BottomSheet({
   ariaLabel,
   dismissDisabled = false,
 }: Props) {
-  const [dragY, setDragY] = useState(0)
+  const dragUp = variant === 'top'
+  const [dragOffset, setDragOffset] = useState(0)
   const [isDragging, setIsDragging] = useState(false)
-  const [swipeEnabled, setSwipeEnabled] = useState(variant === 'fixed')
+  const [swipeEnabled, setSwipeEnabled] = useState(variant === 'fixed' || variant === 'top')
   const dragStartY = useRef<number | null>(null)
-  const dragYRef = useRef(0)
+  const dragOffsetRef = useRef(0)
 
   useEffect(() => {
     if (variant !== 'console') return
@@ -79,10 +80,10 @@ export function BottomSheet({
   }, [variant])
 
   const resetDrag = useCallback(() => {
-    setDragY(0)
+    setDragOffset(0)
     setIsDragging(false)
     dragStartY.current = null
-    dragYRef.current = 0
+    dragOffsetRef.current = 0
   }, [])
 
   const requestClose = useCallback(() => {
@@ -100,29 +101,35 @@ export function BottomSheet({
     [dismissDisabled, swipeEnabled],
   )
 
-  const onDragMove = useCallback((clientY: number) => {
-    if (dragStartY.current === null) return
-    const delta = Math.max(0, clientY - dragStartY.current)
-    dragYRef.current = delta
-    setDragY(delta)
-  }, [])
+  const onDragMove = useCallback(
+    (clientY: number) => {
+      if (dragStartY.current === null) return
+      const rawDelta = dragUp
+        ? dragStartY.current - clientY
+        : clientY - dragStartY.current
+      const delta = Math.max(0, rawDelta)
+      dragOffsetRef.current = delta
+      setDragOffset(delta)
+    },
+    [dragUp],
+  )
 
   const onDragEnd = useCallback(() => {
     if (dragStartY.current === null) return
-    const shouldDismiss = dragYRef.current > DISMISS_THRESHOLD
+    const shouldDismiss = dragOffsetRef.current > DISMISS_THRESHOLD
     dragStartY.current = null
     setIsDragging(false)
     if (shouldDismiss) {
       if (dismissDisabled) {
-        dragYRef.current = 0
-        setDragY(0)
+        dragOffsetRef.current = 0
+        setDragOffset(0)
         return
       }
       resetDrag()
       onClose()
     } else {
-      dragYRef.current = 0
-      setDragY(0)
+      dragOffsetRef.current = 0
+      setDragOffset(0)
     }
   }, [dismissDisabled, onClose, resetDrag])
 
@@ -154,28 +161,50 @@ export function BottomSheet({
       : 'fixed inset-0 z-50'
 
   const backdropClass =
-    variant === 'console'
-      ? 'absolute inset-0 bg-black/60 backdrop-blur-sm animate-[backdrop-in_200ms_ease-out]'
-      : 'absolute inset-0 bg-black/60 backdrop-blur-sm animate-[backdrop-in_200ms_ease-out]'
+    'absolute inset-0 bg-black/60 backdrop-blur-sm animate-[backdrop-in_200ms_ease-out]'
 
   const panelBase =
     variant === 'console'
       ? 'relative max-h-[90dvh] w-full max-w-lg overflow-y-auto rounded-t-2xl border border-white/10 bg-zinc-900 shadow-xl sm:rounded-xl'
-      : 'absolute inset-x-0 bottom-0 mx-auto w-full max-w-lg overflow-hidden rounded-t-3xl border border-b-0 border-zinc-800 bg-linear-to-b from-zinc-900 to-zinc-950 shadow-2xl'
+      : variant === 'top'
+        ? 'absolute inset-x-0 top-0 mx-auto flex max-h-[min(85dvh,28rem)] w-full flex-col overflow-hidden rounded-b-2xl border border-t-0 border-white/10 bg-zinc-950/95 shadow-xl shadow-black/40 backdrop-blur-md pt-[env(safe-area-inset-top,0px)]'
+        : 'absolute inset-x-0 bottom-0 mx-auto w-full max-w-lg overflow-hidden rounded-t-3xl border border-b-0 border-zinc-800 bg-linear-to-b from-zinc-900 to-zinc-950 shadow-2xl'
+
+  const translateY =
+    dragOffset > 0 ? (dragUp ? -dragOffset : dragOffset) : 0
+
+  const enterAnimation =
+    dragOffset === 0 && !isDragging
+      ? variant === 'top'
+        ? `notification-sheet-in 220ms ease-out`
+        : variant === 'fixed'
+          ? `bottom-sheet-in 280ms ${SHEET_EASING}`
+          : undefined
+      : undefined
 
   const dragStyle: CSSProperties = {
     ...panelStyle,
-    transform: dragY > 0 ? `translateY(${dragY}px)` : panelStyle?.transform,
+    transform: translateY !== 0 ? `translateY(${translateY}px)` : panelStyle?.transform,
     transition: isDragging
       ? 'none'
-      : dragY === 0
+      : dragOffset === 0
         ? `transform 280ms ${SHEET_EASING}`
         : undefined,
-    animation:
-      dragY === 0 && !isDragging && variant === 'fixed'
-        ? `bottom-sheet-in 280ms ${SHEET_EASING}`
-        : undefined,
+    animation: enterAnimation,
   }
+
+  const handleProps = {
+    onDragStart,
+    onDragMove,
+    onDragEnd,
+  }
+
+  const contentClass =
+    variant === 'top'
+      ? 'flex min-h-0 flex-1 flex-col overflow-hidden'
+      : `px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:pb-5 ${
+          swipeEnabled ? 'pt-0' : 'pt-5'
+        }`
 
   return (
     <div
@@ -192,21 +221,25 @@ export function BottomSheet({
         onClick={requestClose}
       />
       <div className={`${panelBase} ${panelClassName}`} style={dragStyle}>
-        {swipeEnabled ? (
-          <BottomSheetHandle
-            onDragStart={onDragStart}
-            onDragMove={onDragMove}
-            onDragEnd={onDragEnd}
-          />
-        ) : null}
-        <div
-          className={`px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:pb-5 ${
-            swipeEnabled ? 'pt-0' : 'pt-5'
-          }`}
-        >
-          {children}
-        </div>
+        {swipeEnabled && !dragUp ? <SheetHandle {...handleProps} /> : null}
+        <div className={contentClass}>{children}</div>
+        {swipeEnabled && dragUp ? <SheetHandle {...handleProps} /> : null}
       </div>
     </div>
   )
+}
+
+/** True when viewport uses mobile sheet layout (< sm). */
+export function useMobileSheetLayout() {
+  const [isMobile, setIsMobile] = useState(false)
+
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 639px)')
+    const update = () => setIsMobile(mq.matches)
+    update()
+    mq.addEventListener('change', update)
+    return () => mq.removeEventListener('change', update)
+  }, [])
+
+  return isMobile
 }
