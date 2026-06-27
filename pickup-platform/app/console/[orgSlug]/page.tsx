@@ -158,16 +158,16 @@ export default async function OrgConsolePage({ params }: Props) {
             disabled={!isSetup}
           />
           <ConsoleNavTile
-            href={`${base}/settings`}
-            title="Settings"
-            icon={<IconSettings />}
-            disabled={!isSetup}
-          />
-          <ConsoleNavTile
             href={`${base}/participants`}
             title="Participants"
             icon={<IconParticipants />}
             badge={formatCount(counts.participantCount, 'person', 'people')}
+            disabled={!isSetup}
+          />
+          <ConsoleNavTile
+            href={`${base}/settings`}
+            title="Settings"
+            icon={<IconSettings />}
             disabled={!isSetup}
           />
         </ConsoleNavGrid>
