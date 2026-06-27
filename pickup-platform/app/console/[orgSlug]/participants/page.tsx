@@ -3,6 +3,7 @@ import { getOrgForMember } from '@/lib/orgs'
 import { getParticipantHistoryForOrg } from '@/lib/participants'
 import { formatPhoneDisplay } from '@/lib/phone'
 import { ConsolePage, ConsoleHeader, ConsoleSection, ConsoleCard } from '../../_components/console-ui'
+import { InfoHint } from '../../_components/info-hint'
 
 type Props = {
   params: Promise<{ orgSlug: string }>
@@ -34,7 +35,16 @@ export default async function ParticipantHistoryPage({ params }: Props) {
               No participants yet. They&apos;ll appear here after someone joins a session.
             </p>
           ) : (
-            <ul className="space-y-2">
+            <>
+              <div className="mb-2 flex justify-end">
+                <div className="flex items-center gap-1 text-[10px] font-medium uppercase tracking-wide text-zinc-500">
+                  Sessions
+                  <InfoHint label="About session count">
+                    This count includes cancelled sessions as well.
+                  </InfoHint>
+                </div>
+              </div>
+              <ul className="space-y-2">
               {participants.map((p) => (
                 <li key={p.id}>
                   <ConsoleCard className="text-sm">
@@ -55,15 +65,13 @@ export default async function ParticipantHistoryPage({ params }: Props) {
                         <div className="text-lg font-semibold tabular-nums text-zinc-100">
                           {p.session_count}
                         </div>
-                        <div className="text-[10px] font-medium uppercase tracking-wide text-zinc-500">
-                          {p.session_count === 1 ? 'session' : 'sessions'}
-                        </div>
                       </div>
                     </div>
                   </ConsoleCard>
                 </li>
               ))}
-            </ul>
+              </ul>
+            </>
           )}
         </ConsoleSection>
       </div>
