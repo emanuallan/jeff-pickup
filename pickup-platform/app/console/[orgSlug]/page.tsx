@@ -43,7 +43,7 @@ export default async function OrgConsolePage({ params }: Props) {
   const isSetup = isOrgConsoleSetupComplete({
     locationCount: counts.locationCount,
     scheduleCount: counts.scheduleCount,
-    upcomingSessionCount: counts.upcomingActiveCount,
+    oneOffEventCount: counts.oneOffEventCount,
   })
   const base = `/console/${orgSlug}`
 

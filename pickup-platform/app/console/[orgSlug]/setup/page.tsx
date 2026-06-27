@@ -2,8 +2,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { getOrgForMember } from '@/lib/orgs'
 import { getLocationsForOrg } from '@/lib/locations'
-import { getSchedulesForOrg } from '@/lib/schedules'
-import { getUpcomingEventsForConsole } from '@/lib/events'
+import { getOrgConsoleNavCounts } from '@/lib/org-console-counts'
 import { isOrgConsoleSetupComplete } from '@/lib/org-setup'
 import { createLocation, createSchedule, createOneOffEvent } from '../../actions'
 import { AddLocationButton } from '../add-location-button'
@@ -44,19 +43,17 @@ export default async function SetupPage({ params }: Props) {
     notFound()
   }
 
-  const [locations, schedules, upcomingEvents] = await Promise.all([
+  const [locations, counts] = await Promise.all([
     getLocationsForOrg(org.id),
-    getSchedulesForOrg(org.id),
-    getUpcomingEventsForConsole(org.id),
+    getOrgConsoleNavCounts(org.id),
   ])
 
-  const hasLocation = locations.length > 0
-  const upcomingSessionCount = upcomingEvents.filter((ev) => ev.status !== 'cancelled').length
-  const hasSessions = schedules.length > 0 || upcomingSessionCount > 0
+  const hasLocation = counts.locationCount > 0
+  const hasSessions = counts.scheduleCount > 0 || counts.oneOffEventCount > 0
   const isComplete = isOrgConsoleSetupComplete({
-    locationCount: locations.length,
-    scheduleCount: schedules.length,
-    upcomingSessionCount,
+    locationCount: counts.locationCount,
+    scheduleCount: counts.scheduleCount,
+    oneOffEventCount: counts.oneOffEventCount,
   })
   const addLocation = createLocation.bind(null, orgSlug)
   const createOneOff = createOneOffEvent.bind(null, orgSlug)
