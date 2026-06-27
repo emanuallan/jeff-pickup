@@ -42,6 +42,26 @@ function MaybeIcon() {
   )
 }
 
+function returningSignupStorageKey(orgSlug: string, eventId: string) {
+  return `returning-signup-seen:${orgSlug}:${eventId}`
+}
+
+function hasSeenReturningSignup(orgSlug: string, eventId: string) {
+  try {
+    return localStorage.getItem(returningSignupStorageKey(orgSlug, eventId)) === '1'
+  } catch {
+    return false
+  }
+}
+
+function markReturningSignupSeen(orgSlug: string, eventId: string) {
+  try {
+    localStorage.setItem(returningSignupStorageKey(orgSlug, eventId), '1')
+  } catch {
+    // ignore quota / private mode
+  }
+}
+
 export function ReturningSignupModal({
   orgSlug,
   orgId,
@@ -55,14 +75,23 @@ export function ReturningSignupModal({
   children,
 }: Props) {
   const router = useRouter()
-  const [open, setOpen] = useState(true)
+  const [open, setOpen] = useState<boolean | null>(null)
   const [loading, setLoading] = useState<'confirmed' | 'maybe' | null>(null)
   const [error, setError] = useState<string | null>(null)
 
+  const markSeen = useCallback(() => {
+    markReturningSignupSeen(orgSlug, eventId)
+  }, [orgSlug, eventId])
+
+  useEffect(() => {
+    setOpen(!hasSeenReturningSignup(orgSlug, eventId))
+  }, [orgSlug, eventId])
+
   const dismiss = useCallback(() => {
+    markSeen()
     setOpen(false)
     setError(null)
-  }, [])
+  }, [markSeen])
 
   useEffect(() => {
     if (!open) return
@@ -76,6 +105,7 @@ export function ReturningSignupModal({
   }, [dismiss, open])
 
   async function handleJoin(status: 'confirmed' | 'maybe') {
+    markSeen()
     setLoading(status)
     setError(null)
     const result = await quickJoinEvent(orgSlug, eventId, orgId, 0, status)
@@ -126,6 +156,7 @@ export function ReturningSignupModal({
                   href={locationMapsUrl}
                   target="_blank"
                   rel="noopener noreferrer"
+                  onClick={markSeen}
                   className="mt-1 block truncate text-sm text-zinc-400 transition-colors hover:text-zinc-200"
                 >
                   {locationLabel}
@@ -136,7 +167,7 @@ export function ReturningSignupModal({
             </div>
 
             <div className="mt-8">
-              <p className="text-lg font-medium text-zinc-100">Can you make it? 👋</p>
+              <p className="text-lg font-medium text-zinc-100">You in?</p>
               <p className="mt-0.5 text-sm text-zinc-400">One tap lets the group know.</p>
             </div>
 
@@ -172,7 +203,7 @@ export function ReturningSignupModal({
         </div>
       ) : null}
 
-      {!open ? (
+      {open === false ? (
         <section className="mt-5 rounded-3xl border border-zinc-800 bg-zinc-900/50 p-5">
           {children}
         </section>
