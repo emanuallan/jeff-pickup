@@ -4,7 +4,8 @@ import { useState } from 'react'
 import { updateOrgLinks } from '../actions'
 import { MAX_ORG_LINKS } from '@/lib/social-links'
 import { SocialLinkIcon } from '@/app/org/[slug]/_components/social-links'
-import { consoleInput, btnSecondary, ConsoleSubmitButton } from '../_components/console-ui'
+import { consoleInput, btnSecondary } from '../_components/console-ui'
+import { ConsoleSubmitButton } from '../_components/console-submit-button'
 
 type Props = {
   orgSlug: string

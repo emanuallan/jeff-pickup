@@ -5,7 +5,8 @@ import type { Location } from '@/lib/locations'
 import type { SessionFormInitial } from '@/lib/session-form-values'
 import { browserTimeZone } from '@/lib/datetime'
 import { defaultOneOffStartsAtLocal } from '@/lib/one-off-datetime'
-import { consoleInput, consoleLabel, btnSecondary, ConsoleSubmitButton } from '../_components/console-ui'
+import { consoleInput, consoleLabel, btnSecondary } from '../_components/console-ui'
+import { ConsoleSubmitButton } from '../_components/console-submit-button'
 
 const DEFAULT_DURATION_MIN = 90
 const MAX_DURATION_MIN = 480

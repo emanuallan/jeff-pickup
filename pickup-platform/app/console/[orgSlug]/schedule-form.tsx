@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import type { Location } from '@/lib/locations'
-import { btnSecondary, ConsoleSubmitButton } from '../_components/console-ui'
+import { btnSecondary } from '../_components/console-ui'
+import { ConsoleSubmitButton } from '../_components/console-submit-button'
 import { ScheduleFormFields } from './schedule-form-fields'
 
 type Props = {

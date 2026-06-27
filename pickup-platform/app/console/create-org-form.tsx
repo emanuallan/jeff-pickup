@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { checkSlugAvailability, createOrg } from './actions'
 import { normalizeSlug } from '@/lib/tenancy/reserved-slugs'
-import { consoleInput, consoleLabel, btnPrimary, ConsoleSubmitButton } from './_components/console-ui'
+import { consoleInput, consoleLabel, btnPrimary } from './_components/console-ui'
+import { ConsoleSubmitButton } from './_components/console-submit-button'
 
 type SlugState = 'idle' | 'checking' | 'available' | 'taken' | 'invalid'
 

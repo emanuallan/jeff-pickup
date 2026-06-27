@@ -2,7 +2,8 @@
 
 import { useState } from 'react'
 import { updateOrgProfile } from '../actions'
-import { consoleInput, btnSecondary, ConsoleSubmitButton } from '../_components/console-ui'
+import { consoleInput, btnSecondary } from '../_components/console-ui'
+import { ConsoleSubmitButton } from '../_components/console-submit-button'
 
 type Props = {
   orgSlug: string
