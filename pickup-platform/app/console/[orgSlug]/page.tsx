@@ -29,6 +29,19 @@ function formatCount(n: number, singular: string, plural?: string) {
   return `${n} ${n === 1 ? singular : plural ?? `${singular}s`}`
 }
 
+function sessionsNavBadge(liveCount: number, upcomingCount: number) {
+  if (liveCount > 0) {
+    return (
+      <div className="space-y-0.5">
+        <div className="font-medium text-red-400">{formatCount(liveCount, 'live')}</div>
+        <div>{`${upcomingCount} upcoming`}</div>
+      </div>
+    )
+  }
+
+  return formatCount(upcomingCount, 'upcoming')
+}
+
 export default async function OrgConsolePage({ params }: Props) {
   const { orgSlug } = await params
   const org = await getOrgForMember(orgSlug)
@@ -85,7 +98,7 @@ export default async function OrgConsolePage({ params }: Props) {
             href={`${base}/sessions`}
             title="Sessions"
             icon={<IconSessions />}
-            badge={formatCount(counts.activeSessionCount, 'upcoming')}
+            badge={sessionsNavBadge(counts.liveSessionCount, counts.upcomingSessionCount)}
             live={counts.liveSessionCount > 0}
             disabled={!isSetup}
           />

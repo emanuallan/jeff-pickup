@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import type { ReactNode } from 'react'
 
 /**
  * Console design language — deliberately distinct from the org-branded public
@@ -239,7 +240,7 @@ export function ConsoleNavTile({
   href: string
   title: string
   icon: React.ReactNode
-  badge?: string | number
+  badge?: ReactNode
   external?: boolean
   disabled?: boolean
   live?: boolean
@@ -258,7 +259,7 @@ export function ConsoleNavTile({
         {live ? <span className="sr-only"> — live session</span> : null}
       </div>
       {badge != null && badge !== '' ? (
-        <div className="mt-1 text-xs text-zinc-500">{badge}</div>
+        <div className="mt-1 text-xs leading-tight text-zinc-500">{badge}</div>
       ) : null}
     </>
   )

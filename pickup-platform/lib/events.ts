@@ -254,6 +254,8 @@ export async function getPastEventsForConsole(
 export type OrgSessionCounts = {
 	/** Non-cancelled sessions that have not ended yet (live + upcoming). */
 	activeCount: number;
+	/** Non-cancelled sessions whose start time is still in the future. */
+	upcomingCount: number;
 	/** Non-cancelled sessions whose duration has elapsed. */
 	pastCount: number;
 	/** Live sessions with status "on". */
@@ -295,13 +297,14 @@ export const getOrgSessionCounts = cache(
 		const inProgress = (inProgressRes.data ?? []).filter((event) =>
 			isEventInProgress(event, now),
 		);
-		const activeCount = (futureRes.count ?? 0) + inProgress.length;
+		const upcomingCount = futureRes.count ?? 0;
+		const activeCount = upcomingCount + inProgress.length;
 		const pastCount = (pastStartedRes.data ?? []).filter((event) =>
 			isEventEnded(event, now),
 		).length;
 		const liveCount = inProgress.filter((event) => event.status === "on").length;
 
-		return { activeCount, pastCount, liveCount };
+		return { activeCount, upcomingCount, pastCount, liveCount };
 	},
 );
 
