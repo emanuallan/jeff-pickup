@@ -21,11 +21,33 @@ type Props = {
 	initialUnreadCount: number;
 };
 
+type DismissAllScope =
+	| { type: "all" }
+	| { type: "org"; orgId: string | null; orgSlug: string };
+
 function orgSlugFromPathname(pathname: string): string | null {
 	const match = pathname.match(/^\/console\/([^/]+)/);
 	const slug = match?.[1];
 	if (!slug || slug === "new") return null;
 	return slug;
+}
+
+function matchesDismissAllScope(
+	notification: OrganizerNotification,
+	scope: DismissAllScope,
+): boolean {
+	if (scope.type === "all") return true;
+	if (scope.orgId && notification.org_id === scope.orgId) return true;
+	if (notification.org_slug === scope.orgSlug) return true;
+	return false;
+}
+
+function applyDismissAllScope(
+	notifications: OrganizerNotification[],
+	scope: DismissAllScope | null,
+): OrganizerNotification[] {
+	if (!scope) return notifications;
+	return notifications.filter((n) => !matchesDismissAllScope(n, scope));
 }
 
 function kindBadge(kind: OrganizerNotification["kind"]): {
@@ -83,19 +105,38 @@ export function ConsoleNotificationBell({
 	const [notifications, setNotifications] = useState(scopedFromServer);
 	const [unreadCount, setUnreadCount] = useState(scopedUnreadFromServer);
 	const panelRef = useRef<HTMLDivElement>(null);
+	const dismissAllScopeRef = useRef<DismissAllScope | null>(null);
+	const dismissedIdsRef = useRef<Set<string>>(new Set());
 
-	const scopedOrgId = useMemo(
-		() =>
-			orgSlug
-				? (notifications.find((n) => n.org_slug === orgSlug)?.org_id ?? null)
-				: null,
-		[orgSlug, notifications],
+	const syncFromServer = useCallback(
+		(serverNotifications: OrganizerNotification[]) => {
+			let next = applyDismissAllScope(
+				serverNotifications,
+				dismissAllScopeRef.current,
+			);
+			if (dismissedIdsRef.current.size > 0) {
+				next = next.filter((n) => !dismissedIdsRef.current.has(n.id));
+			}
+
+			if (dismissAllScopeRef.current) {
+				const scope = dismissAllScopeRef.current;
+				const stillPresent = serverNotifications.some((n) =>
+					matchesDismissAllScope(n, scope),
+				);
+				if (!stillPresent) {
+					dismissAllScopeRef.current = null;
+				}
+			}
+
+			setNotifications(next);
+			setUnreadCount(next.filter((n) => !n.read_at).length);
+		},
+		[],
 	);
 
 	useEffect(() => {
-		setNotifications(scopedFromServer);
-		setUnreadCount(scopedUnreadFromServer);
-	}, [scopedFromServer, scopedUnreadFromServer]);
+		syncFromServer(scopedFromServer);
+	}, [scopedFromServer, syncFromServer]);
 
 	useEffect(() => {
 		if (!open) return;
@@ -125,8 +166,11 @@ export function ConsoleNotificationBell({
 			),
 		);
 		setUnreadCount((c) => Math.max(0, c - 1));
-		await markOrganizerNotificationRead(id);
-	}, []);
+		const result = await markOrganizerNotificationRead(id);
+		if (result?.error) {
+			syncFromServer(scopedFromServer);
+		}
+	}, [scopedFromServer, syncFromServer]);
 
 	const handleMarkAllRead = useCallback(async () => {
 		setNotifications((prev) =>
@@ -136,10 +180,16 @@ export function ConsoleNotificationBell({
 			})),
 		);
 		setUnreadCount(0);
-		await markAllOrganizerNotificationsRead(scopedOrgId);
-	}, [scopedOrgId]);
+		const result = await markAllOrganizerNotificationsRead(
+			orgSlug ? { orgSlug } : undefined,
+		);
+		if (result?.error) {
+			syncFromServer(scopedFromServer);
+		}
+	}, [orgSlug, scopedFromServer, syncFromServer]);
 
 	const handleDismiss = useCallback(async (id: string) => {
+		dismissedIdsRef.current.add(id);
 		setNotifications((prev) => {
 			const dismissed = prev.find((n) => n.id === id);
 			if (dismissed && !dismissed.read_at) {
@@ -147,14 +197,44 @@ export function ConsoleNotificationBell({
 			}
 			return prev.filter((n) => n.id !== id);
 		});
-		await dismissOrganizerNotification(id);
-	}, []);
+		const result = await dismissOrganizerNotification(id);
+		if (result?.error) {
+			dismissedIdsRef.current.delete(id);
+			syncFromServer(scopedFromServer);
+		} else {
+			dismissedIdsRef.current.delete(id);
+		}
+	}, [scopedFromServer, syncFromServer]);
 
 	const handleDismissAll = useCallback(async () => {
+		const scope: DismissAllScope = orgSlug
+			? {
+					type: "org",
+					orgId:
+						notifications.find((n) => n.org_slug === orgSlug)?.org_id ?? null,
+					orgSlug,
+				}
+			: { type: "all" };
+
+		dismissAllScopeRef.current = scope;
+		for (const n of notifications) {
+			dismissedIdsRef.current.add(n.id);
+		}
 		setNotifications([]);
 		setUnreadCount(0);
-		await dismissAllOrganizerNotifications(scopedOrgId);
-	}, [scopedOrgId]);
+
+		const result = await dismissAllOrganizerNotifications(
+			orgSlug ? { orgSlug, orgId: scope.type === "org" ? scope.orgId : null } : undefined,
+		);
+
+		if (result?.error) {
+			dismissAllScopeRef.current = null;
+			for (const n of notifications) {
+				dismissedIdsRef.current.delete(n.id);
+			}
+			syncFromServer(scopedFromServer);
+		}
+	}, [notifications, orgSlug, scopedFromServer, syncFromServer]);
 
 	const showOrgName = !orgSlug;
 
