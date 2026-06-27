@@ -10,7 +10,8 @@ import { JoinSectionLazy } from './join-section-lazy'
 import { EventRosterWithBadges } from './event-roster-with-badges'
 import { RosterListFallback } from './roster-list-fallback'
 import { SignedInControlsLazy } from './signed-in-controls-lazy'
-import { CancelledCallout, isEventCancelled } from '../../_components/event-ui'
+import { CancelledCallout, isEventCancelled, eventName } from '../../_components/event-ui'
+import { formatEventWhenLine } from '@/lib/events'
 
 type Props = {
   slug: string
@@ -52,6 +53,8 @@ export async function EventParticipation({ slug, eventId, org, event }: Props) {
           spotsLeft={spotsLeft}
           participant={participant}
           mySignup={mySignup}
+          eventTitle={eventName(event)}
+          eventWhen={formatEventWhenLine(event)}
         />
       ) : null}
 

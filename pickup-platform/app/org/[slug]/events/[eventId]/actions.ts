@@ -157,6 +157,7 @@ export async function quickJoinEvent(
   eventId: string,
   orgId: string,
   guestCount = 0,
+  arrivalStatus: ArrivalStatus = 'confirmed',
 ): Promise<{ error?: string }> {
   const token = await getSessionToken()
   if (!token) {
@@ -201,7 +202,21 @@ export async function quickJoinEvent(
     return { error: error.message }
   }
 
-  const result = data as { session_token?: string } | null
+  const result = data as { session_token?: string; signup_id?: string } | null
+  const sessionToken = result?.session_token ?? token
+
+  if (arrivalStatus !== 'confirmed' && result?.signup_id) {
+    const { error: statusError } = await supabase.rpc('update_arrival_status', {
+      p_signup_id: result.signup_id,
+      p_session_token: sessionToken,
+      p_status: arrivalStatus,
+    })
+
+    if (statusError) {
+      return { error: statusError.message }
+    }
+  }
+
   if (result?.session_token) {
     await setSessionToken(String(result.session_token))
   }
