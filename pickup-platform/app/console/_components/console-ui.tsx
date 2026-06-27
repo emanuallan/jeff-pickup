@@ -41,6 +41,31 @@ export const btnAccent =
 export const chipAction =
   'inline-flex min-h-10 items-center gap-1 rounded-lg px-2.5 py-2 text-xs font-medium transition'
 
+/** Standard submit button for console forms — shows a pending label while saving. */
+export function ConsoleSubmitButton({
+  pending,
+  pendingLabel = 'Saving…',
+  className = btnSecondary,
+  children,
+  disabled,
+  ...rest
+}: Omit<React.ComponentProps<'button'>, 'type'> & {
+  pending: boolean
+  pendingLabel?: string
+}) {
+  return (
+    <button
+      type="submit"
+      disabled={pending || disabled}
+      className={className}
+      aria-busy={pending}
+      {...rest}
+    >
+      {pending ? pendingLabel : children}
+    </button>
+  )
+}
+
 /** Outer page container — wider than the public mobile layout for a desktop console feel. */
 export function ConsolePage({
   children,

@@ -5,7 +5,7 @@ import type { Location } from '@/lib/locations'
 import type { SessionFormInitial } from '@/lib/session-form-values'
 import { browserTimeZone } from '@/lib/datetime'
 import { defaultOneOffStartsAtLocal } from '@/lib/one-off-datetime'
-import { consoleInput, consoleLabel, btnSecondary } from '../_components/console-ui'
+import { consoleInput, consoleLabel, btnSecondary, ConsoleSubmitButton } from '../_components/console-ui'
 
 const DEFAULT_DURATION_MIN = 90
 const MAX_DURATION_MIN = 480
@@ -147,9 +147,13 @@ export function SessionForm({
 
       {error ? <p className="text-sm text-red-300">{error}</p> : null}
 
-      <button type="submit" disabled={pending} className={`w-full sm:w-auto ${btnSecondary} disabled:opacity-50`}>
-        {pending ? pendingLabel : submitLabel}
-      </button>
+      <ConsoleSubmitButton
+        pending={pending}
+        pendingLabel={pendingLabel}
+        className={`w-full sm:w-auto ${btnSecondary}`}
+      >
+        {submitLabel}
+      </ConsoleSubmitButton>
     </form>
   )
 }

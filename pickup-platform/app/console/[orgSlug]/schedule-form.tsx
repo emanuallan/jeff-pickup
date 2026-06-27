@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import type { Location } from '@/lib/locations'
-import { btnSecondary } from '../_components/console-ui'
+import { btnSecondary, ConsoleSubmitButton } from '../_components/console-ui'
 import { ScheduleFormFields } from './schedule-form-fields'
 
 type Props = {
@@ -47,9 +47,13 @@ export function ScheduleForm({ orgSlug, locations, createSchedule, onSuccess }: 
 
       {error ? <p className="text-sm text-red-300">{error}</p> : null}
 
-      <button type="submit" disabled={pending} className={`w-full sm:w-auto ${btnSecondary}`}>
-        {pending ? 'Adding…' : 'Add schedule'}
-      </button>
+      <ConsoleSubmitButton
+        pending={pending}
+        pendingLabel="Adding…"
+        className={`w-full sm:w-auto ${btnSecondary}`}
+      >
+        Add schedule
+      </ConsoleSubmitButton>
     </form>
   )
 }

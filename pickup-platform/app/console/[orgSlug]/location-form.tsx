@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import type { Location } from '@/lib/locations'
-import { consoleInput, btnSecondary } from '../_components/console-ui'
+import { consoleInput, btnSecondary, ConsoleSubmitButton } from '../_components/console-ui'
 
 type Props = {
   location?: Location
@@ -96,9 +96,13 @@ export function LocationForm({
 
       {error ? <p className="text-sm text-red-300">{error}</p> : null}
 
-      <button type="submit" disabled={pending} className={`w-full sm:w-auto ${btnSecondary}`}>
-        {pending ? pendingLabel : submitLabel}
-      </button>
+      <ConsoleSubmitButton
+        pending={pending}
+        pendingLabel={pendingLabel}
+        className={`w-full sm:w-auto ${btnSecondary}`}
+      >
+        {submitLabel}
+      </ConsoleSubmitButton>
     </form>
   )
 }

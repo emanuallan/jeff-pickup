@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { updateBranding } from '../actions'
-import { consoleInput, btnSecondary } from '../_components/console-ui'
+import { consoleInput, btnSecondary, ConsoleSubmitButton } from '../_components/console-ui'
 
 type Props = {
   orgSlug: string
@@ -13,10 +13,13 @@ type Props = {
 export function BrandingForm({ orgSlug, logoUrl, accentColor }: Props) {
   const [color, setColor] = useState(accentColor)
   const [message, setMessage] = useState<string | null>(null)
+  const [pending, setPending] = useState(false)
 
   async function handleSubmit(formData: FormData) {
     setMessage(null)
+    setPending(true)
     const result = await updateBranding(orgSlug, formData)
+    setPending(false)
     setMessage(result?.error ? result.error : 'Saved.')
   }
 
@@ -49,9 +52,9 @@ export function BrandingForm({ orgSlug, logoUrl, accentColor }: Props) {
       </label>
 
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
-        <button type="submit" className={`w-full sm:w-auto ${btnSecondary}`}>
+        <ConsoleSubmitButton pending={pending} className={`w-full sm:w-auto ${btnSecondary}`}>
           Save branding
-        </button>
+        </ConsoleSubmitButton>
         {message ? <span className="text-xs text-zinc-400">{message}</span> : null}
       </div>
     </form>

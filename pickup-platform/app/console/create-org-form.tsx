@@ -3,12 +3,13 @@
 import { useEffect, useRef, useState } from 'react'
 import { checkSlugAvailability, createOrg } from './actions'
 import { normalizeSlug } from '@/lib/tenancy/reserved-slugs'
-import { consoleInput, consoleLabel, btnPrimary } from './_components/console-ui'
+import { consoleInput, consoleLabel, btnPrimary, ConsoleSubmitButton } from './_components/console-ui'
 
 type SlugState = 'idle' | 'checking' | 'available' | 'taken' | 'invalid'
 
 export function CreateOrgForm() {
   const [error, setError] = useState<string | null>(null)
+  const [pending, setPending] = useState(false)
   const [slug, setSlug] = useState('')
   const [slugEdited, setSlugEdited] = useState(false)
   const [timezone, setTimezone] = useState('UTC')
@@ -45,7 +46,9 @@ export function CreateOrgForm() {
 
   async function handleSubmit(formData: FormData) {
     setError(null)
+    setPending(true)
     const result = await createOrg(formData)
+    setPending(false)
     if (result?.error) {
       setError(result.error)
     }
@@ -116,13 +119,14 @@ export function CreateOrgForm() {
 
       {error ? <p className="text-sm text-red-300">{error}</p> : null}
 
-      <button
-        type="submit"
+      <ConsoleSubmitButton
+        pending={pending}
+        pendingLabel="Creating…"
         disabled={slugState === 'taken' || slugState === 'invalid' || slugState === 'checking'}
         className={`w-full ${btnPrimary}`}
       >
         Create group
-      </button>
+      </ConsoleSubmitButton>
     </form>
   )
 }

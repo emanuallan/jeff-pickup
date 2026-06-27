@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { updateOrgFeatures } from '../actions'
+import { ConsoleSubmitButton } from '../_components/console-ui'
 import { organizrBtnSecondary } from '@/app/_components/organizr-shell'
 import { ORG_FEATURE_DEFINITIONS, type OrgFeatures } from '@/lib/org-features'
 
@@ -50,10 +51,13 @@ function FeatureToggle({
 export function FeatureTogglesForm({ orgSlug, features }: Props) {
   const [message, setMessage] = useState<string | null>(null)
   const [isError, setIsError] = useState(false)
+  const [pending, setPending] = useState(false)
 
   async function handleSubmit(formData: FormData) {
     setMessage(null)
+    setPending(true)
     const result = await updateOrgFeatures(orgSlug, formData)
+    setPending(false)
     if (result?.error) {
       setIsError(true)
       setMessage(result.error)
@@ -76,9 +80,12 @@ export function FeatureTogglesForm({ orgSlug, features }: Props) {
       ))}
 
       <div className="flex flex-col gap-2 pt-1 sm:flex-row sm:items-start sm:gap-3">
-        <button type="submit" className={`w-full sm:w-auto ${organizrBtnSecondary}`}>
+        <ConsoleSubmitButton
+          pending={pending}
+          className={`w-full sm:w-auto ${organizrBtnSecondary}`}
+        >
           Save features
-        </button>
+        </ConsoleSubmitButton>
         {message ? (
           <span className={`text-xs leading-relaxed ${isError ? 'text-red-400' : 'text-zinc-400'}`}>
             {message}
