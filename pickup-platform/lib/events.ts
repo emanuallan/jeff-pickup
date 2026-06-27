@@ -258,6 +258,8 @@ export type OrgSessionCounts = {
 	upcomingCount: number;
 	/** Non-cancelled sessions whose duration has elapsed. */
 	pastCount: number;
+	/** Cancelled sessions whose duration has elapsed. */
+	pastCancelledCount: number;
 	/** Live sessions with status "on". */
 	liveCount: number;
 };
@@ -288,9 +290,8 @@ export const getOrgSessionCounts = cache(
 				.lt("starts_at", nowIso),
 			supabase
 				.from("events")
-				.select("starts_at, duration_min")
+				.select("starts_at, duration_min, status")
 				.eq("org_id", orgId)
-				.neq("status", "cancelled")
 				.lt("starts_at", nowIso),
 		]);
 
@@ -299,12 +300,18 @@ export const getOrgSessionCounts = cache(
 		);
 		const upcomingCount = futureRes.count ?? 0;
 		const activeCount = upcomingCount + inProgress.length;
-		const pastCount = (pastStartedRes.data ?? []).filter((event) =>
+		const pastEnded = (pastStartedRes.data ?? []).filter((event) =>
 			isEventEnded(event, now),
+		);
+		const pastCount = pastEnded.filter(
+			(event) => event.status !== "cancelled",
+		).length;
+		const pastCancelledCount = pastEnded.filter(
+			(event) => event.status === "cancelled",
 		).length;
 		const liveCount = inProgress.filter((event) => event.status === "on").length;
 
-		return { activeCount, upcomingCount, pastCount, liveCount };
+		return { activeCount, upcomingCount, pastCount, pastCancelledCount, liveCount };
 	},
 );
 

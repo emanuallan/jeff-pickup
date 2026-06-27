@@ -29,6 +29,19 @@ function formatCount(n: number, singular: string, plural?: string) {
   return `${n} ${n === 1 ? singular : plural ?? `${singular}s`}`
 }
 
+function pastSessionsNavBadge(sessionCount: number, cancelledCount: number) {
+  if (sessionCount === 0 && cancelledCount === 0) {
+    return 'None yet'
+  }
+
+  return (
+    <div className="space-y-0.5">
+      <div>{`${sessionCount} ${sessionCount === 1 ? 'session' : 'sessions'}`}</div>
+      {cancelledCount > 0 ? <div>{`${cancelledCount} cancelled`}</div> : null}
+    </div>
+  )
+}
+
 function sessionsNavBadge(liveCount: number, upcomingCount: number) {
   if (liveCount > 0) {
     return (
@@ -106,7 +119,10 @@ export default async function OrgConsolePage({ params }: Props) {
             href={`${base}/sessions/past`}
             title="Past sessions"
             icon={<IconPastSessions />}
-            badge={formatCount(counts.pastSessionCount, 'session')}
+            badge={pastSessionsNavBadge(
+              counts.pastSessionCount,
+              counts.pastCancelledSessionCount,
+            )}
             disabled={!isSetup}
           />
           <ConsoleNavTile
