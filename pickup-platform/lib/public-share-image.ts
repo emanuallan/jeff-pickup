@@ -24,6 +24,7 @@ export async function buildEventsListShareImageProps(slug: string): Promise<Shar
       dayLabel: formatEventDayLabel(nextEvent),
       timeLabel: formatEventTimeOnly(nextEvent),
       locationLine: nextEvent.location_label || undefined,
+      locationAddress: nextEvent.location_address?.trim() || undefined,
       locationOnline: nextEvent.location_is_online,
     }
   }
@@ -56,6 +57,7 @@ export async function buildEventDetailShareImageProps(
     dayLabel: event ? formatEventDayLabel(event) : 'Schedule',
     timeLabel: event ? formatEventTimeOnly(event) : 'Open now',
     locationLine: event?.location_label || undefined,
+    locationAddress: event?.location_address?.trim() || undefined,
     locationOnline: event?.location_is_online,
   }
 }
