@@ -501,294 +501,74 @@ function SharePoweredByPill({ logoSrc }: { logoSrc: string }) {
   )
 }
 
-function ShareInfoBlock({
-  label,
+function ShareDetailRow({
   accentFg,
-  children,
+  primary,
+  secondary,
 }: {
-  label: string
   accentFg: string
-  children: React.ReactNode
+  primary: string
+  secondary?: string
 }) {
   return (
-    <div
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        width: '100%',
-        gap: '12px',
-        padding: '22px 26px',
-        borderRadius: '18px',
-        backgroundColor: 'rgba(255,255,255,0.035)',
-        border: `1px solid ${hexToRgba(accentFg, 0.2)}`,
-      }}
-    >
+    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '18px' }}>
       <div
         style={{
           display: 'flex',
-          ...font(600),
-          fontSize: '13px',
-          letterSpacing: '0.16em',
-          textTransform: 'uppercase',
-          color: accentFg,
-        }}
-      >
-        {label}
-      </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>{children}</div>
-    </div>
-  )
-}
-
-/** Square social post — editorial event poster with prominent branding and clear when/where blocks. */
-export function OrgShareCard({
-  slug,
-  orgName,
-  accent,
-  logoUrl,
-  sessionTitle,
-  dayLabel,
-  timeLabel,
-  locationLine,
-  locationAddress,
-  locationOnline,
-  organizrLogoSrc,
-}: OrgShareCardProps) {
-  const accentFg = accentOnDark(accent)
-  const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? 'organizr.co'
-  const joinUrl = `${slug}.${rootDomain}`
-  const venueLine = locationLine || (locationOnline ? 'Online session' : undefined)
-  const addressLine = locationAddress?.trim() || undefined
-
-  return (
-    <div
-      style={{
-        width: '100%',
-        height: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        position: 'relative',
-        overflow: 'hidden',
-        backgroundColor: '#09090b',
-        color: '#fafafa',
-      }}
-    >
-      <div
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          bottom: 0,
-          width: '8px',
+          width: '10px',
+          height: '10px',
+          borderRadius: '9999px',
           backgroundColor: accentFg,
+          flexShrink: 0,
+          marginTop: '12px',
         }}
       />
-      <div
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          height: '420px',
-          backgroundImage: `linear-gradient(165deg, ${hexToRgba(accent, 0.24)} 0%, transparent 72%)`,
-        }}
-      />
-      <DotGrid opacity={0.12} />
-
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          flex: 1,
-          padding: '56px 64px 48px 80px',
-          zIndex: 1,
-        }}
-      >
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', minWidth: 0 }}>
         <div
           style={{
             display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: '14px',
+            ...font(600),
+            fontSize: '26px',
+            lineHeight: 1.25,
+            letterSpacing: '-0.01em',
+            color: '#fafafa',
           }}
         >
-          <OrgAvatar orgName={orgName} accent={accent} logoUrl={logoUrl} size={120} prominent />
+          {primary}
+        </div>
+        {secondary ? (
           <div
             style={{
               display: 'flex',
-              ...font(600),
-              fontSize: '15px',
-              letterSpacing: '0.14em',
-              textTransform: 'uppercase',
+              ...font(400),
+              fontSize: '20px',
+              lineHeight: 1.35,
               color: '#a1a1aa',
             }}
           >
-            {orgName}
+            {secondary}
           </div>
-        </div>
-
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            flex: 1,
-            justifyContent: 'center',
-            gap: '20px',
-            paddingTop: '28px',
-            paddingBottom: '28px',
-            width: '100%',
-          }}
-        >
-          <div
-            style={{
-              display: 'flex',
-              padding: '8px 20px',
-              borderRadius: '9999px',
-              backgroundColor: hexToRgba(accent, 0.16),
-              border: `1px solid ${hexToRgba(accentFg, 0.35)}`,
-              ...font(600),
-              fontSize: '14px',
-              letterSpacing: '0.14em',
-              textTransform: 'uppercase',
-              color: accentFg,
-            }}
-          >
-            Join us
-          </div>
-
-          <div
-            style={{
-              display: 'flex',
-              ...font(700),
-              fontSize: '48px',
-              lineHeight: 1.08,
-              letterSpacing: '-0.03em',
-              color: '#fafafa',
-              textTransform: 'uppercase',
-              textAlign: 'center',
-              maxWidth: '880px',
-            }}
-          >
-            {sessionTitle}
-          </div>
-
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              width: '100%',
-              maxWidth: '820px',
-              gap: '14px',
-              marginTop: '8px',
-            }}
-          >
-            <ShareInfoBlock label="When" accentFg={accentFg}>
-              <div
-                style={{
-                  display: 'flex',
-                  ...font(700),
-                  fontSize: '30px',
-                  letterSpacing: '-0.01em',
-                  color: accentFg,
-                }}
-              >
-                {timeLabel}
-              </div>
-              <div
-                style={{
-                  display: 'flex',
-                  ...font(600),
-                  fontSize: '22px',
-                  color: '#e4e4e7',
-                }}
-              >
-                {dayLabel}
-              </div>
-            </ShareInfoBlock>
-
-            {venueLine ? (
-              <ShareInfoBlock label="Where" accentFg={accentFg}>
-                <div
-                  style={{
-                    display: 'flex',
-                    ...font(700),
-                    fontSize: '24px',
-                    lineHeight: 1.2,
-                    color: '#fafafa',
-                  }}
-                >
-                  {venueLine}
-                </div>
-                {addressLine && !locationOnline ? (
-                  <div
-                    style={{
-                      display: 'flex',
-                      ...font(400),
-                      fontSize: '20px',
-                      lineHeight: 1.35,
-                      color: '#a1a1aa',
-                    }}
-                  >
-                    {addressLine}
-                  </div>
-                ) : null}
-              </ShareInfoBlock>
-            ) : null}
-          </div>
-        </div>
-
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: '20px',
-          }}
-        >
-          <div
-            style={{
-              display: 'flex',
-              ...font(600),
-              fontSize: '22px',
-              letterSpacing: '0.01em',
-              color: '#71717a',
-            }}
-          >
-            {joinUrl}
-          </div>
-          <SharePoweredByPill logoSrc={organizrLogoSrc} />
-        </div>
+        ) : null}
       </div>
     </div>
   )
 }
 
-function OrgAvatar({
+function SharePanelLogo({
   orgName,
-  accent,
   logoUrl,
-  size,
-  prominent = false,
+  panelText,
 }: {
   orgName: string
-  accent: string
   logoUrl?: string | null
-  size: number
-  prominent?: boolean
+  panelText: string
 }) {
-  const accentText = readableTextColor(accent)
-  const accentFg = accentOnDark(accent)
-  const radius = Math.round(size * (prominent ? 0.2 : 0.24))
-  const ring = prominent
-    ? {
-        border: `3px solid ${hexToRgba(accentFg, 0.55)}`,
-        boxShadow: `0 0 0 8px ${hexToRgba(accent, 0.14)}, 0 20px 48px ${hexToRgba(accent, 0.28)}`,
-      }
-    : {
-        border: '1px solid rgba(255,255,255,0.1)',
-        boxShadow: `0 12px 32px ${hexToRgba(accent, 0.25)}`,
-      }
+  const size = 168
+  const radius = '28px'
+  const ring = {
+    border: `4px solid ${hexToRgba(panelText, 0.28)}`,
+    boxShadow: `0 20px 56px ${hexToRgba('#000000', 0.22)}`,
+  }
 
   if (logoUrl) {
     return (
@@ -801,7 +581,7 @@ function OrgAvatar({
         style={{
           width: `${size}px`,
           height: `${size}px`,
-          borderRadius: `${radius}px`,
+          borderRadius: radius,
           objectFit: 'cover',
           ...ring,
         }}
@@ -817,15 +597,150 @@ function OrgAvatar({
         justifyContent: 'center',
         width: `${size}px`,
         height: `${size}px`,
-        borderRadius: `${radius}px`,
-        backgroundColor: accent,
+        borderRadius: radius,
+        backgroundColor: hexToRgba(panelText, 0.16),
         ...font(700),
-        fontSize: `${Math.round(size * 0.42)}px`,
-        color: accentText,
+        fontSize: '72px',
+        color: panelText,
         ...ring,
       }}
     >
       {orgName.charAt(0).toUpperCase()}
+    </div>
+  )
+}
+
+/** Square social post — split-panel event flyer with branded left column and typographic details. */
+export function OrgShareCard({
+  slug,
+  orgName,
+  accent,
+  logoUrl,
+  sessionTitle,
+  dayLabel,
+  timeLabel,
+  locationLine,
+  locationAddress,
+  locationOnline,
+  organizrLogoSrc,
+}: OrgShareCardProps) {
+  const accentFg = accentOnDark(accent)
+  const panelText = readableTextColor(accent)
+  const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? 'organizr.co'
+  const joinUrl = `${slug}.${rootDomain}`
+  const venueLine = locationLine || (locationOnline ? 'Online session' : undefined)
+  const addressLine = locationAddress?.trim() || undefined
+  const whenLine = `${dayLabel} · ${timeLabel}`
+
+  return (
+    <div
+      style={{
+        width: '100%',
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden',
+        backgroundColor: '#09090b',
+        color: '#fafafa',
+      }}
+    >
+      <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: '390px',
+            flexShrink: 0,
+            padding: '48px 36px',
+            backgroundColor: accent,
+            gap: '28px',
+          }}
+        >
+          <SharePanelLogo orgName={orgName} logoUrl={logoUrl} panelText={panelText} />
+          <div
+            style={{
+              display: 'flex',
+              ...font(700),
+              fontSize: '28px',
+              lineHeight: 1.2,
+              letterSpacing: '-0.02em',
+              color: panelText,
+              textAlign: 'center',
+              maxWidth: '310px',
+            }}
+          >
+            {orgName}
+          </div>
+        </div>
+
+        <div
+          style={{
+            display: 'flex',
+            flex: 1,
+            flexDirection: 'column',
+            justifyContent: 'center',
+            position: 'relative',
+            overflow: 'hidden',
+            padding: '56px 52px',
+            gap: '36px',
+          }}
+        >
+          <DotGrid opacity={0.14} />
+          <div
+            style={{
+              display: 'flex',
+              ...font(700),
+              fontSize: '54px',
+              lineHeight: 1.06,
+              letterSpacing: '-0.035em',
+              color: '#fafafa',
+              zIndex: 1,
+              maxWidth: '580px',
+            }}
+          >
+            {sessionTitle}
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '22px', zIndex: 1, maxWidth: '580px' }}>
+            <ShareDetailRow accentFg={accentFg} primary={whenLine} />
+            {venueLine ? (
+              <ShareDetailRow
+                accentFg={accentFg}
+                primary={venueLine}
+                secondary={addressLine && !locationOnline ? addressLine : undefined}
+              />
+            ) : null}
+          </div>
+        </div>
+      </div>
+
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexShrink: 0,
+          height: '100px',
+          padding: '0 40px',
+          borderTop: '1px solid rgba(255,255,255,0.08)',
+          backgroundColor: '#09090b',
+        }}
+      >
+        <div
+          style={{
+            display: 'flex',
+            ...font(600),
+            fontSize: '22px',
+            letterSpacing: '-0.01em',
+            color: '#71717a',
+          }}
+        >
+          {joinUrl}
+        </div>
+        <SharePoweredByPill logoSrc={organizrLogoSrc} />
+      </div>
     </div>
   )
 }
