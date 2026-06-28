@@ -501,7 +501,7 @@ function SharePoweredByPill({ logoSrc }: { logoSrc: string }) {
   )
 }
 
-function ShareTimeMark({ accentFg }: { accentFg: string }) {
+function ShareDetailMark({ accentFg }: { accentFg: string }) {
   return (
     <div
       style={{
@@ -519,58 +519,28 @@ function ShareTimeMark({ accentFg }: { accentFg: string }) {
       <div
         style={{
           display: 'flex',
-          width: '16px',
-          height: '16px',
+          width: '10px',
+          height: '10px',
           borderRadius: '9999px',
-          border: `2px solid ${accentFg}`,
+          backgroundColor: accentFg,
         }}
       />
     </div>
   )
 }
 
-function ShareDetailRow({
+function ShareDetailItem({
   accentFg,
   primary,
   secondary,
-  icon,
-  online,
 }: {
   accentFg: string
   primary: string
   secondary?: string
-  icon: 'when' | 'where'
-  online?: boolean
 }) {
   return (
-    <div
-      style={{
-        display: 'flex',
-        alignItems: 'flex-start',
-        gap: '20px',
-        padding: '22px 26px',
-        borderRadius: '18px',
-        backgroundColor: 'rgba(255,255,255,0.04)',
-        border: `1px solid ${hexToRgba(accentFg, 0.22)}`,
-        boxShadow: `inset 0 1px 0 ${hexToRgba(accentFg, 0.08)}`,
-      }}
-    >
-      {icon === 'when' ? (
-        <ShareTimeMark accentFg={accentFg} />
-      ) : (
-        <div
-          style={{
-            display: 'flex',
-            width: '36px',
-            height: '36px',
-            alignItems: 'center',
-            justifyContent: 'center',
-            flexShrink: 0,
-          }}
-        >
-          <LocationMark accentFg={accentFg} online={online} />
-        </div>
-      )}
+    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '20px' }}>
+      <ShareDetailMark accentFg={accentFg} />
       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', minWidth: 0 }}>
         <div
           style={{
@@ -598,6 +568,52 @@ function ShareDetailRow({
           </div>
         ) : null}
       </div>
+    </div>
+  )
+}
+
+function ShareDetailsBox({
+  accentFg,
+  whenLine,
+  venueLine,
+  addressLine,
+}: {
+  accentFg: string
+  whenLine: string
+  venueLine?: string
+  addressLine?: string
+}) {
+  return (
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '22px',
+        padding: '22px 26px',
+        borderRadius: '18px',
+        backgroundColor: 'rgba(255,255,255,0.04)',
+        border: `1px solid ${hexToRgba(accentFg, 0.22)}`,
+        boxShadow: `inset 0 1px 0 ${hexToRgba(accentFg, 0.08)}`,
+      }}
+    >
+      <ShareDetailItem accentFg={accentFg} primary={whenLine} />
+      {venueLine ? (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '22px' }}>
+          <div
+            style={{
+              display: 'flex',
+              width: '100%',
+              height: '1px',
+              backgroundColor: hexToRgba(accentFg, 0.16),
+            }}
+          />
+          <ShareDetailItem
+            accentFg={accentFg}
+            primary={venueLine}
+            secondary={addressLine}
+          />
+        </div>
+      ) : null}
     </div>
   )
 }
@@ -921,17 +937,13 @@ export function OrgShareCard({
             </div>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', zIndex: 1, maxWidth: '560px' }}>
-            <ShareDetailRow accentFg={accentFg} icon="when" primary={whenLine} />
-            {venueLine ? (
-              <ShareDetailRow
-                accentFg={accentFg}
-                icon="where"
-                online={locationOnline}
-                primary={venueLine}
-                secondary={addressLine && !locationOnline ? addressLine : undefined}
-              />
-            ) : null}
+          <div style={{ display: 'flex', zIndex: 1, maxWidth: '560px' }}>
+            <ShareDetailsBox
+              accentFg={accentFg}
+              whenLine={whenLine}
+              venueLine={venueLine}
+              addressLine={addressLine && !locationOnline ? addressLine : undefined}
+            />
           </div>
         </div>
       </div>
