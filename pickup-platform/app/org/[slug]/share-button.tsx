@@ -2,11 +2,13 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import { BottomSheet } from '@/app/_components/bottom-sheet'
+import { readableTextColor } from '@/lib/colors'
 
 type Props = {
   title: string
   text: string
   imagePath: string
+  accent: string
 }
 
 type Step = 'choose' | 'image'
@@ -119,7 +121,8 @@ function downloadBlob(blob: Blob, filename: string) {
   URL.revokeObjectURL(url)
 }
 
-export function ShareButton({ title, text, imagePath }: Props) {
+export function ShareButton({ title, text, imagePath, accent }: Props) {
+  const accentText = readableTextColor(accent)
   const [open, setOpen] = useState(false)
   const [step, setStep] = useState<Step>('choose')
   const [copied, setCopied] = useState(false)
@@ -295,8 +298,9 @@ export function ShareButton({ title, text, imagePath }: Props) {
 
             <div className="mt-5 overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950">
               {imageLoading ? (
-                <div className="flex aspect-square items-center justify-center">
+                <div className="flex aspect-square flex-col items-center justify-center gap-4 px-8 text-center">
                   <div className="h-8 w-8 animate-pulse rounded-full bg-zinc-800" />
+                  <p className="text-sm text-zinc-500">This may take a few moments to load.</p>
                 </div>
               ) : imageError ? (
                 <div className="flex aspect-square items-center justify-center px-6 text-center text-sm text-red-300">
@@ -318,7 +322,12 @@ export function ShareButton({ title, text, imagePath }: Props) {
                   type="button"
                   disabled={!imageBlob || sharingImage}
                   onClick={() => void handleShareImageFile()}
-                  className="rounded-xl border border-white/10 bg-zinc-950/40 px-4 py-3 text-sm font-semibold text-zinc-100 transition-colors hover:border-zinc-700 hover:bg-zinc-900/60 disabled:opacity-50"
+                  className="rounded-xl px-4 py-3 text-sm font-semibold shadow-lg transition-opacity hover:opacity-90 disabled:opacity-50"
+                  style={{
+                    backgroundColor: accent,
+                    color: accentText,
+                    boxShadow: `0 10px 30px -12px ${accent}`,
+                  }}
                 >
                   {sharingImage ? 'Sharing…' : 'Share'}
                 </button>

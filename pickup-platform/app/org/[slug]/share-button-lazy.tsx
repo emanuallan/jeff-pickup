@@ -19,6 +19,7 @@ type Props = {
   title: string
   text: string
   imagePath: string
+  accent: string
 }
 
 export function ShareButton(props: Props) {
