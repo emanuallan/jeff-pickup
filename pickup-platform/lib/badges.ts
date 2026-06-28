@@ -23,23 +23,24 @@ export function hasActiveStreak(currentStreakWeeks: number): boolean {
 
 export function rosterBadges(args: {
   stats: EngagementStats | undefined
-  topSessionsOnRoster: number
+  topCapsOnRoster: number
   /** Gate the "most caps" badge until the org has enough history (like the leaderboard). */
   capsLeaderUnlocked?: boolean
   /** Hide "New" on the org's inaugural session — everyone would qualify. */
   newBadgeUnlocked?: boolean
 }): { milestone: number | null; isNew: boolean; streak: number; isCapsLeader: boolean } {
+  const caps = args.stats?.caps ?? 0
   const totalSessions = args.stats?.total_sessions ?? 0
   const streak = args.stats?.current_streak_weeks ?? 0
   const capsLeaderUnlocked = args.capsLeaderUnlocked ?? true
   const newBadgeUnlocked = args.newBadgeUnlocked ?? true
 
   return {
-    milestone: capsMilestone(totalSessions),
+    milestone: capsMilestone(caps),
     isNew: newBadgeUnlocked && isNewPlayer(totalSessions),
     streak: hasActiveStreak(streak) ? streak : 0,
     isCapsLeader:
-      capsLeaderUnlocked && totalSessions > 0 && totalSessions === args.topSessionsOnRoster,
+      capsLeaderUnlocked && caps > 0 && caps === args.topCapsOnRoster,
   }
 }
 
@@ -50,9 +51,9 @@ export function buildRosterBadgeMap(
   engagementStats: Map<string, EngagementStats>,
   options?: { capsLeaderUnlocked?: boolean; newBadgeUnlocked?: boolean },
 ): Record<string, RosterBadgeInfo> {
-  const topSessionsOnRoster = Math.max(
+  const topCapsOnRoster = Math.max(
     0,
-    ...roster.map((e) => engagementStats.get(e.participant_id)?.total_sessions ?? 0),
+    ...roster.map((e) => engagementStats.get(e.participant_id)?.caps ?? 0),
   )
 
   return Object.fromEntries(
@@ -62,7 +63,7 @@ export function buildRosterBadgeMap(
         e.participant_id,
         rosterBadges({
           stats,
-          topSessionsOnRoster,
+          topCapsOnRoster,
           capsLeaderUnlocked: options?.capsLeaderUnlocked,
           newBadgeUnlocked: options?.newBadgeUnlocked,
         }),
