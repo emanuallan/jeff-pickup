@@ -15,7 +15,7 @@ export async function AllSessionsLinkDeferred({ orgId }: Props) {
       href="/events"
       className="inline-flex items-center gap-1 text-sm text-zinc-400 transition-colors hover:text-zinc-200"
     >
-      <span aria-hidden>←</span> Home
+      <span aria-hidden>←</span> Calendar
     </Link>
   )
 }
