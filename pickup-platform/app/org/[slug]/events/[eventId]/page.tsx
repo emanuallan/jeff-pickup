@@ -122,7 +122,7 @@ export default async function EventPage({ params }: Props) {
 				<Suspense fallback={null}>
 					<AllSessionsLinkDeferred orgId={org.id} />
 				</Suspense>
-				<ShareButton title={org.name} text={shareText} />
+				<ShareButton title={org.name} text={shareText} imagePath={`/events/${eventId}/share-image`} />
 			</nav>
 
 			<OrgHeader

@@ -99,7 +99,7 @@ export default async function EventsPage({ params }: Props) {
         className={`flex min-h-9 items-center gap-3 ${slug === 'demo' ? 'justify-between' : 'justify-end'}`}
       >
         {slug === 'demo' ? <BackToOrganizrLink /> : null}
-        <ShareButton title={org.name} text={`Join ${org.name} on Organizr`} />
+        <ShareButton title={org.name} text={`Join ${org.name} on Organizr`} imagePath="/events/share-image" />
       </nav>
 
       <OrgHeader

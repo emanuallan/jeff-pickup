@@ -18,6 +18,7 @@ const ShareButtonInner = dynamic(
 type Props = {
   title: string
   text: string
+  imagePath: string
 }
 
 export function ShareButton(props: Props) {

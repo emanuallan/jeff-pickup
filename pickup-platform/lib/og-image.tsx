@@ -457,3 +457,247 @@ export async function renderOrgOgImage(props: OrgOgCardProps) {
   const fonts = await getOgFonts()
   return new ImageResponse(<OrgOgCard {...props} />, { ...ogImageSize, fonts })
 }
+
+export const shareImageSize = { width: 1080, height: 1080 }
+
+/** Square social post card — org branding, optimized for Instagram/Facebook feed posts. */
+export function OrgShareCard({
+  slug,
+  orgName,
+  accent,
+  eyebrow,
+  headline,
+  subline,
+  locationOnline,
+  cta,
+  logoUrl,
+}: OrgOgCardProps) {
+  const accentText = readableTextColor(accent)
+  const accentFg = accentOnDark(accent)
+  const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? 'organizr.co'
+
+  return (
+    <div
+      style={{
+        width: '100%',
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'space-between',
+        position: 'relative',
+        overflow: 'hidden',
+        backgroundColor: '#09090b',
+        color: '#fafafa',
+        padding: '56px 52px',
+      }}
+    >
+      <div
+        style={{
+          position: 'absolute',
+          top: '-60px',
+          right: '-30px',
+          width: '420px',
+          height: '420px',
+          borderRadius: '9999px',
+          background: `radial-gradient(circle, ${hexToRgba(accent, 0.34)} 0%, transparent 68%)`,
+        }}
+      />
+      <div
+        style={{
+          position: 'absolute',
+          bottom: '-80px',
+          left: '-60px',
+          width: '360px',
+          height: '360px',
+          borderRadius: '9999px',
+          background: `radial-gradient(circle, ${hexToRgba(accent, 0.14)} 0%, transparent 70%)`,
+        }}
+      />
+      <DotGrid opacity={0.22} />
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', zIndex: 1 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '18px', minWidth: 0 }}>
+          {logoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={logoUrl}
+              alt=""
+              width={72}
+              height={72}
+              style={{
+                width: '72px',
+                height: '72px',
+                borderRadius: '18px',
+                objectFit: 'cover',
+                border: '1px solid rgba(255,255,255,0.1)',
+                flexShrink: 0,
+              }}
+            />
+          ) : (
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '72px',
+                height: '72px',
+                borderRadius: '18px',
+                backgroundColor: accent,
+                ...font(700),
+                fontSize: '32px',
+                color: accentText,
+                flexShrink: 0,
+              }}
+            >
+              {orgName.charAt(0).toUpperCase()}
+            </div>
+          )}
+          <div
+            style={{
+              display: 'flex',
+              ...font(600),
+              fontSize: '34px',
+              letterSpacing: '-0.02em',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {orgName}
+          </div>
+        </div>
+
+        {eyebrow ? (
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              alignSelf: 'flex-start',
+              padding: '8px 18px',
+              borderRadius: '9999px',
+              backgroundColor: hexToRgba(accentFg, 0.12),
+              border: `1px solid ${hexToRgba(accentFg, 0.35)}`,
+            }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                width: '8px',
+                height: '8px',
+                borderRadius: '9999px',
+                backgroundColor: accentFg,
+              }}
+            />
+            <div
+              style={{
+                display: 'flex',
+                ...font(600),
+                fontSize: '15px',
+                letterSpacing: '0.1em',
+                textTransform: 'uppercase',
+                color: accentFg,
+              }}
+            >
+              {eyebrow}
+            </div>
+          </div>
+        ) : null}
+      </div>
+
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '24px',
+          zIndex: 1,
+          flex: 1,
+          justifyContent: 'center',
+        }}
+      >
+        <div
+          style={{
+            display: 'flex',
+            ...font(700),
+            fontSize: '52px',
+            lineHeight: 1.08,
+            letterSpacing: '-0.035em',
+          }}
+        >
+          {headline}
+        </div>
+
+        {subline ? (
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '14px',
+              padding: '16px 20px',
+              borderRadius: '16px',
+              border: '1px solid rgba(255,255,255,0.08)',
+              backgroundColor: 'rgba(24,24,27,0.72)',
+            }}
+          >
+            <LocationMark accentFg={accentFg} online={locationOnline} />
+            <div
+              style={{
+                display: 'flex',
+                ...font(400),
+                fontSize: '24px',
+                lineHeight: 1.3,
+                color: '#d4d4d8',
+              }}
+            >
+              {subline}
+            </div>
+          </div>
+        ) : null}
+      </div>
+
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '20px',
+          zIndex: 1,
+        }}
+      >
+        {cta ? (
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              alignSelf: 'flex-start',
+              padding: '14px 28px',
+              borderRadius: '14px',
+              backgroundColor: accent,
+              color: accentText,
+              ...font(600),
+              fontSize: '22px',
+              boxShadow: `0 14px 40px ${hexToRgba(accent, 0.32)}`,
+            }}
+          >
+            {cta}
+          </div>
+        ) : null}
+        <div
+          style={{
+            display: 'flex',
+            ...font(400),
+            fontSize: '18px',
+            color: '#52525b',
+            letterSpacing: '-0.01em',
+          }}
+        >
+          {slug}.{rootDomain}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export async function renderOrgShareImage(props: OrgOgCardProps) {
+  const fonts = await getOgFonts()
+  return new ImageResponse(<OrgShareCard {...props} />, { ...shareImageSize, fonts })
+}
