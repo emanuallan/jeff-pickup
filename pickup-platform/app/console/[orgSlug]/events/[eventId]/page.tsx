@@ -48,7 +48,7 @@ export default async function ConsoleEventAnalyticsPage({ params }: Props) {
     fetchEventAnalyticsDb(event.id),
   ])
   const analytics = buildRosterAnalytics(roster, event.capacity, dbAnalytics)
-  const publicEventUrl = `${orgBaseUrl(orgSlug)}/events/${event.short_id}`
+  const publicEventUrl = `${orgBaseUrl(orgSlug)}/cal/${event.short_id}`
   const isLive = isEventInProgress(event) && event.status === 'on'
   const hasSignupActivity = analytics.uniqueSignups > 0 || analytics.uniqueLeft > 0
   const hasTraffic = analytics.uniqueVisitors > 0 || analytics.uniqueSignups > 0

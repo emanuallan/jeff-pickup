@@ -25,7 +25,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const orgSlugs = await getActivePublicOrgSlugs()
     for (const orgSlug of orgSlugs) {
       entries.push({
-        url: `${orgBaseUrl(orgSlug)}/events`,
+        url: `${orgBaseUrl(orgSlug)}/cal`,
         lastModified: now,
         changeFrequency: 'daily',
         priority: 0.7,
@@ -49,7 +49,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const entries: MetadataRoute.Sitemap = [
     {
-      url: `${base}/events`,
+      url: `${base}/cal`,
       changeFrequency: 'daily',
       priority: 0.9,
     },
@@ -57,7 +57,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   for (const event of events) {
     entries.push({
-      url: `${base}/events/${event.short_id}`,
+      url: `${base}/cal/${event.short_id}`,
       lastModified: new Date(event.starts_at),
       changeFrequency: 'daily',
       priority: 0.8,

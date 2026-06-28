@@ -390,7 +390,7 @@ export function SessionRow({
   return (
     <div className="group relative flex items-center gap-3 rounded-xl border border-white/5 bg-zinc-950/40 px-3 py-2.5 transition-colors hover:border-zinc-700/60 hover:bg-zinc-900/40">
       <Link
-        href={`/events/${event.short_id}`}
+        href={`/cal/${event.short_id}`}
         className="absolute inset-0 z-0 rounded-xl"
         aria-label={`${eventName(event)} on ${formatEventDayLabel(event)}`}
       />

@@ -606,7 +606,7 @@ export async function updateEventAnnouncement(
 
   revalidatePath(`/console/${orgSlug}`)
   revalidatePath(`/org/${orgSlug}`)
-  revalidatePath(`/org/${orgSlug}/events`)
+  revalidatePath(`/org/${orgSlug}/cal`)
   revalidatePath(`/console/${orgSlug}/events/${eventId}`)
 
   return { ok: true }

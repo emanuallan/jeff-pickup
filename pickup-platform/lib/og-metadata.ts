@@ -14,9 +14,9 @@ export function orgBaseUrl(slug: string): string {
   return `https://${slug}.${root}`
 }
 
-/** Public sessions list for an org — preferred entry point over the org root redirect. */
+/** Public calendar for an org — preferred entry point over the org root redirect. */
 export function orgEventsUrl(slug: string): string {
-  return `${orgBaseUrl(slug)}/events`
+  return `${orgBaseUrl(slug)}/cal`
 }
 
 /** Canonical apex URL for the marketing/landing page (no org subdomain). */

@@ -67,7 +67,7 @@ export default async function LeaderboardPage({ params }: Props) {
     <OrgPageShell>
       <div className="flex justify-start">
         <Link
-          href="/events"
+          href="/cal"
           className="inline-flex items-center gap-1 text-sm text-zinc-400 transition-colors hover:text-zinc-200"
         >
           <span aria-hidden>←</span> Calendar
@@ -89,7 +89,7 @@ export default async function LeaderboardPage({ params }: Props) {
 
       <p className="mt-10 text-center">
         <Link
-          href="/events"
+          href="/cal"
           className="inline-flex items-center gap-1.5 rounded-full border border-zinc-800 bg-zinc-900/60 px-4 py-2 text-sm text-zinc-300 transition-colors hover:border-zinc-700 hover:bg-zinc-800/60 hover:text-zinc-100"
           style={{ borderColor: `${accentOnDark(accent)}33` }}
         >

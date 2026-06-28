@@ -17,8 +17,8 @@ export default async function OrgPage({ params }: Props) {
   const soonest = events[0]
 
   if (soonest) {
-    redirect(`/events/${soonest.short_id}`)
+    redirect(`/cal/${soonest.short_id}`)
   }
 
-  redirect('/events')
+  redirect('/cal')
 }

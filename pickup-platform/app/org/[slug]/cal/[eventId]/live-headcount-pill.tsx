@@ -49,7 +49,7 @@ export function LiveHeadcountPill({
       if (document.visibilityState !== 'visible') return
 
       try {
-        const res = await fetch(`/api/org/${orgSlug}/events/${eventRef}/headcount`)
+        const res = await fetch(`/api/org/${orgSlug}/cal/${eventRef}/headcount`)
         if (!res.ok || cancelled) return
 
         const data = (await res.json()) as { headcount?: number }

@@ -32,7 +32,7 @@ async function getOpenEvent(
 }
 
 function revalidatePublicEvent(orgSlug: string, eventRef: string, eventId: string, orgId: string) {
-  revalidatePath(`/org/${orgSlug}/events/${eventRef}`)
+  revalidatePath(`/org/${orgSlug}/cal/${eventRef}`)
   revalidatePath(`/org/${orgSlug}`)
   revalidateTag(`org-events:${orgId}`)
   revalidateTag(`event:${orgSlug}:${eventRef}`)
@@ -41,7 +41,7 @@ function revalidatePublicEvent(orgSlug: string, eventRef: string, eventId: strin
 async function revalidatePublicEventByRef(orgSlug: string, eventRef: string) {
   const org = await getOrgBySlug(orgSlug)
   if (!org) {
-    revalidatePath(`/org/${orgSlug}/events/${eventRef}`)
+    revalidatePath(`/org/${orgSlug}/cal/${eventRef}`)
     revalidatePath(`/org/${orgSlug}`)
     return
   }
@@ -50,7 +50,7 @@ async function revalidatePublicEventByRef(orgSlug: string, eventRef: string) {
   if (event) {
     revalidatePublicEvent(orgSlug, eventRef, event.id, org.id)
   } else {
-    revalidatePath(`/org/${orgSlug}/events/${eventRef}`)
+    revalidatePath(`/org/${orgSlug}/cal/${eventRef}`)
     revalidatePath(`/org/${orgSlug}`)
     revalidateTag(`org-events:${org.id}`)
   }

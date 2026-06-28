@@ -59,8 +59,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   return buildOrgMetadata({
     slug,
-    path: '/events',
-    imagePath: '/events/og-image',
+    path: '/cal',
+    imagePath: '/cal/og-image',
     title,
     description,
     siteName: org.name,
@@ -80,7 +80,7 @@ export default async function EventsPage({ params }: Props) {
 
   const activeUpcoming = events.filter((ev) => !isEventCancelled(ev.status))
   if (activeUpcoming.length === 1) {
-    redirect(`/events/${activeUpcoming[0].short_id}`)
+    redirect(`/cal/${activeUpcoming[0].short_id}`)
   }
 
   const skippedCancelled =
@@ -99,7 +99,7 @@ export default async function EventsPage({ params }: Props) {
         className={`flex min-h-9 items-center gap-3 ${slug === 'demo' ? 'justify-between' : 'justify-end'}`}
       >
         {slug === 'demo' ? <BackToOrganizrLink /> : null}
-        <ShareButton title={org.name} text={`Join ${org.name} on Organizr`} imagePath="/events/share-image" accent={accent} />
+        <ShareButton title={org.name} text={`Join ${org.name} on Organizr`} imagePath="/cal/share-image" accent={accent} />
       </nav>
 
       <OrgHeader
@@ -120,7 +120,7 @@ export default async function EventsPage({ params }: Props) {
             <section>
               <div className="group relative overflow-hidden rounded-3xl border border-zinc-800 bg-linear-to-b from-zinc-900 to-zinc-950 p-6 transition-colors hover:border-zinc-700">
                 <Link
-                  href={`/events/${featured.short_id}`}
+                  href={`/cal/${featured.short_id}`}
                   className="absolute inset-0 z-0 rounded-3xl"
                   aria-label={`${eventName(featured)} — ${formatEventDayLabel(featured)}`}
                 />
@@ -185,7 +185,7 @@ export default async function EventsPage({ params }: Props) {
 
           {skippedCancelled ? (
             <CancelledSessionNotice
-              href={`/events/${skippedCancelled.short_id}`}
+              href={`/cal/${skippedCancelled.short_id}`}
               className={featured ? 'mt-2' : 'mt-8'}
             />
           ) : null}

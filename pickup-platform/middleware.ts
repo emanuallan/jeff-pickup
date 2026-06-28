@@ -15,9 +15,29 @@ const VISITOR_COOKIE_OPTIONS = {
 /** Org public event detail pages (subdomain path or apex rewrite path). */
 function isPublicEventPage(pathname: string): boolean {
   return (
-    /^\/events\/[^/]+/.test(pathname) ||
-    /^\/org\/[^/]+\/events\/[^/]+/.test(pathname)
+    /^\/cal\/[^/]+/.test(pathname) ||
+    /^\/org\/[^/]+\/cal\/[^/]+/.test(pathname)
   )
+}
+
+/** Legacy /events URLs — redirect to /cal so shared links and OG caches keep working. */
+function redirectEventsToCal(request: NextRequest): NextResponse | null {
+  const { pathname } = request.nextUrl
+
+  if (pathname === '/events' || pathname.startsWith('/events/')) {
+    const url = request.nextUrl.clone()
+    url.pathname = `/cal${pathname.slice('/events'.length)}`
+    return NextResponse.redirect(url, 308)
+  }
+
+  const apexMatch = /^(\/org\/[^/]+)\/events(\/.*)?$/.exec(pathname)
+  if (apexMatch) {
+    const url = request.nextUrl.clone()
+    url.pathname = `${apexMatch[1]}/cal${apexMatch[2] ?? ''}`
+    return NextResponse.redirect(url, 308)
+  }
+
+  return null
 }
 
 function copyCookies(from: NextResponse, to: NextResponse) {
@@ -36,7 +56,7 @@ function attachVisitorKey(request: NextRequest, requestHeaders: Headers): string
   return visitorKey
 }
 
-/** Apex paths like /org/demo/events — public tenant pages, no auth refresh needed. */
+/** Apex paths like /org/demo/cal — public tenant pages, no auth refresh needed. */
 function isApexPublicOrgRoute(pathname: string): boolean {
   return /^\/org\/[^/]+(\/|$)/.test(pathname)
 }
@@ -47,6 +67,9 @@ export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname
 
   if (orgSlug) {
+    const legacyRedirect = redirectEventsToCal(request)
+    if (legacyRedirect) return legacyRedirect
+
     if (
       pathname === '/robots.txt' ||
       pathname === '/sitemap.xml' ||
@@ -77,6 +100,9 @@ export async function middleware(request: NextRequest) {
   }
 
   if (isApexPublicOrgRoute(pathname)) {
+    const legacyRedirect = redirectEventsToCal(request)
+    if (legacyRedirect) return legacyRedirect
+
     const requestHeaders = new Headers(request.headers)
     const visitorKey = attachVisitorKey(request, requestHeaders)
     const isNewVisitor = visitorKey != null && !request.cookies.get(VISITOR_COOKIE)?.value

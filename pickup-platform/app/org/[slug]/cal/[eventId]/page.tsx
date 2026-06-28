@@ -64,8 +64,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 	return buildOrgMetadata({
 		slug,
-		path: `/events/${eventId}`,
-		imagePath: `/events/${eventId}/og-image`,
+		path: `/cal/${eventId}`,
+		imagePath: `/cal/${eventId}/og-image`,
 		title,
 		description,
 		siteName: org.name,
@@ -117,12 +117,12 @@ export default async function EventPage({ params }: Props) {
 
 	return (
 		<OrgPageShell>
-			<JsonLd data={buildEventJsonLd(org, event, `/events/${eventId}`)} />
+			<JsonLd data={buildEventJsonLd(org, event, `/cal/${eventId}`)} />
 			<nav className="flex min-h-9 items-center justify-between gap-3">
 				<Suspense fallback={null}>
 					<AllSessionsLinkDeferred orgId={org.id} />
 				</Suspense>
-				<ShareButton title={org.name} text={shareText} imagePath={`/events/${eventId}/share-image`} accent={accent} />
+				<ShareButton title={org.name} text={shareText} imagePath={`/cal/${eventId}/share-image`} accent={accent} />
 			</nav>
 
 			<OrgHeader
@@ -139,7 +139,7 @@ export default async function EventPage({ params }: Props) {
 					<PageHelpHint message={helpMessage} fullWidth={false} className="min-w-0" />
 					{nextActiveSession ? (
 						<ViewNextSessionLink
-							href={`/events/${nextActiveSession.short_id}`}
+							href={`/cal/${nextActiveSession.short_id}`}
 							accent={accent}
 							inline
 							className="shrink-0"
