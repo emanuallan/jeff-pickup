@@ -24,7 +24,7 @@ function clampShareText(text: string, max: number): string {
 
 function toCalendarShareEvent(
   event: EventWithLocation,
-  { addressMax }: { addressMax: number },
+  { includeAddress = false, addressMax = 56 }: { includeAddress?: boolean; addressMax?: number } = {},
 ): CalendarShareEventItem {
   const locationLine =
     event.location_label || (event.location_is_online ? 'Online session' : undefined)
@@ -34,7 +34,8 @@ function toCalendarShareEvent(
     title: eventDisplayName(event.title),
     whenLine: formatEventWhenLine(event),
     locationLine,
-    addressLine: rawAddress ? clampShareText(rawAddress, addressMax) : undefined,
+    addressLine:
+      includeAddress && rawAddress ? clampShareText(rawAddress, addressMax) : undefined,
   }
 }
 
@@ -44,7 +45,7 @@ export async function buildEventsListShareImageProps(slug: string): Promise<Cale
   const featured = pickFeaturedUpcomingEvent(events)
   const upcoming = events
     .filter((ev) => !isEventCancelled(ev.status) && ev.id !== featured?.id)
-    .slice(0, 3)
+    .slice(0, 2)
 
   return {
     slug,
@@ -52,8 +53,8 @@ export async function buildEventsListShareImageProps(slug: string): Promise<Cale
     orgDescription: org?.description ? clampShareText(org.description, 120) : undefined,
     accent: org?.branding.accent_color ?? '#2563eb',
     logoUrl: org?.branding.logo_url,
-    featuredEvent: featured ? toCalendarShareEvent(featured, { addressMax: 56 }) : undefined,
-    upcomingEvents: upcoming.map((ev) => toCalendarShareEvent(ev, { addressMax: 40 })),
+    featuredEvent: featured ? toCalendarShareEvent(featured, { includeAddress: true }) : undefined,
+    upcomingEvents: upcoming.map((ev) => toCalendarShareEvent(ev)),
   }
 }
 

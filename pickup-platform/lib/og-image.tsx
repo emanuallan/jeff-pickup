@@ -1107,6 +1107,47 @@ function CalendarShareFeaturedBlock({
   )
 }
 
+function CalendarShareUpcomingCard({
+  accentFg,
+  event,
+}: {
+  accentFg: string
+  event: CalendarShareEventItem
+}) {
+  return (
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '12px',
+        padding: '20px 24px',
+        borderRadius: '16px',
+        backgroundColor: 'rgba(255,255,255,0.03)',
+        border: `1px solid ${hexToRgba(accentFg, 0.18)}`,
+        boxShadow: `inset 0 1px 0 ${hexToRgba(accentFg, 0.06)}`,
+      }}
+    >
+      <div
+        style={{
+          display: 'flex',
+          ...font(600),
+          fontSize: '24px',
+          lineHeight: 1.2,
+          letterSpacing: '-0.02em',
+          color: '#fafafa',
+        }}
+      >
+        {event.title}
+      </div>
+      <CalendarShareEventMeta
+        accentFg={accentFg}
+        whenLine={event.whenLine}
+        locationLine={event.locationLine}
+      />
+    </div>
+  )
+}
+
 function CalendarShareUpcomingList({
   accentFg,
   events,
@@ -1117,50 +1158,13 @@ function CalendarShareUpcomingList({
   if (events.length === 0) return null
 
   return (
-    <div
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '18px',
-        padding: '20px 24px',
-        borderRadius: '16px',
-        backgroundColor: 'rgba(255,255,255,0.03)',
-        border: `1px solid ${hexToRgba(accentFg, 0.16)}`,
-      }}
-    >
-      {events.map((event, index) => (
-        <div key={`${event.title}-${event.whenLine}`} style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
-          {index > 0 ? (
-            <div
-              style={{
-                display: 'flex',
-                width: '100%',
-                height: '1px',
-                backgroundColor: hexToRgba(accentFg, 0.14),
-              }}
-            />
-          ) : null}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            <div
-              style={{
-                display: 'flex',
-                ...font(600),
-                fontSize: '24px',
-                lineHeight: 1.2,
-                letterSpacing: '-0.02em',
-                color: '#fafafa',
-              }}
-            >
-              {event.title}
-            </div>
-            <CalendarShareEventMeta
-              accentFg={accentFg}
-              whenLine={event.whenLine}
-              locationLine={event.locationLine}
-              addressLine={event.addressLine}
-            />
-          </div>
-        </div>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+      {events.map((event) => (
+        <CalendarShareUpcomingCard
+          key={`${event.title}-${event.whenLine}`}
+          accentFg={accentFg}
+          event={event}
+        />
       ))}
     </div>
   )
