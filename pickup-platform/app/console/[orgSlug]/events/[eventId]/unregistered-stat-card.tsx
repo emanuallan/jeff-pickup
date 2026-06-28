@@ -126,7 +126,7 @@ export function UnregisteredStatCard({ orgSlug, eventId, count, timezone }: Prop
 
         <div className="mt-4" aria-busy={loading}>
           {loading ? (
-            <BottomSheetLoading label="Loading unregistered people…" />
+            <BottomSheetLoading label="Loading unregistered people…" rows={Math.min(count, 4)} />
           ) : error ? (
             <p className="text-sm text-red-400">{error}</p>
           ) : people && people.length === 0 ? (

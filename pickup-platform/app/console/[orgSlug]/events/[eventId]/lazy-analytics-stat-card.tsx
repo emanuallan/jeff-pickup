@@ -20,6 +20,7 @@ type Props<T> = {
   sheetTitleId: string
   emptyMessage?: string
   loadingLabel?: string
+  skeletonRows?: number
   children: (data: T) => ReactNode
   hasContent?: (data: T) => boolean
 }
@@ -39,6 +40,7 @@ export function LazyAnalyticsStatCard<T>({
   sheetTitleId,
   emptyMessage = 'Nothing to show yet.',
   loadingLabel = 'Loading…',
+  skeletonRows = 3,
   children,
   hasContent,
 }: Props<T>) {
@@ -118,7 +120,7 @@ export function LazyAnalyticsStatCard<T>({
 
         <div className="mt-4" aria-busy={loading}>
           {loading ? (
-            <BottomSheetLoading label={loadingLabel} />
+            <BottomSheetLoading label={loadingLabel} rows={skeletonRows} />
           ) : error ? (
             <p className="text-sm text-red-400">{error}</p>
           ) : data && (hasContent ? hasContent(data) : true) ? (

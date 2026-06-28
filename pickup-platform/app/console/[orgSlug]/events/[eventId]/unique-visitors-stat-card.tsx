@@ -128,7 +128,7 @@ export function UniqueVisitorsStatCard({ orgSlug, eventId, count }: Props) {
 
         <div className="mt-4" aria-busy={loading}>
           {loading ? (
-            <BottomSheetLoading label="Loading visitors…" />
+            <BottomSheetLoading label="Loading visitors…" rows={Math.min(count, 4)} />
           ) : error ? (
             <p className="text-sm text-red-400">{error}</p>
           ) : !hasContent ? (
