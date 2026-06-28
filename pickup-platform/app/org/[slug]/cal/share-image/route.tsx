@@ -1,4 +1,4 @@
-import { renderOrgShareImage } from '@/lib/og-image'
+import { renderOrgCalendarShareImage } from '@/lib/og-image'
 import { buildEventsListShareImageProps } from '@/lib/public-share-image'
 
 type Context = {
@@ -8,5 +8,5 @@ type Context = {
 export async function GET(_request: Request, { params }: Context) {
   const { slug } = await params
   const props = await buildEventsListShareImageProps(slug)
-  return renderOrgShareImage(props)
+  return renderOrgCalendarShareImage(props)
 }

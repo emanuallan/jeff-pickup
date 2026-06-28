@@ -1,49 +1,66 @@
-import type { OrgShareCardProps } from '@/lib/og-image'
+import type {
+  CalendarShareEventItem,
+  OrgCalendarShareCardProps,
+  OrgShareCardProps,
+} from '@/lib/og-image'
 import {
   formatEventDayLabel,
   formatEventTimeOnly,
+  formatEventWhenLine,
   eventDisplayName,
+  isEventCancelled,
   pickFeaturedUpcomingEvent,
 } from '@/lib/events'
+import type { EventWithLocation } from '@/lib/events'
 import { getPublicOrgAndEvent, getPublicOrgBySlug, getPublicUpcomingEventsForOrg } from '@/lib/public-data'
 
-type ShareImageProps = Omit<OrgShareCardProps, 'organizrLogoSrc'>
+type EventShareImageProps = Omit<OrgShareCardProps, 'organizrLogoSrc'>
+type CalendarShareImageProps = Omit<OrgCalendarShareCardProps, 'organizrLogoSrc'>
 
-export async function buildEventsListShareImageProps(slug: string): Promise<ShareImageProps> {
+function clampShareText(text: string, max: number): string {
+  if (text.length <= max) return text
+  return `${text.slice(0, max - 1).trimEnd()}…`
+}
+
+function toCalendarShareEvent(
+  event: EventWithLocation,
+  { addressMax }: { addressMax: number },
+): CalendarShareEventItem {
+  const locationLine =
+    event.location_label || (event.location_is_online ? 'Online session' : undefined)
+  const rawAddress = !event.location_is_online ? event.location_address?.trim() : undefined
+
+  return {
+    title: eventDisplayName(event.title),
+    whenLine: formatEventWhenLine(event),
+    locationLine,
+    addressLine: rawAddress ? clampShareText(rawAddress, addressMax) : undefined,
+  }
+}
+
+export async function buildEventsListShareImageProps(slug: string): Promise<CalendarShareImageProps> {
   const org = await getPublicOrgBySlug(slug)
   const events = org ? await getPublicUpcomingEventsForOrg(org.id, 20, true) : []
-  const nextEvent = pickFeaturedUpcomingEvent(events)
-
-  if (nextEvent) {
-    return {
-      slug,
-      orgName: org?.name ?? 'Organizr',
-      accent: org?.branding.accent_color ?? '#2563eb',
-      logoUrl: org?.branding.logo_url,
-      sessionTitle: eventDisplayName(nextEvent.title),
-      dayLabel: formatEventDayLabel(nextEvent),
-      timeLabel: formatEventTimeOnly(nextEvent),
-      locationLine: nextEvent.location_label || undefined,
-      locationAddress: nextEvent.location_address?.trim() || undefined,
-      locationOnline: nextEvent.location_is_online,
-    }
-  }
+  const featured = pickFeaturedUpcomingEvent(events)
+  const upcoming = events
+    .filter((ev) => !isEventCancelled(ev.status) && ev.id !== featured?.id)
+    .slice(0, 3)
 
   return {
     slug,
     orgName: org?.name ?? 'Organizr',
+    orgDescription: org?.description ? clampShareText(org.description, 120) : undefined,
     accent: org?.branding.accent_color ?? '#2563eb',
     logoUrl: org?.branding.logo_url,
-    sessionTitle: 'Upcoming sessions',
-    dayLabel: 'Schedule',
-    timeLabel: 'Open now',
+    featuredEvent: featured ? toCalendarShareEvent(featured, { addressMax: 56 }) : undefined,
+    upcomingEvents: upcoming.map((ev) => toCalendarShareEvent(ev, { addressMax: 40 })),
   }
 }
 
 export async function buildEventDetailShareImageProps(
   slug: string,
   eventId: string,
-): Promise<ShareImageProps> {
+): Promise<EventShareImageProps> {
   const result = await getPublicOrgAndEvent(slug, eventId)
   const org = result?.org ?? null
   const event = result?.event ?? null

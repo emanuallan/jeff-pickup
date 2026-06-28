@@ -474,6 +474,24 @@ export type OrgShareCardProps = {
   organizrLogoSrc: string
 }
 
+export type CalendarShareEventItem = {
+  title: string
+  whenLine: string
+  locationLine?: string
+  addressLine?: string
+}
+
+export type OrgCalendarShareCardProps = {
+  slug: string
+  orgName: string
+  orgDescription?: string
+  accent: string
+  logoUrl?: string | null
+  featuredEvent?: CalendarShareEventItem
+  upcomingEvents: CalendarShareEventItem[]
+  organizrLogoSrc: string
+}
+
 function SharePoweredByPill({ logoSrc }: { logoSrc: string }) {
   return (
     <div
@@ -990,6 +1008,493 @@ export function OrgShareCard({
   )
 }
 
+function CalendarShareEventMeta({
+  accentFg,
+  whenLine,
+  locationLine,
+  addressLine,
+  featured,
+}: {
+  accentFg: string
+  whenLine: string
+  locationLine?: string
+  addressLine?: string
+  featured?: boolean
+}) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: featured ? '10px' : '6px' }}>
+      <div
+        style={{
+          display: 'flex',
+          ...font(600),
+          fontSize: featured ? '28px' : '19px',
+          lineHeight: 1.25,
+          color: accentFg,
+        }}
+      >
+        {whenLine}
+      </div>
+      {locationLine ? (
+        <div
+          style={{
+            display: 'flex',
+            ...font(400),
+            fontSize: featured ? '24px' : '18px',
+            lineHeight: 1.3,
+            color: '#d4d4d8',
+          }}
+        >
+          {locationLine}
+        </div>
+      ) : null}
+      {addressLine ? (
+        <div
+          style={{
+            display: 'flex',
+            ...font(400),
+            fontSize: featured ? '20px' : '16px',
+            lineHeight: 1.35,
+            color: '#a1a1aa',
+          }}
+        >
+          {addressLine}
+        </div>
+      ) : null}
+    </div>
+  )
+}
+
+function CalendarShareFeaturedBlock({
+  accentFg,
+  event,
+}: {
+  accentFg: string
+  event: CalendarShareEventItem
+}) {
+  return (
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '18px',
+        padding: '26px 28px',
+        borderRadius: '18px',
+        backgroundColor: 'rgba(255,255,255,0.04)',
+        border: `1px solid ${hexToRgba(accentFg, 0.28)}`,
+        boxShadow: `inset 0 1px 0 ${hexToRgba(accentFg, 0.1)}`,
+      }}
+    >
+      <div
+        style={{
+          display: 'flex',
+          ...font(700),
+          fontSize: '46px',
+          lineHeight: 1.08,
+          letterSpacing: '-0.03em',
+          color: '#fafafa',
+        }}
+      >
+        {event.title}
+      </div>
+      <CalendarShareEventMeta
+        accentFg={accentFg}
+        whenLine={event.whenLine}
+        locationLine={event.locationLine}
+        addressLine={event.addressLine}
+        featured
+      />
+    </div>
+  )
+}
+
+function CalendarShareUpcomingList({
+  accentFg,
+  events,
+}: {
+  accentFg: string
+  events: CalendarShareEventItem[]
+}) {
+  if (events.length === 0) return null
+
+  return (
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '18px',
+        padding: '20px 24px',
+        borderRadius: '16px',
+        backgroundColor: 'rgba(255,255,255,0.03)',
+        border: `1px solid ${hexToRgba(accentFg, 0.16)}`,
+      }}
+    >
+      {events.map((event, index) => (
+        <div key={`${event.title}-${event.whenLine}`} style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+          {index > 0 ? (
+            <div
+              style={{
+                display: 'flex',
+                width: '100%',
+                height: '1px',
+                backgroundColor: hexToRgba(accentFg, 0.14),
+              }}
+            />
+          ) : null}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <div
+              style={{
+                display: 'flex',
+                ...font(600),
+                fontSize: '24px',
+                lineHeight: 1.2,
+                letterSpacing: '-0.02em',
+                color: '#fafafa',
+              }}
+            >
+              {event.title}
+            </div>
+            <CalendarShareEventMeta
+              accentFg={accentFg}
+              whenLine={event.whenLine}
+              locationLine={event.locationLine}
+              addressLine={event.addressLine}
+            />
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+/** Square social post — group calendar with featured session and upcoming list. */
+export function OrgCalendarShareCard({
+  slug,
+  orgName,
+  orgDescription,
+  accent,
+  logoUrl,
+  featuredEvent,
+  upcomingEvents,
+  organizrLogoSrc,
+}: OrgCalendarShareCardProps) {
+  const accentFg = accentOnDark(accent)
+  const panelText = readableTextColor(accent)
+  const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? 'organizr.co'
+  const joinUrl = `${slug}.${rootDomain}`
+
+  return (
+    <div
+      style={{
+        width: '100%',
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden',
+        backgroundColor: '#09090b',
+        color: '#fafafa',
+      }}
+    >
+      <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: '390px',
+            flexShrink: 0,
+            padding: '44px 36px',
+            backgroundColor: accent,
+            gap: '24px',
+            position: 'relative',
+            overflow: 'hidden',
+          }}
+        >
+          <div
+            style={{
+              position: 'absolute',
+              inset: 0,
+              opacity: 0.14,
+              backgroundImage: `radial-gradient(circle at center, ${hexToRgba(panelText, 0.55)} 1px, transparent 1px)`,
+              backgroundSize: '22px 22px',
+            }}
+          />
+          <div
+            style={{
+              position: 'absolute',
+              top: '-80px',
+              left: '-60px',
+              width: '360px',
+              height: '360px',
+              borderRadius: '9999px',
+              background: `radial-gradient(circle, ${hexToRgba(panelText, 0.22)} 0%, transparent 68%)`,
+            }}
+          />
+          <div
+            style={{
+              position: 'absolute',
+              bottom: '-100px',
+              right: '-80px',
+              width: '320px',
+              height: '320px',
+              borderRadius: '9999px',
+              background: `radial-gradient(circle, ${hexToRgba('#000000', 0.18)} 0%, transparent 70%)`,
+            }}
+          />
+          <div
+            style={{
+              position: 'absolute',
+              top: 0,
+              right: 0,
+              bottom: 0,
+              width: '1px',
+              backgroundColor: hexToRgba(panelText, 0.22),
+            }}
+          />
+
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              position: 'relative',
+              width: '240px',
+              height: '240px',
+            }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                position: 'absolute',
+                width: '220px',
+                height: '220px',
+                borderRadius: '9999px',
+                border: `2px solid ${hexToRgba(panelText, 0.16)}`,
+              }}
+            />
+            <SharePanelLogo orgName={orgName} logoUrl={logoUrl} panelText={panelText} />
+          </div>
+
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '12px',
+              zIndex: 1,
+            }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                ...font(700),
+                fontSize: '30px',
+                lineHeight: 1.2,
+                letterSpacing: '-0.02em',
+                color: panelText,
+                textAlign: 'center',
+                maxWidth: '310px',
+              }}
+            >
+              {orgName}
+            </div>
+            {orgDescription ? (
+              <div
+                style={{
+                  display: 'flex',
+                  ...font(400),
+                  fontSize: '18px',
+                  lineHeight: 1.45,
+                  color: hexToRgba(panelText, 0.82),
+                  textAlign: 'center',
+                  maxWidth: '300px',
+                }}
+              >
+                {orgDescription}
+              </div>
+            ) : (
+              <div
+                style={{
+                  display: 'flex',
+                  width: '48px',
+                  height: '3px',
+                  borderRadius: '9999px',
+                  backgroundColor: hexToRgba(panelText, 0.35),
+                }}
+              />
+            )}
+          </div>
+        </div>
+
+        <div
+          style={{
+            display: 'flex',
+            width: '6px',
+            flexShrink: 0,
+            backgroundImage: `linear-gradient(to bottom, ${hexToRgba(accentFg, 0.5)}, ${hexToRgba(accent, 0.95)}, ${hexToRgba(accentFg, 0.5)})`,
+          }}
+        />
+
+        <div
+          style={{
+            display: 'flex',
+            flex: 1,
+            flexDirection: 'column',
+            justifyContent: 'center',
+            position: 'relative',
+            overflow: 'hidden',
+            padding: '44px 48px',
+            gap: '22px',
+          }}
+        >
+          <div
+            style={{
+              position: 'absolute',
+              top: '-70px',
+              right: '-50px',
+              width: '380px',
+              height: '380px',
+              borderRadius: '9999px',
+              background: `radial-gradient(circle, ${hexToRgba(accent, 0.26)} 0%, transparent 68%)`,
+            }}
+          />
+          <div
+            style={{
+              position: 'absolute',
+              bottom: '-90px',
+              left: '-40px',
+              width: '280px',
+              height: '280px',
+              borderRadius: '9999px',
+              background: `radial-gradient(circle, ${hexToRgba(accent, 0.1)} 0%, transparent 70%)`,
+            }}
+          />
+          <DotGrid opacity={0.14} />
+
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+              padding: '10px 20px',
+              borderRadius: '9999px',
+              backgroundColor: hexToRgba(accentFg, 0.1),
+              border: `1px solid ${hexToRgba(accentFg, 0.28)}`,
+              alignSelf: 'flex-start',
+              zIndex: 1,
+            }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                width: '8px',
+                height: '8px',
+                borderRadius: '9999px',
+                backgroundColor: accentFg,
+              }}
+            />
+            <div
+              style={{
+                display: 'flex',
+                ...font(600),
+                fontSize: '16px',
+                letterSpacing: '0.14em',
+                textTransform: 'uppercase',
+                color: accentFg,
+              }}
+            >
+              {featuredEvent ? 'Upcoming sessions' : 'Calendar'}
+            </div>
+          </div>
+
+          {featuredEvent ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '18px', zIndex: 1 }}>
+              <CalendarShareFeaturedBlock accentFg={accentFg} event={featuredEvent} />
+              <CalendarShareUpcomingList accentFg={accentFg} events={upcomingEvents} />
+            </div>
+          ) : (
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '14px',
+                zIndex: 1,
+                padding: '28px 30px',
+                borderRadius: '18px',
+                backgroundColor: 'rgba(255,255,255,0.04)',
+                border: `1px solid ${hexToRgba(accentFg, 0.22)}`,
+              }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  ...font(700),
+                  fontSize: '42px',
+                  lineHeight: 1.1,
+                  letterSpacing: '-0.03em',
+                  color: '#fafafa',
+                }}
+              >
+                Upcoming sessions
+              </div>
+              <div
+                style={{
+                  display: 'flex',
+                  ...font(400),
+                  fontSize: '24px',
+                  lineHeight: 1.35,
+                  color: '#a1a1aa',
+                }}
+              >
+                Check back soon for new sessions.
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexShrink: 0,
+          height: '108px',
+          padding: '0 44px',
+          borderTop: `1px solid ${hexToRgba(accentFg, 0.2)}`,
+          backgroundColor: '#09090b',
+          position: 'relative',
+          overflow: 'hidden',
+        }}
+      >
+        <div
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            height: '2px',
+            backgroundImage: `linear-gradient(to right, transparent, ${hexToRgba(accentFg, 0.55)}, transparent)`,
+          }}
+        />
+        <div
+          style={{
+            display: 'flex',
+            ...font(600),
+            fontSize: '24px',
+            letterSpacing: '-0.01em',
+            color: '#71717a',
+            zIndex: 1,
+          }}
+        >
+          {joinUrl}
+        </div>
+        <SharePoweredByPill logoSrc={organizrLogoSrc} />
+      </div>
+    </div>
+  )
+}
+
 export async function renderOrgShareImage(
   props: Omit<OrgShareCardProps, 'organizrLogoSrc'>,
 ) {
@@ -998,4 +1503,17 @@ export async function renderOrgShareImage(
     ...shareImageSize,
     fonts,
   })
+}
+
+export async function renderOrgCalendarShareImage(
+  props: Omit<OrgCalendarShareCardProps, 'organizrLogoSrc'>,
+) {
+  const [fonts, organizrLogoSrc] = await Promise.all([getOgFonts(), getOrganizrLogoDataUrl()])
+  return new ImageResponse(
+    <OrgCalendarShareCard {...props} organizrLogoSrc={organizrLogoSrc} />,
+    {
+      ...shareImageSize,
+      fonts,
+    },
+  )
 }
