@@ -463,6 +463,7 @@ export const shareImageSize = { width: 1080, height: 1080 }
 export type OrgShareCardProps = {
   slug: string
   orgName: string
+  orgDescription?: string
   accent: string
   logoUrl?: string | null
   sessionTitle: string
@@ -515,123 +516,6 @@ function SharePoweredByPill({ logoSrc }: { logoSrc: string }) {
       <div style={{ display: 'flex', ...font(600), fontSize: '20px', color: '#e4e4e7' }}>
         Organizr
       </div>
-    </div>
-  )
-}
-
-function ShareDetailMark({ accentFg }: { accentFg: string }) {
-  return (
-    <div
-      style={{
-        display: 'flex',
-        width: '36px',
-        height: '36px',
-        borderRadius: '11px',
-        backgroundColor: hexToRgba(accentFg, 0.16),
-        border: `1px solid ${hexToRgba(accentFg, 0.35)}`,
-        alignItems: 'center',
-        justifyContent: 'center',
-        flexShrink: 0,
-      }}
-    >
-      <div
-        style={{
-          display: 'flex',
-          width: '10px',
-          height: '10px',
-          borderRadius: '9999px',
-          backgroundColor: accentFg,
-        }}
-      />
-    </div>
-  )
-}
-
-function ShareDetailItem({
-  accentFg,
-  primary,
-  secondary,
-}: {
-  accentFg: string
-  primary: string
-  secondary?: string
-}) {
-  return (
-    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '20px' }}>
-      <ShareDetailMark accentFg={accentFg} />
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', minWidth: 0 }}>
-        <div
-          style={{
-            display: 'flex',
-            ...font(600),
-            fontSize: '30px',
-            lineHeight: 1.25,
-            letterSpacing: '-0.01em',
-            color: '#fafafa',
-          }}
-        >
-          {primary}
-        </div>
-        {secondary ? (
-          <div
-            style={{
-              display: 'flex',
-              ...font(400),
-              fontSize: '23px',
-              lineHeight: 1.35,
-              color: '#a1a1aa',
-            }}
-          >
-            {secondary}
-          </div>
-        ) : null}
-      </div>
-    </div>
-  )
-}
-
-function ShareDetailsBox({
-  accentFg,
-  whenLine,
-  venueLine,
-  addressLine,
-}: {
-  accentFg: string
-  whenLine: string
-  venueLine?: string
-  addressLine?: string
-}) {
-  return (
-    <div
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '22px',
-        padding: '22px 26px',
-        borderRadius: '18px',
-        backgroundColor: 'rgba(255,255,255,0.04)',
-        border: `1px solid ${hexToRgba(accentFg, 0.22)}`,
-        boxShadow: `inset 0 1px 0 ${hexToRgba(accentFg, 0.08)}`,
-      }}
-    >
-      <ShareDetailItem accentFg={accentFg} primary={whenLine} />
-      {venueLine ? (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '22px' }}>
-          <div
-            style={{
-              display: 'flex',
-              width: '100%',
-              height: '1px',
-              backgroundColor: hexToRgba(accentFg, 0.16),
-            }}
-          />
-          <ShareDetailItem
-            accentFg={accentFg}
-            primary={venueLine}
-            secondary={addressLine}
-          />
-        </div>
-      ) : null}
     </div>
   )
 }
@@ -692,10 +576,257 @@ function SharePanelLogo({
   )
 }
 
+function CalendarShareEventMeta({
+  accentFg,
+  whenLine,
+  locationLine,
+  addressLine,
+  featured,
+}: {
+  accentFg: string
+  whenLine: string
+  locationLine?: string
+  addressLine?: string
+  featured?: boolean
+}) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: featured ? '10px' : '6px' }}>
+      <div
+        style={{
+          display: 'flex',
+          ...font(600),
+          fontSize: featured ? '28px' : '19px',
+          lineHeight: 1.25,
+          color: accentFg,
+        }}
+      >
+        {whenLine}
+      </div>
+      {locationLine ? (
+        <div
+          style={{
+            display: 'flex',
+            ...font(400),
+            fontSize: featured ? '24px' : '18px',
+            lineHeight: 1.3,
+            color: '#d4d4d8',
+          }}
+        >
+          {locationLine}
+        </div>
+      ) : null}
+      {addressLine ? (
+        <div
+          style={{
+            display: 'flex',
+            ...font(400),
+            fontSize: featured ? '20px' : '16px',
+            lineHeight: 1.35,
+            color: '#a1a1aa',
+          }}
+        >
+          {addressLine}
+        </div>
+      ) : null}
+    </div>
+  )
+}
+
+function ShareEventDetailsCard({
+  accentFg,
+  whenLine,
+  locationLine,
+  addressLine,
+}: {
+  accentFg: string
+  whenLine: string
+  locationLine?: string
+  addressLine?: string
+}) {
+  return (
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        padding: '26px 28px',
+        borderRadius: '18px',
+        backgroundColor: 'rgba(255,255,255,0.04)',
+        border: `1px solid ${hexToRgba(accentFg, 0.28)}`,
+        boxShadow: `inset 0 1px 0 ${hexToRgba(accentFg, 0.1)}`,
+      }}
+    >
+      <CalendarShareEventMeta
+        accentFg={accentFg}
+        whenLine={whenLine}
+        locationLine={locationLine}
+        addressLine={addressLine}
+        featured
+      />
+    </div>
+  )
+}
+
+function ShareBrandedSidebar({
+  orgName,
+  orgDescription,
+  accent,
+  logoUrl,
+}: {
+  orgName: string
+  orgDescription?: string
+  accent: string
+  logoUrl?: string | null
+}) {
+  const panelText = readableTextColor(accent)
+
+  return (
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: '390px',
+        flexShrink: 0,
+        padding: '48px 36px',
+        backgroundColor: accent,
+        gap: '32px',
+        position: 'relative',
+        overflow: 'hidden',
+      }}
+    >
+      <div
+        style={{
+          position: 'absolute',
+          inset: 0,
+          opacity: 0.14,
+          backgroundImage: `radial-gradient(circle at center, ${hexToRgba(panelText, 0.55)} 1px, transparent 1px)`,
+          backgroundSize: '22px 22px',
+        }}
+      />
+      <div
+        style={{
+          position: 'absolute',
+          top: '-80px',
+          left: '-60px',
+          width: '360px',
+          height: '360px',
+          borderRadius: '9999px',
+          background: `radial-gradient(circle, ${hexToRgba(panelText, 0.22)} 0%, transparent 68%)`,
+        }}
+      />
+      <div
+        style={{
+          position: 'absolute',
+          bottom: '-100px',
+          right: '-80px',
+          width: '320px',
+          height: '320px',
+          borderRadius: '9999px',
+          background: `radial-gradient(circle, ${hexToRgba('#000000', 0.18)} 0%, transparent 70%)`,
+        }}
+      />
+      <div
+        style={{
+          position: 'absolute',
+          top: 0,
+          right: 0,
+          bottom: 0,
+          width: '1px',
+          backgroundColor: hexToRgba(panelText, 0.22),
+        }}
+      />
+
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          position: 'relative',
+          width: '280px',
+          height: '280px',
+        }}
+      >
+        <div
+          style={{
+            display: 'flex',
+            position: 'absolute',
+            width: '260px',
+            height: '260px',
+            borderRadius: '9999px',
+            border: `2px solid ${hexToRgba(panelText, 0.16)}`,
+          }}
+        />
+        <div
+          style={{
+            display: 'flex',
+            position: 'absolute',
+            width: '320px',
+            height: '320px',
+            borderRadius: '9999px',
+            border: `1px solid ${hexToRgba(panelText, 0.08)}`,
+          }}
+        />
+        <SharePanelLogo orgName={orgName} logoUrl={logoUrl} panelText={panelText} />
+      </div>
+
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: '14px',
+          zIndex: 1,
+        }}
+      >
+        <div
+          style={{
+            display: 'flex',
+            ...font(700),
+            fontSize: '32px',
+            lineHeight: 1.2,
+            letterSpacing: '-0.02em',
+            color: panelText,
+            textAlign: 'center',
+            maxWidth: '310px',
+          }}
+        >
+          {orgName}
+        </div>
+        <div
+          style={{
+            display: 'flex',
+            width: '48px',
+            height: '3px',
+            borderRadius: '9999px',
+            backgroundColor: hexToRgba(panelText, 0.35),
+          }}
+        />
+        {orgDescription ? (
+          <div
+            style={{
+              display: 'flex',
+              ...font(400),
+              fontSize: '18px',
+              lineHeight: 1.45,
+              color: hexToRgba(panelText, 0.82),
+              textAlign: 'center',
+              maxWidth: '300px',
+            }}
+          >
+            {orgDescription}
+          </div>
+        ) : null}
+      </div>
+    </div>
+  )
+}
+
 /** Square social post — split-panel event flyer with branded left column and typographic details. */
 export function OrgShareCard({
   slug,
   orgName,
+  orgDescription,
   accent,
   logoUrl,
   sessionTitle,
@@ -707,7 +838,6 @@ export function OrgShareCard({
   organizrLogoSrc,
 }: OrgShareCardProps) {
   const accentFg = accentOnDark(accent)
-  const panelText = readableTextColor(accent)
   const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? 'organizr.co'
   const joinUrl = `${slug}.${rootDomain}`
   const venueLine = locationLine || (locationOnline ? 'Online session' : undefined)
@@ -727,130 +857,12 @@ export function OrgShareCard({
       }}
     >
       <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: '390px',
-            flexShrink: 0,
-            padding: '48px 36px',
-            backgroundColor: accent,
-            gap: '32px',
-            position: 'relative',
-            overflow: 'hidden',
-          }}
-        >
-          <div
-            style={{
-              position: 'absolute',
-              inset: 0,
-              opacity: 0.14,
-              backgroundImage: `radial-gradient(circle at center, ${hexToRgba(panelText, 0.55)} 1px, transparent 1px)`,
-              backgroundSize: '22px 22px',
-            }}
-          />
-          <div
-            style={{
-              position: 'absolute',
-              top: '-80px',
-              left: '-60px',
-              width: '360px',
-              height: '360px',
-              borderRadius: '9999px',
-              background: `radial-gradient(circle, ${hexToRgba(panelText, 0.22)} 0%, transparent 68%)`,
-            }}
-          />
-          <div
-            style={{
-              position: 'absolute',
-              bottom: '-100px',
-              right: '-80px',
-              width: '320px',
-              height: '320px',
-              borderRadius: '9999px',
-              background: `radial-gradient(circle, ${hexToRgba('#000000', 0.18)} 0%, transparent 70%)`,
-            }}
-          />
-          <div
-            style={{
-              position: 'absolute',
-              top: 0,
-              right: 0,
-              bottom: 0,
-              width: '1px',
-              backgroundColor: hexToRgba(panelText, 0.22),
-            }}
-          />
-
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              position: 'relative',
-              width: '280px',
-              height: '280px',
-            }}
-          >
-            <div
-              style={{
-                display: 'flex',
-                position: 'absolute',
-                width: '260px',
-                height: '260px',
-                borderRadius: '9999px',
-                border: `2px solid ${hexToRgba(panelText, 0.16)}`,
-              }}
-            />
-            <div
-              style={{
-                display: 'flex',
-                position: 'absolute',
-                width: '320px',
-                height: '320px',
-                borderRadius: '9999px',
-                border: `1px solid ${hexToRgba(panelText, 0.08)}`,
-              }}
-            />
-            <SharePanelLogo orgName={orgName} logoUrl={logoUrl} panelText={panelText} />
-          </div>
-
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: '14px',
-              zIndex: 1,
-            }}
-          >
-            <div
-              style={{
-                display: 'flex',
-                ...font(700),
-                fontSize: '32px',
-                lineHeight: 1.2,
-                letterSpacing: '-0.02em',
-                color: panelText,
-                textAlign: 'center',
-                maxWidth: '310px',
-              }}
-            >
-              {orgName}
-            </div>
-            <div
-              style={{
-                display: 'flex',
-                width: '48px',
-                height: '3px',
-                borderRadius: '9999px',
-                backgroundColor: hexToRgba(panelText, 0.35),
-              }}
-            />
-          </div>
-        </div>
+        <ShareBrandedSidebar
+          orgName={orgName}
+          orgDescription={orgDescription}
+          accent={accent}
+          logoUrl={logoUrl}
+        />
 
         <div
           style={{
@@ -956,10 +968,10 @@ export function OrgShareCard({
           </div>
 
           <div style={{ display: 'flex', zIndex: 1, maxWidth: '560px' }}>
-            <ShareDetailsBox
+            <ShareEventDetailsCard
               accentFg={accentFg}
               whenLine={whenLine}
-              venueLine={venueLine}
+              locationLine={venueLine}
               addressLine={addressLine && !locationOnline ? addressLine : undefined}
             />
           </div>
@@ -1004,62 +1016,6 @@ export function OrgShareCard({
         </div>
         <SharePoweredByPill logoSrc={organizrLogoSrc} />
       </div>
-    </div>
-  )
-}
-
-function CalendarShareEventMeta({
-  accentFg,
-  whenLine,
-  locationLine,
-  addressLine,
-  featured,
-}: {
-  accentFg: string
-  whenLine: string
-  locationLine?: string
-  addressLine?: string
-  featured?: boolean
-}) {
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: featured ? '10px' : '6px' }}>
-      <div
-        style={{
-          display: 'flex',
-          ...font(600),
-          fontSize: featured ? '28px' : '19px',
-          lineHeight: 1.25,
-          color: accentFg,
-        }}
-      >
-        {whenLine}
-      </div>
-      {locationLine ? (
-        <div
-          style={{
-            display: 'flex',
-            ...font(400),
-            fontSize: featured ? '24px' : '18px',
-            lineHeight: 1.3,
-            color: '#d4d4d8',
-          }}
-        >
-          {locationLine}
-        </div>
-      ) : null}
-      {addressLine ? (
-        <div
-          style={{
-            display: 'flex',
-            ...font(400),
-            fontSize: featured ? '20px' : '16px',
-            lineHeight: 1.35,
-            color: '#a1a1aa',
-          }}
-        >
-          {addressLine}
-        </div>
-      ) : null}
     </div>
   )
 }
@@ -1182,7 +1138,6 @@ export function OrgCalendarShareCard({
   organizrLogoSrc,
 }: OrgCalendarShareCardProps) {
   const accentFg = accentOnDark(accent)
-  const panelText = readableTextColor(accent)
   const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? 'organizr.co'
   const joinUrl = `${slug}.${rootDomain}`
 
@@ -1199,136 +1154,12 @@ export function OrgCalendarShareCard({
       }}
     >
       <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: '390px',
-            flexShrink: 0,
-            padding: '44px 36px',
-            backgroundColor: accent,
-            gap: '24px',
-            position: 'relative',
-            overflow: 'hidden',
-          }}
-        >
-          <div
-            style={{
-              position: 'absolute',
-              inset: 0,
-              opacity: 0.14,
-              backgroundImage: `radial-gradient(circle at center, ${hexToRgba(panelText, 0.55)} 1px, transparent 1px)`,
-              backgroundSize: '22px 22px',
-            }}
-          />
-          <div
-            style={{
-              position: 'absolute',
-              top: '-80px',
-              left: '-60px',
-              width: '360px',
-              height: '360px',
-              borderRadius: '9999px',
-              background: `radial-gradient(circle, ${hexToRgba(panelText, 0.22)} 0%, transparent 68%)`,
-            }}
-          />
-          <div
-            style={{
-              position: 'absolute',
-              bottom: '-100px',
-              right: '-80px',
-              width: '320px',
-              height: '320px',
-              borderRadius: '9999px',
-              background: `radial-gradient(circle, ${hexToRgba('#000000', 0.18)} 0%, transparent 70%)`,
-            }}
-          />
-          <div
-            style={{
-              position: 'absolute',
-              top: 0,
-              right: 0,
-              bottom: 0,
-              width: '1px',
-              backgroundColor: hexToRgba(panelText, 0.22),
-            }}
-          />
-
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              position: 'relative',
-              width: '240px',
-              height: '240px',
-            }}
-          >
-            <div
-              style={{
-                display: 'flex',
-                position: 'absolute',
-                width: '220px',
-                height: '220px',
-                borderRadius: '9999px',
-                border: `2px solid ${hexToRgba(panelText, 0.16)}`,
-              }}
-            />
-            <SharePanelLogo orgName={orgName} logoUrl={logoUrl} panelText={panelText} />
-          </div>
-
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: '12px',
-              zIndex: 1,
-            }}
-          >
-            <div
-              style={{
-                display: 'flex',
-                ...font(700),
-                fontSize: '30px',
-                lineHeight: 1.2,
-                letterSpacing: '-0.02em',
-                color: panelText,
-                textAlign: 'center',
-                maxWidth: '310px',
-              }}
-            >
-              {orgName}
-            </div>
-            {orgDescription ? (
-              <div
-                style={{
-                  display: 'flex',
-                  ...font(400),
-                  fontSize: '18px',
-                  lineHeight: 1.45,
-                  color: hexToRgba(panelText, 0.82),
-                  textAlign: 'center',
-                  maxWidth: '300px',
-                }}
-              >
-                {orgDescription}
-              </div>
-            ) : (
-              <div
-                style={{
-                  display: 'flex',
-                  width: '48px',
-                  height: '3px',
-                  borderRadius: '9999px',
-                  backgroundColor: hexToRgba(panelText, 0.35),
-                }}
-              />
-            )}
-          </div>
-        </div>
+        <ShareBrandedSidebar
+          orgName={orgName}
+          orgDescription={orgDescription}
+          accent={accent}
+          logoUrl={logoUrl}
+        />
 
         <div
           style={{

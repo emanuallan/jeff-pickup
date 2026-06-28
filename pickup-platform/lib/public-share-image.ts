@@ -69,6 +69,7 @@ export async function buildEventDetailShareImageProps(
   return {
     slug,
     orgName: org?.name ?? 'Organizr',
+    orgDescription: org?.description ? clampShareText(org.description, 120) : undefined,
     accent: org?.branding.accent_color ?? '#2563eb',
     logoUrl: org?.branding.logo_url,
     sessionTitle: event ? eventDisplayName(event.title) : org?.name ?? 'Organizr',
