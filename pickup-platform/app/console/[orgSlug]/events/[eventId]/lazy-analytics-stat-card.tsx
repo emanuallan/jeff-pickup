@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState, type ReactNode } from 'react'
 import { BottomSheet } from '@/app/_components/bottom-sheet'
+import { BottomSheetLoading } from '../../../_components/bottom-sheet-loading'
 import { ConsoleCard } from '../../../_components/console-ui'
 
 type Props<T> = {
@@ -18,7 +19,7 @@ type Props<T> = {
   sheetDescription: string
   sheetTitleId: string
   emptyMessage?: string
-  skeletonRows?: number
+  loadingLabel?: string
   children: (data: T) => ReactNode
   hasContent?: (data: T) => boolean
 }
@@ -37,7 +38,7 @@ export function LazyAnalyticsStatCard<T>({
   sheetDescription,
   sheetTitleId,
   emptyMessage = 'Nothing to show yet.',
-  skeletonRows = 3,
+  loadingLabel = 'Loading…',
   children,
   hasContent,
 }: Props<T>) {
@@ -115,16 +116,9 @@ export function LazyAnalyticsStatCard<T>({
         </h2>
         <p className="mt-1 text-sm text-zinc-400">{sheetDescription}</p>
 
-        <div className="mt-4">
+        <div className="mt-4" aria-busy={loading}>
           {loading ? (
-            <ul className="space-y-2">
-              {Array.from({ length: skeletonRows }, (_, i) => (
-                <li
-                  key={i}
-                  className="h-14 animate-pulse rounded-lg border border-white/10 bg-zinc-900/50"
-                />
-              ))}
-            </ul>
+            <BottomSheetLoading label={loadingLabel} />
           ) : error ? (
             <p className="text-sm text-red-400">{error}</p>
           ) : data && (hasContent ? hasContent(data) : true) ? (

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import { BottomSheet } from '@/app/_components/bottom-sheet'
+import { BottomSheetLoading } from '../../../_components/bottom-sheet-loading'
 import { ConsoleCard } from '../../../_components/console-ui'
 
 type UnregisteredPerson = {
@@ -123,16 +124,9 @@ export function UnregisteredStatCard({ orgSlug, eventId, count, timezone }: Prop
         </h2>
         <p className="mt-1 text-sm text-zinc-400">People who left and didn&apos;t come back.</p>
 
-        <div className="mt-4">
+        <div className="mt-4" aria-busy={loading}>
           {loading ? (
-            <ul className="space-y-2">
-              {Array.from({ length: Math.min(count, 4) }, (_, i) => (
-                <li
-                  key={i}
-                  className="h-16 animate-pulse rounded-lg border border-white/10 bg-zinc-900/50"
-                />
-              ))}
-            </ul>
+            <BottomSheetLoading label="Loading unregistered people…" />
           ) : error ? (
             <p className="text-sm text-red-400">{error}</p>
           ) : people && people.length === 0 ? (
