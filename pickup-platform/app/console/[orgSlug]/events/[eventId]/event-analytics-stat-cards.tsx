@@ -309,8 +309,8 @@ export function LastSignupStatCard({
           {events.map((event, index) => (
             <DetailRow
               key={`${event.at}-${event.displayName}-${index}`}
-              title={event.displayName}
-              meta={`${event.action === 'joined' ? 'Joined' : 'Left'} · ${event.at}`}
+              title={`${event.displayName} ${event.action === 'joined' ? 'joined' : 'left'}`}
+              subtitle={event.at}
             />
           ))}
         </DetailList>
