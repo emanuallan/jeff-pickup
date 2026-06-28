@@ -373,145 +373,6 @@ function sessionDateChip(event: Pick<EventWithLocation, 'starts_at' | 'timezone'
   }
 }
 
-function SessionDateChip({
-  event,
-  size = 'compact',
-}: {
-  event: Pick<EventWithLocation, 'starts_at' | 'timezone'>
-  size?: 'compact' | 'featured'
-}) {
-  const { month, day, weekday } = sessionDateChip(event)
-  const featured = size === 'featured'
-
-  return (
-    <div
-      className={
-        featured
-          ? 'flex w-[4.25rem] shrink-0 flex-col items-center rounded-xl border border-white/5 bg-black/25 px-2 py-2.5 sm:w-[4.75rem] sm:py-3'
-          : 'flex w-12 shrink-0 flex-col items-center rounded-lg border border-white/5 bg-black/25 px-1 py-1.5'
-      }
-    >
-      <span
-        className={
-          featured
-            ? 'text-[11px] font-medium uppercase tracking-wide text-zinc-600'
-            : 'text-[10px] font-medium uppercase tracking-wide text-zinc-600'
-        }
-      >
-        {month}
-      </span>
-      <span
-        className={
-          featured
-            ? 'text-2xl font-semibold tabular-nums leading-tight text-zinc-300 sm:text-[1.65rem]'
-            : 'text-sm font-semibold tabular-nums leading-tight text-zinc-400'
-        }
-      >
-        {day}
-      </span>
-      <span
-        className={
-          featured
-            ? 'text-[10px] font-medium text-zinc-600'
-            : 'text-[9px] font-medium text-zinc-600'
-        }
-      >
-        {weekday}
-      </span>
-    </div>
-  )
-}
-
-export function FeaturedSessionRow({
-  event,
-  accent,
-  upcomingLabel = 'Next session',
-  footer,
-}: {
-  event: EventWithLocation
-  accent: string
-  upcomingLabel?: string
-  footer?: ReactNode
-}) {
-  const cancelled = isEventCancelled(event.status)
-  const inProgress = isEventInProgress(event)
-  const ended = isEventEnded(event)
-  const live = inProgress && event.status === 'on'
-  const classes = cancelledEventClasses(cancelled)
-  const address = event.location_address.trim()
-
-  return (
-    <div className="group relative flex items-stretch gap-3 rounded-2xl border border-white/5 bg-zinc-950/40 p-3.5 transition-colors hover:border-zinc-700/60 hover:bg-zinc-900/40 sm:gap-4 sm:p-4">
-      <Link
-        href={`/cal/${event.short_id}`}
-        className="absolute inset-0 z-0 rounded-2xl"
-        aria-label={`${eventName(event)} on ${formatEventDayLabel(event)}`}
-      />
-      <div className="relative z-10 pointer-events-none">
-        <SessionDateChip event={event} size="featured" />
-      </div>
-      <div className="relative z-10 min-w-0 flex-1 pointer-events-none">
-        <EventTimingBadge
-          event={event}
-          accent={accent}
-          cancelled={cancelled}
-          upcomingLabel={upcomingLabel}
-        />
-
-        <div className="mt-2.5 flex items-start justify-between gap-3">
-          <h2 className={`min-w-0 text-base font-semibold leading-snug sm:text-lg ${classes.titleSm}`}>
-            {eventName(event)}
-          </h2>
-          <StatusPill status={event.status} accent={accent} live={live} ended={ended} />
-        </div>
-
-        <div
-          className={`mt-1 flex min-w-0 flex-wrap items-center gap-x-2 text-sm text-zinc-500 ${classes.datetimeRow}`}
-        >
-          <span className="shrink-0 tabular-nums font-medium text-zinc-300">
-            {formatEventTimeOnly(event)}
-          </span>
-          <span className="shrink-0 text-zinc-700">·</span>
-          <EventLocationRow
-            event={event}
-            compact
-            nestedInLink
-            className="min-w-0 text-zinc-500"
-          />
-        </div>
-
-        {!event.location_is_online && address ? (
-          <p className="mt-1 truncate text-xs text-zinc-600">{address}</p>
-        ) : null}
-
-        {event.announcement ? (
-          <p className="mt-3 rounded-lg border border-white/5 bg-black/20 px-3 py-2 text-sm leading-snug text-zinc-400">
-            {event.announcement}
-          </p>
-        ) : null}
-
-        {footer ? (
-          <div className="mt-3 flex items-center justify-between gap-3 border-t border-white/5 pt-3">
-            <div className="text-sm text-zinc-500">{footer}</div>
-            <span
-              className="inline-flex shrink-0 items-center gap-1 text-sm font-medium transition-all group-hover:translate-x-0.5"
-              style={{ color: accentOnDark(accent) }}
-            >
-              View session {arrowRight}
-            </span>
-          </div>
-        ) : null}
-      </div>
-      <span
-        className="relative z-10 hidden shrink-0 self-center text-base text-zinc-700 transition-all group-hover:translate-x-0.5 group-hover:text-zinc-500 sm:flex pointer-events-none"
-        aria-hidden
-      >
-        {arrowRight}
-      </span>
-    </div>
-  )
-}
-
 export function SessionRow({
   event,
   accent,
@@ -524,6 +385,7 @@ export function SessionRow({
   const ended = isEventEnded(event)
   const live = inProgress && event.status === 'on'
   const classes = cancelledEventClasses(cancelled)
+  const { month, day, weekday } = sessionDateChip(event)
 
   return (
     <div className="group relative flex items-center gap-3 rounded-xl border border-white/5 bg-zinc-950/40 px-3 py-2.5 transition-colors hover:border-zinc-700/60 hover:bg-zinc-900/40">
@@ -532,8 +394,14 @@ export function SessionRow({
         className="absolute inset-0 z-0 rounded-xl"
         aria-label={`${eventName(event)} on ${formatEventDayLabel(event)}`}
       />
-      <div className="relative z-10 pointer-events-none">
-        <SessionDateChip event={event} size="compact" />
+      <div className="relative z-10 flex w-12 shrink-0 flex-col items-center rounded-lg border border-white/5 bg-black/25 px-1 py-1.5 pointer-events-none">
+        <span className="text-[10px] font-medium uppercase tracking-wide text-zinc-600">
+          {month}
+        </span>
+        <span className="text-sm font-semibold tabular-nums leading-tight text-zinc-400">
+          {day}
+        </span>
+        <span className="text-[9px] font-medium text-zinc-600">{weekday}</span>
       </div>
       <div className="relative z-10 min-w-0 flex-1 pointer-events-none">
         <div className="flex items-center justify-between gap-2">
