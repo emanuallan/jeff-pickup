@@ -466,7 +466,8 @@ export type OrgShareCardProps = {
   accent: string
   logoUrl?: string | null
   sessionTitle: string
-  dateLine: string
+  dayLabel: string
+  timeLabel: string
   locationLine?: string
   locationOnline?: boolean
   /** Short recruiting hook — org description or default invite copy. */
@@ -474,96 +475,120 @@ export type OrgShareCardProps = {
   organizrLogoSrc: string
 }
 
-function ShareDetailRow({
-  accentFg,
-  label,
-  value,
-}: {
-  accentFg: string
-  label: string
-  value: string
-}) {
+function ShareBackdrop({ accent }: { accent: string }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px' }}>
+    <>
       <div
         style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          width: '44px',
-          height: '44px',
-          borderRadius: '12px',
-          backgroundColor: hexToRgba(accentFg, 0.12),
-          border: `1px solid ${hexToRgba(accentFg, 0.28)}`,
-          flexShrink: 0,
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          height: '360px',
+          backgroundImage: `linear-gradient(to bottom, ${hexToRgba(ORGANIZR_ACCENT, 0.14)} 0%, ${hexToRgba(accent, 0.18)} 38%, transparent 100%)`,
         }}
-      >
-        <div
-          style={{
-            display: 'flex',
-            ...font(700),
-            fontSize: '13px',
-            letterSpacing: '0.08em',
-            color: accentFg,
-          }}
-        >
-          {label}
-        </div>
-      </div>
+      />
+      <DotGrid opacity={0.28} />
       <div
         style={{
-          display: 'flex',
-          ...font(600),
-          fontSize: '30px',
-          lineHeight: 1.25,
-          color: '#f4f4f5',
-          paddingTop: '6px',
+          position: 'absolute',
+          inset: 0,
+          backgroundImage: 'linear-gradient(to bottom, transparent 45%, rgba(9,9,11,0.55) 78%, #09090b 100%)',
         }}
-      >
-        {value}
-      </div>
+      />
+    </>
+  )
+}
+
+function OrgAvatar({
+  orgName,
+  accent,
+  logoUrl,
+  size,
+}: {
+  orgName: string
+  accent: string
+  logoUrl?: string | null
+  size: number
+}) {
+  const accentText = readableTextColor(accent)
+  const radius = Math.round(size * 0.24)
+
+  if (logoUrl) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={logoUrl}
+        alt=""
+        width={size}
+        height={size}
+        style={{
+          width: `${size}px`,
+          height: `${size}px`,
+          borderRadius: `${radius}px`,
+          objectFit: 'cover',
+          border: '1px solid rgba(255,255,255,0.1)',
+          boxShadow: `0 16px 40px ${hexToRgba(accent, 0.22)}`,
+        }}
+      />
+    )
+  }
+
+  return (
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: `${size}px`,
+        height: `${size}px`,
+        borderRadius: `${radius}px`,
+        backgroundColor: accent,
+        ...font(700),
+        fontSize: `${Math.round(size * 0.42)}px`,
+        color: accentText,
+        boxShadow: `0 16px 40px ${hexToRgba(accent, 0.22)}`,
+      }}
+    >
+      {orgName.charAt(0).toUpperCase()}
     </div>
   )
 }
 
 function PoweredByOrganizr({ logoSrc }: { logoSrc: string }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-      <div
-        style={{
-          display: 'flex',
-          ...font(400),
-          fontSize: '17px',
-          color: '#71717a',
-        }}
-      >
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px',
+        padding: '10px 14px',
+        borderRadius: '9999px',
+        backgroundColor: 'rgba(255,255,255,0.04)',
+        border: '1px solid rgba(255,255,255,0.08)',
+      }}
+    >
+      <div style={{ display: 'flex', ...font(400), fontSize: '15px', color: '#71717a' }}>
         Powered by
       </div>
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={logoSrc} alt="" width={24} height={24} style={{ objectFit: 'contain' }} />
-      <div
-        style={{
-          display: 'flex',
-          ...font(600),
-          fontSize: '18px',
-          color: '#a1a1aa',
-          letterSpacing: '-0.02em',
-        }}
-      >
+      <img src={logoSrc} alt="" width={20} height={20} style={{ objectFit: 'contain' }} />
+      <div style={{ display: 'flex', ...font(600), fontSize: '15px', color: '#a1a1aa' }}>
         Organizr
       </div>
     </div>
   )
 }
 
-/** Square social post — recruitment poster with org branding, not a link-preview card. */
+/** Square social post — polished invite card aligned with the public app UI. */
 export function OrgShareCard({
   slug,
   orgName,
   accent,
   logoUrl,
   sessionTitle,
-  dateLine,
+  dayLabel,
+  timeLabel,
   locationLine,
   locationOnline,
   tagline,
@@ -587,211 +612,319 @@ export function OrgShareCard({
         overflow: 'hidden',
         backgroundColor: '#09090b',
         color: '#fafafa',
+        padding: '52px',
       }}
     >
-      {/* Accent spine */}
-      <div
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          bottom: 0,
-          width: '8px',
-          background: `linear-gradient(to bottom, ${accent}, ${hexToRgba(accent, 0.35)})`,
-        }}
-      />
+      <ShareBackdrop accent={accent} />
 
-      {/* Ambient glow */}
-      <div
-        style={{
-          position: 'absolute',
-          top: '-120px',
-          left: '50%',
-          width: '900px',
-          height: '900px',
-          marginLeft: '-450px',
-          borderRadius: '9999px',
-          background: `radial-gradient(circle, ${hexToRgba(accent, 0.28)} 0%, transparent 62%)`,
-        }}
-      />
-      <DotGrid opacity={0.14} />
-
-      {/* Main content */}
       <div
         style={{
           display: 'flex',
           flexDirection: 'column',
           flex: 1,
-          padding: '64px 72px 96px 88px',
+          gap: '28px',
           zIndex: 1,
         }}
       >
-        {/* Org identity */}
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px' }}>
-          {logoUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={logoUrl}
-              alt=""
-              width={132}
-              height={132}
-              style={{
-                width: '132px',
-                height: '132px',
-                borderRadius: '32px',
-                objectFit: 'cover',
-                border: `3px solid ${hexToRgba(accentFg, 0.45)}`,
-                boxShadow: `0 24px 64px ${hexToRgba(accent, 0.35)}`,
-              }}
-            />
-          ) : (
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: '132px',
-                height: '132px',
-                borderRadius: '32px',
-                backgroundColor: accent,
-                ...font(700),
-                fontSize: '56px',
-                color: accentText,
-                boxShadow: `0 24px 64px ${hexToRgba(accent, 0.35)}`,
-              }}
-            >
-              {orgName.charAt(0).toUpperCase()}
+        {/* Header */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '24px',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', minWidth: 0 }}>
+            <OrgAvatar orgName={orgName} accent={accent} logoUrl={logoUrl} size={64} />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', minWidth: 0 }}>
+              <div
+                style={{
+                  display: 'flex',
+                  ...font(700),
+                  fontSize: '28px',
+                  letterSpacing: '-0.03em',
+                  color: '#fafafa',
+                }}
+              >
+                {orgName}
+              </div>
+              <div
+                style={{
+                  display: 'flex',
+                  ...font(400),
+                  fontSize: '18px',
+                  color: '#71717a',
+                }}
+              >
+                {joinUrl}
+              </div>
             </div>
-          )}
+          </div>
+
           <div
             style={{
               display: 'flex',
-              ...font(700),
-              fontSize: '38px',
-              letterSpacing: '-0.03em',
-              color: '#fafafa',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '10px 16px',
+              borderRadius: '9999px',
+              backgroundColor: hexToRgba(accentFg, 0.1),
+              border: `1px solid ${hexToRgba(accentFg, 0.24)}`,
+              flexShrink: 0,
             }}
           >
-            {orgName}
+            <div
+              style={{
+                display: 'flex',
+                width: '8px',
+                height: '8px',
+                borderRadius: '9999px',
+                backgroundColor: accentFg,
+              }}
+            />
+            <div
+              style={{
+                display: 'flex',
+                ...font(600),
+                fontSize: '14px',
+                letterSpacing: '0.08em',
+                textTransform: 'uppercase',
+                color: accentFg,
+              }}
+            >
+              Open invite
+            </div>
           </div>
         </div>
 
-        {/* Invite block */}
+        {/* Hero card */}
         <div
           style={{
             display: 'flex',
             flexDirection: 'column',
-            alignItems: 'center',
-            marginTop: '44px',
-            gap: '18px',
+            flex: 1,
+            position: 'relative',
+            overflow: 'hidden',
+            borderRadius: '32px',
+            border: '1px solid rgba(255,255,255,0.08)',
+            backgroundImage: 'linear-gradient(to bottom, #18181b 0%, #09090b 100%)',
+            padding: '44px 48px',
+            boxShadow: 'inset 0 1px 0 0 rgba(255,255,255,0.05)',
           }}
         >
           <div
             style={{
-              display: 'flex',
-              padding: '10px 22px',
+              position: 'absolute',
+              top: '-80px',
+              right: '-40px',
+              width: '320px',
+              height: '320px',
               borderRadius: '9999px',
-              backgroundColor: accent,
-              color: accentText,
-              ...font(700),
-              fontSize: '16px',
-              letterSpacing: '0.14em',
-              textTransform: 'uppercase',
-              boxShadow: `0 12px 36px ${hexToRgba(accent, 0.35)}`,
+              background: `radial-gradient(circle, ${hexToRgba(accent, 0.28)} 0%, transparent 68%)`,
             }}
-          >
-            You&apos;re invited
-          </div>
+          />
+
           <div
             style={{
               display: 'flex',
+              ...font(600),
+              fontSize: '13px',
+              letterSpacing: '0.14em',
+              textTransform: 'uppercase',
+              color: accentFg,
+            }}
+          >
+            Next session
+          </div>
+
+          <div
+            style={{
+              display: 'flex',
+              marginTop: '16px',
               ...font(700),
-              fontSize: '58px',
-              lineHeight: 1.08,
+              fontSize: '50px',
+              lineHeight: 1.06,
               letterSpacing: '-0.04em',
-              textAlign: 'center',
               color: '#fafafa',
-              maxWidth: '880px',
+              maxWidth: '860px',
             }}
           >
             {sessionTitle}
           </div>
+
           <div
             style={{
               display: 'flex',
+              marginTop: '32px',
+              height: '1px',
+              backgroundColor: 'rgba(255,255,255,0.06)',
+            }}
+          />
+
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'flex-end',
+              justifyContent: 'space-between',
+              marginTop: '28px',
+              gap: '24px',
+            }}
+          >
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div
+                style={{
+                  display: 'flex',
+                  ...font(600),
+                  fontSize: '12px',
+                  letterSpacing: '0.12em',
+                  textTransform: 'uppercase',
+                  color: '#71717a',
+                }}
+              >
+                When
+              </div>
+              <div
+                style={{
+                  display: 'flex',
+                  ...font(600),
+                  fontSize: '34px',
+                  letterSpacing: '-0.02em',
+                  color: '#f4f4f5',
+                }}
+              >
+                {dayLabel}
+              </div>
+            </div>
+
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'flex-end',
+                gap: '8px',
+              }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  ...font(600),
+                  fontSize: '12px',
+                  letterSpacing: '0.12em',
+                  textTransform: 'uppercase',
+                  color: '#71717a',
+                }}
+              >
+                Time
+              </div>
+              <div
+                style={{
+                  display: 'flex',
+                  ...font(700),
+                  fontSize: '34px',
+                  letterSpacing: '-0.02em',
+                  color: accentFg,
+                }}
+              >
+                {timeLabel}
+              </div>
+            </div>
+          </div>
+
+          {whereLine ? (
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '14px',
+                marginTop: '24px',
+                padding: '16px 18px',
+                borderRadius: '18px',
+                backgroundColor: 'rgba(255,255,255,0.03)',
+                border: '1px solid rgba(255,255,255,0.06)',
+              }}
+            >
+              <LocationMark accentFg={accentFg} online={locationOnline} />
+              <div
+                style={{
+                  display: 'flex',
+                  ...font(400),
+                  fontSize: '24px',
+                  lineHeight: 1.25,
+                  color: '#d4d4d8',
+                }}
+              >
+                {whereLine}
+              </div>
+            </div>
+          ) : null}
+
+          <div
+            style={{
+              display: 'flex',
+              marginTop: 'auto',
+              paddingTop: '28px',
               ...font(400),
-              fontSize: '24px',
-              lineHeight: 1.35,
-              textAlign: 'center',
+              fontSize: '22px',
+              lineHeight: 1.4,
               color: '#a1a1aa',
-              maxWidth: '760px',
             }}
           >
             {hook}
           </div>
         </div>
 
-        {/* When & where */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '18px', marginTop: '40px' }}>
-          <ShareDetailRow accentFg={accentFg} label="WHEN" value={dateLine} />
-          {whereLine ? (
-            <ShareDetailRow accentFg={accentFg} label="WHERE" value={whereLine} />
-          ) : null}
-        </div>
-
-        {/* CTA band */}
+        {/* Footer CTA */}
         <div
           style={{
             display: 'flex',
-            flexDirection: 'column',
-            gap: '14px',
-            marginTop: 'auto',
-            paddingTop: '36px',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '20px',
+            padding: '22px 24px',
+            borderRadius: '24px',
+            border: '1px solid rgba(255,255,255,0.08)',
+            backgroundColor: 'rgba(24,24,27,0.72)',
           }}
         >
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', minWidth: 0 }}>
+            <div style={{ display: 'flex', ...font(600), fontSize: '13px', color: '#71717a' }}>
+              Sign up at
+            </div>
+            <div
+              style={{
+                display: 'flex',
+                ...font(700),
+                fontSize: '28px',
+                letterSpacing: '-0.02em',
+                color: accentFg,
+              }}
+            >
+              {joinUrl}
+            </div>
+          </div>
+
           <div
             style={{
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center',
-              padding: '22px 32px',
-              borderRadius: '20px',
-              background: `linear-gradient(135deg, ${hexToRgba(accent, 0.95)} 0%, ${hexToRgba(accent, 0.72)} 100%)`,
+              padding: '16px 24px',
+              borderRadius: '14px',
+              backgroundColor: accent,
               color: accentText,
-              ...font(700),
-              fontSize: '28px',
-              letterSpacing: '-0.02em',
-              boxShadow: `0 20px 50px ${hexToRgba(accent, 0.28)}`,
+              ...font(600),
+              fontSize: '22px',
+              boxShadow: `0 14px 36px ${hexToRgba(accent, 0.28)}`,
+              flexShrink: 0,
             }}
           >
-            Tap the link · See who&apos;s in
-          </div>
-          <div
-            style={{
-              display: 'flex',
-              alignSelf: 'flex-start',
-              ...font(700),
-              fontSize: '32px',
-              letterSpacing: '-0.02em',
-              color: accentFg,
-            }}
-          >
-            {joinUrl}
+            Count me in {ogArrowRight}
           </div>
         </div>
-      </div>
 
-      {/* Powered by — bottom right */}
-      <div
-        style={{
-          position: 'absolute',
-          right: '48px',
-          bottom: '44px',
-          display: 'flex',
-          zIndex: 2,
-        }}
-      >
-        <PoweredByOrganizr logoSrc={organizrLogoSrc} />
+        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+          <PoweredByOrganizr logoSrc={organizrLogoSrc} />
+        </div>
       </div>
     </div>
   )
