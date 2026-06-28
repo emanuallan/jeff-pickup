@@ -473,76 +473,6 @@ export type OrgShareCardProps = {
   organizrLogoSrc: string
 }
 
-function ShareAccentBandTop({ accent }: { accent: string }) {
-  return (
-    <div
-      style={{
-        position: 'relative',
-        height: '240px',
-        overflow: 'hidden',
-        backgroundColor: '#09090b',
-        flexShrink: 0,
-        display: 'flex',
-      }}
-    >
-      <div
-        style={{
-          position: 'absolute',
-          inset: 0,
-          backgroundImage: `linear-gradient(165deg, ${hexToRgba(accent, 0.55)} 0%, ${hexToRgba(accent, 0.22)} 42%, ${hexToRgba(ORGANIZR_ACCENT, 0.12)} 100%)`,
-        }}
-      />
-      <DotGrid opacity={0.2} />
-      <div
-        style={{
-          position: 'absolute',
-          top: '-60px',
-          left: '-80px',
-          width: '360px',
-          height: '360px',
-          borderRadius: '9999px',
-          background: `radial-gradient(circle, ${hexToRgba(accent, 0.35)} 0%, transparent 70%)`,
-        }}
-      />
-    </div>
-  )
-}
-
-function ShareAccentBandBottom({ accent }: { accent: string }) {
-  return (
-    <div
-      style={{
-        position: 'relative',
-        height: '240px',
-        overflow: 'hidden',
-        backgroundColor: '#09090b',
-        flexShrink: 0,
-        display: 'flex',
-      }}
-    >
-      <div
-        style={{
-          position: 'absolute',
-          inset: 0,
-          backgroundImage: `linear-gradient(15deg, ${hexToRgba(ORGANIZR_ACCENT, 0.1)} 0%, ${hexToRgba(accent, 0.38)} 55%, ${hexToRgba(accent, 0.55)} 100%)`,
-        }}
-      />
-      <DotGrid opacity={0.2} />
-      <div
-        style={{
-          position: 'absolute',
-          bottom: '-60px',
-          right: '-80px',
-          width: '360px',
-          height: '360px',
-          borderRadius: '9999px',
-          background: `radial-gradient(circle, ${hexToRgba(accent, 0.35)} 0%, transparent 70%)`,
-        }}
-      />
-    </div>
-  )
-}
-
 function SharePoweredByPill({ logoSrc }: { logoSrc: string }) {
   return (
     <div
@@ -569,21 +499,21 @@ function SharePoweredByPill({ logoSrc }: { logoSrc: string }) {
   )
 }
 
-function ShareDivider({ accent }: { accent: string }) {
+function ShareDivider({ accent, width = '56px' }: { accent: string; width?: string }) {
   return (
     <div
       style={{
         display: 'flex',
-        width: '72px',
-        height: '3px',
+        width,
+        height: '2px',
         borderRadius: '9999px',
-        backgroundColor: hexToRgba(accentOnDark(accent), 0.85),
+        backgroundColor: hexToRgba(accentOnDark(accent), 0.7),
       }}
     />
   )
 }
 
-/** Square social post — bold poster layout with org accent bands and structured session details. */
+/** Square social post — centered poster with org accent wash and structured session card. */
 export function OrgShareCard({
   slug,
   orgName,
@@ -615,30 +545,47 @@ export function OrgShareCard({
         color: '#fafafa',
       }}
     >
-      <ShareAccentBandTop accent={accent} />
+      <div
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          height: '520px',
+          backgroundImage: `linear-gradient(180deg, ${hexToRgba(accent, 0.32)} 0%, ${hexToRgba(accent, 0.1)} 38%, transparent 100%)`,
+        }}
+      />
+      <div
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          height: '5px',
+          backgroundColor: accentFg,
+        }}
+      />
+      <DotGrid opacity={0.14} />
 
-      {/* Hero typography — bridges accent band into dark panel */}
       <div
         style={{
           display: 'flex',
           flexDirection: 'column',
-          alignItems: 'center',
-          marginTop: '-120px',
-          paddingLeft: '48px',
-          paddingRight: '48px',
-          zIndex: 2,
+          flex: 1,
+          padding: '64px 72px 72px',
+          zIndex: 1,
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '20px' }}>
-          <OrgAvatar orgName={orgName} accent={accent} logoUrl={logoUrl} size={52} />
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '16px' }}>
+          <OrgAvatar orgName={orgName} accent={accent} logoUrl={logoUrl} size={56} />
           <div
             style={{
               display: 'flex',
               ...font(600),
-              fontSize: '15px',
-              letterSpacing: '0.16em',
+              fontSize: '16px',
+              letterSpacing: '0.14em',
               textTransform: 'uppercase',
-              color: '#e4e4e7',
+              color: '#d4d4d8',
             }}
           >
             {orgName}
@@ -648,110 +595,120 @@ export function OrgShareCard({
         <div
           style={{
             display: 'flex',
-            ...font(700),
-            fontSize: '118px',
-            lineHeight: 0.92,
-            letterSpacing: '-0.05em',
-            color: '#fafafa',
-            textTransform: 'uppercase',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flex: 1,
+            gap: '36px',
+            paddingTop: '32px',
+            paddingBottom: '32px',
           }}
         >
-          Join us
-        </div>
-      </div>
+          <div
+            style={{
+              display: 'flex',
+              ...font(700),
+              fontSize: '92px',
+              lineHeight: 0.94,
+              letterSpacing: '-0.045em',
+              color: '#fafafa',
+              textTransform: 'uppercase',
+            }}
+          >
+            Join us
+          </div>
 
-      {/* Session details panel */}
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          flex: 1,
-          marginTop: '28px',
-          padding: '48px 56px 56px',
-          backgroundColor: '#09090b',
-          gap: '24px',
-          textAlign: 'center',
-          zIndex: 1,
-        }}
-      >
-        <div
-          style={{
-            display: 'flex',
-            ...font(700),
-            fontSize: '44px',
-            lineHeight: 1.1,
-            letterSpacing: '-0.03em',
-            color: '#fafafa',
-            maxWidth: '920px',
-            textTransform: 'uppercase',
-          }}
-        >
-          {sessionTitle}
-        </div>
-
-        <ShareDivider accent={accent} />
-
-        <div
-          style={{
-            display: 'flex',
-            ...font(700),
-            fontSize: '28px',
-            letterSpacing: '0.06em',
-            color: accentFg,
-          }}
-        >
-          {scheduleLine}
-        </div>
-
-        {whereLine ? (
           <div
             style={{
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
-              gap: '24px',
               width: '100%',
+              maxWidth: '860px',
+              padding: '36px 44px',
+              borderRadius: '24px',
+              border: `1px solid ${hexToRgba(accentFg, 0.22)}`,
+              backgroundColor: 'rgba(24,24,27,0.72)',
+              gap: '22px',
+              textAlign: 'center',
             }}
           >
-            <ShareDivider accent={accent} />
             <div
               style={{
                 display: 'flex',
-                ...font(600),
-                fontSize: '24px',
-                letterSpacing: '0.04em',
-                color: '#d4d4d8',
+                ...font(700),
+                fontSize: '36px',
+                lineHeight: 1.12,
+                letterSpacing: '-0.02em',
+                color: '#fafafa',
                 textTransform: 'uppercase',
-                maxWidth: '880px',
               }}
             >
-              {whereLine}
+              {sessionTitle}
             </div>
+
+            <ShareDivider accent={accent} width="100%" />
+
+            <div
+              style={{
+                display: 'flex',
+                ...font(700),
+                fontSize: '24px',
+                letterSpacing: '0.05em',
+                color: accentFg,
+              }}
+            >
+              {scheduleLine}
+            </div>
+
+            {whereLine ? (
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: '22px',
+                  width: '100%',
+                }}
+              >
+                <ShareDivider accent={accent} width="100%" />
+                <div
+                  style={{
+                    display: 'flex',
+                    ...font(600),
+                    fontSize: '20px',
+                    letterSpacing: '0.04em',
+                    color: '#d4d4d8',
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  {whereLine}
+                </div>
+              </div>
+            ) : null}
           </div>
-        ) : null}
+        </div>
 
         <div
           style={{
             display: 'flex',
-            paddingTop: '24px',
-            ...font(400),
-            fontSize: '20px',
-            letterSpacing: '0.02em',
-            color: '#52525b',
+            justifyContent: 'center',
+            paddingBottom: '8px',
+            ...font(600),
+            fontSize: '22px',
+            letterSpacing: '0.01em',
+            color: '#71717a',
           }}
         >
           {joinUrl}
         </div>
       </div>
 
-      <ShareAccentBandBottom accent={accent} />
-
       <div
         style={{
           position: 'absolute',
-          right: '36px',
-          bottom: '36px',
+          right: '40px',
+          bottom: '40px',
           display: 'flex',
           zIndex: 10,
         }}
