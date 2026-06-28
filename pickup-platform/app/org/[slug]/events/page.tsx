@@ -104,7 +104,7 @@ export default async function EventsPage({ params }: Props) {
 
       <OrgHeader
         org={org}
-        eyebrow="Home"
+        eyebrow="Calendar"
         title={org.name}
         subtitle={org.description}
         logoPriority
