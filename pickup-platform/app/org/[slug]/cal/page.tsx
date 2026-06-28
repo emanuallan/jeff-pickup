@@ -1,14 +1,11 @@
 import type { Metadata } from 'next'
-import Link from 'next/link'
 import { Suspense } from 'react'
 import { notFound, redirect } from 'next/navigation'
 import { getPublicOrgBySlug, getPublicUpcomingEventsForOrg } from '@/lib/public-data'
 import {
   formatEventTime,
   pickFeaturedUpcomingEvent,
-  formatEventDayLabel,
-  isEventInProgress,
-  isEventEnded,
+  isEventCancelled,
 } from '@/lib/events'
 import { buildOrgMetadata } from '@/lib/og-metadata'
 import { buildOrgJsonLd } from '@/lib/seo'
@@ -18,7 +15,6 @@ import { BackToOrganizrLink } from '../_components/back-to-organizr-link'
 import { PageHelpHint } from '../_components/page-help-hint'
 import { OrgPageShell, OrgPageFooter } from '../_components/org-page-shell'
 import { ShareButton } from '../share-button-lazy'
-import { arrowRight } from '@/lib/text-arrows'
 import { accentOnDark } from '@/lib/colors'
 import { orgFeatures } from '@/lib/org-features'
 import { MoreSessions } from './more-sessions'
@@ -28,14 +24,9 @@ import {
 } from './[eventId]/event-headcount'
 import { LeaderboardLinkDeferred } from './[eventId]/leaderboard-link-deferred'
 import {
-  StatusPill,
+  FeaturedSessionRow,
   SessionRow,
-  EventDateTimeRow,
-  EventLocationRow,
-  EventTimingBadge,
   CancelledSessionNotice,
-  eventName,
-  isEventCancelled,
 } from '../_components/event-ui'
 
 type Props = {
@@ -89,8 +80,6 @@ export default async function EventsPage({ params }: Props) {
   const rest = events.filter(
     (ev) => ev.id !== featured?.id && ev.id !== skippedCancelled?.id,
   )
-  const featuredLive = featured ? isEventInProgress(featured) && featured.status === 'on' : false
-  const featuredEnded = featured ? isEventEnded(featured) : false
 
   return (
     <OrgPageShell>
@@ -118,68 +107,22 @@ export default async function EventsPage({ params }: Props) {
 
           {featured ? (
             <section>
-              <div className="group relative overflow-hidden rounded-3xl border border-zinc-800 bg-linear-to-b from-zinc-900 to-zinc-950 p-6 transition-colors hover:border-zinc-700">
-                <Link
-                  href={`/cal/${featured.short_id}`}
-                  className="absolute inset-0 z-0 rounded-3xl"
-                  aria-label={`${eventName(featured)} — ${formatEventDayLabel(featured)}`}
-                />
-                <div className="relative z-10 pointer-events-none">
-                  <div className="flex items-center justify-between gap-3">
-                    <EventTimingBadge
-                      event={featured}
-                      accent={accent}
-                      cancelled={false}
-                      upcomingLabel="Next session"
+              <FeaturedSessionRow
+                event={featured}
+                accent={accent}
+                footer={
+                  <Suspense
+                    fallback={
+                      <FeaturedEventHeadcountFallback capacity={featured.capacity} />
+                    }
+                  >
+                    <FeaturedEventHeadcount
+                      eventId={featured.id}
+                      capacity={featured.capacity}
                     />
-                    <StatusPill
-                      status={featured.status}
-                      accent={accent}
-                      live={featuredLive}
-                      ended={featuredEnded}
-                    />
-                  </div>
-
-                  <h2 className="mt-4 text-2xl font-semibold tracking-tight text-zinc-50">
-                    {eventName(featured)}
-                  </h2>
-
-                  <EventDateTimeRow event={featured} cancelled={false} />
-
-                  <EventLocationRow
-                    event={featured}
-                    nestedInLink
-                    className="mt-3 flex gap-2 text-sm text-zinc-400"
-                  />
-
-                  {featured.announcement ? (
-                    <p className="mt-4 rounded-xl border border-zinc-800 bg-black/30 px-3 py-2 text-sm text-zinc-300">
-                      {featured.announcement}
-                    </p>
-                  ) : null}
-
-                  <div className="mt-5 flex items-center justify-between border-t border-zinc-800 pt-4">
-                    <span className="text-sm text-zinc-400">
-                      <Suspense
-                        fallback={
-                          <FeaturedEventHeadcountFallback capacity={featured.capacity} />
-                        }
-                      >
-                        <FeaturedEventHeadcount
-                          eventId={featured.id}
-                          capacity={featured.capacity}
-                        />
-                      </Suspense>
-                    </span>
-                    <span
-                      className="inline-flex items-center gap-1 text-sm font-medium transition-transform group-hover:translate-x-0.5"
-                      style={{ color: accentOnDark(accent) }}
-                    >
-                      View session {arrowRight}
-                    </span>
-                  </div>
-                </div>
-              </div>
+                  </Suspense>
+                }
+              />
             </section>
           ) : null}
 
