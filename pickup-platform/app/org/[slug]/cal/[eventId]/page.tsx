@@ -9,6 +9,10 @@ import {
 import { formatEventTime, isEventInProgress, isEventEnded } from "@/lib/events";
 import { orgFeatures } from "@/lib/org-features";
 import { buildOrgMetadata } from "@/lib/og-metadata";
+import {
+	buildEventShareText,
+	buildEventShareTitle,
+} from "@/lib/public-share-text";
 import { buildEventJsonLd } from "@/lib/seo";
 import { JsonLd } from "@/app/_components/json-ld";
 import {
@@ -106,7 +110,8 @@ export default async function EventPage({ params }: Props) {
 	const isLive = isEventInProgress(event) && event.status === "on";
 	const isEnded = isEventEnded(event);
 	const nextActiveSession = isCancelled || isEnded ? nextSession : null;
-	const shareText = `${org.name}: ${formatEventTime(event)} ${event.location_is_online ? "on" : "at"} ${event.location_label}. Join us!`;
+	const shareText = buildEventShareText(org.name, event);
+	const shareTitle = buildEventShareTitle(org.name, event);
 	const accent = org.branding.accent_color;
 
 	const helpMessage = isCancelled
@@ -122,7 +127,7 @@ export default async function EventPage({ params }: Props) {
 				<Suspense fallback={null}>
 					<AllSessionsLinkDeferred orgId={org.id} />
 				</Suspense>
-				<ShareButton title={org.name} text={shareText} imagePath={`/cal/${eventId}/share-image`} accent={accent} />
+				<ShareButton title={shareTitle} text={shareText} imagePath={`/cal/${eventId}/share-image`} accent={accent} />
 			</nav>
 
 			<OrgHeader

@@ -154,7 +154,7 @@ export function ShareButton({ title, text, imagePath, accent }: Props) {
 
   async function handleShareLink() {
     const url = window.location.href
-    const shareText = `${text}\n${url}`
+    const shareText = `${text}\n\n${url}`
 
     if (navigator.share) {
       try {

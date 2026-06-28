@@ -11,6 +11,10 @@ import {
   isEventEnded,
 } from '@/lib/events'
 import { buildOrgMetadata } from '@/lib/og-metadata'
+import {
+  buildOrgCalendarShareText,
+  buildOrgCalendarShareTitle,
+} from '@/lib/public-share-text'
 import { buildOrgJsonLd } from '@/lib/seo'
 import { JsonLd } from '@/app/_components/json-ld'
 import { OrgHeader } from '../_components/org-header'
@@ -99,7 +103,12 @@ export default async function EventsPage({ params }: Props) {
         className={`flex min-h-9 items-center gap-3 ${slug === 'demo' ? 'justify-between' : 'justify-end'}`}
       >
         {slug === 'demo' ? <BackToOrganizrLink /> : null}
-        <ShareButton title={org.name} text={`Join ${org.name} on Organizr`} imagePath="/cal/share-image" accent={accent} />
+        <ShareButton
+          title={buildOrgCalendarShareTitle(org.name, featured)}
+          text={buildOrgCalendarShareText(org.name, featured)}
+          imagePath="/cal/share-image"
+          accent={accent}
+        />
       </nav>
 
       <OrgHeader
