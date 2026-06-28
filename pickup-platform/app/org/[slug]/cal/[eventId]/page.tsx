@@ -174,6 +174,12 @@ export default async function EventPage({ params }: Props) {
 						className="mt-3 flex gap-2 text-sm text-zinc-400"
 					/>
 
+					{event.announcement ? (
+						<p className="mt-4 rounded-xl border border-zinc-800 bg-black/30 px-3 py-2 text-sm text-zinc-300">
+							{event.announcement}
+						</p>
+					) : null}
+
 					<div className="mt-5 flex flex-wrap items-center gap-2 border-t border-zinc-800 pt-4 text-sm">
 						<Suspense
 							fallback={
@@ -203,12 +209,6 @@ export default async function EventPage({ params }: Props) {
 							/>
 						</Suspense>
 					</div>
-
-					{event.announcement ? (
-						<p className="mt-4 rounded-xl border border-zinc-800 bg-black/30 px-3 py-2 text-sm text-zinc-300">
-							{event.announcement}
-						</p>
-					) : null}
 				</div>
 			</section>
 
