@@ -302,7 +302,7 @@ export function EventLocationRow({
       <div className={rowClass}>
         {!compact ? <OnlineIcon /> : null}
         <div className="min-w-0">
-          {meetingUrl ? (
+          {meetingUrl && !compact ? (
             <ExternalLocationLink
               href={meetingUrl}
               nestedInLink={nestedInLink}
@@ -311,7 +311,10 @@ export function EventLocationRow({
               {event.location_label} · Join online {arrowNe}
             </ExternalLocationLink>
           ) : (
-            <span className="truncate">{event.location_label} · Online</span>
+            <span className="truncate">
+              {event.location_label}
+              {meetingUrl ? ` · Join online ${arrowNe}` : ' · Online'}
+            </span>
           )}
         </div>
       </div>
@@ -321,17 +324,7 @@ export function EventLocationRow({
   if (compact) {
     return (
       <div className={rowClass}>
-        {hasMaps ? (
-          <ExternalLocationLink
-            href={mapsUrl}
-            nestedInLink={nestedInLink}
-            className={`truncate ${linkClass}`}
-          >
-            {event.location_label}
-          </ExternalLocationLink>
-        ) : (
-          <span className="truncate">{event.location_label}</span>
-        )}
+        <span className="truncate">{event.location_label}</span>
       </div>
     )
   }
@@ -428,7 +421,6 @@ export function SessionRow({
           <span className="shrink-0 text-zinc-700">·</span>
           <EventLocationRow
             event={event}
-            nestedInLink
             compact
             className="min-w-0 text-zinc-600"
           />
