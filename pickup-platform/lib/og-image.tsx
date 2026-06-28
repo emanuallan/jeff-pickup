@@ -481,22 +481,50 @@ function SharePoweredByPill({ logoSrc }: { logoSrc: string }) {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        gap: '10px',
-        padding: '14px 24px',
+        gap: '12px',
+        padding: '16px 28px',
         borderRadius: '9999px',
-        backgroundColor: 'rgba(9,9,11,0.88)',
-        border: '1px solid rgba(255,255,255,0.14)',
+        backgroundColor: 'rgba(9,9,11,0.92)',
+        border: '1px solid rgba(255,255,255,0.16)',
         boxShadow: '0 10px 40px rgba(0,0,0,0.5)',
       }}
     >
-      <div style={{ display: 'flex', ...font(400), fontSize: '18px', color: '#71717a' }}>
+      <div style={{ display: 'flex', ...font(400), fontSize: '20px', color: '#71717a' }}>
         Powered by
       </div>
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={logoSrc} alt="" width={24} height={24} style={{ objectFit: 'contain' }} />
-      <div style={{ display: 'flex', ...font(600), fontSize: '18px', color: '#e4e4e7' }}>
+      <img src={logoSrc} alt="" width={26} height={26} style={{ objectFit: 'contain' }} />
+      <div style={{ display: 'flex', ...font(600), fontSize: '20px', color: '#e4e4e7' }}>
         Organizr
       </div>
+    </div>
+  )
+}
+
+function ShareTimeMark({ accentFg }: { accentFg: string }) {
+  return (
+    <div
+      style={{
+        display: 'flex',
+        width: '36px',
+        height: '36px',
+        borderRadius: '11px',
+        backgroundColor: hexToRgba(accentFg, 0.16),
+        border: `1px solid ${hexToRgba(accentFg, 0.35)}`,
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexShrink: 0,
+      }}
+    >
+      <div
+        style={{
+          display: 'flex',
+          width: '16px',
+          height: '16px',
+          borderRadius: '9999px',
+          border: `2px solid ${accentFg}`,
+        }}
+      />
     </div>
   )
 }
@@ -505,30 +533,50 @@ function ShareDetailRow({
   accentFg,
   primary,
   secondary,
+  icon,
+  online,
 }: {
   accentFg: string
   primary: string
   secondary?: string
+  icon: 'when' | 'where'
+  online?: boolean
 }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '18px' }}>
-      <div
-        style={{
-          display: 'flex',
-          width: '10px',
-          height: '10px',
-          borderRadius: '9999px',
-          backgroundColor: accentFg,
-          flexShrink: 0,
-          marginTop: '12px',
-        }}
-      />
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', minWidth: 0 }}>
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'flex-start',
+        gap: '20px',
+        padding: '22px 26px',
+        borderRadius: '18px',
+        backgroundColor: 'rgba(255,255,255,0.04)',
+        border: `1px solid ${hexToRgba(accentFg, 0.22)}`,
+        boxShadow: `inset 0 1px 0 ${hexToRgba(accentFg, 0.08)}`,
+      }}
+    >
+      {icon === 'when' ? (
+        <ShareTimeMark accentFg={accentFg} />
+      ) : (
+        <div
+          style={{
+            display: 'flex',
+            width: '36px',
+            height: '36px',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
+          }}
+        >
+          <LocationMark accentFg={accentFg} online={online} />
+        </div>
+      )}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', minWidth: 0 }}>
         <div
           style={{
             display: 'flex',
             ...font(600),
-            fontSize: '26px',
+            fontSize: '30px',
             lineHeight: 1.25,
             letterSpacing: '-0.01em',
             color: '#fafafa',
@@ -541,7 +589,7 @@ function ShareDetailRow({
             style={{
               display: 'flex',
               ...font(400),
-              fontSize: '20px',
+              fontSize: '23px',
               lineHeight: 1.35,
               color: '#a1a1aa',
             }}
@@ -563,11 +611,11 @@ function SharePanelLogo({
   logoUrl?: string | null
   panelText: string
 }) {
-  const size = 168
-  const radius = '28px'
+  const size = 184
+  const radius = '30px'
   const ring = {
-    border: `4px solid ${hexToRgba(panelText, 0.28)}`,
-    boxShadow: `0 20px 56px ${hexToRgba('#000000', 0.22)}`,
+    border: `4px solid ${hexToRgba(panelText, 0.32)}`,
+    boxShadow: `0 0 0 10px ${hexToRgba(panelText, 0.08)}, 0 24px 64px ${hexToRgba('#000000', 0.24)}`,
   }
 
   if (logoUrl) {
@@ -600,7 +648,7 @@ function SharePanelLogo({
         borderRadius: radius,
         backgroundColor: hexToRgba(panelText, 0.16),
         ...font(700),
-        fontSize: '72px',
+        fontSize: '78px',
         color: panelText,
         ...ring,
       }}
@@ -655,25 +703,129 @@ export function OrgShareCard({
             flexShrink: 0,
             padding: '48px 36px',
             backgroundColor: accent,
-            gap: '28px',
+            gap: '32px',
+            position: 'relative',
+            overflow: 'hidden',
           }}
         >
-          <SharePanelLogo orgName={orgName} logoUrl={logoUrl} panelText={panelText} />
+          <div
+            style={{
+              position: 'absolute',
+              inset: 0,
+              opacity: 0.14,
+              backgroundImage: `radial-gradient(circle at center, ${hexToRgba(panelText, 0.55)} 1px, transparent 1px)`,
+              backgroundSize: '22px 22px',
+            }}
+          />
+          <div
+            style={{
+              position: 'absolute',
+              top: '-80px',
+              left: '-60px',
+              width: '360px',
+              height: '360px',
+              borderRadius: '9999px',
+              background: `radial-gradient(circle, ${hexToRgba(panelText, 0.22)} 0%, transparent 68%)`,
+            }}
+          />
+          <div
+            style={{
+              position: 'absolute',
+              bottom: '-100px',
+              right: '-80px',
+              width: '320px',
+              height: '320px',
+              borderRadius: '9999px',
+              background: `radial-gradient(circle, ${hexToRgba('#000000', 0.18)} 0%, transparent 70%)`,
+            }}
+          />
+          <div
+            style={{
+              position: 'absolute',
+              top: 0,
+              right: 0,
+              bottom: 0,
+              width: '1px',
+              backgroundColor: hexToRgba(panelText, 0.22),
+            }}
+          />
+
           <div
             style={{
               display: 'flex',
-              ...font(700),
-              fontSize: '28px',
-              lineHeight: 1.2,
-              letterSpacing: '-0.02em',
-              color: panelText,
-              textAlign: 'center',
-              maxWidth: '310px',
+              alignItems: 'center',
+              justifyContent: 'center',
+              position: 'relative',
+              width: '280px',
+              height: '280px',
             }}
           >
-            {orgName}
+            <div
+              style={{
+                display: 'flex',
+                position: 'absolute',
+                width: '260px',
+                height: '260px',
+                borderRadius: '9999px',
+                border: `2px solid ${hexToRgba(panelText, 0.16)}`,
+              }}
+            />
+            <div
+              style={{
+                display: 'flex',
+                position: 'absolute',
+                width: '320px',
+                height: '320px',
+                borderRadius: '9999px',
+                border: `1px solid ${hexToRgba(panelText, 0.08)}`,
+              }}
+            />
+            <SharePanelLogo orgName={orgName} logoUrl={logoUrl} panelText={panelText} />
+          </div>
+
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '14px',
+              zIndex: 1,
+            }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                ...font(700),
+                fontSize: '32px',
+                lineHeight: 1.2,
+                letterSpacing: '-0.02em',
+                color: panelText,
+                textAlign: 'center',
+                maxWidth: '310px',
+              }}
+            >
+              {orgName}
+            </div>
+            <div
+              style={{
+                display: 'flex',
+                width: '48px',
+                height: '3px',
+                borderRadius: '9999px',
+                backgroundColor: hexToRgba(panelText, 0.35),
+              }}
+            />
           </div>
         </div>
+
+        <div
+          style={{
+            display: 'flex',
+            width: '6px',
+            flexShrink: 0,
+            backgroundImage: `linear-gradient(to bottom, ${hexToRgba(accentFg, 0.5)}, ${hexToRgba(accent, 0.95)}, ${hexToRgba(accentFg, 0.5)})`,
+          }}
+        />
 
         <div
           style={{
@@ -683,31 +835,99 @@ export function OrgShareCard({
             justifyContent: 'center',
             position: 'relative',
             overflow: 'hidden',
-            padding: '56px 52px',
-            gap: '36px',
+            padding: '52px 56px',
+            gap: '32px',
           }}
         >
+          <div
+            style={{
+              position: 'absolute',
+              top: '-70px',
+              right: '-50px',
+              width: '380px',
+              height: '380px',
+              borderRadius: '9999px',
+              background: `radial-gradient(circle, ${hexToRgba(accent, 0.26)} 0%, transparent 68%)`,
+            }}
+          />
+          <div
+            style={{
+              position: 'absolute',
+              bottom: '-90px',
+              left: '-40px',
+              width: '280px',
+              height: '280px',
+              borderRadius: '9999px',
+              background: `radial-gradient(circle, ${hexToRgba(accent, 0.1)} 0%, transparent 70%)`,
+            }}
+          />
           <DotGrid opacity={0.14} />
+
           <div
             style={{
               display: 'flex',
-              ...font(700),
-              fontSize: '54px',
-              lineHeight: 1.06,
-              letterSpacing: '-0.035em',
-              color: '#fafafa',
+              flexDirection: 'column',
+              gap: '20px',
               zIndex: 1,
-              maxWidth: '580px',
+              maxWidth: '560px',
             }}
           >
-            {sessionTitle}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                padding: '10px 20px',
+                borderRadius: '9999px',
+                backgroundColor: hexToRgba(accentFg, 0.1),
+                border: `1px solid ${hexToRgba(accentFg, 0.28)}`,
+                alignSelf: 'flex-start',
+              }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  width: '8px',
+                  height: '8px',
+                  borderRadius: '9999px',
+                  backgroundColor: accentFg,
+                }}
+              />
+              <div
+                style={{
+                  display: 'flex',
+                  ...font(600),
+                  fontSize: '16px',
+                  letterSpacing: '0.14em',
+                  textTransform: 'uppercase',
+                  color: accentFg,
+                }}
+              >
+                Upcoming session
+              </div>
+            </div>
+
+            <div
+              style={{
+                display: 'flex',
+                ...font(700),
+                fontSize: '62px',
+                lineHeight: 1.06,
+                letterSpacing: '-0.035em',
+                color: '#fafafa',
+              }}
+            >
+              {sessionTitle}
+            </div>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '22px', zIndex: 1, maxWidth: '580px' }}>
-            <ShareDetailRow accentFg={accentFg} primary={whenLine} />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', zIndex: 1, maxWidth: '560px' }}>
+            <ShareDetailRow accentFg={accentFg} icon="when" primary={whenLine} />
             {venueLine ? (
               <ShareDetailRow
                 accentFg={accentFg}
+                icon="where"
+                online={locationOnline}
                 primary={venueLine}
                 secondary={addressLine && !locationOnline ? addressLine : undefined}
               />
@@ -722,19 +942,32 @@ export function OrgShareCard({
           alignItems: 'center',
           justifyContent: 'space-between',
           flexShrink: 0,
-          height: '100px',
-          padding: '0 40px',
-          borderTop: '1px solid rgba(255,255,255,0.08)',
+          height: '108px',
+          padding: '0 44px',
+          borderTop: `1px solid ${hexToRgba(accentFg, 0.2)}`,
           backgroundColor: '#09090b',
+          position: 'relative',
+          overflow: 'hidden',
         }}
       >
         <div
           style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            height: '2px',
+            backgroundImage: `linear-gradient(to right, transparent, ${hexToRgba(accentFg, 0.55)}, transparent)`,
+          }}
+        />
+        <div
+          style={{
             display: 'flex',
             ...font(600),
-            fontSize: '22px',
+            fontSize: '24px',
             letterSpacing: '-0.01em',
             color: '#71717a',
+            zIndex: 1,
           }}
         >
           {joinUrl}
