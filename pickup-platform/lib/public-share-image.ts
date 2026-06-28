@@ -9,10 +9,6 @@ import { getPublicOrgAndEvent, getPublicOrgBySlug, getPublicUpcomingEventsForOrg
 
 type ShareImageProps = Omit<OrgShareCardProps, 'organizrLogoSrc'>
 
-function defaultTagline(orgDescription: string | undefined): string {
-  return orgDescription?.trim() || "See who's coming and join in seconds."
-}
-
 export async function buildEventsListShareImageProps(slug: string): Promise<ShareImageProps> {
   const org = await getPublicOrgBySlug(slug)
   const events = org ? await getPublicUpcomingEventsForOrg(org.id, 20, true) : []
@@ -29,7 +25,6 @@ export async function buildEventsListShareImageProps(slug: string): Promise<Shar
       timeLabel: formatEventTimeOnly(nextEvent),
       locationLine: nextEvent.location_label || undefined,
       locationOnline: nextEvent.location_is_online,
-      tagline: defaultTagline(org?.description),
     }
   }
 
@@ -41,7 +36,6 @@ export async function buildEventsListShareImageProps(slug: string): Promise<Shar
     sessionTitle: 'Upcoming sessions',
     dayLabel: 'Schedule',
     timeLabel: 'Open now',
-    tagline: defaultTagline(org?.description),
   }
 }
 
@@ -63,6 +57,5 @@ export async function buildEventDetailShareImageProps(
     timeLabel: event ? formatEventTimeOnly(event) : 'Open now',
     locationLine: event?.location_label || undefined,
     locationOnline: event?.location_is_online,
-    tagline: defaultTagline(org?.description),
   }
 }

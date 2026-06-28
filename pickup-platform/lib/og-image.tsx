@@ -470,8 +470,6 @@ export type OrgShareCardProps = {
   timeLabel: string
   locationLine?: string
   locationOnline?: boolean
-  /** Short recruiting hook — org description or default invite copy. */
-  tagline?: string
   organizrLogoSrc: string
 }
 
@@ -557,30 +555,20 @@ function OrgAvatar({
 
 function PoweredByOrganizr({ logoSrc }: { logoSrc: string }) {
   return (
-    <div
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: '8px',
-        padding: '10px 14px',
-        borderRadius: '9999px',
-        backgroundColor: 'rgba(255,255,255,0.04)',
-        border: '1px solid rgba(255,255,255,0.08)',
-      }}
-    >
-      <div style={{ display: 'flex', ...font(400), fontSize: '15px', color: '#71717a' }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+      <div style={{ display: 'flex', ...font(400), fontSize: '16px', color: '#52525b' }}>
         Powered by
       </div>
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={logoSrc} alt="" width={20} height={20} style={{ objectFit: 'contain' }} />
-      <div style={{ display: 'flex', ...font(600), fontSize: '15px', color: '#a1a1aa' }}>
+      <img src={logoSrc} alt="" width={22} height={22} style={{ objectFit: 'contain' }} />
+      <div style={{ display: 'flex', ...font(600), fontSize: '16px', color: '#71717a' }}>
         Organizr
       </div>
     </div>
   )
 }
 
-/** Square social post — polished invite card aligned with the public app UI. */
+/** Square social post — minimal session invite with org branding. */
 export function OrgShareCard({
   slug,
   orgName,
@@ -591,15 +579,13 @@ export function OrgShareCard({
   timeLabel,
   locationLine,
   locationOnline,
-  tagline,
   organizrLogoSrc,
 }: OrgShareCardProps) {
-  const accentText = readableTextColor(accent)
   const accentFg = accentOnDark(accent)
   const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? 'organizr.co'
   const joinUrl = `${slug}.${rootDomain}`
-  const hook = tagline?.trim() || "See who's coming and join in seconds."
-  const whereLine = locationLine || (locationOnline ? 'Online session' : undefined)
+  const whenLine = `${dayLabel} · ${timeLabel}`
+  const whereLine = locationLine || (locationOnline ? 'Online' : undefined)
 
   return (
     <div
@@ -612,7 +598,7 @@ export function OrgShareCard({
         overflow: 'hidden',
         backgroundColor: '#09090b',
         color: '#fafafa',
-        padding: '52px',
+        padding: '64px',
       }}
     >
       <ShareBackdrop accent={accent} />
@@ -621,310 +607,90 @@ export function OrgShareCard({
         style={{
           display: 'flex',
           flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
           flex: 1,
-          gap: '28px',
+          gap: '32px',
           zIndex: 1,
+          textAlign: 'center',
         }}
       >
-        {/* Header */}
+        <OrgAvatar orgName={orgName} accent={accent} logoUrl={logoUrl} size={96} />
+
         <div
           style={{
             display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: '24px',
+            ...font(600),
+            fontSize: '30px',
+            letterSpacing: '-0.02em',
+            color: accentFg,
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', minWidth: 0 }}>
-            <OrgAvatar orgName={orgName} accent={accent} logoUrl={logoUrl} size={64} />
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', minWidth: 0 }}>
-              <div
-                style={{
-                  display: 'flex',
-                  ...font(700),
-                  fontSize: '28px',
-                  letterSpacing: '-0.03em',
-                  color: '#fafafa',
-                }}
-              >
-                {orgName}
-              </div>
-              <div
-                style={{
-                  display: 'flex',
-                  ...font(400),
-                  fontSize: '18px',
-                  color: '#71717a',
-                }}
-              >
-                {joinUrl}
-              </div>
-            </div>
-          </div>
-
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              padding: '10px 16px',
-              borderRadius: '9999px',
-              backgroundColor: hexToRgba(accentFg, 0.1),
-              border: `1px solid ${hexToRgba(accentFg, 0.24)}`,
-              flexShrink: 0,
-            }}
-          >
-            <div
-              style={{
-                display: 'flex',
-                width: '8px',
-                height: '8px',
-                borderRadius: '9999px',
-                backgroundColor: accentFg,
-              }}
-            />
-            <div
-              style={{
-                display: 'flex',
-                ...font(600),
-                fontSize: '14px',
-                letterSpacing: '0.08em',
-                textTransform: 'uppercase',
-                color: accentFg,
-              }}
-            >
-              Open invite
-            </div>
-          </div>
+          {orgName}
         </div>
 
-        {/* Hero card */}
         <div
           style={{
             display: 'flex',
-            flexDirection: 'column',
-            flex: 1,
-            position: 'relative',
-            overflow: 'hidden',
-            borderRadius: '32px',
-            border: '1px solid rgba(255,255,255,0.08)',
-            backgroundImage: 'linear-gradient(to bottom, #18181b 0%, #09090b 100%)',
-            padding: '44px 48px',
-            boxShadow: 'inset 0 1px 0 0 rgba(255,255,255,0.05)',
+            ...font(700),
+            fontSize: '56px',
+            lineHeight: 1.08,
+            letterSpacing: '-0.04em',
+            color: '#fafafa',
+            maxWidth: '880px',
           }}
         >
-          <div
-            style={{
-              position: 'absolute',
-              top: '-80px',
-              right: '-40px',
-              width: '320px',
-              height: '320px',
-              borderRadius: '9999px',
-              background: `radial-gradient(circle, ${hexToRgba(accent, 0.28)} 0%, transparent 68%)`,
-            }}
-          />
+          {sessionTitle}
+        </div>
 
-          <div
-            style={{
-              display: 'flex',
-              ...font(600),
-              fontSize: '13px',
-              letterSpacing: '0.14em',
-              textTransform: 'uppercase',
-              color: accentFg,
-            }}
-          >
-            Next session
-          </div>
+        <div
+          style={{
+            display: 'flex',
+            ...font(600),
+            fontSize: '32px',
+            letterSpacing: '-0.02em',
+            color: '#e4e4e7',
+          }}
+        >
+          {whenLine}
+        </div>
 
+        {whereLine ? (
           <div
             style={{
               display: 'flex',
-              marginTop: '16px',
-              ...font(700),
-              fontSize: '50px',
-              lineHeight: 1.06,
-              letterSpacing: '-0.04em',
-              color: '#fafafa',
-              maxWidth: '860px',
-            }}
-          >
-            {sessionTitle}
-          </div>
-
-          <div
-            style={{
-              display: 'flex',
-              marginTop: '32px',
-              height: '1px',
-              backgroundColor: 'rgba(255,255,255,0.06)',
-            }}
-          />
-
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'flex-end',
-              justifyContent: 'space-between',
-              marginTop: '28px',
-              gap: '24px',
-            }}
-          >
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <div
-                style={{
-                  display: 'flex',
-                  ...font(600),
-                  fontSize: '12px',
-                  letterSpacing: '0.12em',
-                  textTransform: 'uppercase',
-                  color: '#71717a',
-                }}
-              >
-                When
-              </div>
-              <div
-                style={{
-                  display: 'flex',
-                  ...font(600),
-                  fontSize: '34px',
-                  letterSpacing: '-0.02em',
-                  color: '#f4f4f5',
-                }}
-              >
-                {dayLabel}
-              </div>
-            </div>
-
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'flex-end',
-                gap: '8px',
-              }}
-            >
-              <div
-                style={{
-                  display: 'flex',
-                  ...font(600),
-                  fontSize: '12px',
-                  letterSpacing: '0.12em',
-                  textTransform: 'uppercase',
-                  color: '#71717a',
-                }}
-              >
-                Time
-              </div>
-              <div
-                style={{
-                  display: 'flex',
-                  ...font(700),
-                  fontSize: '34px',
-                  letterSpacing: '-0.02em',
-                  color: accentFg,
-                }}
-              >
-                {timeLabel}
-              </div>
-            </div>
-          </div>
-
-          {whereLine ? (
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '14px',
-                marginTop: '24px',
-                padding: '16px 18px',
-                borderRadius: '18px',
-                backgroundColor: 'rgba(255,255,255,0.03)',
-                border: '1px solid rgba(255,255,255,0.06)',
-              }}
-            >
-              <LocationMark accentFg={accentFg} online={locationOnline} />
-              <div
-                style={{
-                  display: 'flex',
-                  ...font(400),
-                  fontSize: '24px',
-                  lineHeight: 1.25,
-                  color: '#d4d4d8',
-                }}
-              >
-                {whereLine}
-              </div>
-            </div>
-          ) : null}
-
-          <div
-            style={{
-              display: 'flex',
-              marginTop: 'auto',
-              paddingTop: '28px',
               ...font(400),
-              fontSize: '22px',
-              lineHeight: 1.4,
+              fontSize: '28px',
               color: '#a1a1aa',
             }}
           >
-            {hook}
+            {whereLine}
           </div>
-        </div>
+        ) : null}
 
-        {/* Footer CTA */}
         <div
           style={{
             display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: '20px',
-            padding: '22px 24px',
-            borderRadius: '24px',
-            border: '1px solid rgba(255,255,255,0.08)',
-            backgroundColor: 'rgba(24,24,27,0.72)',
+            marginTop: '8px',
+            ...font(400),
+            fontSize: '22px',
+            color: '#52525b',
           }}
         >
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', minWidth: 0 }}>
-            <div style={{ display: 'flex', ...font(600), fontSize: '13px', color: '#71717a' }}>
-              Sign up at
-            </div>
-            <div
-              style={{
-                display: 'flex',
-                ...font(700),
-                fontSize: '28px',
-                letterSpacing: '-0.02em',
-                color: accentFg,
-              }}
-            >
-              {joinUrl}
-            </div>
-          </div>
-
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              padding: '16px 24px',
-              borderRadius: '14px',
-              backgroundColor: accent,
-              color: accentText,
-              ...font(600),
-              fontSize: '22px',
-              boxShadow: `0 14px 36px ${hexToRgba(accent, 0.28)}`,
-              flexShrink: 0,
-            }}
-          >
-            Count me in {ogArrowRight}
-          </div>
+          {joinUrl}
         </div>
+      </div>
 
-        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-          <PoweredByOrganizr logoSrc={organizrLogoSrc} />
-        </div>
+      <div
+        style={{
+          position: 'absolute',
+          right: '48px',
+          bottom: '44px',
+          display: 'flex',
+          zIndex: 2,
+        }}
+      >
+        <PoweredByOrganizr logoSrc={organizrLogoSrc} />
       </div>
     </div>
   )
