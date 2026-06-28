@@ -473,15 +473,7 @@ export type OrgShareCardProps = {
   organizrLogoSrc: string
 }
 
-function ShareAccentBand({
-  accent,
-  position,
-}: {
-  accent: string
-  position: 'top' | 'bottom'
-}) {
-  const isTop = position === 'top'
-
+function ShareAccentBandTop({ accent }: { accent: string }) {
   return (
     <div
       style={{
@@ -490,33 +482,57 @@ function ShareAccentBand({
         overflow: 'hidden',
         backgroundColor: '#09090b',
         flexShrink: 0,
+        display: 'flex',
       }}
     >
       <div
         style={{
           position: 'absolute',
           inset: 0,
-          backgroundImage: isTop
-            ? `linear-gradient(165deg, ${hexToRgba(accent, 0.55)} 0%, ${hexToRgba(accent, 0.22)} 42%, ${hexToRgba(ORGANIZR_ACCENT, 0.12)} 100%)`
-            : `linear-gradient(15deg, ${hexToRgba(ORGANIZR_ACCENT, 0.1)} 0%, ${hexToRgba(accent, 0.38)} 55%, ${hexToRgba(accent, 0.55)} 100%)`,
-        }}
-      />
-      <div
-        style={{
-          position: 'absolute',
-          inset: 0,
-          opacity: 0.35,
-          backgroundImage:
-            'repeating-linear-gradient(-12deg, rgba(255,255,255,0.04) 0px, rgba(255,255,255,0.04) 2px, transparent 2px, transparent 14px)',
+          backgroundImage: `linear-gradient(165deg, ${hexToRgba(accent, 0.55)} 0%, ${hexToRgba(accent, 0.22)} 42%, ${hexToRgba(ORGANIZR_ACCENT, 0.12)} 100%)`,
         }}
       />
       <DotGrid opacity={0.2} />
       <div
         style={{
           position: 'absolute',
-          [isTop ? 'top' : 'bottom']: '-60px',
-          left: isTop ? '-80px' : 'auto',
-          right: isTop ? 'auto' : '-80px',
+          top: '-60px',
+          left: '-80px',
+          width: '360px',
+          height: '360px',
+          borderRadius: '9999px',
+          background: `radial-gradient(circle, ${hexToRgba(accent, 0.35)} 0%, transparent 70%)`,
+        }}
+      />
+    </div>
+  )
+}
+
+function ShareAccentBandBottom({ accent }: { accent: string }) {
+  return (
+    <div
+      style={{
+        position: 'relative',
+        height: '240px',
+        overflow: 'hidden',
+        backgroundColor: '#09090b',
+        flexShrink: 0,
+        display: 'flex',
+      }}
+    >
+      <div
+        style={{
+          position: 'absolute',
+          inset: 0,
+          backgroundImage: `linear-gradient(15deg, ${hexToRgba(ORGANIZR_ACCENT, 0.1)} 0%, ${hexToRgba(accent, 0.38)} 55%, ${hexToRgba(accent, 0.55)} 100%)`,
+        }}
+      />
+      <DotGrid opacity={0.2} />
+      <div
+        style={{
+          position: 'absolute',
+          bottom: '-60px',
+          right: '-80px',
           width: '360px',
           height: '360px',
           borderRadius: '9999px',
@@ -599,7 +615,7 @@ export function OrgShareCard({
         color: '#fafafa',
       }}
     >
-      <ShareAccentBand accent={accent} position="top" />
+      <ShareAccentBandTop accent={accent} />
 
       {/* Hero typography — bridges accent band into dark panel */}
       <div
@@ -689,7 +705,15 @@ export function OrgShareCard({
         </div>
 
         {whereLine ? (
-          <>
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '24px',
+              width: '100%',
+            }}
+          >
             <ShareDivider accent={accent} />
             <div
               style={{
@@ -704,14 +728,13 @@ export function OrgShareCard({
             >
               {whereLine}
             </div>
-          </>
+          </div>
         ) : null}
 
         <div
           style={{
             display: 'flex',
-            marginTop: 'auto',
-            paddingTop: '16px',
+            paddingTop: '24px',
             ...font(400),
             fontSize: '20px',
             letterSpacing: '0.02em',
@@ -722,7 +745,7 @@ export function OrgShareCard({
         </div>
       </div>
 
-      <ShareAccentBand accent={accent} position="bottom" />
+      <ShareAccentBandBottom accent={accent} />
 
       <div
         style={{
