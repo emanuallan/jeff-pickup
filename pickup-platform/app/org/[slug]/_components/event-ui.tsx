@@ -383,30 +383,22 @@ export function EventDateChip({
   className?: string
 }) {
   const { month, day, weekday } = sessionDateChip(event)
-  const accentFg = accentOnDark(accent)
 
   return (
     <div
-      className={`flex w-12 shrink-0 flex-col items-center rounded-lg px-1 py-1.5 ${className ?? ''}`}
+      className={`flex w-12 shrink-0 flex-col items-center rounded-lg border border-white/5 px-1 py-1.5 ${className ?? ''}`}
       style={{
-        backgroundImage: `linear-gradient(180deg, ${hexToRgba(accent, 0.2)} 0%, ${hexToRgba(accent, 0.06)} 100%)`,
-        border: `1px solid ${hexToRgba(accent, 0.22)}`,
-        boxShadow: `inset 0 1px 0 ${hexToRgba(accent, 0.12)}`,
+        backgroundImage: `linear-gradient(180deg, ${hexToRgba(accent, 0.08)} 0%, ${hexToRgba(accent, 0.02)} 100%)`,
+        borderColor: hexToRgba(accent, 0.1),
       }}
     >
-      <span
-        className="text-[10px] font-medium uppercase tracking-wide"
-        style={{ color: hexToRgba(accentFg, 0.65) }}
-      >
+      <span className="text-[10px] font-medium uppercase tracking-wide text-zinc-600">
         {month}
       </span>
-      <span
-        className="text-sm font-semibold tabular-nums leading-tight"
-        style={{ color: accentFg }}
-      >
+      <span className="text-sm font-semibold tabular-nums leading-tight text-zinc-400">
         {day}
       </span>
-      <span className="text-[9px] font-medium text-zinc-500">{weekday}</span>
+      <span className="text-[9px] font-medium text-zinc-600">{weekday}</span>
     </div>
   )
 }
