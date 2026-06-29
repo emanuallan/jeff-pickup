@@ -14,7 +14,7 @@ import {
   type EventWithLocation,
 } from '@/lib/events'
 import { arrowNe, arrowRight } from '@/lib/text-arrows'
-import { accentOnDark } from '@/lib/colors'
+import { accentOnDark, hexToRgba } from '@/lib/colors'
 
 export { isEventCancelled }
 
@@ -375,24 +375,38 @@ function sessionDateChip(event: Pick<EventWithLocation, 'starts_at' | 'timezone'
 
 export function EventDateChip({
   event,
+  accent,
   className,
 }: {
   event: Pick<EventWithLocation, 'starts_at' | 'timezone'>
+  accent: string
   className?: string
 }) {
   const { month, day, weekday } = sessionDateChip(event)
+  const accentFg = accentOnDark(accent)
 
   return (
     <div
-      className={`flex w-12 shrink-0 flex-col items-center rounded-lg border border-white/5 bg-black/25 px-1 py-1.5 ${className ?? ''}`}
+      className={`flex w-12 shrink-0 flex-col items-center rounded-lg px-1 py-1.5 ${className ?? ''}`}
+      style={{
+        backgroundImage: `linear-gradient(180deg, ${hexToRgba(accent, 0.2)} 0%, ${hexToRgba(accent, 0.06)} 100%)`,
+        border: `1px solid ${hexToRgba(accent, 0.22)}`,
+        boxShadow: `inset 0 1px 0 ${hexToRgba(accent, 0.12)}`,
+      }}
     >
-      <span className="text-[10px] font-medium uppercase tracking-wide text-zinc-600">
+      <span
+        className="text-[10px] font-medium uppercase tracking-wide"
+        style={{ color: hexToRgba(accentFg, 0.65) }}
+      >
         {month}
       </span>
-      <span className="text-sm font-semibold tabular-nums leading-tight text-zinc-400">
+      <span
+        className="text-sm font-semibold tabular-nums leading-tight"
+        style={{ color: accentFg }}
+      >
         {day}
       </span>
-      <span className="text-[9px] font-medium text-zinc-600">{weekday}</span>
+      <span className="text-[9px] font-medium text-zinc-500">{weekday}</span>
     </div>
   )
 }
@@ -417,7 +431,7 @@ export function SessionRow({
         className="absolute inset-0 z-0 rounded-xl"
         aria-label={`${eventName(event)} on ${formatEventDayLabel(event)}`}
       />
-      <EventDateChip event={event} className="relative z-10 pointer-events-none" />
+      <EventDateChip event={event} accent={accent} className="relative z-10 pointer-events-none" />
       <div className="relative z-10 min-w-0 flex-1 pointer-events-none">
         <div className="flex items-center justify-between gap-2">
           <span className={`truncate text-sm font-medium ${classes.titleSm}`}>
