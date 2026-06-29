@@ -62,6 +62,8 @@ export default async function LeaderboardPage({ params }: Props) {
 
   const accent = org.branding.accent_color
   const topCaps = capsRows[0]
+  const topCapsValue = topCaps?.caps ?? 0
+  const leadersCount = capsRows.filter((row) => row.caps === topCapsValue).length
 
   return (
     <OrgPageShell>
@@ -79,7 +81,8 @@ export default async function LeaderboardPage({ params }: Props) {
       <LeaderboardSummary
         playerCount={capsRows.length}
         topName={topCaps?.display_name ?? null}
-        topCaps={topCaps?.caps ?? 0}
+        topCaps={topCapsValue}
+        leadersCount={leadersCount}
         accent={accent}
       />
 

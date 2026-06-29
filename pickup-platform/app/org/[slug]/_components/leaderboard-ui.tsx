@@ -1,27 +1,63 @@
 import type { CapsLeaderboardRow, StreakLeaderboardRow } from '@/lib/engagement'
 import { hexToRgba, readableTextColor } from '@/lib/colors'
 
-/** Dense rank: tied values share the same rank (1, 1, 3…). */
+/** Dense rank: tied values share the same rank (1, 1, 1, 2, 2…). */
 export function denseRank<T>(rows: T[], valueFn: (row: T) => number): number[] {
+  let rank = 0
+  let prevVal: number | null = null
+
   return rows.map((row, idx) => {
-    const prev = rows[idx - 1]
-    if (!prev) return 1
     const val = valueFn(row)
-    if (valueFn(prev) === val) {
-      return rows.slice(0, idx).filter((r) => valueFn(r) > val).length + 1
+    if (idx === 0 || val !== prevVal) {
+      rank++
+      prevVal = val
     }
-    return idx + 1
+    return rank
   })
 }
 
-function RankBadge({ rank, accent }: { rank: number; accent: string }) {
+function rankOrdinal(rank: number): string {
+  if (rank === 1) return '1st'
+  if (rank === 2) return '2nd'
+  if (rank === 3) return '3rd'
+  return `${rank}th`
+}
+
+function groupRowsByRank<T>(rows: T[], ranks: number[]): Array<{ rank: number; rows: T[] }> {
+  const groups: Array<{ rank: number; rows: T[] }> = []
+
+  rows.forEach((row, idx) => {
+    const rank = ranks[idx]
+    const last = groups[groups.length - 1]
+    if (last?.rank === rank) {
+      last.rows.push(row)
+    } else {
+      groups.push({ rank, rows: [row] })
+    }
+  })
+
+  return groups
+}
+
+function RankBadge({
+  rank,
+  accent,
+  tied,
+}: {
+  rank: number
+  accent: string
+  tied?: boolean
+}) {
+  const label = tied ? `T${rank}` : String(rank)
+
   if (rank === 1) {
     return (
       <span
-        className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold tabular-nums shadow-sm"
+        className="flex h-7 min-w-7 shrink-0 items-center justify-center rounded-full px-1 text-xs font-bold tabular-nums shadow-sm"
         style={{ backgroundColor: accent, color: readableTextColor(accent) }}
+        title={tied ? 'Tied for 1st' : '1st place'}
       >
-        1
+        {label}
       </span>
     )
   }
@@ -35,9 +71,10 @@ function RankBadge({ rank, accent }: { rank: number; accent: string }) {
 
   return (
     <span
-      className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold tabular-nums ${medal}`}
+      className={`flex h-7 min-w-7 shrink-0 items-center justify-center rounded-full px-1 text-xs font-semibold tabular-nums ${medal}`}
+      title={tied ? `Tied for ${rankOrdinal(rank)}` : `${rankOrdinal(rank)} place`}
     >
-      {rank}
+      {label}
     </span>
   )
 }
@@ -95,6 +132,27 @@ function SectionHeader({
         <p className="text-xs text-zinc-500">{subtitle}</p>
       </div>
     </div>
+  )
+}
+
+function RankGroupHeader({
+  rank,
+  count,
+  value,
+  valueLabel,
+}: {
+  rank: number
+  count: number
+  value: number
+  valueLabel: string
+}) {
+  const tieNote = count > 1 ? ` · ${count} tied` : ''
+
+  return (
+    <p className="px-1 pb-1 pt-3 text-xs font-medium text-zinc-500 first:pt-0">
+      {rankOrdinal(rank)} place · {value} {valueLabel}
+      {tieNote}
+    </p>
   )
 }
 
@@ -182,12 +240,14 @@ function CapsRow({
   accent,
   topCaps,
   isLeader,
+  tied,
 }: {
   row: CapsLeaderboardRow
   rank: number
   accent: string
   topCaps: number
   isLeader: boolean
+  tied?: boolean
 }) {
   const fill = topCaps > 0 ? (row.caps / topCaps) * 100 : 0
 
@@ -210,7 +270,7 @@ function CapsRow({
         aria-hidden
       />
       <div className="relative flex items-center gap-3 text-sm">
-        <RankBadge rank={rank} accent={accent} />
+        <RankBadge rank={rank} accent={accent} tied={tied} />
         <span className="min-w-0 flex-1 truncate font-medium text-zinc-100">{row.display_name}</span>
         <span className="shrink-0 tabular-nums">
           <span className="font-semibold text-zinc-200">{row.caps}</span>
@@ -226,11 +286,13 @@ function StreakRow({
   rank,
   accent,
   isLeader,
+  tied,
 }: {
   row: StreakLeaderboardRow
   rank: number
   accent: string
   isLeader: boolean
+  tied?: boolean
 }) {
   const weeks = row.current_streak_weeks
 
@@ -249,7 +311,7 @@ function StreakRow({
       }
     >
       <div className="relative flex items-center gap-3 text-sm">
-        <RankBadge rank={rank} accent={accent} />
+        <RankBadge rank={rank} accent={accent} tied={tied} />
         <span className="min-w-0 flex-1 truncate font-medium text-zinc-100">{row.display_name}</span>
         <div className="shrink-0 text-right">
           <span className="tabular-nums font-semibold text-orange-200">{formatWeeks(weeks)}</span>
@@ -266,14 +328,18 @@ export function LeaderboardSummary({
   playerCount,
   topName,
   topCaps,
+  leadersCount = 1,
   accent,
 }: {
   playerCount: number
   topName: string | null
   topCaps: number
+  leadersCount?: number
   accent: string
 }) {
   if (playerCount === 0) return null
+
+  const tiedForFirst = leadersCount > 1
 
   return (
     <div
@@ -290,13 +356,79 @@ export function LeaderboardSummary({
         {topName && topCaps > 0 ? (
           <div className="min-w-0 text-right">
             <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">Leading</p>
-            <p className="mt-0.5 truncate text-sm font-semibold text-zinc-100">{topName}</p>
-            <p className="text-xs tabular-nums text-zinc-400">
-              {topCaps} {topCaps === 1 ? 'cap' : 'caps'}
-            </p>
+            {tiedForFirst ? (
+              <>
+                <p className="mt-0.5 text-sm font-semibold text-zinc-100">
+                  {leadersCount} tied for 1st
+                </p>
+                <p className="text-xs tabular-nums text-zinc-400">
+                  {topCaps} {topCaps === 1 ? 'cap' : 'caps'} each
+                </p>
+              </>
+            ) : (
+              <>
+                <p className="mt-0.5 truncate text-sm font-semibold text-zinc-100">{topName}</p>
+                <p className="text-xs tabular-nums text-zinc-400">
+                  {topCaps} {topCaps === 1 ? 'cap' : 'caps'}
+                </p>
+              </>
+            )}
           </div>
         ) : null}
       </div>
+    </div>
+  )
+}
+
+function CapsRankedList({
+  rows,
+  ranks,
+  accent,
+  topCaps,
+  showGroupHeaders,
+  className,
+}: {
+  rows: CapsLeaderboardRow[]
+  ranks: number[]
+  accent: string
+  topCaps: number
+  showGroupHeaders: boolean
+  className?: string
+}) {
+  const groups = groupRowsByRank(rows, ranks)
+
+  return (
+    <div className={className}>
+      {groups.map((group) => {
+        const tied = group.rows.length > 1
+        const capLabel = group.rows[0].caps === 1 ? 'cap' : 'caps'
+
+        return (
+          <div key={group.rank}>
+            {showGroupHeaders ? (
+              <RankGroupHeader
+                rank={group.rank}
+                count={group.rows.length}
+                value={group.rows[0].caps}
+                valueLabel={capLabel}
+              />
+            ) : null}
+            <ol className="space-y-2">
+              {group.rows.map((row) => (
+                <CapsRow
+                  key={row.participant_id}
+                  row={row}
+                  rank={group.rank}
+                  accent={accent}
+                  topCaps={topCaps}
+                  isLeader={group.rank === 1}
+                  tied={tied}
+                />
+              ))}
+            </ol>
+          </div>
+        )
+      })}
     </div>
   )
 }
@@ -310,8 +442,13 @@ export function CapsLeaderboard({
 }) {
   const ranks = denseRank(rows, (r) => r.caps)
   const topCaps = rows[0]?.caps ?? 0
-  const podiumRows = rows.slice(0, 3)
-  const restRows = rows.slice(3)
+  const showPodium =
+    rows.length >= 3 && ranks[0] === 1 && ranks[1] === 2 && ranks[2] === 3
+  const listRows = showPodium ? rows.slice(3) : rows
+  const listRanks = showPodium ? ranks.slice(3) : ranks
+  const listGroups = groupRowsByRank(listRows, listRanks)
+  const showGroupHeaders =
+    listGroups.length > 1 || listGroups.some((group) => group.rows.length > 1)
 
   return (
     <section className="mt-8 overflow-hidden rounded-3xl border border-zinc-800 bg-linear-to-b from-zinc-900 to-zinc-950 p-6">
@@ -326,27 +463,19 @@ export function CapsLeaderboard({
         <p className="mt-6 rounded-2xl border border-dashed border-zinc-800 bg-zinc-900/30 px-4 py-8 text-center text-sm text-zinc-500">
           No sessions attended yet. Join a session to start climbing.
         </p>
-      ) : rows.length === 1 ? (
-        <ol className="mt-6 space-y-2">
-          <CapsRow row={rows[0]} rank={1} accent={accent} topCaps={topCaps} isLeader />
-        </ol>
       ) : (
         <>
-          <CapsPodium rows={podiumRows} ranks={ranks.slice(0, 3)} accent={accent} />
-          {restRows.length > 0 ? (
-            <ol className="mt-5 space-y-2 border-t border-zinc-800/80 pt-5">
-              {restRows.map((row, i) => (
-                <CapsRow
-                  key={row.participant_id}
-                  row={row}
-                  rank={ranks[i + 3]}
-                  accent={accent}
-                  topCaps={topCaps}
-                  isLeader={row.caps > 0 && row.caps === topCaps}
-                />
-              ))}
-            </ol>
+          {showPodium ? (
+            <CapsPodium rows={rows.slice(0, 3)} ranks={ranks.slice(0, 3)} accent={accent} />
           ) : null}
+          <CapsRankedList
+            rows={listRows}
+            ranks={listRanks}
+            accent={accent}
+            topCaps={topCaps}
+            showGroupHeaders={showGroupHeaders}
+            className={showPodium ? 'mt-5 border-t border-zinc-800/80 pt-5' : 'mt-6'}
+          />
         </>
       )}
     </section>
@@ -361,6 +490,8 @@ export function StreakLeaderboard({
   accent: string
 }) {
   const ranks = denseRank(rows, (r) => r.current_streak_weeks)
+  const groups = groupRowsByRank(rows, ranks)
+  const showGroupHeaders = groups.length > 1 || groups.some((group) => group.rows.length > 1)
 
   return (
     <section className="mt-5 overflow-hidden rounded-3xl border border-zinc-800 bg-zinc-900/50 p-6">
@@ -376,17 +507,37 @@ export function StreakLeaderboard({
           No active streaks this week. Show up two weeks in a row to get on the board.
         </p>
       ) : (
-        <ol className="mt-6 space-y-2">
-          {rows.map((row, idx) => (
-            <StreakRow
-              key={row.participant_id}
-              row={row}
-              rank={ranks[idx]}
-              accent={accent}
-              isLeader={idx === 0}
-            />
-          ))}
-        </ol>
+        <div className="mt-6">
+          {groups.map((group) => {
+            const tied = group.rows.length > 1
+            const weeks = group.rows[0].current_streak_weeks
+
+            return (
+              <div key={group.rank}>
+                {showGroupHeaders ? (
+                  <RankGroupHeader
+                    rank={group.rank}
+                    count={group.rows.length}
+                    value={weeks}
+                    valueLabel={weeks === 1 ? 'week' : 'weeks'}
+                  />
+                ) : null}
+                <ol className="space-y-2">
+                  {group.rows.map((row) => (
+                    <StreakRow
+                      key={row.participant_id}
+                      row={row}
+                      rank={group.rank}
+                      accent={accent}
+                      isLeader={group.rank === 1}
+                      tied={tied}
+                    />
+                  ))}
+                </ol>
+              </div>
+            )
+          })}
+        </div>
       )}
     </section>
   )
