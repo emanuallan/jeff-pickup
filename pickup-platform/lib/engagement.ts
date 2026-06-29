@@ -22,6 +22,22 @@ export const LEADERBOARD_MIN_SESSIONS = 3
 /** Minimum consecutive weeks to appear on the public streak leaderboard. */
 export const LEADERBOARD_MIN_STREAK_WEEKS = 2
 
+async function getOrgReferenceTimezone(orgId: string): Promise<string> {
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from('schedules')
+    .select('timezone')
+    .eq('org_id', orgId)
+    .limit(1)
+    .maybeSingle()
+
+  return data?.timezone ?? 'UTC'
+}
+
+function localDateInZone(timeZone: string, date = new Date()): string {
+  return date.toLocaleDateString('en-CA', { timeZone })
+}
+
 /** Count of an org's past, non-cancelled sessions (i.e. sessions that have ended). */
 export const getOrgPastSessionCount = cache(async (orgId: string): Promise<number> => {
   const counts = await getOrgSessionCounts(orgId)
@@ -76,7 +92,8 @@ export const getOrgCapsLeaderboard = cache(
 export const getOrgStreakLeaderboard = cache(
   async (orgId: string, limit = 20): Promise<StreakLeaderboardRow[]> => {
     const supabase = await createClient()
-    const today = new Date().toISOString().slice(0, 10)
+    const timeZone = await getOrgReferenceTimezone(orgId)
+    const today = localDateInZone(timeZone)
 
     const { data, error } = await supabase.rpc('org_weekly_streak_leaderboard', {
       p_org_id: orgId,
@@ -104,7 +121,8 @@ export const getParticipantEngagementStats = cache(
     if (participantIds.length === 0) return new Map()
 
     const supabase = await createClient()
-    const today = new Date().toISOString().slice(0, 10)
+    const timeZone = await getOrgReferenceTimezone(orgId)
+    const today = localDateInZone(timeZone)
 
     const { data, error } = await supabase.rpc('participant_engagement_stats', {
       p_org_id: orgId,

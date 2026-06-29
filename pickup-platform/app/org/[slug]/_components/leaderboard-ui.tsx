@@ -504,7 +504,7 @@ export function StreakLeaderboard({
 
       {rows.length === 0 ? (
         <p className="mt-6 rounded-2xl border border-dashed border-zinc-800 bg-zinc-900/30 px-4 py-8 text-center text-sm text-zinc-500">
-          No active streaks this week. Show up two weeks in a row to get on the board.
+          No one has a 2+ week streak right now. Play two weeks in a row to get on the board.
         </p>
       ) : (
         <div className="mt-6">
