@@ -373,6 +373,30 @@ function sessionDateChip(event: Pick<EventWithLocation, 'starts_at' | 'timezone'
   }
 }
 
+export function EventDateChip({
+  event,
+  className,
+}: {
+  event: Pick<EventWithLocation, 'starts_at' | 'timezone'>
+  className?: string
+}) {
+  const { month, day, weekday } = sessionDateChip(event)
+
+  return (
+    <div
+      className={`flex w-12 shrink-0 flex-col items-center rounded-lg border border-white/5 bg-black/25 px-1 py-1.5 ${className ?? ''}`}
+    >
+      <span className="text-[10px] font-medium uppercase tracking-wide text-zinc-600">
+        {month}
+      </span>
+      <span className="text-sm font-semibold tabular-nums leading-tight text-zinc-400">
+        {day}
+      </span>
+      <span className="text-[9px] font-medium text-zinc-600">{weekday}</span>
+    </div>
+  )
+}
+
 export function SessionRow({
   event,
   accent,
@@ -385,7 +409,6 @@ export function SessionRow({
   const ended = isEventEnded(event)
   const live = inProgress && event.status === 'on'
   const classes = cancelledEventClasses(cancelled)
-  const { month, day, weekday } = sessionDateChip(event)
 
   return (
     <div className="group relative flex items-center gap-3 rounded-xl border border-white/5 bg-zinc-950/40 px-3 py-2.5 transition-colors hover:border-zinc-700/60 hover:bg-zinc-900/40">
@@ -394,15 +417,7 @@ export function SessionRow({
         className="absolute inset-0 z-0 rounded-xl"
         aria-label={`${eventName(event)} on ${formatEventDayLabel(event)}`}
       />
-      <div className="relative z-10 flex w-12 shrink-0 flex-col items-center rounded-lg border border-white/5 bg-black/25 px-1 py-1.5 pointer-events-none">
-        <span className="text-[10px] font-medium uppercase tracking-wide text-zinc-600">
-          {month}
-        </span>
-        <span className="text-sm font-semibold tabular-nums leading-tight text-zinc-400">
-          {day}
-        </span>
-        <span className="text-[9px] font-medium text-zinc-600">{weekday}</span>
-      </div>
+      <EventDateChip event={event} className="relative z-10 pointer-events-none" />
       <div className="relative z-10 min-w-0 flex-1 pointer-events-none">
         <div className="flex items-center justify-between gap-2">
           <span className={`truncate text-sm font-medium ${classes.titleSm}`}>

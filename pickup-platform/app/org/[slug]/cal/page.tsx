@@ -37,6 +37,7 @@ import {
   EventDateTimeRow,
   EventLocationRow,
   EventTimingBadge,
+  EventDateChip,
   CancelledSessionNotice,
   eventName,
   isEventCancelled,
@@ -149,17 +150,22 @@ export default async function EventsPage({ params }: Props) {
                     />
                   </div>
 
-                  <h2 className="mt-4 text-2xl font-semibold tracking-tight text-zinc-50">
-                    {eventName(featured)}
-                  </h2>
+                  <div className="mt-4 flex items-start gap-4">
+                    <EventDateChip event={featured} />
+                    <div className="min-w-0 flex-1">
+                      <h2 className="text-2xl font-semibold tracking-tight text-zinc-50">
+                        {eventName(featured)}
+                      </h2>
 
-                  <EventDateTimeRow event={featured} cancelled={false} />
+                      <EventDateTimeRow event={featured} cancelled={false} />
 
-                  <EventLocationRow
-                    event={featured}
-                    nestedInLink
-                    className="mt-3 flex gap-2 text-sm text-zinc-400"
-                  />
+                      <EventLocationRow
+                        event={featured}
+                        nestedInLink
+                        className="mt-3 flex gap-2 text-sm text-zinc-400"
+                      />
+                    </div>
+                  </div>
 
                   {featured.announcement ? (
                     <p className="mt-4 rounded-xl border border-zinc-800 bg-black/30 px-3 py-2 text-sm text-zinc-300">
