@@ -42,22 +42,47 @@ function emojiForCode(code: number): string {
   return WMO_EMOJI[code] ?? '🌡️'
 }
 
+/** Hour bucket (YYYY-MM-DDTHH) for an instant in an IANA timezone — matches Open-Meteo hourly keys. */
+export function hourlyKeyInZone(iso: string, timeZone: string): string {
+  const d = new Date(iso)
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    hourCycle: 'h23',
+  }).formatToParts(d)
+
+  const pick = (type: string) => parts.find((p) => p.type === type)?.value ?? '00'
+  return `${pick('year')}-${pick('month')}-${pick('day')}T${pick('hour')}`
+}
+
+function findHourIndex(times: string[], targetHour: string): number {
+  return times.findIndex((t) => t.slice(0, 13) === targetHour)
+}
+
 export async function getWeatherForEvent(
   lat: number,
   lon: number,
   startsAtIso: string,
+  timeZone: string,
 ): Promise<WeatherInfo | null> {
   // No usable coordinates (location wasn't geocoded)
   if (!lat && !lon) return null
 
+  const zone = timeZone?.trim() || 'UTC'
   const start = new Date(startsAtIso)
+  if (Number.isNaN(start.getTime())) return null
+
   const now = new Date()
   const diffDays = (start.getTime() - now.getTime()) / 86_400_000
   if (diffDays < 0 || diffDays > 15) return null
 
   const url =
     `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +
-    `&hourly=temperature_2m,weather_code&temperature_unit=fahrenheit&forecast_days=16&timezone=GMT`
+    `&hourly=temperature_2m,weather_code&temperature_unit=fahrenheit&forecast_days=16` +
+    `&timezone=${encodeURIComponent(zone)}`
 
   try {
     const res = await fetch(url, {
@@ -67,22 +92,23 @@ export async function getWeatherForEvent(
     if (!res.ok) return null
 
     const data = (await res.json()) as {
-      hourly?: { time: string[]; temperature_2m: number[]; weather_code: number[] }
+      hourly?: { time: string[]; temperature_2m: number[]; weather_code: Array<number | null> }
     }
 
     const times = data.hourly?.time
     if (!times?.length) return null
 
-    // Match the event hour in UTC/GMT (e.g. "2026-06-11T22")
-    const targetHour = start.toISOString().slice(0, 13)
-    let idx = times.findIndex((t) => t.slice(0, 13) === targetHour)
-    if (idx === -1) idx = 0
+    const targetHour = hourlyKeyInZone(startsAtIso, zone)
+    const idx = findHourIndex(times, targetHour)
+    if (idx === -1) return null
 
-    const code = data.hourly?.weather_code?.[idx] ?? 0
+    const rawCode = data.hourly?.weather_code?.[idx]
+    if (rawCode == null) return null
+
     const temp = data.hourly?.temperature_2m?.[idx]
 
     return {
-      emoji: emojiForCode(code),
+      emoji: emojiForCode(rawCode),
       tempF: typeof temp === 'number' ? Math.round(temp) : null,
     }
   } catch {

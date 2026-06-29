@@ -5,12 +5,14 @@ export async function WeatherPill({
   lat,
   lon,
   startsAt,
+  timeZone,
 }: {
   lat: number
   lon: number
   startsAt: string
+  timeZone: string
 }) {
-  const weather = await getWeatherForEvent(lat, lon, startsAt)
+  const weather = await getWeatherForEvent(lat, lon, startsAt, timeZone)
   if (!weather) return null
   return (
     <span className="rounded-lg bg-zinc-800/60 px-2.5 py-1 text-zinc-300">

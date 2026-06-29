@@ -211,6 +211,7 @@ export default async function EventPage({ params }: Props) {
 								lat={event.location_lat}
 								lon={event.location_lon}
 								startsAt={event.starts_at}
+								timeZone={event.timezone}
 							/>
 						</Suspense>
 					</div>
