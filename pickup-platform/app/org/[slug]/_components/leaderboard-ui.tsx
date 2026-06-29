@@ -149,7 +149,7 @@ function RankGroupHeader({
   const tieNote = count > 1 ? ` · ${count} tied` : ''
 
   return (
-    <p className="px-1 pb-1 pt-3 text-xs font-medium text-zinc-500 first:pt-0">
+    <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-zinc-500">
       {rankOrdinal(rank)} place · {value} {valueLabel}
       {tieNote}
     </p>
@@ -238,18 +238,31 @@ function CapsRow({
   row,
   rank,
   accent,
-  topCaps,
   isLeader,
   tied,
+  grouped,
 }: {
   row: CapsLeaderboardRow
   rank: number
   accent: string
-  topCaps: number
-  isLeader: boolean
+  isLeader?: boolean
   tied?: boolean
+  grouped?: boolean
 }) {
-  const fill = topCaps > 0 ? (row.caps / topCaps) * 100 : 0
+  const content = (
+    <div className="flex items-center gap-3 text-sm">
+      <RankBadge rank={rank} accent={accent} tied={tied} />
+      <span className="min-w-0 flex-1 truncate font-medium text-zinc-100">{row.display_name}</span>
+      <span className="shrink-0 tabular-nums">
+        <span className="font-semibold text-zinc-200">{row.caps}</span>
+        <span className="ml-1 text-xs text-zinc-500">{row.caps === 1 ? 'cap' : 'caps'}</span>
+      </span>
+    </div>
+  )
+
+  if (grouped) {
+    return content
+  }
 
   return (
     <li
@@ -264,20 +277,54 @@ function CapsRow({
           : { backgroundColor: 'rgba(0,0,0,0.2)' }
       }
     >
-      <div
-        className="pointer-events-none absolute inset-y-0 left-0 opacity-[0.07]"
-        style={{ width: `${fill}%`, backgroundColor: accent }}
-        aria-hidden
-      />
-      <div className="relative flex items-center gap-3 text-sm">
-        <RankBadge rank={rank} accent={accent} tied={tied} />
-        <span className="min-w-0 flex-1 truncate font-medium text-zinc-100">{row.display_name}</span>
-        <span className="shrink-0 tabular-nums">
-          <span className="font-semibold text-zinc-200">{row.caps}</span>
-          <span className="ml-1 text-xs text-zinc-500">{row.caps === 1 ? 'cap' : 'caps'}</span>
-        </span>
-      </div>
+      {content}
     </li>
+  )
+}
+
+function CapsGroup({
+  rank,
+  rows,
+  accent,
+  tied,
+  showHeader,
+}: {
+  rank: number
+  rows: CapsLeaderboardRow[]
+  accent: string
+  tied: boolean
+  showHeader: boolean
+}) {
+  const capLabel = rows[0].caps === 1 ? 'cap' : 'caps'
+  const isLeader = rank === 1
+
+  return (
+    <div>
+      {showHeader ? (
+        <RankGroupHeader rank={rank} count={rows.length} value={rows[0].caps} valueLabel={capLabel} />
+      ) : null}
+      <div
+        className={`overflow-hidden rounded-2xl border ${
+          isLeader ? 'border-zinc-700/80' : 'border-zinc-800/80'
+        }`}
+        style={
+          isLeader
+            ? {
+                background: `linear-gradient(180deg, ${hexToRgba(accent, 0.1)} 0%, rgba(0,0,0,0.24) 100%)`,
+              }
+            : { backgroundColor: 'rgba(0,0,0,0.2)' }
+        }
+      >
+        {rows.map((row, index) => (
+          <div
+            key={row.participant_id}
+            className={`px-3 py-2.5 ${index > 0 ? 'border-t border-zinc-800/70' : ''}`}
+          >
+            <CapsRow row={row} rank={rank} accent={accent} tied={tied} grouped />
+          </div>
+        ))}
+      </div>
+    </div>
   )
 }
 
@@ -287,14 +334,33 @@ function StreakRow({
   accent,
   isLeader,
   tied,
+  grouped,
 }: {
   row: StreakLeaderboardRow
   rank: number
   accent: string
-  isLeader: boolean
+  isLeader?: boolean
   tied?: boolean
+  grouped?: boolean
 }) {
   const weeks = row.current_streak_weeks
+
+  const content = (
+    <div className="flex items-center gap-3 text-sm">
+      <RankBadge rank={rank} accent={accent} tied={tied} />
+      <span className="min-w-0 flex-1 truncate font-medium text-zinc-100">{row.display_name}</span>
+      <div className="shrink-0 text-right">
+        <span className="tabular-nums font-semibold text-orange-200">{formatWeeks(weeks)}</span>
+        <span className="block text-[11px] tabular-nums text-zinc-600">
+          Best: {formatWeeks(row.best_streak_weeks)}
+        </span>
+      </div>
+    </div>
+  )
+
+  if (grouped) {
+    return content
+  }
 
   return (
     <li
@@ -310,17 +376,60 @@ function StreakRow({
           : { backgroundColor: 'rgba(0,0,0,0.2)' }
       }
     >
-      <div className="relative flex items-center gap-3 text-sm">
-        <RankBadge rank={rank} accent={accent} tied={tied} />
-        <span className="min-w-0 flex-1 truncate font-medium text-zinc-100">{row.display_name}</span>
-        <div className="shrink-0 text-right">
-          <span className="tabular-nums font-semibold text-orange-200">{formatWeeks(weeks)}</span>
-          <span className="block text-[11px] tabular-nums text-zinc-600">
-            Best: {formatWeeks(row.best_streak_weeks)}
-          </span>
-        </div>
-      </div>
+      {content}
     </li>
+  )
+}
+
+function StreakGroup({
+  rank,
+  rows,
+  accent,
+  tied,
+  showHeader,
+}: {
+  rank: number
+  rows: StreakLeaderboardRow[]
+  accent: string
+  tied: boolean
+  showHeader: boolean
+}) {
+  const weeks = rows[0].current_streak_weeks
+  const isLeader = rank === 1
+
+  return (
+    <div>
+      {showHeader ? (
+        <RankGroupHeader
+          rank={rank}
+          count={rows.length}
+          value={weeks}
+          valueLabel={weeks === 1 ? 'week' : 'weeks'}
+        />
+      ) : null}
+      <div
+        className={`overflow-hidden rounded-2xl border ${
+          isLeader ? 'border-orange-500/25' : 'border-zinc-800/80'
+        }`}
+        style={
+          isLeader
+            ? {
+                background:
+                  'linear-gradient(180deg, rgba(249, 115, 22, 0.08) 0%, rgba(0,0,0,0.24) 100%)',
+              }
+            : { backgroundColor: 'rgba(0,0,0,0.2)' }
+        }
+      >
+        {rows.map((row, index) => (
+          <div
+            key={row.participant_id}
+            className={`px-3 py-2.5 ${index > 0 ? 'border-t border-zinc-800/70' : ''}`}
+          >
+            <StreakRow row={row} rank={rank} accent={accent} tied={tied} grouped />
+          </div>
+        ))}
+      </div>
+    </div>
   )
 }
 
@@ -384,51 +493,42 @@ function CapsRankedList({
   rows,
   ranks,
   accent,
-  topCaps,
   showGroupHeaders,
   className,
 }: {
   rows: CapsLeaderboardRow[]
   ranks: number[]
   accent: string
-  topCaps: number
   showGroupHeaders: boolean
   className?: string
 }) {
   const groups = groupRowsByRank(rows, ranks)
 
-  return (
-    <div className={className}>
-      {groups.map((group) => {
-        const tied = group.rows.length > 1
-        const capLabel = group.rows[0].caps === 1 ? 'cap' : 'caps'
+  if (groups.length === 1 && groups[0].rows.length === 1) {
+    return (
+      <ol className={className}>
+        <CapsRow
+          row={groups[0].rows[0]}
+          rank={groups[0].rank}
+          accent={accent}
+          isLeader={groups[0].rank === 1}
+        />
+      </ol>
+    )
+  }
 
-        return (
-          <div key={group.rank}>
-            {showGroupHeaders ? (
-              <RankGroupHeader
-                rank={group.rank}
-                count={group.rows.length}
-                value={group.rows[0].caps}
-                valueLabel={capLabel}
-              />
-            ) : null}
-            <ol className="space-y-2">
-              {group.rows.map((row) => (
-                <CapsRow
-                  key={row.participant_id}
-                  row={row}
-                  rank={group.rank}
-                  accent={accent}
-                  topCaps={topCaps}
-                  isLeader={group.rank === 1}
-                  tied={tied}
-                />
-              ))}
-            </ol>
-          </div>
-        )
-      })}
+  return (
+    <div className={`flex flex-col gap-5 ${className ?? ''}`}>
+      {groups.map((group) => (
+        <CapsGroup
+          key={group.rank}
+          rank={group.rank}
+          rows={group.rows}
+          accent={accent}
+          tied={group.rows.length > 1}
+          showHeader={showGroupHeaders}
+        />
+      ))}
     </div>
   )
 }
@@ -441,7 +541,6 @@ export function CapsLeaderboard({
   accent: string
 }) {
   const ranks = denseRank(rows, (r) => r.caps)
-  const topCaps = rows[0]?.caps ?? 0
   const showPodium =
     rows.length >= 3 && ranks[0] === 1 && ranks[1] === 2 && ranks[2] === 3
   const listRows = showPodium ? rows.slice(3) : rows
@@ -472,7 +571,6 @@ export function CapsLeaderboard({
             rows={listRows}
             ranks={listRanks}
             accent={accent}
-            topCaps={topCaps}
             showGroupHeaders={showGroupHeaders}
             className={showPodium ? 'mt-5 border-t border-zinc-800/80 pt-5' : 'mt-6'}
           />
@@ -507,36 +605,17 @@ export function StreakLeaderboard({
           No one has a 2+ week streak right now. Play two weeks in a row to get on the board.
         </p>
       ) : (
-        <div className="mt-6">
-          {groups.map((group) => {
-            const tied = group.rows.length > 1
-            const weeks = group.rows[0].current_streak_weeks
-
-            return (
-              <div key={group.rank}>
-                {showGroupHeaders ? (
-                  <RankGroupHeader
-                    rank={group.rank}
-                    count={group.rows.length}
-                    value={weeks}
-                    valueLabel={weeks === 1 ? 'week' : 'weeks'}
-                  />
-                ) : null}
-                <ol className="space-y-2">
-                  {group.rows.map((row) => (
-                    <StreakRow
-                      key={row.participant_id}
-                      row={row}
-                      rank={group.rank}
-                      accent={accent}
-                      isLeader={group.rank === 1}
-                      tied={tied}
-                    />
-                  ))}
-                </ol>
-              </div>
-            )
-          })}
+        <div className="mt-6 flex flex-col gap-5">
+          {groups.map((group) => (
+            <StreakGroup
+              key={group.rank}
+              rank={group.rank}
+              rows={group.rows}
+              accent={accent}
+              tied={group.rows.length > 1}
+              showHeader={showGroupHeaders}
+            />
+          ))}
         </div>
       )}
     </section>
