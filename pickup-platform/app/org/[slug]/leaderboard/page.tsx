@@ -1,19 +1,19 @@
 import type { Metadata } from 'next'
-import Link from 'next/link'
+import { Suspense } from 'react'
 import { notFound } from 'next/navigation'
 import { getPublicOrgBySlug } from '@/lib/public-data'
 import { getOrgCapsLeaderboard, getOrgStreakLeaderboard } from '@/lib/engagement'
 import { orgFeatures } from '@/lib/org-features'
-import { accentOnDark } from '@/lib/colors'
 import { buildOrgMetadata } from '@/lib/og-metadata'
 import { OrgHeader } from '../_components/org-header'
 import { OrgPageShell, OrgPageFooter } from '../_components/org-page-shell'
+import { OrgPublicNavDeferred } from '../_components/org-public-nav-deferred'
+import { OrgPublicNavFallback } from '../_components/org-public-nav'
 import {
   CapsLeaderboard,
   LeaderboardSummary,
   StreakLeaderboard,
 } from '../_components/leaderboard-ui'
-import { arrowRight } from '@/lib/text-arrows'
 
 type Props = {
   params: Promise<{ slug: string }>
@@ -67,16 +67,11 @@ export default async function LeaderboardPage({ params }: Props) {
 
   return (
     <OrgPageShell>
-      <div className="flex justify-start">
-        <Link
-          href="/cal"
-          className="inline-flex items-center gap-1 text-sm text-zinc-400 transition-colors hover:text-zinc-200"
-        >
-          <span aria-hidden>←</span> Calendar
-        </Link>
-      </div>
+      <OrgHeader org={org} title="Leaderboard" subtitle={org.name} className="mt-2" />
 
-      <OrgHeader org={org} title="Leaderboard" subtitle={org.name} className="mt-4" />
+      <Suspense fallback={<OrgPublicNavFallback />}>
+        <OrgPublicNavDeferred org={org} activeKey="leaderboard" />
+      </Suspense>
 
       <LeaderboardSummary
         playerCount={capsRows.length}
@@ -89,16 +84,6 @@ export default async function LeaderboardPage({ params }: Props) {
       <CapsLeaderboard rows={capsRows} accent={accent} />
 
       <StreakLeaderboard rows={streakRows} accent={accent} />
-
-      <p className="mt-10 text-center">
-        <Link
-          href="/cal"
-          className="inline-flex items-center gap-1.5 rounded-full border border-zinc-800 bg-zinc-900/60 px-4 py-2 text-sm text-zinc-300 transition-colors hover:border-zinc-700 hover:bg-zinc-800/60 hover:text-zinc-100"
-          style={{ borderColor: `${accentOnDark(accent)}33` }}
-        >
-          View sessions {arrowRight}
-        </Link>
-      </p>
 
       <OrgPageFooter slug={org.slug} links={org.branding.links} />
     </OrgPageShell>

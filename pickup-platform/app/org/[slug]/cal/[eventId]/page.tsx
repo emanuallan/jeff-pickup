@@ -7,7 +7,6 @@ import {
 	getPublicNextActiveUpcomingEvent,
 } from "@/lib/public-data";
 import { formatEventTime, isEventInProgress, isEventEnded } from "@/lib/events";
-import { orgFeatures } from "@/lib/org-features";
 import { buildOrgMetadata } from "@/lib/og-metadata";
 import {
 	buildEventShareText,
@@ -25,11 +24,11 @@ import { EventHeadcount, EventHeadcountFallback } from "./event-headcount";
 import { EventParticipation } from "./event-participation";
 import { PageHelpHint } from "../../_components/page-help-hint";
 import { ParticipationFallback } from "./participation-fallback";
-import { LeaderboardLinkDeferred } from "./leaderboard-link-deferred";
-import { AllSessionsLinkDeferred } from "./all-sessions-link-deferred";
 import { ShareButton } from "../../share-button-lazy";
 import { OrgHeader } from "../../_components/org-header";
 import { OrgPageShell, OrgPageFooter } from "../../_components/org-page-shell";
+import { OrgPublicNavDeferred } from "../../_components/org-public-nav-deferred";
+import { OrgPublicNavFallback } from "../../_components/org-public-nav";
 import {
 	StatusPill,
 	EventDateTimeRow,
@@ -123,10 +122,7 @@ export default async function EventPage({ params }: Props) {
 	return (
 		<OrgPageShell>
 			<JsonLd data={buildEventJsonLd(org, event, `/cal/${eventId}`)} />
-			<nav className="flex min-h-9 items-center justify-between gap-3">
-				<Suspense fallback={null}>
-					<AllSessionsLinkDeferred orgId={org.id} />
-				</Suspense>
+			<nav className="flex min-h-9 items-center justify-end gap-3">
 				<ShareButton title={shareTitle} text={shareText} imagePath={`/cal/${eventId}/share-image`} accent={accent} />
 			</nav>
 
@@ -138,6 +134,10 @@ export default async function EventPage({ params }: Props) {
 				className="mt-4"
 				logoPriority
 			/>
+
+			<Suspense fallback={<OrgPublicNavFallback />}>
+				<OrgPublicNavDeferred org={org} activeKey="sessions" />
+			</Suspense>
 
 			<section className={nextActiveSession ? "mt-6" : "mt-8"}>
 				<div className="mb-3 flex items-center justify-between gap-3">
@@ -227,20 +227,7 @@ export default async function EventPage({ params }: Props) {
 				/>
 			</Suspense>
 
-			<OrgPageFooter
-				slug={org.slug}
-				links={org.branding.links}
-				accent={accent}
-				leaderboardSlot={
-					<Suspense fallback={null}>
-						<LeaderboardLinkDeferred
-							orgId={org.id}
-							accent={accent}
-							enabled={orgFeatures(org).leaderboard}
-						/>
-					</Suspense>
-				}
-			/>
+			<OrgPageFooter slug={org.slug} links={org.branding.links} />
 		</OrgPageShell>
 	);
 }

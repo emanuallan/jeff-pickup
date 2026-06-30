@@ -21,16 +21,16 @@ import { OrgHeader } from '../_components/org-header'
 import { BackToOrganizrLink } from '../_components/back-to-organizr-link'
 import { PageHelpHint } from '../_components/page-help-hint'
 import { OrgPageShell, OrgPageFooter } from '../_components/org-page-shell'
+import { OrgPublicNavDeferred } from '../_components/org-public-nav-deferred'
+import { OrgPublicNavFallback } from '../_components/org-public-nav'
 import { ShareButton } from '../share-button-lazy'
 import { arrowRight } from '@/lib/text-arrows'
 import { accentOnDark } from '@/lib/colors'
-import { orgFeatures } from '@/lib/org-features'
 import { MoreSessions } from './more-sessions'
 import {
   FeaturedEventHeadcount,
   FeaturedEventHeadcountFallback,
 } from './[eventId]/event-headcount'
-import { LeaderboardLinkDeferred } from './[eventId]/leaderboard-link-deferred'
 import {
   StatusPill,
   SessionRow,
@@ -118,6 +118,10 @@ export default async function EventsPage({ params }: Props) {
         subtitle={org.description}
         logoPriority
       />
+
+      <Suspense fallback={<OrgPublicNavFallback />}>
+        <OrgPublicNavDeferred org={org} activeKey="sessions" />
+      </Suspense>
 
       {events.length > 0 ? (
         <>
@@ -228,20 +232,7 @@ export default async function EventsPage({ params }: Props) {
         </section>
       )}
 
-      <OrgPageFooter
-        slug={org.slug}
-        links={org.branding.links}
-        accent={accent}
-        leaderboardSlot={
-          <Suspense fallback={null}>
-            <LeaderboardLinkDeferred
-              orgId={org.id}
-              accent={accent}
-              enabled={orgFeatures(org).leaderboard}
-            />
-          </Suspense>
-        }
-      />
+      <OrgPageFooter slug={org.slug} links={org.branding.links} />
     </OrgPageShell>
   )
 }
