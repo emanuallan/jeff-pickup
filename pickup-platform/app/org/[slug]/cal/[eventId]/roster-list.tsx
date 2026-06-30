@@ -59,7 +59,7 @@ function ArrivalStatusIcon({
   if (!emoji) return null
 
   return (
-    <TooltipBadge tip={label} className="inline-flex items-center">
+    <TooltipBadge tip={label} className="mr-0.5 inline-flex items-center">
       {emoji}
     </TooltipBadge>
   )
@@ -69,7 +69,7 @@ function RosterBadges({ badges }: { badges: RosterBadgeInfo | undefined }) {
   if (!badges) return null
 
   return (
-    <span className="inline-flex flex-wrap items-center gap-1">
+    <span className="inline-flex shrink-0 flex-wrap items-center justify-end gap-1">
       {badges.isCapsLeader ? (
         <TooltipBadge tip="Most caps on this roster" className="inline-flex items-center">
           🏅
@@ -146,44 +146,46 @@ export function RosterList(props: {
                   borderColor: hexToRgba(accentFg, 0.45),
                 }}
               >
-                <span className="inline-flex min-w-0 flex-wrap items-center gap-x-1 gap-y-0.5 font-semibold">
+                <span className="inline-flex min-w-0 flex-1 flex-wrap items-center gap-x-1 gap-y-0.5 font-semibold">
                   <ArrivalStatusIcon status={e.arrival_status} isOnline={props.isOnline} />
                   <span>{e.display_name}</span>
                   <span className="text-zinc-400">(you)</span>
-                  <RosterBadges badges={props.badgesByParticipantId?.[e.participant_id]} />
                   {e.guest_count > 0 ? (
                     <span className="text-zinc-400">{formatGuestSuffix(e.guest_count)}</span>
                   ) : null}
                 </span>
-                {props.canLeave && props.orgSlug && props.eventId ? (
-                  <button
-                    type="button"
-                    disabled={leaving}
-                    aria-label="Leave this session"
-                    title="Leave this session"
-                    onClick={async () => {
-                      setLeaving(true)
-                      setError(null)
-                      const result = await leaveEvent(props.orgSlug!, props.eventId!, e.id)
-                      setLeaving(false)
-                      if (result.error) setError(result.error)
-                    }}
-                    className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white/5 text-zinc-400 transition-colors hover:bg-white/10 hover:text-zinc-200 disabled:opacity-50"
-                  >
-                    <svg
-                      className="h-4 w-4"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      aria-hidden
+                <span className="inline-flex shrink-0 items-center gap-1.5">
+                  <RosterBadges badges={props.badgesByParticipantId?.[e.participant_id]} />
+                  {props.canLeave && props.orgSlug && props.eventId ? (
+                    <button
+                      type="button"
+                      disabled={leaving}
+                      aria-label="Leave this session"
+                      title="Leave this session"
+                      onClick={async () => {
+                        setLeaving(true)
+                        setError(null)
+                        const result = await leaveEvent(props.orgSlug!, props.eventId!, e.id)
+                        setLeaving(false)
+                        if (result.error) setError(result.error)
+                      }}
+                      className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white/5 text-zinc-400 transition-colors hover:bg-white/10 hover:text-zinc-200 disabled:opacity-50"
                     >
-                      <path d="M18 6 6 18M6 6l12 12" />
-                    </svg>
-                  </button>
-                ) : null}
+                      <svg
+                        className="h-4 w-4"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        aria-hidden
+                      >
+                        <path d="M18 6 6 18M6 6l12 12" />
+                      </svg>
+                    </button>
+                  ) : null}
+                </span>
               </li>
             )
           }
@@ -193,14 +195,14 @@ export function RosterList(props: {
               key={e.id}
               className="flex items-center justify-between gap-2 rounded-xl border border-zinc-800 bg-black/20 px-3 py-2 text-sm"
             >
-              <span className="inline-flex min-w-0 flex-wrap items-center gap-x-1 gap-y-0.5">
+              <span className="inline-flex min-w-0 flex-1 flex-wrap items-center gap-x-1 gap-y-0.5">
                 <ArrivalStatusIcon status={e.arrival_status} isOnline={props.isOnline} />
                 <span>{e.display_name}</span>
-                <RosterBadges badges={props.badgesByParticipantId?.[e.participant_id]} />
                 {e.guest_count > 0 ? (
                   <span className="text-zinc-500">{formatGuestSuffix(e.guest_count)}</span>
                 ) : null}
               </span>
+              <RosterBadges badges={props.badgesByParticipantId?.[e.participant_id]} />
             </li>
           )
         })}
