@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { hexToRgba } from '@/lib/colors'
+import { showHeadcountChipOnCard } from '@/lib/headcount-display'
 
 const POLL_MS = 20_000
 const REFRESH_COOLDOWN_MS = 30_000
@@ -95,6 +96,10 @@ export function LiveHeadcountPill({
       if (pulseTimer.current) clearTimeout(pulseTimer.current)
     }
   }, [active, orgSlug, eventRef, router])
+
+  if (!showHeadcountChipOnCard(headcount)) {
+    return null
+  }
 
   return (
     <span

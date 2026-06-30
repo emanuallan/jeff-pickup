@@ -1,4 +1,5 @@
 import { getPublicRoster, rosterHeadcount } from '@/lib/signups'
+import { showHeadcountChipOnCard } from '@/lib/headcount-display'
 import { LiveHeadcountPill } from './live-headcount-pill'
 
 type Props = {
@@ -55,6 +56,10 @@ export async function FeaturedEventHeadcount({
   const roster = await getPublicRoster(eventId)
   const headcount = rosterHeadcount(roster)
 
+  if (!showHeadcountChipOnCard(headcount)) {
+    return null
+  }
+
   return (
     <>
       <span className="font-semibold text-zinc-100">{headcount}</span>
@@ -63,19 +68,12 @@ export async function FeaturedEventHeadcount({
   )
 }
 
-export function FeaturedEventHeadcountFallback({ capacity }: { capacity: number | null }) {
-  return (
-    <>
-      <span className="inline-block h-4 w-6 animate-pulse rounded bg-zinc-700/80" />
-      {capacity != null ? ` / ${capacity}` : ''} coming
-    </>
-  )
+export function FeaturedEventHeadcountFallback(_props: { capacity: number | null }) {
+  return null
 }
 
 export function EventHeadcountFallback({
-  capacity,
   minPlayers,
-  ended = false,
 }: {
   capacity: number | null
   minPlayers: number | null
@@ -83,10 +81,6 @@ export function EventHeadcountFallback({
 }) {
   return (
     <>
-      <span className="rounded-lg bg-zinc-800/60 px-2.5 py-1 text-zinc-500">
-        <span className="inline-block h-4 w-8 animate-pulse rounded bg-zinc-700/80" />
-        {capacity != null ? ` / ${capacity}` : ''} {ended ? 'came' : 'coming'}
-      </span>
       {minPlayers != null ? (
         <span className="rounded-lg bg-zinc-800/60 px-2.5 py-1 text-zinc-500">
           min {minPlayers} participants
