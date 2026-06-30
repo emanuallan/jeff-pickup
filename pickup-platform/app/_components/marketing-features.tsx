@@ -193,16 +193,9 @@ export const FEATURE_GROUPS: MarketingFeatureGroup[] = [
 export const PLAYER_NOTE =
   'Players join from any phone browser — tap to sign up, update status, or unregister when plans change. No app store, no account password.'
 
-function FeatureCard({
-  icon,
-  title,
-  description,
-  className,
-}: MarketingFeature & { className?: string }) {
+function FeatureCard({ icon, title, description }: MarketingFeature) {
   return (
-    <div
-      className={`h-full rounded-xl border border-white/10 bg-white/3 p-4 lg:p-5${className ? ` ${className}` : ''}`}
-    >
+    <div className="rounded-xl border border-white/10 bg-white/3 p-4">
       <div className="flex gap-3">
         <span className="text-lg leading-none" aria-hidden>
           {icon}
@@ -216,26 +209,20 @@ function FeatureCard({
   )
 }
 
-export function HomeFeatureHighlights({ className }: { className?: string }) {
+export function HomeFeatureHighlights() {
   return (
-    <section
-      className={className}
-      aria-labelledby="home-features-heading"
-    >
-      <h2
-        id="home-features-heading"
-        className="text-sm font-semibold uppercase tracking-wide text-zinc-500"
-      >
+    <section className="mt-10" aria-labelledby="home-features-heading">
+      <h2 id="home-features-heading" className="text-sm font-semibold uppercase tracking-wide text-zinc-500">
         Built for organizers
       </h2>
-      <ul className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+      <ul className="mt-4 space-y-3">
         {HOME_FEATURE_HIGHLIGHTS.map((feature) => (
-          <li key={feature.title} className="h-full">
+          <li key={feature.title}>
             <FeatureCard {...feature} />
           </li>
         ))}
       </ul>
-      <p className="mt-4 text-center text-sm text-zinc-500 sm:text-left">
+      <p className="mt-4 text-center text-sm text-zinc-500">
         <Link href="/features" className="text-indigo-300 transition-colors hover:text-indigo-200">
           See all features →
         </Link>
