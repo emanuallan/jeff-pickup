@@ -6,6 +6,13 @@ export type WeatherInfo = {
   tempF: number | null
 }
 
+type WeatherSignals = {
+  isDay: boolean
+  cloudCover: number | null
+  precipProb: number | null
+  precipMm: number | null
+}
+
 // WMO weather codes → emoji (coarse mapping is fine for our use)
 const WMO_EMOJI: Record<number, string> = {
   0: '☀️',
@@ -38,8 +45,52 @@ const WMO_EMOJI: Record<number, string> = {
   99: '⛈️',
 }
 
-function emojiForCode(code: number): string {
-  return WMO_EMOJI[code] ?? '🌡️'
+const STORM_CODES = new Set([82, 95, 96, 99])
+const RAIN_CODES = new Set([51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81])
+const SNOW_CODES = new Set([71, 73, 75, 77, 85, 86])
+
+function emojiForCloudCover(cloudPercent: number, isDay: boolean): string {
+  if (!isDay) {
+    if (cloudPercent < 35) return '🌙'
+    return '☁️'
+  }
+  if (cloudPercent < 15) return '☀️'
+  if (cloudPercent < 35) return '🌤️'
+  if (cloudPercent < 65) return '⛅'
+  return '☁️'
+}
+
+function hasMeaningfulPrecip(signals: WeatherSignals): boolean {
+  const prob = signals.precipProb ?? 0
+  const mm = signals.precipMm ?? 0
+  return prob >= 30 || mm >= 0.1
+}
+
+/**
+ * Open-Meteo's WMO code can label dry, mostly-clear hours as thunderstorms.
+ * Cross-check cloud cover and precipitation before showing storm/rain emojis.
+ */
+export function emojiForConditions(code: number, signals: WeatherSignals): string {
+  const mapped = WMO_EMOJI[code]
+  const precipLikely = hasMeaningfulPrecip(signals)
+  const cloud = signals.cloudCover
+
+  if (STORM_CODES.has(code) && !precipLikely) {
+    return cloud != null ? emojiForCloudCover(cloud, signals.isDay) : '⛅'
+  }
+
+  if (RAIN_CODES.has(code) && !precipLikely) {
+    return cloud != null ? emojiForCloudCover(cloud, signals.isDay) : mapped ?? '⛅'
+  }
+
+  if (SNOW_CODES.has(code) && !precipLikely) {
+    return cloud != null ? emojiForCloudCover(cloud, signals.isDay) : mapped ?? '☁️'
+  }
+
+  if (mapped) return mapped
+
+  if (cloud != null) return emojiForCloudCover(cloud, signals.isDay)
+  return signals.isDay ? '🌤️' : '🌙'
 }
 
 /** Hour bucket (YYYY-MM-DDTHH) for an instant in an IANA timezone — matches Open-Meteo hourly keys. */
@@ -81,7 +132,8 @@ export async function getWeatherForEvent(
 
   const url =
     `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +
-    `&hourly=temperature_2m,weather_code&temperature_unit=fahrenheit&forecast_days=16` +
+    `&hourly=temperature_2m,weather_code,is_day,cloud_cover,precipitation_probability,precipitation` +
+    `&temperature_unit=fahrenheit&forecast_days=16` +
     `&timezone=${encodeURIComponent(zone)}`
 
   try {
@@ -92,7 +144,15 @@ export async function getWeatherForEvent(
     if (!res.ok) return null
 
     const data = (await res.json()) as {
-      hourly?: { time: string[]; temperature_2m: number[]; weather_code: Array<number | null> }
+      hourly?: {
+        time: string[]
+        temperature_2m: number[]
+        weather_code: Array<number | null>
+        is_day: Array<number | null>
+        cloud_cover: Array<number | null>
+        precipitation_probability: Array<number | null>
+        precipitation: Array<number | null>
+      }
     }
 
     const times = data.hourly?.time
@@ -106,9 +166,18 @@ export async function getWeatherForEvent(
     if (rawCode == null) return null
 
     const temp = data.hourly?.temperature_2m?.[idx]
+    const isDay = data.hourly?.is_day?.[idx]
+    const cloudCover = data.hourly?.cloud_cover?.[idx]
+    const precipProb = data.hourly?.precipitation_probability?.[idx]
+    const precipMm = data.hourly?.precipitation?.[idx]
 
     return {
-      emoji: emojiForCode(rawCode),
+      emoji: emojiForConditions(rawCode, {
+        isDay: isDay !== 0,
+        cloudCover: typeof cloudCover === 'number' ? cloudCover : null,
+        precipProb: typeof precipProb === 'number' ? precipProb : null,
+        precipMm: typeof precipMm === 'number' ? precipMm : null,
+      }),
       tempF: typeof temp === 'number' ? Math.round(temp) : null,
     }
   } catch {
