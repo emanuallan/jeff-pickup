@@ -14,7 +14,9 @@ type Props = {
 
 type Indicator = {
   left: number
+  top: number
   width: number
+  height: number
 }
 
 export function OrgPublicNav({ items, accent, basePath }: Props) {
@@ -31,11 +33,11 @@ export function OrgPublicNav({ items, accent, basePath }: Props) {
       return
     }
 
-    const trackRect = track.getBoundingClientRect()
-    const linkRect = activeLink.getBoundingClientRect()
     setIndicator({
-      left: linkRect.left - trackRect.left,
-      width: linkRect.width,
+      left: activeLink.offsetLeft,
+      top: activeLink.offsetTop,
+      width: activeLink.offsetWidth,
+      height: activeLink.offsetHeight,
     })
   }, [activeKey])
 
@@ -51,13 +53,19 @@ export function OrgPublicNav({ items, accent, basePath }: Props) {
 
     const observer = new ResizeObserver(() => measureIndicator())
     observer.observe(track)
+    for (const link of linkRefs.current.values()) {
+      observer.observe(link)
+    }
+
+    track.addEventListener('scroll', measureIndicator, { passive: true })
     window.addEventListener('resize', measureIndicator)
 
     return () => {
       observer.disconnect()
+      track.removeEventListener('scroll', measureIndicator)
       window.removeEventListener('resize', measureIndicator)
     }
-  }, [measureIndicator])
+  }, [measureIndicator, items])
 
   if (items.length <= 1) {
     return null
@@ -72,16 +80,18 @@ export function OrgPublicNav({ items, accent, basePath }: Props) {
     >
       <div
         ref={trackRef}
-        className="relative inline-flex max-w-[min(100vw-2rem,24rem)] gap-0.5 overflow-x-auto rounded-full border border-zinc-800 bg-zinc-900/80 p-1 shadow-lg backdrop-blur-md [-ms-overflow-style:none] [scrollbar-width:none] md:max-w-full md:bg-zinc-900/60 md:shadow-none md:backdrop-blur-none [&::-webkit-scrollbar]:hidden"
+        className="relative inline-flex max-w-[min(100vw-2rem,24rem)] gap-1 overflow-x-auto rounded-full border border-zinc-800 bg-zinc-900/80 p-1 shadow-lg backdrop-blur-md [-ms-overflow-style:none] [scrollbar-width:none] md:max-w-full md:bg-zinc-900/60 md:shadow-none md:backdrop-blur-none [&::-webkit-scrollbar]:hidden"
         style={{ borderColor: hexToRgba(accent, 0.12) }}
       >
         {indicator ? (
           <span
             aria-hidden
-            className="pointer-events-none absolute top-1 bottom-1 rounded-full transition-[transform,width] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]"
+            className="pointer-events-none absolute rounded-full transition-[left,width,top,height] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]"
             style={{
+              left: indicator.left,
+              top: indicator.top,
               width: indicator.width,
-              transform: `translateX(${indicator.left}px)`,
+              height: indicator.height,
               backgroundColor: hexToRgba(accent, 0.22),
             }}
           />
@@ -101,7 +111,7 @@ export function OrgPublicNav({ items, accent, basePath }: Props) {
               }}
               href={item.href}
               aria-current={active ? 'page' : undefined}
-              className={`relative z-10 shrink-0 rounded-full px-3.5 py-2 text-sm font-medium transition-colors duration-200 sm:px-4 ${
+              className={`relative z-10 inline-flex shrink-0 items-center justify-center rounded-full px-4 py-2 text-sm font-medium transition-colors duration-200 ${
                 active ? 'text-zinc-50' : 'text-zinc-400 hover:text-zinc-200'
               }`}
               style={active ? { color: accentFg } : undefined}
