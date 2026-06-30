@@ -57,6 +57,7 @@ Track deferred work and known simplifications. Prefer shipping simple, refine la
 
 ## Post-MVP
 
+- [ ] **Org public subnav shell** (parked) — layout-first nav with floating mobile dock was prototyped at `/hidden` on commits `66c4201`–`e3bfb0e`; restore via cherry-pick or `git revert` of the parking commit when ready to promote to `/cal`.
 - [ ] Waitlist
 - [ ] Activate OTP (pick SMS provider)
 - [ ] Reminders
