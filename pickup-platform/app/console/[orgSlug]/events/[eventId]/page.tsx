@@ -200,7 +200,8 @@ export default async function ConsoleEventAnalyticsPage({ params }: Props) {
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
                         <div className="break-words font-medium text-zinc-100">
-                          <span className="text-zinc-500">#{index + 1}</span> {e.display_name}
+                          <span className="mr-1.5 text-zinc-500">#{index + 1}</span>
+                          {e.display_name}
                           {formatGuestSuffix(e.guest_count)}
                         </div>
                         <div className="mt-0.5 text-xs text-zinc-500">

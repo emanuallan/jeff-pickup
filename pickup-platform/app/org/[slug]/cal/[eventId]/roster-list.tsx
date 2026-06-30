@@ -155,7 +155,7 @@ export function RosterList(props: {
               >
                 <span className="inline-flex min-w-0 flex-1 flex-wrap items-center gap-x-1 gap-y-0.5 font-semibold">
                   {isWaitlist ? (
-                    <span className="text-zinc-500">#{position}</span>
+                    <span className="mr-1.5 text-zinc-500">#{position}</span>
                   ) : (
                     <ArrivalStatusIcon status={e.arrival_status} isOnline={props.isOnline} />
                   )}
@@ -212,7 +212,7 @@ export function RosterList(props: {
             >
               <span className="inline-flex min-w-0 flex-1 flex-wrap items-center gap-x-1 gap-y-0.5">
                 {isWaitlist ? (
-                  <span className="text-zinc-600">#{position}</span>
+                  <span className="mr-1.5 text-zinc-600">#{position}</span>
                 ) : (
                   <ArrivalStatusIcon status={e.arrival_status} isOnline={props.isOnline} />
                 )}
