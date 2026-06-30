@@ -3,13 +3,14 @@ import type { Org } from '@/lib/orgs'
 import type { EventWithLocation } from '@/lib/events'
 import { canUpdateArrivalStatus, isEventEnded } from '@/lib/events'
 import { readableTextColor } from '@/lib/colors'
-import { getPublicRoster, rosterHeadcount } from '@/lib/signups'
+import { getPublicRoster, getPublicWaitlist, rosterHeadcount } from '@/lib/signups'
 import { getSessionToken } from '@/lib/participant-session'
 import { getSessionInfo } from '@/lib/participant'
 import { JoinSectionLazy } from './join-section-lazy'
 import { EventRosterWithBadges } from './event-roster-with-badges'
 import { RosterListFallback } from './roster-list-fallback'
 import { SignedInControlsLazy } from './signed-in-controls-lazy'
+import { WaitlistSection } from './waitlist-section'
 import { CancelledCallout, isEventCancelled, eventName } from '../../_components/event-ui'
 import { formatEventWhenLine } from '@/lib/events'
 import { orgFeatures } from '@/lib/org-features'
@@ -27,15 +28,20 @@ export async function EventParticipation({ slug, eventId, org, event }: Props) {
   const canUpdateStatus = canUpdateArrivalStatus(event)
   const accent = org.branding.accent_color
   const accentText = readableTextColor(accent)
+  const waitlistEnabled = event.capacity != null
 
-  const [{ participant, mySignup }, roster] = await Promise.all([
+  const [{ participant, mySignup }, roster, waitlist] = await Promise.all([
     getSessionToken().then((token) => getSessionInfo(token, org.id, event.id)),
     isCancelled ? Promise.resolve([]) : getPublicRoster(event.id),
+    isCancelled || !waitlistEnabled ? Promise.resolve([]) : getPublicWaitlist(event.id),
   ])
 
   const headcount = rosterHeadcount(roster)
-  const isFull = event.capacity != null && headcount >= event.capacity
-  const spotsLeft = event.capacity != null ? Math.max(0, event.capacity - headcount) : null
+  const isFull = waitlistEnabled && headcount >= event.capacity!
+  const spotsLeft = waitlistEnabled ? Math.max(0, event.capacity! - headcount) : null
+  const isWaitlisted = mySignup?.list_status === 'waitlisted'
+  const confirmedMySignupId = isWaitlisted ? null : mySignup?.signup_id
+  const waitlistMySignupId = isWaitlisted ? mySignup?.signup_id : null
 
   return (
     <>
@@ -49,6 +55,7 @@ export async function EventParticipation({ slug, eventId, org, event }: Props) {
           accent={accent}
           accentText={accentText}
           isFull={isFull}
+          waitlistEnabled={waitlistEnabled}
           isOnline={event.location_is_online}
           spotsLeft={spotsLeft}
           participant={participant}
@@ -75,7 +82,7 @@ export async function EventParticipation({ slug, eventId, org, event }: Props) {
                 org={org}
                 event={event}
                 isOnline={event.location_is_online}
-                mySignupId={mySignup?.signup_id}
+                mySignupId={confirmedMySignupId}
                 canLeave={!isEnded}
                 orgSlug={slug}
                 eventId={eventId}
@@ -84,6 +91,17 @@ export async function EventParticipation({ slug, eventId, org, event }: Props) {
             </Suspense>
           </div>
 
+          {waitlistEnabled ? (
+            <WaitlistSection
+              waitlist={waitlist}
+              mySignupId={waitlistMySignupId}
+              canLeave={!isEnded}
+              orgSlug={slug}
+              eventId={eventId}
+              accent={accent}
+            />
+          ) : null}
+
           {mySignup && canUpdateStatus ? (
             <SignedInControlsLazy
               orgSlug={slug}
@@ -91,6 +109,7 @@ export async function EventParticipation({ slug, eventId, org, event }: Props) {
               signupId={mySignup.signup_id}
               guestCount={mySignup.guest_count}
               arrivalStatus={mySignup.arrival_status}
+              listStatus={mySignup.list_status}
               isOnline={event.location_is_online}
               accent={accent}
             />

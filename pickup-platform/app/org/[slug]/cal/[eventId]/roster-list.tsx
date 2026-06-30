@@ -120,21 +120,28 @@ export function RosterList(props: {
   orgSlug?: string
   eventId?: string
   accent?: string
+  variant?: 'confirmed' | 'waitlist'
 }) {
   const [leaving, setLeaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const accent = props.accent ?? '#2563eb'
   const accentFg = accentOnDark(accent)
+  const isWaitlist = props.variant === 'waitlist'
 
   if (props.entries.length === 0) {
-    return <p className="text-sm text-zinc-500">No one signed up yet. Be the first!</p>
+    return (
+      <p className="text-sm text-zinc-500">
+        {isWaitlist ? 'No one on the waitlist yet.' : 'No one signed up yet. Be the first!'}
+      </p>
+    )
   }
 
   return (
     <div>
       <ul className="space-y-2">
-        {props.entries.map((e) => {
+        {props.entries.map((e, index) => {
           const isMe = props.mySignupId != null && e.id === props.mySignupId
+          const position = index + 1
 
           if (isMe) {
             return (
@@ -147,15 +154,23 @@ export function RosterList(props: {
                 }}
               >
                 <span className="inline-flex min-w-0 flex-1 flex-wrap items-center gap-x-1 gap-y-0.5 font-semibold">
-                  <ArrivalStatusIcon status={e.arrival_status} isOnline={props.isOnline} />
+                  {isWaitlist ? (
+                    <span className="text-zinc-500">#{position}</span>
+                  ) : (
+                    <ArrivalStatusIcon status={e.arrival_status} isOnline={props.isOnline} />
+                  )}
                   <span>{e.display_name}</span>
-                  <span className="text-zinc-400">(you)</span>
+                  <span className="text-zinc-400">
+                    (you){isWaitlist ? ` · #${position} on waitlist` : ''}
+                  </span>
                   {e.guest_count > 0 ? (
                     <span className="text-zinc-400">{formatGuestSuffix(e.guest_count)}</span>
                   ) : null}
                 </span>
                 <span className="inline-flex shrink-0 items-center gap-1.5">
-                  <RosterBadges badges={props.badgesByParticipantId?.[e.participant_id]} />
+                  {!isWaitlist ? (
+                    <RosterBadges badges={props.badgesByParticipantId?.[e.participant_id]} />
+                  ) : null}
                   {props.canLeave && props.orgSlug && props.eventId ? (
                     <button
                       type="button"
@@ -196,13 +211,19 @@ export function RosterList(props: {
               className="flex items-center justify-between gap-2 rounded-xl border border-zinc-800 bg-black/20 px-3 py-2 text-sm"
             >
               <span className="inline-flex min-w-0 flex-1 flex-wrap items-center gap-x-1 gap-y-0.5">
-                <ArrivalStatusIcon status={e.arrival_status} isOnline={props.isOnline} />
+                {isWaitlist ? (
+                  <span className="text-zinc-600">#{position}</span>
+                ) : (
+                  <ArrivalStatusIcon status={e.arrival_status} isOnline={props.isOnline} />
+                )}
                 <span>{e.display_name}</span>
                 {e.guest_count > 0 ? (
                   <span className="text-zinc-500">{formatGuestSuffix(e.guest_count)}</span>
                 ) : null}
               </span>
-              <RosterBadges badges={props.badgesByParticipantId?.[e.participant_id]} />
+              {!isWaitlist ? (
+                <RosterBadges badges={props.badgesByParticipantId?.[e.participant_id]} />
+              ) : null}
             </li>
           )
         })}

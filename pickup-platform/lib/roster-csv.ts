@@ -8,7 +8,7 @@ function escapeCsv(value: string): string {
 }
 
 export function rosterToCsv(rows: SignupWithContact[]): string {
-  const header = ['display_name', 'first_name', 'last_name', 'phone', 'guest_count', 'arrival_status']
+  const header = ['display_name', 'first_name', 'last_name', 'phone', 'guest_count', 'arrival_status', 'list_status']
   const lines = [
     header.join(','),
     ...rows.map((r) =>
@@ -19,6 +19,7 @@ export function rosterToCsv(rows: SignupWithContact[]): string {
         escapeCsv(r.phone),
         String(r.guest_count),
         escapeCsv(r.arrival_status),
+        escapeCsv(r.list_status),
       ].join(','),
     ),
   ]

@@ -16,7 +16,7 @@ import { type EventStatus, initialEventStatus, getEventByRef, isEventEnded } fro
 import { getOrgForMember } from '@/lib/orgs'
 import { isValidSlug, normalizeSlug } from '@/lib/tenancy/reserved-slugs'
 import { MAX_ORG_LINKS, normalizeLinkUrl } from '@/lib/social-links'
-import { orgSettings, type OrgFeatures } from '@/lib/org-features'
+import { orgSettings, orgWaitlistSettings, type OrgFeatures, type OrgWaitlistSettings } from '@/lib/org-features'
 
 async function requireOrgAdmin(slug: string) {
   const org = await getOrgForMember(slug)
@@ -956,6 +956,35 @@ export async function updateOrgFeatures(orgSlug: string, formData: FormData) {
   revalidatePath(`/console/${orgSlug}`)
   revalidatePath(`/console/${orgSlug}/settings`)
   revalidatePath(`/org/${orgSlug}`)
+  return { ok: true }
+}
+
+export async function updateOrgWaitlistSettings(orgSlug: string, formData: FormData) {
+  const org = await requireOrgAdmin(orgSlug)
+  const supabase = await createClient()
+
+  const raw = String(formData.get('promotion_mode') ?? 'strict_fifo')
+  const promotion_mode: OrgWaitlistSettings['promotion_mode'] =
+    raw === 'skip_ahead' ? 'skip_ahead' : 'strict_fifo'
+
+  const current = orgSettings(org)
+
+  const { error } = await supabase
+    .from('orgs')
+    .update({
+      settings: {
+        ...current,
+        waitlist: { promotion_mode },
+      },
+    })
+    .eq('id', org.id)
+
+  if (error) {
+    return { error: error.message }
+  }
+
+  revalidatePath(`/console/${orgSlug}`)
+  revalidatePath(`/console/${orgSlug}/settings`)
   return { ok: true }
 }
 

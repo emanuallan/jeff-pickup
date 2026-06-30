@@ -3,6 +3,7 @@ export type OrganizerNotificationKind =
   | 'returning_signup_batch'
   | 'unregister_batch'
   | 'unregister_immediate'
+  | 'waitlist_signup_batch'
 
 export type OrganizerNotificationPayload = {
   count: number
@@ -77,6 +78,17 @@ export function formatOrganizerNotificationCopy(n: OrganizerNotification): {
       }
       return {
         title: `${count} players can't make it`,
+        detail: event_label,
+      }
+    case 'waitlist_signup_batch':
+      if (count === 1) {
+        return {
+          title: preview ? `${preview} joined the waitlist` : '1 player joined the waitlist',
+          detail: event_label,
+        }
+      }
+      return {
+        title: preview ? `${preview} joined the waitlist` : `${count} players joined the waitlist`,
         detail: event_label,
       }
     default:

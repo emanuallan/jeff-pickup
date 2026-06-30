@@ -188,6 +188,30 @@ export async function getPublicRosterLive(eventId: string): Promise<RosterEntry[
   return fetchPublicRoster(eventId)
 }
 
+async function fetchPublicWaitlist(eventId: string): Promise<RosterEntry[]> {
+  const supabase = createPublicClient()
+
+  const { data, error } = await supabase
+    .from('event_waitlist_public')
+    .select('id, event_id, participant_id, display_name, guest_count, arrival_status, created_at')
+    .eq('event_id', eventId)
+    .order('created_at', { ascending: true })
+
+  if (error || !data) {
+    return []
+  }
+
+  return (data as RosterEntry[]).map((row) => ({
+    ...row,
+    list_status: 'waitlisted' as const,
+  }))
+}
+
+/** Always fresh — waitlist changes on every join/leave/promotion. */
+export async function getPublicWaitlistLive(eventId: string): Promise<RosterEntry[]> {
+  return fetchPublicWaitlist(eventId)
+}
+
 async function fetchPublicPastSessionCount(orgId: string): Promise<number> {
   const supabase = createPublicClient()
   const now = new Date().toISOString()

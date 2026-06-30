@@ -4,8 +4,15 @@ export type OrgFeatures = {
   returning_signup_modal: boolean
 }
 
+export type WaitlistPromotionMode = 'strict_fifo' | 'skip_ahead'
+
+export type OrgWaitlistSettings = {
+  promotion_mode: WaitlistPromotionMode
+}
+
 export type OrgSettings = {
   features: OrgFeatures
+  waitlist?: OrgWaitlistSettings
 }
 
 export const DEFAULT_ORG_FEATURES: OrgFeatures = {
@@ -14,8 +21,22 @@ export const DEFAULT_ORG_FEATURES: OrgFeatures = {
   returning_signup_modal: true,
 }
 
+export const DEFAULT_ORG_WAITLIST_SETTINGS: OrgWaitlistSettings = {
+  promotion_mode: 'strict_fifo',
+}
+
 export const DEFAULT_ORG_SETTINGS: OrgSettings = {
   features: DEFAULT_ORG_FEATURES,
+  waitlist: DEFAULT_ORG_WAITLIST_SETTINGS,
+}
+
+export function parseWaitlistSettings(raw: unknown): OrgWaitlistSettings {
+  const waitlist = raw as Partial<OrgWaitlistSettings> | null | undefined
+  const mode = waitlist?.promotion_mode
+
+  return {
+    promotion_mode: mode === 'skip_ahead' ? 'skip_ahead' : 'strict_fifo',
+  }
 }
 
 export function parseOrgSettings(raw: unknown): OrgSettings {
@@ -28,6 +49,7 @@ export function parseOrgSettings(raw: unknown): OrgSettings {
       leaderboard: features?.leaderboard !== false,
       returning_signup_modal: features?.returning_signup_modal !== false,
     },
+    waitlist: parseWaitlistSettings(settings?.waitlist),
   }
 }
 
@@ -38,6 +60,10 @@ export function orgSettings(org: { settings?: OrgSettings | null }): OrgSettings
 
 export function orgFeatures(org: { settings?: OrgSettings | null }): OrgFeatures {
   return orgSettings(org).features
+}
+
+export function orgWaitlistSettings(org: { settings?: OrgSettings | null }): OrgWaitlistSettings {
+  return orgSettings(org).waitlist ?? DEFAULT_ORG_WAITLIST_SETTINGS
 }
 
 export type OrgFeatureDefinition = {

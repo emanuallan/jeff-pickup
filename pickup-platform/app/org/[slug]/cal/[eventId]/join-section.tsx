@@ -23,6 +23,7 @@ type Props = {
   accent: string
   accentText: string
   isFull: boolean
+  waitlistEnabled: boolean
   isOnline: boolean
   spotsLeft: number | null
   participant: Participant | null
@@ -158,16 +159,7 @@ export function JoinSection(props: Props) {
     return null
   }
 
-  if (props.isFull) {
-    return (
-      <div>
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-400">Full</h2>
-        <p className="mt-2 text-sm text-zinc-500">
-          This session is at capacity. Check back in case a spot opens up.
-        </p>
-      </div>
-    )
-  }
+  const joiningWaitlist = props.isFull && props.waitlistEnabled
 
   if (props.participant) {
     const welcomeBack = (
@@ -177,9 +169,11 @@ export function JoinSection(props: Props) {
             Welcome back, {props.participant.display_name}
           </h2>
           <p className="mt-0.5 text-sm text-zinc-400">
-            {props.spotsLeft != null && props.spotsLeft <= 5
-              ? `Only ${props.spotsLeft} spot${props.spotsLeft === 1 ? '' : 's'} left — tap to lock yours in.`
-              : 'Tap below to lock in your spot.'}
+            {joiningWaitlist
+              ? 'This session is full. Join the waitlist and we’ll move you up automatically if a spot opens.'
+              : props.spotsLeft != null && props.spotsLeft <= 5
+                ? `Only ${props.spotsLeft} spot${props.spotsLeft === 1 ? '' : 's'} left — tap to lock yours in.`
+                : 'Tap below to lock in your spot.'}
           </p>
         </div>
 
@@ -222,7 +216,7 @@ export function JoinSection(props: Props) {
             boxShadow: `0 10px 30px -12px ${props.accent}`,
           }}
         >
-          {loading ? 'Counting you in…' : `Count me in ${arrowRight}`}
+          {loading ? 'Counting you in…' : joiningWaitlist ? 'Join waitlist' : `Count me in ${arrowRight}`}
         </button>
         <div className="text-right">
           <button
@@ -276,11 +270,15 @@ export function JoinSection(props: Props) {
         className="space-y-4"
       >
       <div>
-        <h2 className="text-lg font-semibold text-zinc-100">Save your spot</h2>
+        <h2 className="text-lg font-semibold text-zinc-100">
+          {joiningWaitlist ? 'Join the waitlist' : 'Save your spot'}
+        </h2>
         <p className="mt-0.5 text-sm text-zinc-400">
-          {props.spotsLeft != null && props.spotsLeft <= 5
-            ? `Only ${props.spotsLeft} spot${props.spotsLeft === 1 ? '' : 's'} left. Add your name — you only have to do this once.`
-            : 'Add your name so everyone knows you\u2019re coming. You only have to do this once.'}
+          {joiningWaitlist
+            ? 'This session is full. You’ll be added in signup order and promoted automatically if a spot opens.'
+            : props.spotsLeft != null && props.spotsLeft <= 5
+              ? `Only ${props.spotsLeft} spot${props.spotsLeft === 1 ? '' : 's'} left. Add your name — you only have to do this once.`
+              : 'Add your name so everyone knows you\u2019re coming. You only have to do this once.'}
         </p>
       </div>
 
@@ -340,7 +338,7 @@ export function JoinSection(props: Props) {
           boxShadow: `0 10px 30px -12px ${props.accent}`,
         }}
       >
-        {loading ? 'Counting you in…' : `Count me in ${arrowRight}`}
+        {loading ? 'Counting you in…' : joiningWaitlist ? 'Join waitlist' : `Count me in ${arrowRight}`}
       </button>
       </form>
 

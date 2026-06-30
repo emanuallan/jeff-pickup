@@ -1,5 +1,6 @@
 import { cache } from 'react'
 import type { ArrivalStatus } from '@/lib/arrival-status'
+import type { SignupListStatus } from '@/lib/signups'
 import { createClient } from '@/lib/supabase/server'
 
 export type Participant = {
@@ -14,6 +15,7 @@ export type MySignup = {
   guest_count: number
   arrival_status: ArrivalStatus
   display_name: string
+  list_status: SignupListStatus
 }
 
 export type SessionInfo = { participant: Participant | null; mySignup: MySignup | null }
@@ -34,6 +36,11 @@ export const getSessionInfo = cache(async (
 
   return {
     participant: (p as Participant | null) ?? null,
-    mySignup: (s as MySignup | null) ?? null,
+    mySignup: s
+      ? {
+          ...(s as MySignup),
+          list_status: (s as MySignup).list_status ?? 'confirmed',
+        }
+      : null,
   }
 })

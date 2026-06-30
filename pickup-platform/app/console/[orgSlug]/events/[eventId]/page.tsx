@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation'
 import { getOrgForMember } from '@/lib/orgs'
 import { getEventByRef, formatEventTime, formatInstantInZone, statusLabel, isEventInProgress } from '@/lib/events'
-import { getRosterWithContact } from '@/lib/signups'
+import { getRosterWithContact, splitRosterByStatus } from '@/lib/signups'
 import { formatGuestSuffix } from '@/lib/format-guest-suffix'
 import { buildRosterAnalytics, fetchEventAnalyticsDb } from '@/lib/event-analytics'
 import { arrivalStatusEmoji } from '@/lib/arrival-status'
@@ -43,10 +43,11 @@ export default async function ConsoleEventAnalyticsPage({ params }: Props) {
     notFound()
   }
 
-  const [roster, dbAnalytics] = await Promise.all([
+  const [allRoster, dbAnalytics] = await Promise.all([
     getRosterWithContact(event.id),
     fetchEventAnalyticsDb(event.id),
   ])
+  const { confirmed: roster, waitlisted } = splitRosterByStatus(allRoster)
   const analytics = buildRosterAnalytics(roster, event.capacity, dbAnalytics)
   const publicEventUrl = `${orgBaseUrl(orgSlug)}/cal/${event.short_id}`
   const isLive = isEventInProgress(event) && event.status === 'on'
@@ -152,7 +153,7 @@ export default async function ConsoleEventAnalyticsPage({ params }: Props) {
         <ConsoleSection
           title={`Roster (${roster.length})`}
           action={
-            roster.length > 0 ? (
+            allRoster.length > 0 ? (
               <a
                 href={`/api/console/${orgSlug}/events/${eventId}/roster`}
                 className="text-xs font-medium text-indigo-300 hover:text-indigo-200"
@@ -184,6 +185,34 @@ export default async function ConsoleEventAnalyticsPage({ params }: Props) {
               ))}
             </ul>
           )}
+
+          {event.capacity != null && waitlisted.length > 0 ? (
+            <details className="mt-4 group">
+              <summary className="cursor-pointer list-none text-sm font-medium text-zinc-500 transition-colors hover:text-zinc-400 [&::-webkit-details-marker]:hidden">
+                <span className="inline-flex items-center gap-2">
+                  <span className="inline-block transition-transform group-open:rotate-90">›</span>
+                  Waitlist ({waitlisted.length})
+                </span>
+              </summary>
+              <ul className="mt-3 space-y-2">
+                {waitlisted.map((e, index) => (
+                  <ConsoleCard key={e.id} className="min-w-0 text-sm">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <div className="break-words font-medium text-zinc-100">
+                          <span className="text-zinc-500">#{index + 1}</span> {e.display_name}
+                          {formatGuestSuffix(e.guest_count)}
+                        </div>
+                        <div className="mt-0.5 text-xs text-zinc-500">
+                          {e.first_name} {e.last_name} · {e.phone}
+                        </div>
+                      </div>
+                    </div>
+                  </ConsoleCard>
+                ))}
+              </ul>
+            </details>
+          ) : null}
         </ConsoleSection>
       </div>
     </ConsolePage>

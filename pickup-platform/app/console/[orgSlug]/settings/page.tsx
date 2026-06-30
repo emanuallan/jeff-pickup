@@ -5,7 +5,8 @@ import { getRootDomain } from '@/lib/tenancy/parse-host'
 import { MaterializeButton } from '../materialize-button'
 import { DeleteOrgSection } from '../delete-org-section'
 import { FeatureTogglesForm } from '../feature-toggles-form'
-import { orgFeatures } from '@/lib/org-features'
+import { WaitlistSettingsForm } from '../waitlist-settings-form'
+import { orgFeatures, orgWaitlistSettings } from '@/lib/org-features'
 import { ConsolePage, ConsoleHeader, ConsoleSection } from '../../_components/console-ui'
 
 type Props = {
@@ -49,6 +50,13 @@ export default async function OrgSettingsPage({ params }: Props) {
           description="Turn optional public features on or off for your group."
         >
           <FeatureTogglesForm orgSlug={orgSlug} features={orgFeatures(org)} />
+        </ConsoleSection>
+
+        <ConsoleSection
+          title="Waitlist"
+          description="When a session hits capacity, extra sign-ups go on a waitlist. Choose how spots are filled when someone leaves."
+        >
+          <WaitlistSettingsForm orgSlug={orgSlug} waitlist={orgWaitlistSettings(org)} />
         </ConsoleSection>
 
         <ConsoleSection

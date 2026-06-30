@@ -76,6 +76,11 @@ function kindBadge(kind: OrganizerNotification["kind"]): {
 				label: "Left",
 				className: "bg-zinc-500/15 text-zinc-300 ring-zinc-500/30",
 			};
+		case "waitlist_signup_batch":
+			return {
+				label: "Waitlist",
+				className: "bg-sky-500/15 text-sky-300 ring-sky-500/30",
+			};
 	}
 }
 
