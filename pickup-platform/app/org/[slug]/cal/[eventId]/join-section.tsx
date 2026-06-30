@@ -22,7 +22,6 @@ type Props = {
   eventId: string
   accent: string
   accentText: string
-  isPast: boolean
   isFull: boolean
   isOnline: boolean
   spotsLeft: number | null
@@ -152,15 +151,6 @@ export function JoinSection(props: Props) {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [guestCount, setGuestCount] = useState(0)
-
-  if (props.isPast) {
-    return (
-      <div>
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-400">Closed</h2>
-        <p className="mt-2 text-sm text-zinc-500">This session has ended.</p>
-      </div>
-    )
-  }
 
   // Signed-up users are handled in the roster (highlighted row + status picker
   // below the attendee list), so the join card collapses for them.

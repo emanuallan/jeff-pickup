@@ -41,14 +41,13 @@ export async function EventParticipation({ slug, eventId, org, event }: Props) {
     <>
       {isCancelled ? <CancelledCallout hasSignup={!!mySignup} /> : null}
 
-      {!isCancelled && !mySignup ? (
+      {!isCancelled && !isEnded && !mySignup ? (
         <JoinSectionLazy
           orgSlug={slug}
           orgId={org.id}
           eventId={eventId}
           accent={accent}
           accentText={accentText}
-          isPast={isEnded}
           isFull={isFull}
           isOnline={event.location_is_online}
           spotsLeft={spotsLeft}
