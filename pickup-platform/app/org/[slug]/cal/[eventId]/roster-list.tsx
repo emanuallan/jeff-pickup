@@ -150,6 +150,7 @@ export function RosterList(props: {
                   <ArrivalStatusIcon status={e.arrival_status} isOnline={props.isOnline} />
                   <span>{e.display_name}</span>
                   <span className="text-zinc-400">(you)</span>
+                  <RosterBadges badges={props.badgesByParticipantId?.[e.participant_id]} />
                   {e.guest_count > 0 ? (
                     <span className="text-zinc-400">{formatGuestSuffix(e.guest_count)}</span>
                   ) : null}
