@@ -28,9 +28,9 @@ export async function EventParticipation({ slug, eventId, org, event }: Props) {
   const accent = org.branding.accent_color
   const accentText = readableTextColor(accent)
 
-  const [roster, { participant, mySignup }] = await Promise.all([
-    getPublicRoster(event.id),
+  const [{ participant, mySignup }, roster] = await Promise.all([
     getSessionToken().then((token) => getSessionInfo(token, org.id, event.id)),
+    isCancelled ? Promise.resolve([]) : getPublicRoster(event.id),
   ])
 
   const headcount = rosterHeadcount(roster)
@@ -63,38 +63,40 @@ export async function EventParticipation({ slug, eventId, org, event }: Props) {
         />
       ) : null}
 
-      <section className="mt-5 rounded-3xl border border-zinc-800 bg-zinc-900/50 p-5">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-400">
-          {isEnded ? 'Who came' : "Who's coming"} ({headcount})
-        </h2>
-        <div className="mt-4">
-          <Suspense fallback={<RosterListFallback />}>
-            <EventRosterWithBadges
-              roster={roster}
-              org={org}
-              event={event}
-              isOnline={event.location_is_online}
-              mySignupId={mySignup?.signup_id}
-              canLeave={!isEnded}
+      {!isCancelled ? (
+        <section className="mt-5 rounded-3xl border border-zinc-800 bg-zinc-900/50 p-5">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-400">
+            {isEnded ? 'Who came' : "Who's coming"} ({headcount})
+          </h2>
+          <div className="mt-4">
+            <Suspense fallback={<RosterListFallback />}>
+              <EventRosterWithBadges
+                roster={roster}
+                org={org}
+                event={event}
+                isOnline={event.location_is_online}
+                mySignupId={mySignup?.signup_id}
+                canLeave={!isEnded}
+                orgSlug={slug}
+                eventId={eventId}
+                accent={accent}
+              />
+            </Suspense>
+          </div>
+
+          {mySignup && canUpdateStatus ? (
+            <SignedInControlsLazy
               orgSlug={slug}
               eventId={eventId}
+              signupId={mySignup.signup_id}
+              guestCount={mySignup.guest_count}
+              arrivalStatus={mySignup.arrival_status}
+              isOnline={event.location_is_online}
               accent={accent}
             />
-          </Suspense>
-        </div>
-
-        {mySignup && canUpdateStatus && !isCancelled ? (
-          <SignedInControlsLazy
-            orgSlug={slug}
-            eventId={eventId}
-            signupId={mySignup.signup_id}
-            guestCount={mySignup.guest_count}
-            arrivalStatus={mySignup.arrival_status}
-            isOnline={event.location_is_online}
-            accent={accent}
-          />
-        ) : null}
-      </section>
+          ) : null}
+        </section>
+      ) : null}
     </>
   )
 }
