@@ -32,28 +32,40 @@ export async function getOrganizerNotifications(
   orgId?: string | null,
   limit = 30,
 ): Promise<OrganizerNotification[]> {
+  const inbox = await getOrganizerNotificationInbox(orgId, limit)
+  return inbox.notifications
+}
+
+export async function getOrganizerNotificationInbox(
+  orgId?: string | null,
+  limit = 30,
+): Promise<{ notifications: OrganizerNotification[]; unreadCount: number }> {
   const supabase = await createClient()
-  const { data, error } = await supabase.rpc('get_organizer_notifications', {
+  const { data, error } = await supabase.rpc('get_organizer_notification_inbox', {
     p_org_id: orgId ?? null,
     p_limit: limit,
   })
 
-  if (error || !data) {
-    return []
+  if (error || !data || typeof data !== 'object') {
+    return { notifications: [], unreadCount: 0 }
   }
 
-  return (data as Record<string, unknown>[]).map(parseNotification)
+  const payload = data as {
+    unread_count?: unknown
+    notifications?: unknown
+  }
+
+  const rows = Array.isArray(payload.notifications)
+    ? (payload.notifications as Record<string, unknown>[])
+    : []
+
+  return {
+    notifications: rows.map(parseNotification),
+    unreadCount: Number(payload.unread_count ?? 0),
+  }
 }
 
 export async function countUnreadOrganizerNotifications(orgId?: string | null): Promise<number> {
-  const supabase = await createClient()
-  const { data, error } = await supabase.rpc('count_unread_organizer_notifications', {
-    p_org_id: orgId ?? null,
-  })
-
-  if (error || data == null) {
-    return 0
-  }
-
-  return Number(data)
+  const inbox = await getOrganizerNotificationInbox(orgId, 1)
+  return inbox.unreadCount
 }
