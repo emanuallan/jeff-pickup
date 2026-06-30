@@ -7,19 +7,9 @@ import { arrowRight } from '@/lib/text-arrows'
 import { OrganizrLogo } from '../../../_components/organizr-logo'
 import { SocialLinks } from './social-links'
 
-export function OrgPageShell({
-  children,
-  className,
-}: {
-  children: React.ReactNode
-  className?: string
-}) {
+export function OrgPageShell({ children }: { children: React.ReactNode }) {
   return (
-    <main
-      className={`mx-auto min-h-dvh max-w-lg px-5 py-10 sm:px-6${className ? ` ${className}` : ''}`}
-    >
-      {children}
-    </main>
+    <main className="mx-auto min-h-dvh max-w-lg px-5 py-10 sm:px-6">{children}</main>
   )
 }
 

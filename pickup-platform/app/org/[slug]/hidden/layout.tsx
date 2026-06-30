@@ -29,7 +29,7 @@ export default async function HiddenOrgLayout({ children, params }: Props) {
   const navItems = resolveOrgPublicNavItems({ org, pastSessionCount }, HIDDEN_ORG_NAV_BASE)
 
   return (
-    <OrgPageShell className="pb-24 md:pb-10">
+    <OrgPageShell>
       <p className="rounded-lg border border-amber-500/25 bg-amber-500/5 px-3 py-2 text-center text-xs text-amber-200/90">
         Preview shell at <span className="font-medium">/hidden</span> — not linked publicly
       </p>
