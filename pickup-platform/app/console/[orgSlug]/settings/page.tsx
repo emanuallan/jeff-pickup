@@ -7,6 +7,8 @@ import { DeleteOrgSection } from '../delete-org-section'
 import { FeatureTogglesForm } from '../feature-toggles-form'
 import { WaitlistSettingsForm } from '../waitlist-settings-form'
 import { orgFeatures, orgWaitlistSettings } from '@/lib/org-features'
+import { isInteriorOperator } from '@/lib/interior'
+import { InteriorAddOwnerSection } from '../interior-add-owner-section'
 import { ConsolePage, ConsoleHeader, ConsoleSection } from '../../_components/console-ui'
 
 type Props = {
@@ -33,6 +35,7 @@ export default async function OrgSettingsPage({ params }: Props) {
     : { data: null }
 
   const isOwner = membership?.role === 'owner'
+  const showInteriorTools = isInteriorOperator(user?.id) && isOwner
   const rootDomain = getRootDomain()
 
   return (
@@ -65,6 +68,16 @@ export default async function OrgSettingsPage({ params }: Props) {
         >
           <MaterializeButton orgSlug={orgSlug} />
         </ConsoleSection>
+
+        {showInteriorTools ? (
+          <ConsoleSection
+            title="Interior"
+            description="Platform-operator tools. Not visible to other organizers."
+            className="border-amber-500/20"
+          >
+            <InteriorAddOwnerSection orgSlug={orgSlug} />
+          </ConsoleSection>
+        ) : null}
 
         {isOwner ? (
           <ConsoleSection

@@ -17,6 +17,7 @@ import { getOrgForMember } from '@/lib/orgs'
 import { isValidSlug, normalizeSlug } from '@/lib/tenancy/reserved-slugs'
 import { MAX_ORG_LINKS, normalizeLinkUrl } from '@/lib/social-links'
 import { orgSettings, orgWaitlistSettings, type OrgFeatures, type OrgWaitlistSettings } from '@/lib/org-features'
+import { isInteriorOperator } from '@/lib/interior'
 
 async function requireOrgAdmin(slug: string) {
   const org = await getOrgForMember(slug)
@@ -1034,6 +1035,44 @@ export async function deleteOrg(orgSlug: string, confirmSlug: string): Promise<{
 
   revalidatePath('/console')
   redirect('/console')
+}
+
+export async function interiorAddOrgOwner(
+  orgSlug: string,
+  email: string,
+): Promise<{ error?: string; ok?: boolean; email?: string }> {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!isInteriorOperator(user?.id)) {
+    return { error: 'Not authorized' }
+  }
+
+  const ownerResult = await requireOrgOwner(orgSlug)
+  if ('error' in ownerResult) {
+    return { error: ownerResult.error }
+  }
+
+  const trimmed = email.trim().toLowerCase()
+  if (!trimmed) {
+    return { error: 'Email is required.' }
+  }
+
+  const { data, error } = await supabase.rpc('interior_add_org_owner', {
+    p_org_id: ownerResult.org.id,
+    p_email: trimmed,
+  })
+
+  if (error) {
+    return { error: error.message }
+  }
+
+  const payload = data as { email?: string } | null
+  revalidatePath(`/console/${orgSlug}/settings`)
+  revalidatePath('/console')
+  return { ok: true, email: payload?.email ?? trimmed }
 }
 
 /** Live availability check for the org-creation form. */
