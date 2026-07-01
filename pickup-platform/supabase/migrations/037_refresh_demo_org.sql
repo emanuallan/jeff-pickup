@@ -56,9 +56,11 @@ begin
   into v_ev_next_day
   from unnest(v_pickup_days) as d;
 
-  select v_today + 6 + min((d - extract(dow from v_today + 6)::int + 7) % 7)::int
-  into v_ev_cancel_day
-  from unnest(v_pickup_days) as d;
+  -- Anchor other pickup sessions to the next slot so (schedule_id, starts_at) stays unique.
+  v_ev_cancel_day := v_ev_next_day + 7;
+  v_ev_past1_day := v_ev_next_day - 7;
+  v_ev_past2_day := v_ev_next_day - 14;
+  v_ev_past3_day := v_ev_next_day - 21;
 
   select v_today + 11 + ((6 - extract(dow from v_today + 11)::int + 7) % 7)::int
   into v_ev_tent_day;
@@ -66,20 +68,7 @@ begin
   select v_today + 8 + ((3 - extract(dow from v_today + 8)::int + 7) % 7)::int
   into v_ev_online_day;
 
-  select (v_today - 7) - min((extract(dow from v_today - 7)::int - d + 7) % 7)::int
-  into v_ev_past1_day
-  from unnest(v_pickup_days) as d;
-
-  select (v_today - 14) - min((extract(dow from v_today - 14)::int - d + 7) % 7)::int
-  into v_ev_past2_day
-  from unnest(v_pickup_days) as d;
-
-  select (v_today - 21) - min((extract(dow from v_today - 21)::int - d + 7) % 7)::int
-  into v_ev_past3_day
-  from unnest(v_pickup_days) as d;
-
-  select (v_today - 28) - ((extract(dow from v_today - 28)::int - 6 + 7) % 7)::int
-  into v_ev_past4_day;
+  v_ev_past4_day := v_ev_tent_day - 7;
 
   delete from public.orgs where slug = 'demo';
 
