@@ -206,7 +206,7 @@ begin
       v_loc_park,
       (v_ev_next_day + time '18:30') at time zone v_tz,
       13,
-      14,
+      12,
       'on',
       'Session is full — join the waitlist and we will move you up if a spot opens.',
       v_tz,
