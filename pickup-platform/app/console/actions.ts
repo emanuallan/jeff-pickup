@@ -1040,7 +1040,8 @@ export async function deleteOrg(orgSlug: string, confirmSlug: string): Promise<{
 export async function interiorAddOrgOwner(
   orgSlug: string,
   email: string,
-): Promise<{ error?: string; ok?: boolean; email?: string }> {
+  timezone?: string | null,
+): Promise<{ error?: string; ok?: boolean; email?: string; timezoneApplied?: string }> {
   const supabase = await createClient()
   const {
     data: { user },
@@ -1060,19 +1061,30 @@ export async function interiorAddOrgOwner(
     return { error: 'Email is required.' }
   }
 
+  const tz = timezone?.trim() || null
+
   const { data, error } = await supabase.rpc('interior_add_org_owner', {
     p_org_id: ownerResult.org.id,
     p_email: trimmed,
+    p_timezone: tz,
   })
 
   if (error) {
     return { error: error.message }
   }
 
-  const payload = data as { email?: string } | null
+  const payload = data as { email?: string; timezone_applied?: string | null } | null
   revalidatePath(`/console/${orgSlug}/settings`)
+  revalidatePath(`/console/${orgSlug}/schedules`)
+  revalidatePath(`/console/${orgSlug}/sessions`)
+  revalidatePath(`/console/${orgSlug}`)
+  revalidatePath(`/org/${orgSlug}`)
   revalidatePath('/console')
-  return { ok: true, email: payload?.email ?? trimmed }
+  return {
+    ok: true,
+    email: payload?.email ?? trimmed,
+    timezoneApplied: payload?.timezone_applied ?? undefined,
+  }
 }
 
 /** Live availability check for the org-creation form. */
