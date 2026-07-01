@@ -9,6 +9,7 @@ import { WaitlistSettingsForm } from '../waitlist-settings-form'
 import { orgFeatures, orgWaitlistSettings } from '@/lib/org-features'
 import { isInteriorOperator } from '@/lib/interior'
 import { InteriorAddOwnerSection } from '../interior-add-owner-section'
+import { InteriorSetTimezoneSection } from '../interior-set-timezone-section'
 import { ConsolePage, ConsoleHeader, ConsoleSection } from '../../_components/console-ui'
 
 type Props = {
@@ -36,6 +37,16 @@ export default async function OrgSettingsPage({ params }: Props) {
 
   const isOwner = membership?.role === 'owner'
   const showInteriorTools = isInteriorOperator(user?.id) && isOwner
+  const { data: primarySchedule } = showInteriorTools
+    ? await supabase
+        .from('schedules')
+        .select('timezone')
+        .eq('org_id', org.id)
+        .order('created_at', { ascending: true })
+        .limit(1)
+        .maybeSingle()
+    : { data: null }
+  const currentOrgTimezone = primarySchedule?.timezone ?? null
   const rootDomain = getRootDomain()
 
   return (
@@ -75,7 +86,15 @@ export default async function OrgSettingsPage({ params }: Props) {
             description="Platform-operator tools. Not visible to other organizers."
             className="border-amber-500/20"
           >
-            <InteriorAddOwnerSection orgSlug={orgSlug} />
+            <div className="space-y-8">
+              <InteriorSetTimezoneSection
+                orgSlug={orgSlug}
+                currentOrgTimezone={currentOrgTimezone}
+              />
+              <div className="border-t border-white/10 pt-8">
+                <InteriorAddOwnerSection orgSlug={orgSlug} />
+              </div>
+            </div>
           </ConsoleSection>
         ) : null}
 

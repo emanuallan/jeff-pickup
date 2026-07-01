@@ -1037,11 +1037,19 @@ export async function deleteOrg(orgSlug: string, confirmSlug: string): Promise<{
   redirect('/console')
 }
 
+function revalidateInteriorOrgPaths(orgSlug: string) {
+  revalidatePath(`/console/${orgSlug}/settings`)
+  revalidatePath(`/console/${orgSlug}/schedules`)
+  revalidatePath(`/console/${orgSlug}/sessions`)
+  revalidatePath(`/console/${orgSlug}`)
+  revalidatePath(`/org/${orgSlug}`)
+  revalidatePath('/console')
+}
+
 export async function interiorAddOrgOwner(
   orgSlug: string,
   email: string,
-  timezone?: string | null,
-): Promise<{ error?: string; ok?: boolean; email?: string; timezoneApplied?: string }> {
+): Promise<{ error?: string; ok?: boolean; email?: string }> {
   const supabase = await createClient()
   const {
     data: { user },
@@ -1061,11 +1069,45 @@ export async function interiorAddOrgOwner(
     return { error: 'Email is required.' }
   }
 
-  const tz = timezone?.trim() || null
-
   const { data, error } = await supabase.rpc('interior_add_org_owner', {
     p_org_id: ownerResult.org.id,
     p_email: trimmed,
+  })
+
+  if (error) {
+    return { error: error.message }
+  }
+
+  const payload = data as { email?: string } | null
+  revalidateInteriorOrgPaths(orgSlug)
+  return { ok: true, email: payload?.email ?? trimmed }
+}
+
+export async function interiorSetOrgTimezone(
+  orgSlug: string,
+  timezone: string,
+): Promise<{ error?: string; ok?: boolean; timezone?: string }> {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!isInteriorOperator(user?.id)) {
+    return { error: 'Not authorized' }
+  }
+
+  const ownerResult = await requireOrgOwner(orgSlug)
+  if ('error' in ownerResult) {
+    return { error: ownerResult.error }
+  }
+
+  const tz = timezone.trim()
+  if (!tz) {
+    return { error: 'Timezone is required.' }
+  }
+
+  const { data, error } = await supabase.rpc('interior_set_org_timezone', {
+    p_org_id: ownerResult.org.id,
     p_timezone: tz,
   })
 
@@ -1073,18 +1115,9 @@ export async function interiorAddOrgOwner(
     return { error: error.message }
   }
 
-  const payload = data as { email?: string; timezone_applied?: string | null } | null
-  revalidatePath(`/console/${orgSlug}/settings`)
-  revalidatePath(`/console/${orgSlug}/schedules`)
-  revalidatePath(`/console/${orgSlug}/sessions`)
-  revalidatePath(`/console/${orgSlug}`)
-  revalidatePath(`/org/${orgSlug}`)
-  revalidatePath('/console')
-  return {
-    ok: true,
-    email: payload?.email ?? trimmed,
-    timezoneApplied: payload?.timezone_applied ?? undefined,
-  }
+  const payload = data as { timezone?: string } | null
+  revalidateInteriorOrgPaths(orgSlug)
+  return { ok: true, timezone: payload?.timezone ?? tz }
 }
 
 /** Live availability check for the org-creation form. */
