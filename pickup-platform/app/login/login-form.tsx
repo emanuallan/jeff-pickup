@@ -14,10 +14,9 @@ import { loginErrorMessage } from '@/lib/login-errors'
 
 type Props = {
   authError?: string
-  nextPath?: string
 }
 
-export function LoginForm({ authError, nextPath = '/console' }: Props) {
+export function LoginForm({ authError }: Props) {
   const [email, setEmail] = useState('')
   const [status, setStatus] = useState<'idle' | 'loading' | 'sent' | 'error'>('idle')
   const [toastMessage, setToastMessage] = useState<string | null>(null)
@@ -37,12 +36,10 @@ export function LoginForm({ authError, nextPath = '/console' }: Props) {
     try {
       const { createClient } = await import('@/lib/supabase/client')
       const supabase = createClient()
-      const callbackUrl = new URL('/auth/callback', window.location.origin)
-      callbackUrl.searchParams.set('next', nextPath)
       const { error: signInError } = await supabase.auth.signInWithOtp({
         email: email.trim(),
         options: {
-          emailRedirectTo: callbackUrl.toString(),
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
         },
       })
 

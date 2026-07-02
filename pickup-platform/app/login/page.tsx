@@ -23,5 +23,5 @@ export default async function LoginPage({ searchParams }: Props) {
     redirect(destination)
   }
 
-  return <LoginForm authError={error} nextPath={destination} />
+  return <LoginForm authError={error} />
 }

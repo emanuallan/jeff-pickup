@@ -1,5 +1,4 @@
 import { createBrowserClient } from '@supabase/ssr'
-import { getSupabaseCookieOptions } from './cookie-options'
 
 export function createClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -9,7 +8,5 @@ export function createClient() {
     throw new Error('Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY')
   }
 
-  return createBrowserClient(url, key, {
-    cookieOptions: getSupabaseCookieOptions(),
-  })
+  return createBrowserClient(url, key)
 }
