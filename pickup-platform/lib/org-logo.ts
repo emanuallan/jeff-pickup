@@ -13,6 +13,23 @@ const MIME_TO_EXT: Record<OrgLogoMimeType, string> = {
   'image/webp': 'webp',
 }
 
+const EXT_TO_MIME: Record<string, OrgLogoMimeType> = {
+  jpg: 'image/jpeg',
+  jpeg: 'image/jpeg',
+  png: 'image/png',
+  webp: 'image/webp',
+}
+
+function inferLogoMime(file: File): OrgLogoMimeType | null {
+  if (ORG_LOGO_MIME_TYPES.includes(file.type as OrgLogoMimeType)) {
+    return file.type as OrgLogoMimeType
+  }
+
+  const ext = file.name.split('.').pop()?.toLowerCase()
+  if (!ext) return null
+  return EXT_TO_MIME[ext] ?? null
+}
+
 export function extensionForMime(mime: OrgLogoMimeType): string {
   return MIME_TO_EXT[mime]
 }
@@ -46,7 +63,8 @@ export function parseOurBucketLogoPath(logoUrl: string | null | undefined): stri
 }
 
 export function validateLogoFile(file: File): { ok: true; mime: OrgLogoMimeType } | { ok: false; error: string } {
-  if (!ORG_LOGO_MIME_TYPES.includes(file.type as OrgLogoMimeType)) {
+  const mime = inferLogoMime(file)
+  if (!mime) {
     return { ok: false, error: 'Logo must be a PNG, JPG, or WebP image.' }
   }
 
@@ -58,5 +76,5 @@ export function validateLogoFile(file: File): { ok: true; mime: OrgLogoMimeType 
     return { ok: false, error: 'Logo file is empty.' }
   }
 
-  return { ok: true, mime: file.type as OrgLogoMimeType }
+  return { ok: true, mime }
 }

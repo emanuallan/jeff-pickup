@@ -913,10 +913,22 @@ async function updateOrgLogoUrl(orgSlug: string, logoUrl: string | null) {
   return { ok: true as const, logoUrl }
 }
 
+function friendlyLogoStorageError(message: string): string {
+  if (message.includes('row-level security') || message.includes('security policy')) {
+    return 'Upload failed due to a permissions error. Try again in a moment.'
+  }
+  return message
+}
+
 export async function uploadOrgLogo(orgSlug: string, formData: FormData) {
-  const org = await requireOrgAdmin(orgSlug)
+  let org
+  try {
+    org = await requireOrgAdmin(orgSlug)
+  } catch {
+    return { error: 'Not authorized.' }
+  }
+
   // Storage writes use the service role after the membership check above.
-  // Server actions don't reliably pass the user JWT to Storage RLS (upsert also needs SELECT).
   const admin = createAdminClient()
 
   const file = formData.get('logo')
@@ -933,42 +945,63 @@ export async function uploadOrgLogo(orgSlug: string, formData: FormData) {
   const storagePath = buildOrgLogoPath(org.id, ext)
   const previousPath = parseOurBucketLogoPath(org.branding.logo_url)
 
-  const { error: uploadError } = await admin.storage
-    .from(ORG_LOGO_BUCKET)
-    .upload(storagePath, file, { upsert: true, contentType: validation.mime })
+  try {
+    const { error: uploadError } = await admin.storage
+      .from(ORG_LOGO_BUCKET)
+      .upload(storagePath, file, { upsert: true, contentType: validation.mime })
 
-  if (uploadError) {
-    return { error: uploadError.message }
+    if (uploadError) {
+      return { error: friendlyLogoStorageError(uploadError.message) }
+    }
+
+    const logoUrl = publicLogoUrl(storagePath)
+    const updateResult = await updateOrgLogoUrl(orgSlug, logoUrl)
+    if ('error' in updateResult) {
+      // Roll back the new object when the DB update fails (safe when path changed).
+      if (previousPath !== storagePath) {
+        await admin.storage.from(ORG_LOGO_BUCKET).remove([storagePath])
+      }
+      return updateResult
+    }
+
+    if (previousPath && previousPath !== storagePath) {
+      await admin.storage.from(ORG_LOGO_BUCKET).remove([previousPath])
+    }
+
+    return { ok: true as const, logoUrl }
+  } catch {
+    return { error: 'Upload failed. Try again.' }
   }
-
-  const logoUrl = publicLogoUrl(storagePath)
-  const updateResult = await updateOrgLogoUrl(orgSlug, logoUrl)
-  if ('error' in updateResult) {
-    return updateResult
-  }
-
-  if (previousPath && previousPath !== storagePath) {
-    await admin.storage.from(ORG_LOGO_BUCKET).remove([previousPath])
-  }
-
-  return { ok: true as const, logoUrl }
 }
 
 export async function removeOrgLogo(orgSlug: string) {
-  const org = await requireOrgAdmin(orgSlug)
+  let org
+  try {
+    org = await requireOrgAdmin(orgSlug)
+  } catch {
+    return { error: 'Not authorized.' }
+  }
+
   const admin = createAdminClient()
-
   const storagePath = parseOurBucketLogoPath(org.branding.logo_url)
-  const updateResult = await updateOrgLogoUrl(orgSlug, null)
-  if ('error' in updateResult) {
-    return updateResult
-  }
 
-  if (storagePath) {
-    await admin.storage.from(ORG_LOGO_BUCKET).remove([storagePath])
-  }
+  try {
+    const updateResult = await updateOrgLogoUrl(orgSlug, null)
+    if ('error' in updateResult) {
+      return updateResult
+    }
 
-  return { ok: true as const }
+    if (storagePath) {
+      const { error: removeError } = await admin.storage.from(ORG_LOGO_BUCKET).remove([storagePath])
+      if (removeError) {
+        return { error: 'Logo removed from your group, but cleanup failed. Try uploading again.' }
+      }
+    }
+
+    return { ok: true as const }
+  } catch {
+    return { error: 'Remove failed. Try again.' }
+  }
 }
 
 export async function updateBranding(orgSlug: string, formData: FormData) {
