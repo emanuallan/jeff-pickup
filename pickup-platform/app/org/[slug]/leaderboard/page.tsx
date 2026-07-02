@@ -7,7 +7,6 @@ import { orgFeatures } from '@/lib/org-features'
 import { accentOnDark } from '@/lib/colors'
 import { buildOrgMetadata } from '@/lib/og-metadata'
 import { OrgHeader } from '../_components/org-header'
-import { OrganizerConsoleLinkSlot } from '../_components/organizer-console-link'
 import { OrgPageShell, OrgPageFooter } from '../_components/org-page-shell'
 import {
   CapsLeaderboard,
@@ -68,10 +67,6 @@ export default async function LeaderboardPage({ params }: Props) {
 
   return (
     <OrgPageShell>
-      <nav className="flex min-h-9 items-center justify-between gap-3">
-        <OrganizerConsoleLinkSlot slug={slug} />
-      </nav>
-
       <div className="flex justify-start">
         <Link
           href="/cal"

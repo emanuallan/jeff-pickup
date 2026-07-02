@@ -29,7 +29,6 @@ import { LeaderboardLinkDeferred } from "./leaderboard-link-deferred";
 import { AllSessionsLinkDeferred } from "./all-sessions-link-deferred";
 import { ShareButton } from "../../share-button-lazy";
 import { OrgHeader } from "../../_components/org-header";
-import { OrganizerConsoleLinkSlot } from "../../_components/organizer-console-link";
 import { OrgPageShell, OrgPageFooter } from "../../_components/org-page-shell";
 import {
 	StatusPill,
@@ -125,12 +124,9 @@ export default async function EventPage({ params }: Props) {
 		<OrgPageShell>
 			<JsonLd data={buildEventJsonLd(org, event, `/cal/${eventId}`)} />
 			<nav className="flex min-h-9 items-center justify-between gap-3">
-				<div className="flex min-w-0 items-center gap-3">
-					<OrganizerConsoleLinkSlot slug={slug} />
-					<Suspense fallback={null}>
-						<AllSessionsLinkDeferred orgId={org.id} />
-					</Suspense>
-				</div>
+				<Suspense fallback={null}>
+					<AllSessionsLinkDeferred orgId={org.id} />
+				</Suspense>
 				<ShareButton title={shareTitle} text={shareText} imagePath={`/cal/${eventId}/share-image`} accent={accent} />
 			</nav>
 

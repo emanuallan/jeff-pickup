@@ -1,7 +1,6 @@
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import type { NextResponse } from 'next/server'
-import { getSupabaseCookieOptions } from './cookie-options'
 
 /**
  * Supabase client for Route Handlers. Session cookies must be written to both
@@ -18,7 +17,6 @@ export async function createRouteHandlerClient(response: NextResponse) {
   const cookieStore = await cookies()
 
   return createServerClient(url, key, {
-    cookieOptions: getSupabaseCookieOptions(),
     cookies: {
       getAll() {
         return cookieStore.getAll()
