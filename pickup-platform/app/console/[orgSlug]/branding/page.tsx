@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation'
 import { getOrgForMember } from '@/lib/orgs'
 import { orgBaseUrl } from '@/lib/og-metadata'
+import { createClient } from '@/lib/supabase/server'
 import { ProfileForm } from '../profile-form'
 import { BrandingForm } from '../branding-form'
 import { LinksForm } from '../links-form'
@@ -19,6 +20,21 @@ export default async function OrgBrandingPage({ params }: Props) {
   if (!org) {
     notFound()
   }
+
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  const { data: membership } = user
+    ? await supabase
+        .from('org_members')
+        .select('role')
+        .eq('org_id', org.id)
+        .eq('user_id', user.id)
+        .maybeSingle()
+    : { data: null }
+
+  const canManageLogo = membership?.role === 'owner' || membership?.role === 'admin'
 
   const orgUrl = orgBaseUrl(org.slug)
   const orgHost = new URL(orgUrl).host
@@ -43,8 +59,10 @@ export default async function OrgBrandingPage({ params }: Props) {
         >
           <BrandingForm
             orgSlug={orgSlug}
+            orgName={org.name}
             logoUrl={org.branding.logo_url}
             accentColor={org.branding.accent_color}
+            canManageLogo={canManageLogo}
           />
         </ConsoleSection>
 

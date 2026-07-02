@@ -39,12 +39,11 @@ Track deferred work and known simplifications. Prefer shipping simple, refine la
 ## Phase 3 — Polish + self-serve onboarding
 
 - [x] Live slug availability check in org-creation form
-- [x] Branding: logo URL + accent color picker (console)
+- [x] Branding: logo upload (Supabase Storage) + accent color picker (console)
 - [x] Weather on event detail page (Open-Meteo, no key)
 - [x] Geocode location address on create (Nominatim)
 - [x] Share button (native share + clipboard) on org + event pages
 - [ ] i18n EN/ES — doing last, per owner
-- [ ] Logo upload pipeline (Supabase Storage) — currently URL field only
 - [ ] Weather on org-page event list cards (currently detail page only)
 - [ ] Multi-step wizard (location + schedule in one flow) — console guides this today
 

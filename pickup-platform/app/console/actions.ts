@@ -18,6 +18,14 @@ import { isValidSlug, normalizeSlug } from '@/lib/tenancy/reserved-slugs'
 import { MAX_ORG_LINKS, normalizeLinkUrl } from '@/lib/social-links'
 import { orgSettings, orgWaitlistSettings, type OrgFeatures, type OrgWaitlistSettings } from '@/lib/org-features'
 import { isInteriorOperator } from '@/lib/interior'
+import {
+  ORG_LOGO_BUCKET,
+  buildOrgLogoPath,
+  extensionForMime,
+  parseOurBucketLogoPath,
+  publicLogoUrl,
+  validateLogoFile,
+} from '@/lib/org-logo'
 
 async function requireOrgAdmin(slug: string) {
   const org = await getOrgForMember(slug)
@@ -875,20 +883,24 @@ export async function updateOrgProfile(orgSlug: string, formData: FormData) {
   return { ok: true }
 }
 
-export async function updateBranding(orgSlug: string, formData: FormData) {
+function revalidateOrgBrandingPaths(orgSlug: string) {
+  revalidatePath(`/console/${orgSlug}`)
+  revalidatePath(`/console/${orgSlug}/branding`)
+  revalidatePath(`/org/${orgSlug}`)
+}
+
+async function updateOrgLogoUrl(orgSlug: string, logoUrl: string | null) {
   const org = await requireOrgAdmin(orgSlug)
   const supabase = await createClient()
-
-  const logoUrl = String(formData.get('logo_url') ?? '').trim()
-  const accentColor = String(formData.get('accent_color') ?? '').trim()
-
-  const accent = /^#[0-9a-fA-F]{6}$/.test(accentColor) ? accentColor : '#2563eb'
 
   const { error } = await supabase
     .from('orgs')
     .update({
-      // Preserve links — branding is stored as one JSONB object.
-      branding: { logo_url: logoUrl || null, accent_color: accent, links: org.branding.links },
+      branding: {
+        logo_url: logoUrl,
+        accent_color: org.branding.accent_color,
+        links: org.branding.links,
+      },
     })
     .eq('id', org.id)
 
@@ -896,9 +908,89 @@ export async function updateBranding(orgSlug: string, formData: FormData) {
     return { error: error.message }
   }
 
-  revalidatePath(`/console/${orgSlug}`)
-  revalidatePath(`/console/${orgSlug}/branding`)
-  revalidatePath(`/org/${orgSlug}`)
+  revalidateOrgBrandingPaths(orgSlug)
+  return { ok: true as const, logoUrl }
+}
+
+export async function uploadOrgLogo(orgSlug: string, formData: FormData) {
+  const org = await requireOrgAdmin(orgSlug)
+  const supabase = await createClient()
+
+  const file = formData.get('logo')
+  if (!(file instanceof File)) {
+    return { error: 'Choose an image to upload.' }
+  }
+
+  const validation = validateLogoFile(file)
+  if (!validation.ok) {
+    return { error: validation.error }
+  }
+
+  const ext = extensionForMime(validation.mime)
+  const storagePath = buildOrgLogoPath(org.id, ext)
+  const previousPath = parseOurBucketLogoPath(org.branding.logo_url)
+
+  const { error: uploadError } = await supabase.storage
+    .from(ORG_LOGO_BUCKET)
+    .upload(storagePath, file, { upsert: true, contentType: validation.mime })
+
+  if (uploadError) {
+    return { error: uploadError.message }
+  }
+
+  const logoUrl = publicLogoUrl(storagePath)
+  const updateResult = await updateOrgLogoUrl(orgSlug, logoUrl)
+  if ('error' in updateResult) {
+    return updateResult
+  }
+
+  if (previousPath && previousPath !== storagePath) {
+    await supabase.storage.from(ORG_LOGO_BUCKET).remove([previousPath])
+  }
+
+  return { ok: true as const, logoUrl }
+}
+
+export async function removeOrgLogo(orgSlug: string) {
+  const org = await requireOrgAdmin(orgSlug)
+  const supabase = await createClient()
+
+  const storagePath = parseOurBucketLogoPath(org.branding.logo_url)
+  const updateResult = await updateOrgLogoUrl(orgSlug, null)
+  if ('error' in updateResult) {
+    return updateResult
+  }
+
+  if (storagePath) {
+    await supabase.storage.from(ORG_LOGO_BUCKET).remove([storagePath])
+  }
+
+  return { ok: true as const }
+}
+
+export async function updateBranding(orgSlug: string, formData: FormData) {
+  const org = await requireOrgAdmin(orgSlug)
+  const supabase = await createClient()
+
+  const accentColor = String(formData.get('accent_color') ?? '').trim()
+  const accent = /^#[0-9a-fA-F]{6}$/.test(accentColor) ? accentColor : '#2563eb'
+
+  const { error } = await supabase
+    .from('orgs')
+    .update({
+      branding: {
+        logo_url: org.branding.logo_url,
+        accent_color: accent,
+        links: org.branding.links,
+      },
+    })
+    .eq('id', org.id)
+
+  if (error) {
+    return { error: error.message }
+  }
+
+  revalidateOrgBrandingPaths(orgSlug)
   return { ok: true }
 }
 
