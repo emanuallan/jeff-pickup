@@ -38,6 +38,7 @@ In the Supabase **SQL Editor**, run in order:
 11. `supabase/migrations/011_schedule_interval.sql`
 12. `supabase/migrations/012_normalize_phone_us10.sql`
 13. `supabase/migrations/041_org_logo_storage.sql` (after all prior migrations through 040)
+14. `supabase/migrations/042_org_logo_storage_select.sql`
 
 Run migrations 013–040 in order as well if this is a fresh project — see `supabase/migrations/` for the full sequence.
 

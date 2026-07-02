@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { materializeEvents } from '@/lib/materializer'
 import {
   getScheduleDeleteImpact,
@@ -914,7 +915,9 @@ async function updateOrgLogoUrl(orgSlug: string, logoUrl: string | null) {
 
 export async function uploadOrgLogo(orgSlug: string, formData: FormData) {
   const org = await requireOrgAdmin(orgSlug)
-  const supabase = await createClient()
+  // Storage writes use the service role after the membership check above.
+  // Server actions don't reliably pass the user JWT to Storage RLS (upsert also needs SELECT).
+  const admin = createAdminClient()
 
   const file = formData.get('logo')
   if (!(file instanceof File)) {
@@ -930,7 +933,7 @@ export async function uploadOrgLogo(orgSlug: string, formData: FormData) {
   const storagePath = buildOrgLogoPath(org.id, ext)
   const previousPath = parseOurBucketLogoPath(org.branding.logo_url)
 
-  const { error: uploadError } = await supabase.storage
+  const { error: uploadError } = await admin.storage
     .from(ORG_LOGO_BUCKET)
     .upload(storagePath, file, { upsert: true, contentType: validation.mime })
 
@@ -945,7 +948,7 @@ export async function uploadOrgLogo(orgSlug: string, formData: FormData) {
   }
 
   if (previousPath && previousPath !== storagePath) {
-    await supabase.storage.from(ORG_LOGO_BUCKET).remove([previousPath])
+    await admin.storage.from(ORG_LOGO_BUCKET).remove([previousPath])
   }
 
   return { ok: true as const, logoUrl }
@@ -953,7 +956,7 @@ export async function uploadOrgLogo(orgSlug: string, formData: FormData) {
 
 export async function removeOrgLogo(orgSlug: string) {
   const org = await requireOrgAdmin(orgSlug)
-  const supabase = await createClient()
+  const admin = createAdminClient()
 
   const storagePath = parseOurBucketLogoPath(org.branding.logo_url)
   const updateResult = await updateOrgLogoUrl(orgSlug, null)
@@ -962,7 +965,7 @@ export async function removeOrgLogo(orgSlug: string) {
   }
 
   if (storagePath) {
-    await supabase.storage.from(ORG_LOGO_BUCKET).remove([storagePath])
+    await admin.storage.from(ORG_LOGO_BUCKET).remove([storagePath])
   }
 
   return { ok: true as const }
