@@ -141,29 +141,16 @@ export function LoginForm({ authError, nextPath = '/console' }: Props) {
     }
   }
 
+  function handleCodePasted(next: string) {
+    setCode(next)
+    if (!busy && isCompleteOtp(next)) {
+      void verifyCode(next)
+    }
+  }
+
   async function handleResend() {
     if (resendIn > 0 || busy) return
     await sendCode()
-  }
-
-  async function handlePasteCode() {
-    if (busy) return
-
-    try {
-      const text = await navigator.clipboard.readText()
-      const next = normalizeOtpInput(text)
-      if (!next) {
-        setToastMessage("Clipboard doesn't contain a sign-in code.")
-        return
-      }
-
-      setCode(next)
-      if (isCompleteOtp(next)) {
-        void verifyCode(next)
-      }
-    } catch {
-      setToastMessage("Couldn't read clipboard. Tap the code field and paste manually.")
-    }
   }
 
   function handleChangeEmail() {
@@ -244,23 +231,14 @@ export function LoginForm({ authError, nextPath = '/console' }: Props) {
           </form>
         ) : (
           <form onSubmit={handleCodeSubmit} className="mt-10 space-y-6">
-            <div className="space-y-4">
+            <div className="space-y-3">
               <OtpInput
                 value={code}
                 onChange={handleCodeChange}
+                onCodePasted={handleCodePasted}
                 disabled={busy}
                 autoFocus
               />
-              <div className="flex justify-center">
-                <button
-                  type="button"
-                  onClick={handlePasteCode}
-                  disabled={busy}
-                  className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-3.5 py-1.5 text-sm font-medium text-zinc-200 transition hover:border-white/20 hover:bg-white/10 disabled:opacity-50"
-                >
-                  Paste code
-                </button>
-              </div>
               {busy ? (
                 <p className="text-center text-sm text-zinc-500">Verifying…</p>
               ) : null}
