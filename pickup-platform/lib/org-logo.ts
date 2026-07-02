@@ -34,9 +34,34 @@ export function extensionForMime(mime: OrgLogoMimeType): string {
   return MIME_TO_EXT[mime]
 }
 
-export function buildOrgLogoPath(orgId: string, ext: string): string {
-  return `${ORG_LOGO_PATH_PREFIX}/${orgId}/logo.${ext}`
+/** Safe filename segment from a group display name — e.g. "Jeff Soccer" → "jeff_soccer". */
+export function sanitizeOrgNameForLogoFilename(orgName: string): string {
+  const slug = orgName
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '')
+    .slice(0, 48)
+  return slug || 'group'
 }
+
+function logoFilenameId(now = new Date()): string {
+  const stamp = now
+    .toISOString()
+    .replace(/[-:T.Z]/g, '')
+    .slice(0, 14)
+  const suffix = Math.random().toString(36).slice(2, 8)
+  return `${stamp}_${suffix}`
+}
+
+export function buildOrgLogoPath(orgId: string, orgName: string, ext: string): string {
+  const namePart = sanitizeOrgNameForLogoFilename(orgName)
+  const filename = `${namePart}_logo_${logoFilenameId()}.${ext}`
+  return `${ORG_LOGO_PATH_PREFIX}/${orgId}/${filename}`
+}
+
+const OUR_BUCKET_LOGO_PATH =
+  /^[0-9a-f-]{36}\/(?:logo\.(?:jpg|png|webp)|[a-z0-9_]+_logo_[a-z0-9_]+\.(?:jpg|png|webp))$/i
 
 export function publicLogoUrl(storagePath: string): string {
   const base = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -57,7 +82,7 @@ export function parseOurBucketLogoPath(logoUrl: string | null | undefined): stri
   if (!logoUrl.startsWith(prefix)) return null
 
   const path = logoUrl.slice(prefix.length)
-  if (!/^[0-9a-f-]{36}\/logo\.(jpg|png|webp)$/i.test(path)) return null
+  if (!OUR_BUCKET_LOGO_PATH.test(path)) return null
 
   return `${ORG_LOGO_PATH_PREFIX}/${path}`
 }

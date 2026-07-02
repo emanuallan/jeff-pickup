@@ -942,13 +942,13 @@ export async function uploadOrgLogo(orgSlug: string, formData: FormData) {
   }
 
   const ext = extensionForMime(validation.mime)
-  const storagePath = buildOrgLogoPath(org.id, ext)
+  const storagePath = buildOrgLogoPath(org.id, org.name, ext)
   const previousPath = parseOurBucketLogoPath(org.branding.logo_url)
 
   try {
     const { error: uploadError } = await admin.storage
       .from(ORG_LOGO_BUCKET)
-      .upload(storagePath, file, { upsert: true, contentType: validation.mime })
+      .upload(storagePath, file, { contentType: validation.mime })
 
     if (uploadError) {
       return { error: friendlyLogoStorageError(uploadError.message) }
