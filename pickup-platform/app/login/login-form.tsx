@@ -146,6 +146,26 @@ export function LoginForm({ authError, nextPath = '/console' }: Props) {
     }
   }
 
+  async function handlePasteCode() {
+    if (busy) return
+
+    try {
+      const text = await navigator.clipboard.readText()
+      const next = normalizeOtpInput(text)
+      if (!next) {
+        setToastMessage("Clipboard doesn't contain a sign-in code.")
+        return
+      }
+
+      setCode(next)
+      if (isCompleteOtp(next)) {
+        void verifyCode(next)
+      }
+    } catch {
+      setToastMessage('Tap the code field, then paste from the menu above your keyboard.')
+    }
+  }
+
   async function handleResend() {
     if (resendIn > 0 || busy) return
     await sendCode()
@@ -233,6 +253,7 @@ export function LoginForm({ authError, nextPath = '/console' }: Props) {
               <OtpInput
                 value={code}
                 onChange={handleCodeChange}
+                onPaste={handlePasteCode}
                 disabled={busy}
                 autoFocus
               />

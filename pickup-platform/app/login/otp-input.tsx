@@ -1,56 +1,27 @@
 'use client'
 
-import { useId, useRef } from 'react'
+import { useId } from 'react'
 import { OTP_LENGTH } from '@/lib/login-otp'
+import { organizrInput } from '../_components/organizr-shell'
 
 type Props = {
   value: string
   onChange: (event: React.ChangeEvent<HTMLInputElement>) => void
+  onPaste?: () => void
   disabled?: boolean
   autoFocus?: boolean
 }
 
-export function OtpInput({ value, onChange, disabled, autoFocus }: Props) {
-  const inputRef = useRef<HTMLInputElement>(null)
-  const labelId = useId()
-  const digits = value.padEnd(OTP_LENGTH, ' ').slice(0, OTP_LENGTH).split('')
+export function OtpInput({ value, onChange, onPaste, disabled, autoFocus }: Props) {
+  const inputId = useId()
 
   return (
-    <div className="relative">
-      <label id={labelId} className="sr-only">
+    <div className="space-y-3">
+      <label htmlFor={inputId} className="sr-only">
         6-digit sign-in code
       </label>
-      <div
-        className="flex justify-center gap-2 sm:gap-2.5"
-        onClick={() => inputRef.current?.focus()}
-        role="group"
-        aria-labelledby={labelId}
-      >
-        {digits.map((digit, index) => {
-          const filled = digit.trim().length > 0
-          const active = !disabled && value.length === index
-          const cursor = !disabled && value.length === OTP_LENGTH && index === OTP_LENGTH - 1
-
-          return (
-            <div
-              key={index}
-              aria-hidden
-              className={[
-                'flex h-12 w-10 items-center justify-center rounded-xl border text-lg font-semibold tabular-nums transition sm:h-14 sm:w-11 sm:text-xl',
-                filled
-                  ? 'border-indigo-400/40 bg-indigo-500/10 text-zinc-50'
-                  : 'border-white/10 bg-zinc-900/50 text-zinc-500',
-                active || cursor ? 'border-indigo-500/60 ring-2 ring-indigo-500/20' : '',
-                disabled ? 'opacity-60' : '',
-              ].join(' ')}
-            >
-              {filled ? digit : '·'}
-            </div>
-          )
-        })}
-      </div>
       <input
-        ref={inputRef}
+        id={inputId}
         type="text"
         inputMode="numeric"
         autoComplete="one-time-code"
@@ -59,9 +30,21 @@ export function OtpInput({ value, onChange, disabled, autoFocus }: Props) {
         value={value}
         onChange={onChange}
         maxLength={OTP_LENGTH}
-        className="absolute inset-0 cursor-text text-base opacity-0"
-        aria-labelledby={labelId}
+        placeholder="000000"
+        className={`${organizrInput} py-3.5 text-center text-base font-semibold tracking-[0.35em] tabular-nums placeholder:tracking-[0.35em] placeholder:text-zinc-700 sm:text-xl`}
       />
+      {onPaste ? (
+        <div className="flex justify-center">
+          <button
+            type="button"
+            onClick={onPaste}
+            disabled={disabled}
+            className="inline-flex min-h-9 items-center rounded-lg border border-white/10 bg-white/5 px-3.5 py-1.5 text-sm font-medium text-zinc-200 transition hover:border-white/20 hover:bg-white/10 disabled:opacity-50"
+          >
+            Paste code
+          </button>
+        </div>
+      ) : null}
     </div>
   )
 }
