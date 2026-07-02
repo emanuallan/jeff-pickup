@@ -1,44 +1,19 @@
 'use client'
 
-import { useEffect, useId, useRef } from 'react'
-import { normalizeOtpInput, OTP_LENGTH } from '@/lib/login-otp'
+import { useId, useRef } from 'react'
+import { OTP_LENGTH } from '@/lib/login-otp'
 
 type Props = {
   value: string
   onChange: (event: React.ChangeEvent<HTMLInputElement>) => void
-  onCodePasted?: (code: string) => void
   disabled?: boolean
   autoFocus?: boolean
 }
 
-export function OtpInput({ value, onChange, onCodePasted, disabled, autoFocus }: Props) {
+export function OtpInput({ value, onChange, disabled, autoFocus }: Props) {
   const inputRef = useRef<HTMLInputElement>(null)
-  const pasteAttemptedRef = useRef(false)
   const labelId = useId()
   const digits = value.padEnd(OTP_LENGTH, ' ').slice(0, OTP_LENGTH).split('')
-
-  useEffect(() => {
-    if (value.length === 0) {
-      pasteAttemptedRef.current = false
-    }
-  }, [value])
-
-  async function tryPasteOnFirstInteract() {
-    inputRef.current?.focus()
-
-    if (disabled || pasteAttemptedRef.current) return
-    pasteAttemptedRef.current = true
-
-    try {
-      const text = await navigator.clipboard.readText()
-      const next = normalizeOtpInput(text)
-      if (next) {
-        onCodePasted?.(next)
-      }
-    } catch {
-      // Clipboard unavailable or denied — fall through to manual entry.
-    }
-  }
 
   return (
     <div className="relative">
@@ -47,7 +22,7 @@ export function OtpInput({ value, onChange, onCodePasted, disabled, autoFocus }:
       </label>
       <div
         className="flex justify-center gap-2 sm:gap-2.5"
-        onPointerDown={() => void tryPasteOnFirstInteract()}
+        onClick={() => inputRef.current?.focus()}
         role="group"
         aria-labelledby={labelId}
       >
@@ -83,7 +58,6 @@ export function OtpInput({ value, onChange, onCodePasted, disabled, autoFocus }:
         disabled={disabled}
         value={value}
         onChange={onChange}
-        onFocus={() => void tryPasteOnFirstInteract()}
         maxLength={OTP_LENGTH}
         className="absolute inset-0 cursor-text text-base opacity-0"
         aria-labelledby={labelId}

@@ -146,13 +146,6 @@ export function LoginForm({ authError, nextPath = '/console' }: Props) {
     }
   }
 
-  function handleCodePasted(next: string) {
-    setCode(next)
-    if (!busy && isCompleteOtp(next)) {
-      void verifyCode(next)
-    }
-  }
-
   async function handleResend() {
     if (resendIn > 0 || busy) return
     await sendCode()
@@ -240,7 +233,6 @@ export function LoginForm({ authError, nextPath = '/console' }: Props) {
               <OtpInput
                 value={code}
                 onChange={handleCodeChange}
-                onCodePasted={handleCodePasted}
                 disabled={busy}
                 autoFocus
               />
