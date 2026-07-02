@@ -5,7 +5,7 @@ import type {
 } from '@/lib/og-image'
 import {
   formatEventDayLabel,
-  formatEventTimeOnly,
+  formatEventTimeRange,
   formatEventWhenLine,
   eventDisplayName,
   isEventCancelled,
@@ -74,7 +74,7 @@ export async function buildEventDetailShareImageProps(
     logoUrl: org?.branding.logo_url,
     sessionTitle: event ? eventDisplayName(event.title) : org?.name ?? 'Organizr',
     dayLabel: event ? formatEventDayLabel(event) : 'Schedule',
-    timeLabel: event ? formatEventTimeOnly(event) : 'Open now',
+    timeLabel: event ? formatEventTimeRange(event) : 'Open now',
     locationLine: event?.location_label || undefined,
     locationAddress: event?.location_address?.trim() || undefined,
     locationOnline: event?.location_is_online,

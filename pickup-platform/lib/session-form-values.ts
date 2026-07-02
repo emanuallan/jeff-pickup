@@ -1,9 +1,11 @@
 import { utcIsoToLocalDateTimeInput } from './datetime'
+import { addMinutesToLocalDateTime } from './one-off-datetime'
 
 export type SessionFormInitial = {
   title: string
   locationId: string
   startsAtLocal: string
+  endsAtLocal: string
   timezone: string
   durationMin: number
   capacity: number | null
@@ -21,10 +23,16 @@ type SessionFormEvent = {
 }
 
 export function sessionFormInitialFromEvent(event: SessionFormEvent): SessionFormInitial {
+  const startsAtLocal = utcIsoToLocalDateTimeInput(event.starts_at, event.timezone)
   return {
     title: event.title?.trim() || 'Session',
     locationId: event.location_id,
-    startsAtLocal: utcIsoToLocalDateTimeInput(event.starts_at, event.timezone),
+    startsAtLocal,
+    endsAtLocal: addMinutesToLocalDateTime(
+      startsAtLocal,
+      event.duration_min,
+      event.timezone,
+    ),
     timezone: event.timezone,
     durationMin: event.duration_min,
     capacity: event.capacity,

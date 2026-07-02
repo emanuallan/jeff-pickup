@@ -1,5 +1,15 @@
 import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
+import {
+	DEFAULT_EVENT_DURATION_MIN,
+	MAX_EVENT_DURATION_MIN,
+} from "@/lib/event-duration";
+
+export {
+	DEFAULT_EVENT_DURATION_MIN,
+	MAX_EVENT_DURATION_MIN,
+	MIN_EVENT_DURATION_MIN,
+} from "@/lib/event-duration";
 
 export type EventStatus = "tentative" | "on" | "cancelled";
 
@@ -40,9 +50,6 @@ const LOCATION_SELECT =
 	"*, locations(label, address, lat, lon, maps_url, is_online, meeting_url), schedules!events_schedule_id_fkey(title, duration_min)";
 
 const EVENT_NAME_FALLBACK = "Session";
-export const DEFAULT_EVENT_DURATION_MIN = 90;
-/** Matches schedules.duration_min upper bound in the database. */
-export const MAX_EVENT_DURATION_MIN = 480;
 
 type LocationJoin = {
 	label: string;
@@ -407,16 +414,42 @@ export function formatEventDateTime(iso: string, timeZone?: string): string {
 
 /** Format an event's starts_at in its stored timezone. */
 export function formatEventTime(
-	event: Pick<Event, "starts_at" | "timezone">,
+	event: Pick<Event, "starts_at" | "timezone" | "duration_min">,
 ): string {
-	return formatEventDateTime(event.starts_at, event.timezone);
+	const zone = event.timezone || "UTC";
+	const date = new Date(event.starts_at).toLocaleString("en-US", {
+		weekday: "long",
+		month: "short",
+		day: "numeric",
+		timeZone: zone,
+	});
+	return `${date} @ ${formatEventTimeRange(event)}`;
 }
 
-/** Card-style when line — e.g. "Today · 6:00 PM" or "Monday, Jun 15 · 6:00 PM". */
-export function formatEventWhenLine(
-	event: Pick<Event, "starts_at" | "timezone">,
+/** Clock range in the event's zone — e.g. "6:00 – 7:30 PM" or "6:00 PM – 7:30 PM". */
+export function formatEventTimeRange(
+	event: Pick<Event, "starts_at" | "duration_min" | "timezone">,
 ): string {
-	return `${formatEventDayLabel(event)} · ${formatEventTimeOnly(event)}`;
+	const zone = event.timezone || "UTC";
+	const endIso = getEventEndTime(event).toISOString();
+	const startParts = clockParts(event.starts_at, zone);
+	const endParts = clockParts(endIso, zone);
+	const sameDay = dayKeyInZone(event.starts_at, zone) === dayKeyInZone(endIso, zone);
+
+	if (sameDay && startParts.dayPeriod === endParts.dayPeriod) {
+		const startClock = formatClockParts(startParts, { omitMeridiem: true });
+		const endClock = formatClockParts(endParts);
+		return `${startClock} – ${endClock}`;
+	}
+
+	return `${formatTimeInZone(event.starts_at, zone)} – ${formatTimeInZone(endIso, zone)}`;
+}
+
+/** Card-style when line — e.g. "Today · 6:00 – 7:30 PM". */
+export function formatEventWhenLine(
+	event: Pick<Event, "starts_at" | "timezone" | "duration_min">,
+): string {
+	return `${formatEventDayLabel(event)} · ${formatEventTimeRange(event)}`;
 }
 
 /** Compact timestamp in a specific IANA zone — e.g. "Jun 17, 6:30 PM". */
@@ -523,11 +556,44 @@ export function formatEventDayLabel(
 	});
 }
 
-/** Just the time portion in the event's zone — e.g. "6:00 PM". */
+/** Just the start clock time in the event's zone — e.g. "6:00 PM". */
 export function formatEventTimeOnly(
 	event: Pick<Event, "starts_at" | "timezone">,
 ): string {
 	return formatTimeInZone(event.starts_at, event.timezone);
+}
+
+type ClockParts = {
+	hour: string;
+	minute: string;
+	dayPeriod: string;
+};
+
+function clockParts(iso: string, timeZone: string): ClockParts {
+	const parts = new Intl.DateTimeFormat("en-US", {
+		timeZone,
+		hour: "numeric",
+		minute: "2-digit",
+		hour12: true,
+	}).formatToParts(new Date(iso));
+
+	const pick = (type: Intl.DateTimeFormatPartTypes) =>
+		parts.find((part) => part.type === type)?.value ?? "";
+
+	return {
+		hour: pick("hour"),
+		minute: pick("minute"),
+		dayPeriod: pick("dayPeriod"),
+	};
+}
+
+function formatClockParts(
+	parts: ClockParts,
+	{ omitMeridiem = false }: { omitMeridiem?: boolean } = {},
+): string {
+	const clock =
+		parts.minute === "00" ? parts.hour : `${parts.hour}:${parts.minute}`;
+	return omitMeridiem ? clock : `${clock} ${parts.dayPeriod}`;
 }
 
 /**

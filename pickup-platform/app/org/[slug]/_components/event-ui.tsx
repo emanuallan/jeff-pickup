@@ -4,7 +4,7 @@ import {
   statusLabel,
   eventDisplayName,
   formatEventDayLabel,
-  formatEventTimeOnly,
+  formatEventTimeRange,
   formatEventWhenLine,
   formatEventHappening,
   isEventCancelled,
@@ -171,7 +171,7 @@ export function EventDateTimeRow({
   event,
   cancelled,
 }: {
-  event: Pick<EventWithLocation, 'starts_at' | 'timezone'>
+  event: Pick<EventWithLocation, 'starts_at' | 'timezone' | 'duration_min'>
   cancelled: boolean
 }) {
   const classes = cancelledEventClasses(cancelled)
@@ -438,7 +438,7 @@ export function SessionRow({
           />
         </div>
         <div className="mt-0.5 flex min-w-0 flex-wrap items-center gap-x-1.5 text-xs text-zinc-600">
-          <span className="shrink-0 tabular-nums">{formatEventTimeOnly(event)}</span>
+          <span className="shrink-0 tabular-nums">{formatEventTimeRange(event)}</span>
           <span className="shrink-0 text-zinc-700">·</span>
           <EventLocationRow
             event={event}

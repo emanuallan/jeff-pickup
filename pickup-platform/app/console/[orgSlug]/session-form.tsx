@@ -4,12 +4,18 @@ import { useEffect, useState } from 'react'
 import type { Location } from '@/lib/locations'
 import type { SessionFormInitial } from '@/lib/session-form-values'
 import { browserTimeZone } from '@/lib/datetime'
-import { defaultOneOffStartsAtLocal } from '@/lib/one-off-datetime'
+import {
+  DEFAULT_EVENT_DURATION_MIN,
+  MAX_EVENT_DURATION_MIN,
+  MIN_EVENT_DURATION_MIN,
+} from '@/lib/event-duration'
+import {
+  addMinutesToLocalDateTime,
+  defaultOneOffStartsAtLocal,
+  durationMinFromLocalRange,
+} from '@/lib/one-off-datetime'
 import { consoleInput, consoleLabel, btnSecondary } from '../_components/console-ui'
 import { ConsoleSubmitButton } from '../_components/console-submit-button'
-
-const DEFAULT_DURATION_MIN = 90
-const MAX_DURATION_MIN = 480
 
 export type { SessionFormInitial } from '@/lib/session-form-values'
 
@@ -24,6 +30,14 @@ type Props = {
   useBrowserTimezone?: boolean
 }
 
+function defaultFormTimes(timezone: string, initial?: SessionFormInitial) {
+  const startsAtLocal = initial?.startsAtLocal ?? defaultOneOffStartsAtLocal()
+  const endsAtLocal =
+    initial?.endsAtLocal ??
+    addMinutesToLocalDateTime(startsAtLocal, DEFAULT_EVENT_DURATION_MIN, timezone)
+  return { startsAtLocal, endsAtLocal }
+}
+
 export function SessionForm({
   locations,
   onSubmit,
@@ -34,21 +48,67 @@ export function SessionForm({
   useBrowserTimezone = true,
 }: Props) {
   const [timezone, setTimezone] = useState(initial?.timezone ?? 'UTC')
+  const [startsAtLocal, setStartsAtLocal] = useState(() =>
+    defaultFormTimes(initial?.timezone ?? browserTimeZone(), initial).startsAtLocal,
+  )
+  const [endsAtLocal, setEndsAtLocal] = useState(() =>
+    defaultFormTimes(initial?.timezone ?? browserTimeZone(), initial).endsAtLocal,
+  )
   const [pending, setPending] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     if (initial?.timezone) {
       setTimezone(initial.timezone)
+      setStartsAtLocal(initial.startsAtLocal)
+      setEndsAtLocal(initial.endsAtLocal)
       return
     }
-    setTimezone(browserTimeZone())
-  }, [initial?.timezone])
+    const browserTz = browserTimeZone()
+    setTimezone(browserTz)
+    const defaults = defaultFormTimes(browserTz)
+    setStartsAtLocal(defaults.startsAtLocal)
+    setEndsAtLocal(defaults.endsAtLocal)
+  }, [initial])
+
+  function activeTimezone() {
+    return useBrowserTimezone ? browserTimeZone() : timezone
+  }
+
+  function handleStartChange(nextStart: string) {
+    setStartsAtLocal(nextStart)
+    if (endsAtLocal <= nextStart) {
+      setEndsAtLocal(
+        addMinutesToLocalDateTime(nextStart, DEFAULT_EVENT_DURATION_MIN, activeTimezone()),
+      )
+    }
+  }
 
   async function handleSubmit(formData: FormData) {
     setPending(true)
     setError(null)
-    formData.set('timezone', useBrowserTimezone ? browserTimeZone() : timezone)
+
+    const tz = activeTimezone()
+    formData.set('timezone', tz)
+    formData.set('starts_at', startsAtLocal)
+    formData.set('ends_at', endsAtLocal)
+
+    const durationMin = durationMinFromLocalRange(startsAtLocal, endsAtLocal, tz)
+    if (!Number.isFinite(durationMin) || durationMin <= 0) {
+      setPending(false)
+      setError('End time must be after the start time.')
+      return
+    }
+    if (durationMin < MIN_EVENT_DURATION_MIN || durationMin > MAX_EVENT_DURATION_MIN) {
+      setPending(false)
+      setError(
+        `Session length must be between ${MIN_EVENT_DURATION_MIN} and ${MAX_EVENT_DURATION_MIN} minutes.`,
+      )
+      return
+    }
+
+    formData.set('duration_min', String(durationMin))
+
     const result = await onSubmit(formData)
     setPending(false)
     if (result && 'error' in result && result.error) {
@@ -93,29 +153,30 @@ export function SessionForm({
         </select>
       </label>
 
-      <label className="block">
-        <span className={consoleLabel}>Date &amp; time</span>
-        <input
-          name="starts_at"
-          type="datetime-local"
-          required
-          defaultValue={initial?.startsAtLocal ?? defaultOneOffStartsAtLocal()}
-          className={`mt-1 ${consoleInput}`}
-        />
-      </label>
-
-      <label className="block">
-        <span className={consoleLabel}>Duration (min)</span>
-        <input
-          name="duration_min"
-          type="number"
-          min={15}
-          max={MAX_DURATION_MIN}
-          defaultValue={initial?.durationMin ?? DEFAULT_DURATION_MIN}
-          required
-          className={`mt-1 ${consoleInput}`}
-        />
-      </label>
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <label className="block">
+          <span className={consoleLabel}>Starts</span>
+          <input
+            name="starts_at"
+            type="datetime-local"
+            required
+            value={startsAtLocal}
+            onChange={(event) => handleStartChange(event.target.value)}
+            className={`mt-1 ${consoleInput}`}
+          />
+        </label>
+        <label className="block">
+          <span className={consoleLabel}>Ends</span>
+          <input
+            name="ends_at"
+            type="datetime-local"
+            required
+            value={endsAtLocal}
+            onChange={(event) => setEndsAtLocal(event.target.value)}
+            className={`mt-1 ${consoleInput}`}
+          />
+        </label>
+      </div>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <label className="block">
@@ -144,7 +205,7 @@ export function SessionForm({
         </label>
       </div>
 
-      <p className="text-xs text-zinc-500">Timezone: {timezone}</p>
+      <p className="text-xs text-zinc-500">Timezone: {activeTimezone()}</p>
 
       {error ? <p className="text-sm text-red-300">{error}</p> : null}
 
