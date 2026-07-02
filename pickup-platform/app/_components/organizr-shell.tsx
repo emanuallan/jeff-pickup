@@ -66,7 +66,7 @@ export function OrganizrMarketingHeader({
 export const organizrLabel = 'text-xs font-medium text-zinc-400'
 
 export const organizrInput =
-  'mt-1 w-full rounded-lg border border-white/10 bg-zinc-950/60 px-3 py-2.5 text-sm text-zinc-100 placeholder:text-zinc-600 outline-none transition focus:border-indigo-500/50 focus:ring-2 focus:ring-indigo-500/25'
+  'mt-1 w-full rounded-lg border border-white/10 bg-zinc-950/60 px-3 py-2.5 text-base text-zinc-100 placeholder:text-zinc-600 outline-none transition focus:border-indigo-500/50 focus:ring-2 focus:ring-indigo-500/25 sm:text-sm'
 
 /** Primary / secondary CTA classes — matches the console design tokens. */
 export const organizrBtnPrimary =

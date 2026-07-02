@@ -263,7 +263,7 @@ export function GuestCountEditor(props: {
             const n = Number.parseInt(e.target.value, 10)
             setCount(Number.isFinite(n) ? Math.max(0, Math.min(20, n)) : 0)
           }}
-          className="w-20 rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm outline-none focus:ring-2"
+          className="w-20 rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-base outline-none focus:ring-2 sm:text-sm"
           style={{ '--tw-ring-color': props.accent } as React.CSSProperties}
         />
         <button

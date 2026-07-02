@@ -36,10 +36,10 @@ type Props = {
 }
 
 const inputClass =
-  'mt-1 w-full rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2.5 text-sm outline-none transition-colors focus:border-transparent focus:ring-2'
+  'mt-1 w-full rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2.5 text-base outline-none transition-colors focus:border-transparent focus:ring-2 sm:text-sm'
 
 const recoverInputClass =
-  'mt-1 w-full rounded-lg border border-zinc-800 bg-zinc-900/50 px-3 py-2 text-sm text-zinc-400 outline-none transition-colors focus:border-zinc-700 focus:ring-1 focus:ring-zinc-700'
+  'mt-1 w-full rounded-lg border border-zinc-800 bg-zinc-900/50 px-3 py-2 text-base text-zinc-400 outline-none transition-colors focus:border-zinc-700 focus:ring-1 focus:ring-zinc-700 sm:text-sm'
 
 const phoneWhyText =
   'We use your phone number to identify you within a group so you can manage your own sign-ups across visits.'

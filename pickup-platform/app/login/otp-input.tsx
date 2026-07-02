@@ -85,7 +85,7 @@ export function OtpInput({ value, onChange, onCodePasted, disabled, autoFocus }:
         onChange={onChange}
         onFocus={() => void tryPasteOnFirstInteract()}
         maxLength={OTP_LENGTH}
-        className="absolute inset-0 cursor-text opacity-0"
+        className="absolute inset-0 cursor-text text-base opacity-0"
         aria-labelledby={labelId}
       />
     </div>

@@ -12,6 +12,13 @@ body {
 	color: var(--foreground);
 }
 
+/* iOS Safari auto-zooms focused inputs below 16px; it often won't zoom back out. */
+input,
+select,
+textarea {
+	font-size: max(16px, 1em);
+}
+
 .prose-organizr {
 	color: #a1a1aa;
 	font-size: 0.9375rem;
