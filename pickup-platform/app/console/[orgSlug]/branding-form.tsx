@@ -18,9 +18,31 @@ type Props = {
 
 type LogoAction = 'upload' | 'remove' | null
 
+const LOGO_SIZE = 'h-20 w-20'
+
 function logoPreviewUrl(url: string, cacheKey: number) {
   const separator = url.includes('?') ? '&' : '?'
   return `${url}${separator}v=${cacheKey}`
+}
+
+function LogoRemoveButton({ onClick, disabled }: { onClick: () => void; disabled?: boolean }) {
+  return (
+    <button
+      type="button"
+      disabled={disabled}
+      onClick={(e) => {
+        e.preventDefault()
+        e.stopPropagation()
+        onClick()
+      }}
+      aria-label="Remove logo"
+      className="absolute -right-2 -top-2 flex h-7 w-7 items-center justify-center rounded-full border border-white/10 bg-zinc-900 text-zinc-400 shadow-md transition hover:border-red-500/30 hover:bg-red-500/15 hover:text-red-300 disabled:opacity-50"
+    >
+      <svg viewBox="0 0 24 24" fill="none" className="h-3.5 w-3.5" aria-hidden>
+        <path d="M6 6l12 12M18 6 6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      </svg>
+    </button>
+  )
 }
 
 export function BrandingForm({
@@ -38,6 +60,7 @@ export function BrandingForm({
   const [logoAction, setLogoAction] = useState<LogoAction>(null)
   const logoRequestRef = useRef(0)
 
+  const inputId = `${orgSlug}-logo-upload`
   const logoPending = logoAction !== null
   const previewUrl = logoUrl ? logoPreviewUrl(logoUrl, logoCacheKey) : null
 
@@ -127,74 +150,99 @@ export function BrandingForm({
     <div className="space-y-5">
       <div>
         <span className="text-xs text-zinc-500">Group logo (optional)</span>
-        <div className="mt-2 flex items-start gap-4">
-          <div
-            className={`relative shrink-0 ${logoPending ? 'opacity-60' : ''}`}
-            aria-busy={logoPending}
-            aria-live="polite"
-          >
-            {previewUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element -- cache-busted preview URL from storage
+
+        <input
+          id={inputId}
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          className="hidden"
+          disabled={logoPending || pending || !canManageLogo}
+          onChange={(e) => {
+            const file = e.target.files?.[0]
+            void handleLogoSelect(file)
+            e.target.value = ''
+          }}
+        />
+
+        <div className="mt-3 flex items-center gap-4">
+          <div className="relative shrink-0" aria-busy={logoPending} aria-live="polite">
+            {canManageLogo ? (
+              <label
+                htmlFor={inputId}
+                className={`relative block ${LOGO_SIZE} cursor-pointer overflow-hidden rounded-2xl ring-1 ring-white/10 transition hover:ring-indigo-500/40 ${
+                  logoPending ? 'pointer-events-none' : ''
+                } ${previewUrl ? '' : 'border border-dashed border-white/15 bg-white/[0.03] hover:bg-white/[0.06]'}`}
+              >
+                {previewUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element -- cache-busted preview URL from storage
+                  <img src={previewUrl} alt="" className={`${LOGO_SIZE} object-cover`} />
+                ) : (
+                  <span
+                    className={`flex ${LOGO_SIZE} flex-col items-center justify-center gap-1 text-zinc-500`}
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" className="h-6 w-6" aria-hidden>
+                      <path
+                        d="M12 16V8m0 0 3 3m-3-3-3 3"
+                        stroke="currentColor"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                      <path
+                        d="M4 16.5V18a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-1.5"
+                        stroke="currentColor"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                    <span className="text-[10px] font-medium uppercase tracking-wide">Add</span>
+                  </span>
+                )}
+
+                {logoPending ? (
+                  <span className="absolute inset-0 flex items-center justify-center bg-zinc-950/70 text-xs font-medium text-zinc-200">
+                    {logoAction === 'remove' ? 'Removing…' : 'Uploading…'}
+                  </span>
+                ) : null}
+              </label>
+            ) : previewUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={previewUrl}
                 alt=""
-                className="h-16 w-16 rounded-xl object-cover ring-1 ring-white/10"
+                className={`${LOGO_SIZE} rounded-2xl object-cover ring-1 ring-white/10`}
               />
             ) : (
               <div
-                className="flex h-16 w-16 items-center justify-center rounded-xl text-2xl font-bold ring-1 ring-white/10"
+                className={`flex ${LOGO_SIZE} items-center justify-center rounded-2xl text-2xl font-bold ring-1 ring-white/10`}
                 style={{ backgroundColor: color, color: readableTextColor(color) }}
               >
                 {orgName.charAt(0).toUpperCase()}
               </div>
             )}
+
+            {canManageLogo && previewUrl && !logoPending ? (
+              <LogoRemoveButton onClick={() => void handleRemoveLogo()} disabled={pending} />
+            ) : null}
           </div>
 
-          {canManageLogo ? (
-            <div className="min-w-0 flex-1 space-y-2">
-              <input
-                id={`${orgSlug}-logo-upload`}
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                className="hidden"
-                disabled={logoPending || pending}
-                onChange={(e) => {
-                  const file = e.target.files?.[0]
-                  void handleLogoSelect(file)
-                  e.target.value = ''
-                }}
-              />
-
-              {logoPending ? (
-                <p className="text-sm text-zinc-400" aria-live="polite">
-                  {logoAction === 'remove' ? 'Removing logo…' : 'Uploading logo…'}
+          <div className="min-w-0 space-y-1">
+            {canManageLogo ? (
+              <>
+                <label
+                  htmlFor={inputId}
+                  className={`block text-sm font-medium text-zinc-200 ${logoPending ? 'pointer-events-none opacity-50' : 'cursor-pointer hover:text-white'}`}
+                >
+                  {previewUrl ? 'Change photo' : 'Upload photo'}
+                </label>
+                <p className="text-xs leading-relaxed text-zinc-500">
+                  PNG, JPG, or WebP · max 2 MB
                 </p>
-              ) : (
-                <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
-                  <label
-                    htmlFor={`${orgSlug}-logo-upload`}
-                    className={`${btnSecondary} w-fit cursor-pointer`}
-                  >
-                    {logoUrl ? 'Replace logo' : 'Upload logo'}
-                  </label>
-                  {logoUrl ? (
-                    <button
-                      type="button"
-                      disabled={pending}
-                      onClick={() => void handleRemoveLogo()}
-                      className="inline-flex min-h-11 w-fit items-center text-sm text-zinc-400 underline-offset-2 transition hover:text-zinc-200 hover:underline disabled:opacity-50"
-                    >
-                      Remove
-                    </button>
-                  ) : null}
-                </div>
-              )}
-
-              <p className="text-xs text-zinc-500">PNG, JPG, or WebP · max 2 MB</p>
-            </div>
-          ) : (
-            <p className="text-xs text-zinc-500">Only group owners and admins can change the logo.</p>
-          )}
+              </>
+            ) : (
+              <p className="text-xs text-zinc-500">Only group owners and admins can change the logo.</p>
+            )}
+          </div>
         </div>
       </div>
 
