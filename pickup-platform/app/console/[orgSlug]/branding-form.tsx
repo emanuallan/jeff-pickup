@@ -36,7 +36,6 @@ export function BrandingForm({
   const [logoCacheKey, setLogoCacheKey] = useState(0)
   const [pending, setPending] = useState(false)
   const [logoAction, setLogoAction] = useState<LogoAction>(null)
-  const fileInputRef = useRef<HTMLInputElement>(null)
   const logoRequestRef = useRef(0)
 
   const logoPending = logoAction !== null
@@ -152,12 +151,12 @@ export function BrandingForm({
           </div>
 
           {canManageLogo ? (
-            <div className="min-w-0 space-y-2">
+            <div className="min-w-0 flex-1 space-y-2">
               <input
-                ref={fileInputRef}
+                id={`${orgSlug}-logo-upload`}
                 type="file"
                 accept="image/jpeg,image/png,image/webp"
-                className="sr-only"
+                className="hidden"
                 disabled={logoPending || pending}
                 onChange={(e) => {
                   const file = e.target.files?.[0]
@@ -165,32 +164,32 @@ export function BrandingForm({
                   e.target.value = ''
                 }}
               />
-              <div className="flex flex-wrap items-center gap-2">
-                <button
-                  type="button"
-                  disabled={logoPending || pending}
-                  onClick={() => fileInputRef.current?.click()}
-                  className={btnSecondary}
-                  aria-busy={logoAction === 'upload'}
-                >
-                  {logoAction === 'upload'
-                    ? 'Uploading…'
-                    : logoUrl
-                      ? 'Replace logo'
-                      : 'Upload logo'}
-                </button>
-                {logoUrl ? (
-                  <button
-                    type="button"
-                    disabled={logoPending || pending}
-                    onClick={() => void handleRemoveLogo()}
-                    className="text-sm text-zinc-400 underline-offset-2 transition hover:text-zinc-200 hover:underline disabled:opacity-50"
-                    aria-busy={logoAction === 'remove'}
+
+              {logoPending ? (
+                <p className="text-sm text-zinc-400" aria-live="polite">
+                  {logoAction === 'remove' ? 'Removing logo…' : 'Uploading logo…'}
+                </p>
+              ) : (
+                <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+                  <label
+                    htmlFor={`${orgSlug}-logo-upload`}
+                    className={`${btnSecondary} w-fit cursor-pointer`}
                   >
-                    {logoAction === 'remove' ? 'Removing…' : 'Remove'}
-                  </button>
-                ) : null}
-              </div>
+                    {logoUrl ? 'Replace logo' : 'Upload logo'}
+                  </label>
+                  {logoUrl ? (
+                    <button
+                      type="button"
+                      disabled={pending}
+                      onClick={() => void handleRemoveLogo()}
+                      className="inline-flex min-h-11 w-fit items-center text-sm text-zinc-400 underline-offset-2 transition hover:text-zinc-200 hover:underline disabled:opacity-50"
+                    >
+                      Remove
+                    </button>
+                  ) : null}
+                </div>
+              )}
+
               <p className="text-xs text-zinc-500">PNG, JPG, or WebP · max 2 MB</p>
             </div>
           ) : (
