@@ -37,7 +37,7 @@ export function InteriorAddOwnerSection({ orgSlug }: Props) {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <p className="text-sm text-zinc-400">
-        Grant co-ownership to someone who already has an organizer account.
+        Grant co-ownership to someone who already has an organizer account (magic-link sign-up).
         This does not remove your owner access.
       </p>
 

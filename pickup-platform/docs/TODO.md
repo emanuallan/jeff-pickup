@@ -7,9 +7,9 @@ Track deferred work and known simplifications. Prefer shipping simple, refine la
 - [x] Next.js app scaffold
 - [x] Supabase migration: `orgs`, `org_members`, RLS
 - [x] Subdomain middleware (`*.organizr.co`, `*.localhost`)
-- [x] Organizer email OTP auth
+- [x] Organizer email magic-link auth
 - [ ] Deploy to Vercel with wildcard domain `*.organizr.co`
-- [ ] Session refresh on subdomain routes (middleware currently skips `updateSession` on rewrites)
+- [x] Session refresh on subdomain routes (for organizer console bar on public pages)
 
 ## Phase 1 — Org + events core
 

@@ -32,7 +32,7 @@ jeffsoccer.organizr.co). Copy is generic ("session", "who's coming"); each org s
 
 ## Stack & architecture
 - Next.js 15 App Router + React 19, TypeScript, Tailwind v4.
-- Supabase: Postgres + Auth (passwordless email OTP for organizers) + RLS. Separate PROD Supabase project
+- Supabase: Postgres + Auth (passwordless email magic link for organizers) + RLS. Separate PROD Supabase project
   (not the PoC DB). Migrations live in pickup-platform/supabase/migrations/ (001–006) and are run
   MANUALLY in the Supabase SQL Editor, in order. See pickup-platform/supabase/README.md.
 - Vercel hosting + Vercel Cron (daily /api/cron/materialize, protected by CRON_SECRET).
@@ -50,7 +50,7 @@ jeffsoccer.organizr.co). Copy is generic ("session", "who's coming"); each org s
 - app/org/[slug]/ — PUBLIC tenant pages: page.tsx redirects to the soonest upcoming event (or
   /events if none); events/ (list), events/[eventId]/ (detail + join/roster), leaderboard/
 - app/api/ — cron/materialize, console roster
-- app/auth/ — signout
+- app/auth/ — magic-link callback, signout
 - lib/ — supabase/{client,server,middleware,admin}, tenancy/, events, schedules, locations,
   signups, engagement, badges, weather (Open-Meteo), geocode (Nominatim), datetime,
   og-image.tsx + og-metadata.ts (OG/social previews)
@@ -73,7 +73,7 @@ weekly streaks) and badges are computed from signups/events.
 - Timezones: events store a `timezone` column; display via formatEventTime() in the event's zone.
   Server (Vercel) is UTC, so never format event times without an explicit timeZone or they show in
   UTC. One-off events convert organizer-local input → UTC via lib/datetime.ts.
-- OTP email hits Supabase's tiny built-in SMTP rate limit; production needs custom SMTP
+- Magic-link email hits Supabase's tiny built-in SMTP rate limit; production needs custom SMTP
   (e.g. SendGrid/Brevo/Resend) configured in the Supabase dashboard + domain SPF/DKIM. No code change.
 - Wildcard subdomain SSL: organizr.co, www.organizr.co, AND *.organizr.co must all be added in
   Vercel, with nameservers pointed at Vercel for the wildcard cert. Missing the wildcard =
