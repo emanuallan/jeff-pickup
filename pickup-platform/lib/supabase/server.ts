@@ -1,6 +1,7 @@
 import { cache } from 'react'
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
+import { getSupabaseCookieOptions } from './cookie-options'
 
 /**
  * Memoized per-request via React.cache so a single render reuses one client
@@ -17,6 +18,7 @@ export const createClient = cache(async () => {
   const cookieStore = await cookies()
 
   return createServerClient(url, key, {
+    cookieOptions: getSupabaseCookieOptions(),
     cookies: {
       getAll() {
         return cookieStore.getAll()

@@ -18,7 +18,7 @@ import {
 import { buildOrgJsonLd } from '@/lib/seo'
 import { JsonLd } from '@/app/_components/json-ld'
 import { OrgHeader } from '../_components/org-header'
-import { BackToOrganizrLink } from '../_components/back-to-organizr-link'
+import { OrganizerConsoleLinkSlot } from '../_components/organizer-console-link'
 import { PageHelpHint } from '../_components/page-help-hint'
 import { OrgPageShell, OrgPageFooter } from '../_components/org-page-shell'
 import { ShareButton } from '../share-button-lazy'
@@ -99,10 +99,8 @@ export default async function EventsPage({ params }: Props) {
   return (
     <OrgPageShell>
       <JsonLd data={buildOrgJsonLd(org)} />
-      <nav
-        className={`flex min-h-9 items-center gap-3 ${slug === 'demo' ? 'justify-between' : 'justify-end'}`}
-      >
-        {slug === 'demo' ? <BackToOrganizrLink /> : null}
+      <nav className="flex min-h-9 items-center justify-between gap-3">
+        <OrganizerConsoleLinkSlot slug={slug} />
         <ShareButton
           title={buildOrgCalendarShareTitle(org.name, featured)}
           text={buildOrgCalendarShareText(org.name, featured)}

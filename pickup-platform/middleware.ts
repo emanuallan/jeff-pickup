@@ -56,9 +56,19 @@ function attachVisitorKey(request: NextRequest, requestHeaders: Headers): string
   return visitorKey
 }
 
-/** Apex paths like /org/demo/cal — public tenant pages, no auth refresh needed. */
+/** Apex paths like /org/demo/cal — public tenant pages. */
 function isApexPublicOrgRoute(pathname: string): boolean {
   return /^\/org\/[^/]+(\/|$)/.test(pathname)
+}
+
+function applyVisitorCookie(
+  response: NextResponse,
+  isNewVisitor: boolean,
+  visitorKey: string | null,
+) {
+  if (isNewVisitor && visitorKey) {
+    response.cookies.set(VISITOR_COOKIE, visitorKey, VISITOR_COOKIE_OPTIONS)
+  }
 }
 
 export async function middleware(request: NextRequest) {
@@ -89,12 +99,12 @@ export async function middleware(request: NextRequest) {
     const visitorKey = attachVisitorKey(request, requestHeaders)
     const isNewVisitor = visitorKey != null && !request.cookies.get(VISITOR_COOKIE)?.value
 
+    const sessionResponse = await updateSession(request)
+
     const response = NextResponse.rewrite(url, { request: { headers: requestHeaders } })
     response.headers.set('x-org-slug', orgSlug)
-
-    if (isNewVisitor && visitorKey) {
-      response.cookies.set(VISITOR_COOKIE, visitorKey, VISITOR_COOKIE_OPTIONS)
-    }
+    copyCookies(sessionResponse.response, response)
+    applyVisitorCookie(response, isNewVisitor, visitorKey)
 
     return response
   }
@@ -107,11 +117,11 @@ export async function middleware(request: NextRequest) {
     const visitorKey = attachVisitorKey(request, requestHeaders)
     const isNewVisitor = visitorKey != null && !request.cookies.get(VISITOR_COOKIE)?.value
 
-    const response = NextResponse.next({ request: { headers: requestHeaders } })
+    const sessionResponse = await updateSession(request)
 
-    if (isNewVisitor && visitorKey) {
-      response.cookies.set(VISITOR_COOKIE, visitorKey, VISITOR_COOKIE_OPTIONS)
-    }
+    const response = NextResponse.next({ request: { headers: requestHeaders } })
+    copyCookies(sessionResponse.response, response)
+    applyVisitorCookie(response, isNewVisitor, visitorKey)
 
     return response
   }
@@ -126,18 +136,13 @@ export async function middleware(request: NextRequest) {
     const destination = safeNextPath(request.nextUrl.searchParams.get('next'))
     const redirectResponse = NextResponse.redirect(new URL(destination, request.url))
     copyCookies(sessionResponse.response, redirectResponse)
-    if (isNewVisitor && visitorKey) {
-      redirectResponse.cookies.set(VISITOR_COOKIE, visitorKey, VISITOR_COOKIE_OPTIONS)
-    }
+    applyVisitorCookie(redirectResponse, isNewVisitor, visitorKey)
     return redirectResponse
   }
 
   const response = NextResponse.next({ request: { headers: requestHeaders } })
   copyCookies(sessionResponse.response, response)
-
-  if (isNewVisitor && visitorKey) {
-    response.cookies.set(VISITOR_COOKIE, visitorKey, VISITOR_COOKIE_OPTIONS)
-  }
+  applyVisitorCookie(response, isNewVisitor, visitorKey)
 
   return response
 }

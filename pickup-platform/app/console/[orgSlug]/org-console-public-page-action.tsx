@@ -2,6 +2,9 @@ import { arrowNe } from '@/lib/text-arrows'
 import { btnAccent } from '../_components/console-ui'
 import { isOrgConsoleHubSetupComplete } from './org-console-nav'
 
+const PUBLIC_PAGE_HINT =
+  "While signed in, use Console in the top-left of the public page to return."
+
 export function OrgConsolePublicPageActionFallback() {
   return (
     <span
@@ -43,6 +46,7 @@ export async function OrgConsolePublicPageAction({
       href={publicUrl}
       target="_blank"
       rel="noreferrer"
+      title={PUBLIC_PAGE_HINT}
       className={`${btnAccent} w-full shrink-0 sm:w-auto`}
     >
       {label}
