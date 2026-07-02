@@ -101,7 +101,7 @@ export function OrgQrCode({ orgUrl, orgHost, orgName }: Props) {
 
   return (
     <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:gap-6">
-      <div className="rounded-xl bg-white p-4 shadow-sm ring-1 ring-black/5">
+      <div className="self-center rounded-xl bg-white p-4 shadow-sm ring-1 ring-black/5 sm:self-auto">
         <QRCodeCanvas
           ref={canvasRef}
           value={orgUrl}
