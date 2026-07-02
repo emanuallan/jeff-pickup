@@ -66,7 +66,7 @@ export default async function LeaderboardPage({ params }: Props) {
   const leadersCount = capsRows.filter((row) => row.caps === topCapsValue).length
 
   return (
-    <OrgPageShell>
+    <OrgPageShell slug={slug}>
       <div className="flex justify-start">
         <Link
           href="/cal"

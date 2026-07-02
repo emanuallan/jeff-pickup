@@ -6,10 +6,20 @@ import { accentOnDark } from '@/lib/colors'
 import { arrowRight } from '@/lib/text-arrows'
 import { OrganizrLogo } from '../../../_components/organizr-logo'
 import { SocialLinks } from './social-links'
+import { OrganizerConsoleBarSlot } from './organizer-console-bar'
 
-export function OrgPageShell({ children }: { children: React.ReactNode }) {
+export function OrgPageShell({
+  slug,
+  children,
+}: {
+  slug: string
+  children: React.ReactNode
+}) {
   return (
-    <main className="mx-auto min-h-dvh max-w-lg px-5 py-10 sm:px-6">{children}</main>
+    <>
+      <main className="mx-auto min-h-dvh max-w-lg px-5 py-10 sm:px-6">{children}</main>
+      <OrganizerConsoleBarSlot slug={slug} />
+    </>
   )
 }
 

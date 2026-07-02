@@ -28,6 +28,11 @@ export function rootBaseUrl(): string {
   return `https://${root}`
 }
 
+/** Organizer console for an org — always on the apex domain. */
+export function consoleOrgUrl(slug: string): string {
+  return `${rootBaseUrl()}/console/${slug}`
+}
+
 /**
  * Trim a description to a target max length on a word boundary. Social previews
  * truncate around ~125 chars, so we cap there; that still clears the ~120 lower

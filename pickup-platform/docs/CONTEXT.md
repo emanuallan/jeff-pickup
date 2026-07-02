@@ -80,8 +80,7 @@ weekly streaks) and badges are computed from signups/events.
   ERR_CONNECTION_CLOSED on subdomains.
 - Location deletion is blocked when schedules/events reference it (FK on-delete-restrict), with a
   friendly error instead of a raw FK failure.
-- Known TODOs: middleware skips Supabase session refresh on subdomain rewrites (OK today because
-  subdomains are public-only and the authed console lives on the apex); i18n EN/ES deferred; logo is
+- Known TODOs: i18n EN/ES deferred; logo is
   a URL field only (no upload pipeline yet); SMS/OTP scaffolded but dormant.
 
 ## Working agreements
