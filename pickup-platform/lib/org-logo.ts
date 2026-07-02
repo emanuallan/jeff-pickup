@@ -1,3 +1,5 @@
+import type { SupabaseClient } from '@supabase/supabase-js'
+
 export const ORG_LOGO_BUCKET = 'organizr_public'
 export const ORG_LOGO_PATH_PREFIX = 'org-logos'
 
@@ -85,6 +87,33 @@ export function parseOurBucketLogoPath(logoUrl: string | null | undefined): stri
   if (!OUR_BUCKET_LOGO_PATH.test(path)) return null
 
   return `${ORG_LOGO_PATH_PREFIX}/${path}`
+}
+
+/** Remove all logo objects for an org from organizr_public. */
+export async function deleteOrgLogoStorage(
+  admin: SupabaseClient,
+  orgId: string,
+  logoUrl?: string | null,
+): Promise<void> {
+  const paths = new Set<string>()
+
+  const fromUrl = parseOurBucketLogoPath(logoUrl)
+  if (fromUrl) paths.add(fromUrl)
+
+  const folder = `${ORG_LOGO_PATH_PREFIX}/${orgId}`
+  const { data: files } = await admin.storage.from(ORG_LOGO_BUCKET).list(folder)
+  for (const file of files ?? []) {
+    if (file.name) {
+      paths.add(`${folder}/${file.name}`)
+    }
+  }
+
+  if (paths.size === 0) return
+
+  const { error } = await admin.storage.from(ORG_LOGO_BUCKET).remove([...paths])
+  if (error) {
+    throw new Error(error.message)
+  }
 }
 
 export function validateLogoFile(file: File): { ok: true; mime: OrgLogoMimeType } | { ok: false; error: string } {

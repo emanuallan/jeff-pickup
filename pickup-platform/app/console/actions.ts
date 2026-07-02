@@ -22,6 +22,7 @@ import { isInteriorOperator } from '@/lib/interior'
 import {
   ORG_LOGO_BUCKET,
   buildOrgLogoPath,
+  deleteOrgLogoStorage,
   extensionForMime,
   parseOurBucketLogoPath,
   publicLogoUrl,
@@ -1152,6 +1153,13 @@ export async function deleteOrg(orgSlug: string, confirmSlug: string): Promise<{
   const { org } = ownerResult
   if (normalizeSlug(confirmSlug) !== org.slug) {
     return { error: 'Slug does not match. Type the exact slug to confirm.' }
+  }
+
+  const admin = createAdminClient()
+  try {
+    await deleteOrgLogoStorage(admin, org.id, org.branding.logo_url)
+  } catch (err) {
+    console.error('deleteOrg: failed to remove logo files', err)
   }
 
   const supabase = await createClient()
