@@ -426,7 +426,7 @@ export function formatEventTime(
 	return `${date} @ ${formatEventTimeRange(event)}`;
 }
 
-/** Clock range in the event's zone — e.g. "6:00 – 7:30 pm" or "6:00 pm – 7:30 pm". */
+/** Clock range in the event's zone — e.g. "7 - 9pm" or "11:30am - 1pm". */
 export function formatEventTimeRange(
 	event: Pick<Event, "starts_at" | "duration_min" | "timezone">,
 ): string {
@@ -434,20 +434,16 @@ export function formatEventTimeRange(
 	const endIso = getEventEndTime(event).toISOString();
 	const startParts = clockParts(event.starts_at, zone);
 	const endParts = clockParts(endIso, zone);
-	const sameDay = dayKeyInZone(event.starts_at, zone) === dayKeyInZone(endIso, zone);
+	const sameMeridiem = startParts.dayPeriod === endParts.dayPeriod;
 
-	if (sameDay && startParts.dayPeriod === endParts.dayPeriod) {
-		const startClock = formatClockParts(startParts, { omitMeridiem: true });
-		const endClock = formatClockParts(endParts);
-		return lowercaseMeridiem(`${startClock} – ${endClock}`);
+	if (sameMeridiem) {
+		return `${formatClockParts(startParts, { omitMeridiem: true })} - ${formatClockParts(endParts)}`;
 	}
 
-	return lowercaseMeridiem(
-		`${formatTimeInZone(event.starts_at, zone)} – ${formatTimeInZone(endIso, zone)}`,
-	);
+	return `${formatClockParts(startParts)} - ${formatClockParts(endParts)}`;
 }
 
-/** Card-style when line — e.g. "Today · 6:00 – 7:30 pm". */
+/** Card-style when line — e.g. "Today · 7 - 9pm". */
 export function formatEventWhenLine(
 	event: Pick<Event, "starts_at" | "timezone" | "duration_min">,
 ): string {
@@ -595,11 +591,7 @@ function formatClockParts(
 ): string {
 	const clock =
 		parts.minute === "00" ? parts.hour : `${parts.hour}:${parts.minute}`;
-	return omitMeridiem ? clock : `${clock} ${parts.dayPeriod}`;
-}
-
-function lowercaseMeridiem(text: string): string {
-	return text.replace(/\b(AM|PM)\b/g, (meridiem) => meridiem.toLowerCase());
+	return omitMeridiem ? clock : `${clock}${parts.dayPeriod.toLowerCase()}`;
 }
 
 /**
