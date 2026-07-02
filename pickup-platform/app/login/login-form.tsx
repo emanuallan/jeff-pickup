@@ -95,21 +95,26 @@ export function LoginForm({ authError, nextPath = '/console' }: Props) {
       setToastMessage(null)
 
       try {
-        const { createClient } = await import('@/lib/supabase/client')
-        const supabase = createClient()
-        const { error } = await supabase.auth.verifyOtp({
-          email: normalizedEmail,
-          token: trimmedToken,
-          type: 'email',
+        const res = await fetch('/auth/verify-otp', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({
+            email: normalizedEmail,
+            token: trimmedToken,
+            next: nextPath,
+          }),
         })
 
-        if (error) {
-          setToastMessage(mapOtpAuthError(error.message))
+        const data = (await res.json().catch(() => null)) as { message?: string; next?: string } | null
+
+        if (!res.ok) {
+          setToastMessage(data?.message ?? 'Something went wrong while verifying your code.')
           verifyLockRef.current = false
           return
         }
 
-        window.location.assign(nextPath)
+        window.location.assign(data?.next ?? nextPath)
       } catch {
         setToastMessage('Something went wrong while verifying your code.')
         verifyLockRef.current = false
