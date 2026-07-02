@@ -70,21 +70,21 @@ export function OrganizrToast({
         visible ? 'translate-y-0 opacity-100' : 'translate-y-2 opacity-0'
       }`}
     >
-      <div className="flex items-start gap-3">
+      <div className="flex items-center gap-3">
         <span
           aria-hidden
-          className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs font-bold ${styles.icon}`}
+          className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs font-bold ${styles.icon}`}
         >
           {styles.glyph}
         </span>
-        <p className={`min-w-0 flex-1 text-sm leading-relaxed ${styles.text}`}>{message}</p>
+        <p className={`min-w-0 flex-1 text-sm leading-snug ${styles.text}`}>{message}</p>
         <button
           type="button"
           onClick={dismiss}
           aria-label="Dismiss"
-          className="shrink-0 rounded-md p-1 text-zinc-500 transition hover:bg-white/5 hover:text-zinc-300"
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-zinc-500 transition hover:bg-white/5 hover:text-zinc-300"
         >
-          <span aria-hidden className="text-sm leading-none">
+          <span aria-hidden className="text-lg leading-none">
             ×
           </span>
         </button>
