@@ -7,7 +7,6 @@ import {
   OrganizrBackdrop,
   OrganizrMarketingHeader,
   organizrBtnPrimary,
-  organizrBtnSecondary,
   organizrInput,
   organizrLabel,
 } from '../_components/organizr-shell'
@@ -18,6 +17,7 @@ import {
   normalizeOtpInput,
   OTP_LENGTH,
 } from '@/lib/login-otp'
+import { OtpInput } from './otp-input'
 
 const RESEND_SECONDS = 60
 
@@ -35,7 +35,6 @@ export function LoginForm({ authError, nextPath = '/console' }: Props) {
   const [busy, setBusy] = useState(false)
   const [resendIn, setResendIn] = useState(0)
   const [toastMessage, setToastMessage] = useState<string | null>(null)
-  const codeInputRef = useRef<HTMLInputElement>(null)
   const verifyLockRef = useRef(false)
 
   useEffect(() => {
@@ -52,12 +51,6 @@ export function LoginForm({ authError, nextPath = '/console' }: Props) {
     }, 1000)
     return () => window.clearInterval(timer)
   }, [resendIn])
-
-  useEffect(() => {
-    if (step === 'code') {
-      codeInputRef.current?.focus()
-    }
-  }, [step])
 
   const sendCode = useCallback(async () => {
     const normalizedEmail = normalizeLoginEmail(email)
@@ -153,6 +146,26 @@ export function LoginForm({ authError, nextPath = '/console' }: Props) {
     await sendCode()
   }
 
+  async function handlePasteCode() {
+    if (busy) return
+
+    try {
+      const text = await navigator.clipboard.readText()
+      const next = normalizeOtpInput(text)
+      if (!next) {
+        setToastMessage("Clipboard doesn't contain a sign-in code.")
+        return
+      }
+
+      setCode(next)
+      if (isCompleteOtp(next)) {
+        void verifyCode(next)
+      }
+    } catch {
+      setToastMessage("Couldn't read clipboard. Tap the code field and paste manually.")
+    }
+  }
+
   function handleChangeEmail() {
     setStep('email')
     setCode('')
@@ -160,7 +173,7 @@ export function LoginForm({ authError, nextPath = '/console' }: Props) {
     verifyLockRef.current = false
   }
 
-  const codeReady = isCompleteOtp(code)
+  const normalizedEmail = normalizeLoginEmail(email)
 
   return (
     <div className="relative min-h-dvh">
@@ -171,26 +184,43 @@ export function LoginForm({ authError, nextPath = '/console' }: Props) {
         <OrganizrToast message={toastMessage} onClose={() => setToastMessage(null)} />
       ) : null}
 
-      <main className="mx-auto flex min-h-[calc(100dvh-3.5rem)] max-w-md flex-col justify-center px-6 py-16">
-        <Link
-          href="/"
-          className="inline-flex min-h-9 items-center gap-1 text-sm text-zinc-400 transition-colors hover:text-zinc-200"
-        >
-          <span aria-hidden>←</span> Home
-        </Link>
+      <main className="mx-auto flex min-h-[calc(100dvh-3.5rem)] max-w-sm flex-col justify-center px-6 py-12">
+        {step === 'email' ? (
+          <Link
+            href="/"
+            className="inline-flex min-h-9 items-center gap-1 text-sm text-zinc-500 transition-colors hover:text-zinc-300"
+          >
+            <span aria-hidden>←</span> Home
+          </Link>
+        ) : (
+          <button
+            type="button"
+            onClick={handleChangeEmail}
+            disabled={busy}
+            className="inline-flex min-h-9 items-center gap-1 text-sm text-zinc-500 transition-colors hover:text-zinc-300 disabled:opacity-50"
+          >
+            <span aria-hidden>←</span> Different email
+          </button>
+        )}
 
-        <p className="mt-6 text-xs font-semibold uppercase tracking-wider text-indigo-300/90">
-          Sign in
-        </p>
-        <h1 className="mt-3 text-2xl font-semibold tracking-tight text-zinc-50">Welcome back</h1>
-        <p className="mt-2 text-sm text-zinc-400">
-          {step === 'email'
-            ? "We'll email you a 6-digit code. No password needed."
-            : `Enter the code we sent to ${normalizeLoginEmail(email)}.`}
-        </p>
+        <div className="mt-8">
+          <h1 className="text-2xl font-semibold tracking-tight text-zinc-50">
+            {step === 'email' ? 'Welcome' : 'Check your email'}
+          </h1>
+          <p className="mt-2 text-sm leading-relaxed text-zinc-400">
+            {step === 'email' ? (
+              'We’ll send a 6-digit code. No password needed.'
+            ) : (
+              <>
+                Enter the code sent to{' '}
+                <span className="font-medium text-zinc-300">{normalizedEmail}</span>
+              </>
+            )}
+          </p>
+        </div>
 
         {step === 'email' ? (
-          <form onSubmit={handleEmailSubmit} className="mt-8 space-y-4">
+          <form onSubmit={handleEmailSubmit} className="mt-8 space-y-5">
             <label className="block">
               <span className={organizrLabel}>Email</span>
               <input
@@ -209,58 +239,46 @@ export function LoginForm({ authError, nextPath = '/console' }: Props) {
               disabled={busy}
               className={`w-full ${organizrBtnPrimary} disabled:opacity-50`}
             >
-              {busy ? 'Sending…' : 'Send code'}
+              {busy ? 'Sending…' : 'Continue'}
             </button>
           </form>
         ) : (
-          <form onSubmit={handleCodeSubmit} className="mt-8 space-y-4">
-            <label className="block">
-              <span className={organizrLabel}>Sign-in code</span>
-              <input
-                ref={codeInputRef}
-                type="text"
-                inputMode="numeric"
-                autoComplete="one-time-code"
-                required
+          <form onSubmit={handleCodeSubmit} className="mt-10 space-y-6">
+            <div className="space-y-4">
+              <OtpInput
                 value={code}
                 onChange={handleCodeChange}
-                className={`${organizrInput} text-center text-2xl tracking-[0.35em] font-semibold tabular-nums`}
-                placeholder="000000"
-                maxLength={OTP_LENGTH}
-                aria-label="6-digit sign-in code"
+                disabled={busy}
+                autoFocus
               />
-            </label>
+              <div className="flex justify-center">
+                <button
+                  type="button"
+                  onClick={handlePasteCode}
+                  disabled={busy}
+                  className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-3.5 py-1.5 text-sm font-medium text-zinc-200 transition hover:border-white/20 hover:bg-white/10 disabled:opacity-50"
+                >
+                  Paste code
+                </button>
+              </div>
+              {busy ? (
+                <p className="text-center text-sm text-zinc-500">Verifying…</p>
+              ) : null}
+            </div>
 
-            <button
-              type="submit"
-              disabled={busy || !codeReady}
-              className={`w-full ${organizrBtnPrimary} disabled:opacity-50`}
-            >
-              {busy ? 'Verifying…' : 'Continue'}
-            </button>
-
-            <div className="flex flex-col gap-2 sm:flex-row">
+            <p className="text-center text-sm text-zinc-500">
+              Didn&apos;t get it?{' '}
               <button
                 type="button"
                 onClick={handleResend}
                 disabled={busy || resendIn > 0}
-                className={`w-full ${organizrBtnSecondary} disabled:opacity-50`}
+                className="font-medium text-indigo-300 transition hover:text-indigo-200 disabled:text-zinc-600"
               >
                 {resendIn > 0 ? `Resend in ${resendIn}s` : 'Resend code'}
               </button>
-              <button
-                type="button"
-                onClick={handleChangeEmail}
-                disabled={busy}
-                className={`w-full ${organizrBtnSecondary} disabled:opacity-50`}
-              >
-                Change email
-              </button>
-            </div>
+            </p>
           </form>
         )}
-
-        {/* TODO: Phase 3 — self-serve org creation wizard after login */}
       </main>
     </div>
   )
