@@ -3,6 +3,7 @@
 import { useEffect, useState, useTransition } from 'react'
 import { updateEventAnnouncement } from '../actions'
 import { chipAction, consoleInput } from '../_components/console-ui'
+import { useConsoleToast } from '../_components/console-toast'
 
 type Props = {
   orgSlug: string
@@ -11,10 +12,10 @@ type Props = {
 }
 
 export function EventAnnouncementEditor({ orgSlug, eventId, announcement: initial }: Props) {
+  const toast = useConsoleToast()
   const [announcement, setAnnouncement] = useState(initial)
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(initial)
-  const [error, setError] = useState<string | null>(null)
   const [pending, startTransition] = useTransition()
 
   useEffect(() => {
@@ -25,21 +26,18 @@ export function EventAnnouncementEditor({ orgSlug, eventId, announcement: initia
   function openEditor() {
     setDraft(announcement)
     setEditing(true)
-    setError(null)
   }
 
   function cancelEdit() {
     setDraft(announcement)
     setEditing(false)
-    setError(null)
   }
 
   function save() {
-    setError(null)
     startTransition(async () => {
       const result = await updateEventAnnouncement(orgSlug, eventId, draft)
       if (result && 'error' in result) {
-        setError(result.error)
+        toast.error(result.error)
         return
       }
       const next = draft.trim()
@@ -51,11 +49,10 @@ export function EventAnnouncementEditor({ orgSlug, eventId, announcement: initia
 
   function remove() {
     if (pending) return
-    setError(null)
     startTransition(async () => {
       const result = await updateEventAnnouncement(orgSlug, eventId, '')
       if (result && 'error' in result) {
-        setError(result.error)
+        toast.error(result.error)
         return
       }
       setAnnouncement('')
@@ -98,7 +95,6 @@ export function EventAnnouncementEditor({ orgSlug, eventId, announcement: initia
             Cancel
           </button>
         </div>
-        {error ? <p className="mt-2 text-[11px] text-red-300">{error}</p> : null}
       </div>
     )
   }
@@ -126,7 +122,6 @@ export function EventAnnouncementEditor({ orgSlug, eventId, announcement: initia
             {pending ? 'Removing…' : 'Remove'}
           </button>
         </div>
-        {error ? <p className="mt-2 text-[11px] text-red-300">{error}</p> : null}
       </div>
     )
   }

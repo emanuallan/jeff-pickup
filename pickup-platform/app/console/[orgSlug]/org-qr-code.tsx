@@ -1,8 +1,9 @@
 'use client'
 
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useRef } from 'react'
 import { QRCodeCanvas } from 'qrcode.react'
 import { btnOutline } from '../_components/console-ui'
+import { useConsoleToast } from '../_components/console-toast'
 
 function escapeHtml(text: string): string {
   return text
@@ -19,8 +20,8 @@ type Props = {
 }
 
 export function OrgQrCode({ orgUrl, orgHost, orgName }: Props) {
+  const toast = useConsoleToast()
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const [copyMessage, setCopyMessage] = useState<string | null>(null)
 
   const downloadPng = useCallback(() => {
     const canvas = canvasRef.current
@@ -90,14 +91,13 @@ export function OrgQrCode({ orgUrl, orgHost, orgName }: Props) {
   }, [orgName, orgHost])
 
   const copyLink = useCallback(async () => {
-    setCopyMessage(null)
     try {
       await navigator.clipboard.writeText(orgUrl)
-      setCopyMessage('Copied.')
+      toast.success('Copied.')
     } catch {
-      setCopyMessage('Could not copy — try saving or printing instead.')
+      toast.error('Could not copy — try saving or printing instead.')
     }
-  }, [orgUrl])
+  }, [orgUrl, toast])
 
   return (
     <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:gap-6">
@@ -133,8 +133,6 @@ export function OrgQrCode({ orgUrl, orgHost, orgName }: Props) {
             Print
           </button>
         </div>
-
-        {copyMessage ? <p className="text-xs text-zinc-400">{copyMessage}</p> : null}
       </div>
     </div>
   )

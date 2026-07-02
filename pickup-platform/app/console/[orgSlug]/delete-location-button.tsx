@@ -1,8 +1,9 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useTransition } from 'react'
 import { deleteLocation } from '../actions'
 import { chipAction } from '../_components/console-ui'
+import { useConsoleToast } from '../_components/console-toast'
 
 type Props = {
   orgSlug: string
@@ -11,18 +12,17 @@ type Props = {
 }
 
 export function DeleteLocationButton({ orgSlug, locationId, locationLabel }: Props) {
-  const [error, setError] = useState<string | null>(null)
+  const toast = useConsoleToast()
   const [pending, startTransition] = useTransition()
 
   function handleDelete() {
     if (!window.confirm(`Delete "${locationLabel}"? This can't be undone.`)) {
       return
     }
-    setError(null)
     startTransition(async () => {
       const result = await deleteLocation(orgSlug, locationId)
       if (result && 'error' in result) {
-        setError(result.error)
+        toast.error(result.error)
       }
     })
   }
@@ -37,7 +37,6 @@ export function DeleteLocationButton({ orgSlug, locationId, locationLabel }: Pro
       >
         {pending ? 'Deleting…' : 'Delete'}
       </button>
-      {error ? <p className="mt-1 max-w-48 text-xs text-red-300">{error}</p> : null}
     </div>
   )
 }

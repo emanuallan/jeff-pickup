@@ -7,6 +7,7 @@ import { updateSchedule, type UpdateScheduleMode } from '../actions'
 import { chipAction } from '../_components/console-ui'
 import { BottomSheet } from '@/app/_components/bottom-sheet'
 import { ScheduleFormFields } from './schedule-form-fields'
+import { useConsoleToast } from '../_components/console-toast'
 
 type Props = {
   orgSlug: string
@@ -15,27 +16,25 @@ type Props = {
 }
 
 export function EditScheduleButton({ orgSlug, schedule, locations }: Props) {
+  const toast = useConsoleToast()
   const [open, setOpen] = useState(false)
   const [mode, setMode] = useState<UpdateScheduleMode | null>(null)
-  const [error, setError] = useState<string | null>(null)
   const [pending, startTransition] = useTransition()
 
   function closeModal() {
     if (pending) return
     setOpen(false)
     setMode(null)
-    setError(null)
   }
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     if (!mode) return
-    setError(null)
     const formData = new FormData(e.currentTarget)
     startTransition(async () => {
       const result = await updateSchedule(orgSlug, schedule.id, mode, formData)
       if (result && 'error' in result) {
-        setError(result.error)
+        toast.error(result.error)
       } else {
         closeModal()
       }
@@ -81,10 +80,7 @@ export function EditScheduleButton({ orgSlug, schedule, locations }: Props) {
                     name="update-schedule-mode"
                     value="forward_only"
                     checked={mode === 'forward_only'}
-                    onChange={() => {
-                      setMode('forward_only')
-                      setError(null)
-                    }}
+                    onChange={() => setMode('forward_only')}
                     className="mt-0.5 shrink-0 accent-indigo-500"
                   />
                   <span className="text-sm">
@@ -101,10 +97,7 @@ export function EditScheduleButton({ orgSlug, schedule, locations }: Props) {
                     name="update-schedule-mode"
                     value="all_scheduled"
                     checked={mode === 'all_scheduled'}
-                    onChange={() => {
-                      setMode('all_scheduled')
-                      setError(null)
-                    }}
+                    onChange={() => setMode('all_scheduled')}
                     className="mt-0.5 shrink-0 accent-indigo-500"
                   />
                   <span className="text-sm">
@@ -116,8 +109,6 @@ export function EditScheduleButton({ orgSlug, schedule, locations }: Props) {
                   </span>
                 </label>
               </fieldset>
-
-              {error ? <p className="text-sm text-red-300">{error}</p> : null}
 
               <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
                 <button

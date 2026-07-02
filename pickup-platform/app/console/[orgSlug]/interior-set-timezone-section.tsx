@@ -5,6 +5,7 @@ import { interiorSetOrgTimezone } from '../actions'
 import { browserTimeZone } from '@/lib/datetime'
 import { formatTimezoneLabel, orgTimezoneOptions } from '@/lib/timezones'
 import { consoleInput, consoleLabel, btnSecondary } from '../_components/console-ui'
+import { useConsoleToast } from '../_components/console-toast'
 
 type Props = {
   orgSlug: string
@@ -12,26 +13,23 @@ type Props = {
 }
 
 export function InteriorSetTimezoneSection({ orgSlug, currentOrgTimezone }: Props) {
+  const toast = useConsoleToast()
   const timezoneOptions = useMemo(() => orgTimezoneOptions(), [])
   const [timezone, setTimezone] = useState(currentOrgTimezone ?? browserTimeZone())
-  const [error, setError] = useState<string | null>(null)
-  const [success, setSuccess] = useState<string | null>(null)
   const [pending, startTransition] = useTransition()
 
   const unchanged = currentOrgTimezone != null && timezone === currentOrgTimezone
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    setError(null)
-    setSuccess(null)
 
     startTransition(async () => {
       const result = await interiorSetOrgTimezone(orgSlug, timezone)
       if (result.error) {
-        setError(result.error)
+        toast.error(result.error)
         return
       }
-      setSuccess(
+      toast.success(
         `Group timezone set to ${formatTimezoneLabel(result.timezone ?? timezone)}. Schedules and sessions were updated.`,
       )
     })
@@ -56,11 +54,7 @@ export function InteriorSetTimezoneSection({ orgSlug, currentOrgTimezone }: Prop
         <select
           name="timezone"
           value={timezone}
-          onChange={(e) => {
-            setTimezone(e.target.value)
-            setError(null)
-            setSuccess(null)
-          }}
+          onChange={(e) => setTimezone(e.target.value)}
           disabled={pending}
           className={`mt-1.5 ${consoleInput}`}
         >
@@ -71,9 +65,6 @@ export function InteriorSetTimezoneSection({ orgSlug, currentOrgTimezone }: Prop
           ))}
         </select>
       </label>
-
-      {error ? <p className="text-sm text-red-300">{error}</p> : null}
-      {success ? <p className="text-sm text-emerald-300">{success}</p> : null}
 
       <button
         type="submit"

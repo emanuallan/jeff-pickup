@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { BottomSheet } from '@/app/_components/bottom-sheet'
 import { BottomSheetLoading } from '../../../_components/bottom-sheet-loading'
 import { ConsoleCard } from '../../../_components/console-ui'
+import { useConsoleToast } from '../../../_components/console-toast'
 
 type KnownVisitor = {
   participantId: string
@@ -53,14 +54,15 @@ function StatCardContent({
 }
 
 export function UniqueVisitorsStatCard({ orgSlug, eventId, count }: Props) {
+  const toast = useConsoleToast()
   const [open, setOpen] = useState(false)
   const [breakdown, setBreakdown] = useState<VisitorsBreakdown | null>(null)
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [loadFailed, setLoadFailed] = useState(false)
 
   const loadBreakdown = useCallback(async (signal: AbortSignal) => {
     setLoading(true)
-    setError(null)
+    setLoadFailed(false)
 
     try {
       const res = await fetch(`/api/console/${orgSlug}/events/${eventId}/visitors`, { signal })
@@ -73,13 +75,15 @@ export function UniqueVisitorsStatCard({ orgSlug, eventId, count }: Props) {
       setBreakdown(data)
     } catch (err) {
       if (signal.aborted) return
-      setError(err instanceof Error ? err.message : 'Something went wrong')
+      const message = err instanceof Error ? err.message : 'Something went wrong'
+      toast.error(message)
+      setLoadFailed(true)
     } finally {
       if (!signal.aborted) {
         setLoading(false)
       }
     }
-  }, [orgSlug, eventId])
+  }, [orgSlug, eventId, toast])
 
   useEffect(() => {
     if (!open) return
@@ -129,8 +133,8 @@ export function UniqueVisitorsStatCard({ orgSlug, eventId, count }: Props) {
         <div className="mt-4" aria-busy={loading}>
           {loading ? (
             <BottomSheetLoading label="Loading visitors…" rows={Math.min(count, 4)} />
-          ) : error ? (
-            <p className="text-sm text-red-400">{error}</p>
+          ) : loadFailed ? (
+            <p className="text-sm text-zinc-500">Could not load visitor breakdown.</p>
           ) : !hasContent ? (
             <p className="text-sm text-zinc-500">No page views recorded yet.</p>
           ) : (

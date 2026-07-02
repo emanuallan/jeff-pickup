@@ -16,6 +16,7 @@ import {
 } from '@/lib/one-off-datetime'
 import { consoleInput, consoleLabel, btnSecondary } from '../_components/console-ui'
 import { ConsoleSubmitButton } from '../_components/console-submit-button'
+import { useConsoleToast } from '../_components/console-toast'
 
 export type { SessionFormInitial } from '@/lib/session-form-values'
 
@@ -47,6 +48,7 @@ export function SessionForm({
   pendingLabel = 'Adding…',
   useBrowserTimezone = true,
 }: Props) {
+  const toast = useConsoleToast()
   const [timezone, setTimezone] = useState(initial?.timezone ?? 'UTC')
   const [startsAtLocal, setStartsAtLocal] = useState(() =>
     defaultFormTimes(initial?.timezone ?? browserTimeZone(), initial).startsAtLocal,
@@ -55,7 +57,6 @@ export function SessionForm({
     defaultFormTimes(initial?.timezone ?? browserTimeZone(), initial).endsAtLocal,
   )
   const [pending, setPending] = useState(false)
-  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     if (initial?.timezone) {
@@ -86,7 +87,6 @@ export function SessionForm({
 
   async function handleSubmit(formData: FormData) {
     setPending(true)
-    setError(null)
 
     const tz = activeTimezone()
     formData.set('timezone', tz)
@@ -96,12 +96,12 @@ export function SessionForm({
     const durationMin = durationMinFromLocalRange(startsAtLocal, endsAtLocal, tz)
     if (!Number.isFinite(durationMin) || durationMin <= 0) {
       setPending(false)
-      setError('End time must be after the start time.')
+      toast.error('End time must be after the start time.')
       return
     }
     if (durationMin < MIN_EVENT_DURATION_MIN || durationMin > MAX_EVENT_DURATION_MIN) {
       setPending(false)
-      setError(
+      toast.error(
         `Session length must be between ${MIN_EVENT_DURATION_MIN} and ${MAX_EVENT_DURATION_MIN} minutes.`,
       )
       return
@@ -112,7 +112,7 @@ export function SessionForm({
     const result = await onSubmit(formData)
     setPending(false)
     if (result && 'error' in result && result.error) {
-      setError(result.error)
+      toast.error(result.error)
       return
     }
     onSuccess?.()
@@ -206,8 +206,6 @@ export function SessionForm({
       </div>
 
       <p className="text-xs text-zinc-500">Timezone: {activeTimezone()}</p>
-
-      {error ? <p className="text-sm text-red-300">{error}</p> : null}
 
       <ConsoleSubmitButton
         pending={pending}

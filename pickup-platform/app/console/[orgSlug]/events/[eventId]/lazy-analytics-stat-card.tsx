@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState, type ReactNode } from 'react'
 import { BottomSheet } from '@/app/_components/bottom-sheet'
 import { BottomSheetLoading } from '../../../_components/bottom-sheet-loading'
 import { ConsoleCard } from '../../../_components/console-ui'
+import { useConsoleToast } from '../../../_components/console-toast'
 
 type Props<T> = {
   orgSlug: string
@@ -44,15 +45,16 @@ export function LazyAnalyticsStatCard<T>({
   children,
   hasContent,
 }: Props<T>) {
+  const toast = useConsoleToast()
   const [open, setOpen] = useState(false)
   const [data, setData] = useState<T | null>(null)
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [loadFailed, setLoadFailed] = useState(false)
 
   const load = useCallback(
     async (signal: AbortSignal) => {
       setLoading(true)
-      setError(null)
+      setLoadFailed(false)
 
       try {
         const res = await fetch(
@@ -67,14 +69,16 @@ export function LazyAnalyticsStatCard<T>({
         setData((await res.json()) as T)
       } catch (err) {
         if (signal.aborted) return
-        setError(err instanceof Error ? err.message : 'Something went wrong')
+        const message = err instanceof Error ? err.message : 'Something went wrong'
+        toast.error(message)
+        setLoadFailed(true)
       } finally {
         if (!signal.aborted) {
           setLoading(false)
         }
       }
     },
-    [orgSlug, eventId, metric],
+    [orgSlug, eventId, metric, toast],
   )
 
   useEffect(() => {
@@ -121,8 +125,8 @@ export function LazyAnalyticsStatCard<T>({
         <div className="mt-4" aria-busy={loading}>
           {loading ? (
             <BottomSheetLoading label={loadingLabel} rows={skeletonRows} />
-          ) : error ? (
-            <p className="text-sm text-red-400">{error}</p>
+          ) : loadFailed ? (
+            <p className="text-sm text-zinc-500">Could not load details.</p>
           ) : data && (hasContent ? hasContent(data) : true) ? (
             children(data)
           ) : (

@@ -5,6 +5,7 @@ import { deleteOrg } from '../actions'
 import { consoleInput, chipAction } from '../_components/console-ui'
 import { BottomSheet } from '@/app/_components/bottom-sheet'
 import { normalizeSlug } from '@/lib/tenancy/reserved-slugs'
+import { useConsoleToast } from '../_components/console-toast'
 
 type Props = {
   orgSlug: string
@@ -12,9 +13,9 @@ type Props = {
 }
 
 export function DeleteOrgSection({ orgSlug, rootDomain }: Props) {
+  const toast = useConsoleToast()
   const [open, setOpen] = useState(false)
   const [confirmSlug, setConfirmSlug] = useState('')
-  const [error, setError] = useState<string | null>(null)
   const [pending, startTransition] = useTransition()
 
   const slugMatches = normalizeSlug(confirmSlug) === orgSlug
@@ -23,16 +24,14 @@ export function DeleteOrgSection({ orgSlug, rootDomain }: Props) {
     if (pending) return
     setOpen(false)
     setConfirmSlug('')
-    setError(null)
   }
 
   function handleDelete() {
     if (!slugMatches) return
-    setError(null)
     startTransition(async () => {
       const result = await deleteOrg(orgSlug, confirmSlug)
       if (result?.error) {
-        setError(result.error)
+        toast.error(result.error)
       }
     })
   }
@@ -75,18 +74,13 @@ export function DeleteOrgSection({ orgSlug, rootDomain }: Props) {
               <input
                 type="text"
                 value={confirmSlug}
-                onChange={(e) => {
-                  setConfirmSlug(e.target.value)
-                  setError(null)
-                }}
+                onChange={(e) => setConfirmSlug(e.target.value)}
                 autoComplete="off"
                 autoFocus
                 placeholder={orgSlug}
                 className={`mt-1.5 ${consoleInput}`}
               />
             </label>
-
-            {error ? <p className="mt-3 text-sm text-red-300">{error}</p> : null}
 
             <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
               <button

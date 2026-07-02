@@ -1,9 +1,9 @@
 'use client'
 
-import { useState } from 'react'
 import { updateOrgWaitlistSettings } from '../actions'
 import { ConsoleSubmitButton } from '../_components/console-submit-button'
 import { btnSecondary } from '../_components/console-ui'
+import { useConsoleToast } from '../_components/console-toast'
 import type { OrgWaitlistSettings, WaitlistPromotionMode } from '@/lib/org-features'
 
 type Props = {
@@ -31,19 +31,15 @@ const OPTIONS: {
 ]
 
 export function WaitlistSettingsForm({ orgSlug, waitlist }: Props) {
-  const [message, setMessage] = useState<string | null>(null)
-  const [isError, setIsError] = useState(false)
+  const toast = useConsoleToast()
 
   async function handleSubmit(formData: FormData) {
-    setMessage(null)
     const result = await updateOrgWaitlistSettings(orgSlug, formData)
     if (result?.error) {
-      setIsError(true)
-      setMessage(result.error)
+      toast.error(result.error)
       return
     }
-    setIsError(false)
-    setMessage('Saved.')
+    toast.success('Saved.')
   }
 
   return (
@@ -69,15 +65,10 @@ export function WaitlistSettingsForm({ orgSlug, waitlist }: Props) {
         </label>
       ))}
 
-      <div className="flex flex-col gap-2 pt-1 sm:flex-row sm:items-start sm:gap-3">
+      <div className="pt-1">
         <ConsoleSubmitButton className={`w-full sm:w-auto ${btnSecondary}`}>
           Save waitlist settings
         </ConsoleSubmitButton>
-        {message ? (
-          <span className={`text-xs leading-relaxed ${isError ? 'text-red-400' : 'text-zinc-400'}`}>
-            {message}
-          </span>
-        ) : null}
       </div>
     </form>
   )

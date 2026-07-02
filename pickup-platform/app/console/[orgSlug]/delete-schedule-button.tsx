@@ -5,6 +5,7 @@ import { deleteSchedule, type DeleteScheduleMode } from '../actions'
 import type { ScheduleDeleteImpact } from '@/lib/schedules'
 import { chipAction } from '../_components/console-ui'
 import { BottomSheet } from '@/app/_components/bottom-sheet'
+import { useConsoleToast } from '../_components/console-toast'
 
 type Props = {
   orgSlug: string
@@ -14,10 +15,10 @@ type Props = {
 }
 
 export function DeleteScheduleButton({ orgSlug, scheduleId, scheduleTitle, impact }: Props) {
+  const toast = useConsoleToast()
   const [open, setOpen] = useState(false)
   const [mode, setMode] = useState<DeleteScheduleMode>('schedule_only')
   const [acknowledgeSignupLoss, setAcknowledgeSignupLoss] = useState(false)
-  const [error, setError] = useState<string | null>(null)
   const [pending, startTransition] = useTransition()
 
   const needsSignupAck =
@@ -26,7 +27,6 @@ export function DeleteScheduleButton({ orgSlug, scheduleId, scheduleTitle, impac
   function openModal() {
     setMode('schedule_only')
     setAcknowledgeSignupLoss(false)
-    setError(null)
     setOpen(true)
   }
 
@@ -35,19 +35,17 @@ export function DeleteScheduleButton({ orgSlug, scheduleId, scheduleTitle, impac
     setOpen(false)
     setMode('schedule_only')
     setAcknowledgeSignupLoss(false)
-    setError(null)
   }
 
   function handleDelete() {
     if (!mode) return
     if (needsSignupAck && !acknowledgeSignupLoss) return
-    setError(null)
     startTransition(async () => {
       const result = await deleteSchedule(orgSlug, scheduleId, mode, {
         acknowledgeSignupLoss: needsSignupAck ? acknowledgeSignupLoss : undefined,
       })
       if (result && 'error' in result) {
-        setError(result.error)
+        toast.error(result.error)
       } else {
         closeModal()
       }
@@ -90,7 +88,6 @@ export function DeleteScheduleButton({ orgSlug, scheduleId, scheduleTitle, impac
                   onChange={() => {
                     setMode('schedule_only')
                     setAcknowledgeSignupLoss(false)
-                    setError(null)
                   }}
                   className="mt-0.5 shrink-0 accent-indigo-500"
                 />
@@ -111,7 +108,6 @@ export function DeleteScheduleButton({ orgSlug, scheduleId, scheduleTitle, impac
                   onChange={() => {
                     setMode('with_future_events')
                     setAcknowledgeSignupLoss(false)
-                    setError(null)
                   }}
                   className="mt-0.5 shrink-0 accent-red-500"
                 />
@@ -153,10 +149,7 @@ export function DeleteScheduleButton({ orgSlug, scheduleId, scheduleTitle, impac
                 <input
                   type="checkbox"
                   checked={acknowledgeSignupLoss}
-                  onChange={(e) => {
-                    setAcknowledgeSignupLoss(e.target.checked)
-                    setError(null)
-                  }}
+                  onChange={(e) => setAcknowledgeSignupLoss(e.target.checked)}
                   className="mt-0.5 shrink-0 accent-red-500"
                 />
                 <span>
@@ -165,8 +158,6 @@ export function DeleteScheduleButton({ orgSlug, scheduleId, scheduleTitle, impac
                 </span>
               </label>
             ) : null}
-
-            {error ? <p className="mt-3 text-sm text-red-300">{error}</p> : null}
 
             <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
               <button

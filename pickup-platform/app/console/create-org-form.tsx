@@ -5,11 +5,12 @@ import { checkSlugAvailability, createOrg } from './actions'
 import { normalizeSlug } from '@/lib/tenancy/reserved-slugs'
 import { consoleInput, consoleLabel, btnPrimary } from './_components/console-ui'
 import { ConsoleSubmitButton } from './_components/console-submit-button'
+import { useConsoleToast } from './_components/console-toast'
 
 type SlugState = 'idle' | 'checking' | 'available' | 'taken' | 'invalid'
 
 export function CreateOrgForm() {
-  const [error, setError] = useState<string | null>(null)
+  const toast = useConsoleToast()
   const [pending, setPending] = useState(false)
   const [slug, setSlug] = useState('')
   const [slugEdited, setSlugEdited] = useState(false)
@@ -46,12 +47,11 @@ export function CreateOrgForm() {
   }
 
   async function handleSubmit(formData: FormData) {
-    setError(null)
     setPending(true)
     const result = await createOrg(formData)
     setPending(false)
     if (result?.error) {
-      setError(result.error)
+      toast.error(result.error)
     }
   }
 
@@ -117,8 +117,6 @@ export function CreateOrgForm() {
 
       {/* Language defaults to English for now; selector hidden until i18n ships. */}
       <input type="hidden" name="default_locale" value="en" />
-
-      {error ? <p className="text-sm text-red-300">{error}</p> : null}
 
       <ConsoleSubmitButton
         pending={pending}

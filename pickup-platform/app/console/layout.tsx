@@ -5,6 +5,7 @@ import { OrganizrLogo } from '../_components/organizr-logo'
 import { ROBOTS_PRIVATE } from '@/lib/seo'
 import { ConsoleNotificationBellSlot } from './console-notification-bell-slot'
 import { ConsoleSignOutButton } from './_components/console-sign-out-button'
+import { ConsoleToastProvider } from './_components/console-toast'
 
 export const metadata: Metadata = {
   title: 'Console',
@@ -47,7 +48,7 @@ export default function ConsoleLayout({ children }: { children: React.ReactNode 
         </div>
       </header>
 
-      {children}
+      <ConsoleToastProvider>{children}</ConsoleToastProvider>
     </div>
   )
 }

@@ -6,6 +6,7 @@ import { MAX_ORG_LINKS } from '@/lib/social-links'
 import { SocialLinkIcon } from '@/app/org/[slug]/_components/social-links'
 import { consoleInput, btnSecondary } from '../_components/console-ui'
 import { ConsoleSubmitButton } from '../_components/console-submit-button'
+import { useConsoleToast } from '../_components/console-toast'
 
 type Props = {
   orgSlug: string
@@ -13,9 +14,8 @@ type Props = {
 }
 
 export function LinksForm({ orgSlug, links }: Props) {
+  const toast = useConsoleToast()
   const [items, setItems] = useState<string[]>(links.length ? links : [''])
-  const [message, setMessage] = useState<string | null>(null)
-  const [error, setError] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
 
   function setItem(index: number, value: string) {
@@ -34,15 +34,13 @@ export function LinksForm({ orgSlug, links }: Props) {
   }
 
   async function handleSubmit(formData: FormData) {
-    setMessage(null)
-    setError(null)
     setPending(true)
     const result = await updateOrgLinks(orgSlug, formData)
     setPending(false)
     if (result?.error) {
-      setError(result.error)
+      toast.error(result.error)
     } else {
-      setMessage('Saved.')
+      toast.success('Saved.')
     }
   }
 
@@ -105,12 +103,10 @@ export function LinksForm({ orgSlug, links }: Props) {
         <p className="text-xs text-zinc-600">You can add up to {MAX_ORG_LINKS} links.</p>
       )}
 
-      <div className="flex flex-col gap-2 border-t border-white/5 pt-3 sm:flex-row sm:items-center sm:gap-3">
+      <div className="border-t border-white/5 pt-3">
         <ConsoleSubmitButton pending={pending} className={`w-full sm:w-auto ${btnSecondary}`}>
           Save links
         </ConsoleSubmitButton>
-        {message ? <span className="text-xs text-zinc-400">{message}</span> : null}
-        {error ? <span className="text-xs text-red-300">{error}</span> : null}
       </div>
     </form>
   )

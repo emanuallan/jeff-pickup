@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { updateOrgProfile } from '../actions'
 import { consoleInput, btnSecondary } from '../_components/console-ui'
 import { ConsoleSubmitButton } from '../_components/console-submit-button'
+import { useConsoleToast } from '../_components/console-toast'
 
 type Props = {
   orgSlug: string
@@ -12,20 +13,17 @@ type Props = {
 }
 
 export function ProfileForm({ orgSlug, name, description }: Props) {
-  const [message, setMessage] = useState<string | null>(null)
-  const [error, setError] = useState<string | null>(null)
+  const toast = useConsoleToast()
   const [pending, setPending] = useState(false)
 
   async function handleSubmit(formData: FormData) {
-    setMessage(null)
-    setError(null)
     setPending(true)
     const result = await updateOrgProfile(orgSlug, formData)
     setPending(false)
     if (result?.error) {
-      setError(result.error)
+      toast.error(result.error)
     } else {
-      setMessage('Saved.')
+      toast.success('Saved.')
     }
   }
 
@@ -52,13 +50,9 @@ export function ProfileForm({ orgSlug, name, description }: Props) {
         />
       </label>
 
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
-        <ConsoleSubmitButton pending={pending} className={`w-full sm:w-auto ${btnSecondary}`}>
-          Save
-        </ConsoleSubmitButton>
-        {message ? <span className="text-xs text-zinc-400">{message}</span> : null}
-        {error ? <span className="text-xs text-red-300">{error}</span> : null}
-      </div>
+      <ConsoleSubmitButton pending={pending} className={`w-full sm:w-auto ${btnSecondary}`}>
+        Save
+      </ConsoleSubmitButton>
     </form>
   )
 }

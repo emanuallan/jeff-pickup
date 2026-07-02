@@ -1,8 +1,9 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useTransition } from 'react'
 import { deleteEvent } from '../actions'
 import { chipAction } from '../_components/console-ui'
+import { useConsoleToast } from '../_components/console-toast'
 
 type Props = {
   orgSlug: string
@@ -12,7 +13,7 @@ type Props = {
 }
 
 export function DeleteEventButton({ orgSlug, eventId, eventLabel, recurring }: Props) {
-  const [error, setError] = useState<string | null>(null)
+  const toast = useConsoleToast()
   const [pending, startTransition] = useTransition()
 
   function handleDelete() {
@@ -22,26 +23,22 @@ export function DeleteEventButton({ orgSlug, eventId, eventLabel, recurring }: P
     if (!window.confirm(warning)) {
       return
     }
-    setError(null)
     startTransition(async () => {
       const result = await deleteEvent(orgSlug, eventId)
       if (result && 'error' in result) {
-        setError(result.error)
+        toast.error(result.error)
       }
     })
   }
 
   return (
-    <>
-      <button
-        type="button"
-        onClick={handleDelete}
-        disabled={pending}
-        className={`${chipAction} text-zinc-400 hover:bg-red-500/10 hover:text-red-300 disabled:opacity-50`}
-      >
-        {pending ? 'Deleting…' : 'Delete'}
-      </button>
-      {error ? <p className="mt-1 text-xs text-red-300">{error}</p> : null}
-    </>
+    <button
+      type="button"
+      onClick={handleDelete}
+      disabled={pending}
+      className={`${chipAction} text-zinc-400 hover:bg-red-500/10 hover:text-red-300 disabled:opacity-50`}
+    >
+      {pending ? 'Deleting…' : 'Delete'}
+    </button>
   )
 }

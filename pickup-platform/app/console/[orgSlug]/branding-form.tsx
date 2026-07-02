@@ -4,6 +4,7 @@ import { useRef, useState } from 'react'
 import { removeOrgLogo, updateBranding, uploadOrgLogo } from '../actions'
 import { btnSecondary } from '../_components/console-ui'
 import { ConsoleSubmitButton } from '../_components/console-submit-button'
+import { useConsoleToast } from '../_components/console-toast'
 import { readableTextColor } from '@/lib/colors'
 import { validateLogoFile } from '@/lib/org-logo'
 
@@ -29,13 +30,10 @@ export function BrandingForm({
   accentColor,
   canManageLogo,
 }: Props) {
+  const toast = useConsoleToast()
   const [color, setColor] = useState(accentColor)
   const [logoUrl, setLogoUrl] = useState(initialLogoUrl)
   const [logoCacheKey, setLogoCacheKey] = useState(0)
-  const [message, setMessage] = useState<string | null>(null)
-  const [error, setError] = useState<string | null>(null)
-  const [logoSuccess, setLogoSuccess] = useState<string | null>(null)
-  const [logoError, setLogoError] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
   const [logoAction, setLogoAction] = useState<LogoAction>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -45,18 +43,16 @@ export function BrandingForm({
   const previewUrl = logoUrl ? logoPreviewUrl(logoUrl, logoCacheKey) : null
 
   async function handleSubmit(formData: FormData) {
-    setMessage(null)
-    setError(null)
     setPending(true)
     try {
       const result = await updateBranding(orgSlug, formData)
       if (result?.error) {
-        setError(result.error)
+        toast.error(result.error)
       } else {
-        setMessage('Saved.')
+        toast.success('Saved.')
       }
     } catch {
-      setError('Save failed. Try again.')
+      toast.error('Save failed. Try again.')
     } finally {
       setPending(false)
     }
@@ -67,14 +63,11 @@ export function BrandingForm({
 
     const validation = validateLogoFile(file)
     if (!validation.ok) {
-      setLogoSuccess(null)
-      setLogoError(validation.error)
+      toast.error(validation.error)
       return
     }
 
     const requestId = ++logoRequestRef.current
-    setLogoSuccess(null)
-    setLogoError(null)
     setLogoAction('upload')
 
     const formData = new FormData()
@@ -85,7 +78,7 @@ export function BrandingForm({
       if (requestId !== logoRequestRef.current) return
 
       if ('error' in result && result.error) {
-        setLogoError(result.error)
+        toast.error(result.error)
         return
       }
 
@@ -93,10 +86,10 @@ export function BrandingForm({
         setLogoUrl(result.logoUrl)
         setLogoCacheKey((key) => key + 1)
       }
-      setLogoSuccess('Logo uploaded.')
+      toast.success('Logo uploaded.')
     } catch {
       if (requestId !== logoRequestRef.current) return
-      setLogoError('Upload failed. Try again.')
+      toast.error('Upload failed. Try again.')
     } finally {
       if (requestId === logoRequestRef.current) {
         setLogoAction(null)
@@ -108,8 +101,6 @@ export function BrandingForm({
     if (!logoUrl || logoPending) return
 
     const requestId = ++logoRequestRef.current
-    setLogoSuccess(null)
-    setLogoError(null)
     setLogoAction('remove')
 
     try {
@@ -117,15 +108,15 @@ export function BrandingForm({
       if (requestId !== logoRequestRef.current) return
 
       if ('error' in result && result.error) {
-        setLogoError(result.error)
+        toast.error(result.error)
         return
       }
 
       setLogoUrl(null)
-      setLogoSuccess('Logo removed.')
+      toast.success('Logo removed.')
     } catch {
       if (requestId !== logoRequestRef.current) return
-      setLogoError('Remove failed. Try again.')
+      toast.error('Remove failed. Try again.')
     } finally {
       if (requestId === logoRequestRef.current) {
         setLogoAction(null)
@@ -201,8 +192,6 @@ export function BrandingForm({
                 ) : null}
               </div>
               <p className="text-xs text-zinc-500">PNG, JPG, or WebP · max 2 MB</p>
-              {logoSuccess ? <p className="text-xs text-emerald-400">{logoSuccess}</p> : null}
-              {logoError ? <p className="text-xs text-red-300">{logoError}</p> : null}
             </div>
           ) : (
             <p className="text-xs text-zinc-500">Only group owners and admins can change the logo.</p>
@@ -226,17 +215,13 @@ export function BrandingForm({
           </div>
         </label>
 
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
-          <ConsoleSubmitButton
-            pending={pending}
-            disabled={logoPending}
-            className={`w-full sm:w-auto ${btnSecondary}`}
-          >
-            Save branding
-          </ConsoleSubmitButton>
-          {message ? <span className="text-xs text-zinc-400">{message}</span> : null}
-          {error ? <span className="text-xs text-red-300">{error}</span> : null}
-        </div>
+        <ConsoleSubmitButton
+          pending={pending}
+          disabled={logoPending}
+          className={`w-full sm:w-auto ${btnSecondary}`}
+        >
+          Save branding
+        </ConsoleSubmitButton>
       </form>
     </div>
   )

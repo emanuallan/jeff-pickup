@@ -3,33 +3,30 @@
 import { useState } from 'react'
 import { materializeOrgEvents } from '../actions'
 import { btnSecondary } from '../_components/console-ui'
+import { useConsoleToast } from '../_components/console-toast'
 
 export function MaterializeButton({ orgSlug }: { orgSlug: string }) {
-  const [message, setMessage] = useState<string | null>(null)
+  const toast = useConsoleToast()
   const [loading, setLoading] = useState(false)
 
   async function handleClick() {
     setLoading(true)
-    setMessage(null)
     const result = await materializeOrgEvents(orgSlug)
     setLoading(false)
     if (result?.error) {
-      setMessage(result.error)
+      if (result.error.includes('Add SUPABASE')) {
+        toast.warning(result.error)
+      } else {
+        toast.error(result.error)
+      }
     } else if (result?.ok) {
-      setMessage(`Created ${result.count ?? 0} new session(s).`)
+      toast.success(`Created ${result.count ?? 0} new session(s).`)
     }
   }
 
   return (
-    <div>
-      <button type="button" onClick={handleClick} disabled={loading} className={btnSecondary}>
-        {loading ? 'Refreshing…' : 'Refresh sessions'}
-      </button>
-      {message ? (
-        <p className={`mt-2 text-sm ${message.includes('Add SUPABASE') ? 'text-amber-300' : 'text-emerald-300'}`}>
-          {message}
-        </p>
-      ) : null}
-    </div>
+    <button type="button" onClick={handleClick} disabled={loading} className={btnSecondary}>
+      {loading ? 'Refreshing…' : 'Refresh sessions'}
+    </button>
   )
 }

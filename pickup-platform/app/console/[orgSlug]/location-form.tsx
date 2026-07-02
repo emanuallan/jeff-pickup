@@ -4,6 +4,7 @@ import { useState } from 'react'
 import type { Location } from '@/lib/locations'
 import { consoleInput, btnSecondary } from '../_components/console-ui'
 import { ConsoleSubmitButton } from '../_components/console-submit-button'
+import { useConsoleToast } from '../_components/console-toast'
 
 type Props = {
   location?: Location
@@ -22,17 +23,16 @@ export function LocationForm({
   submitLabel = 'Add location',
   pendingLabel = 'Adding…',
 }: Props) {
+  const toast = useConsoleToast()
   const [isOnline, setIsOnline] = useState(location?.is_online ?? false)
   const [pending, setPending] = useState(false)
-  const [error, setError] = useState<string | null>(null)
 
   async function handleSubmit(formData: FormData) {
     setPending(true)
-    setError(null)
     const result = await saveLocation(formData)
     setPending(false)
     if (result && typeof result === 'object' && 'error' in result && result.error) {
-      setError(result.error)
+      toast.error(result.error)
       return
     }
     onSuccess?.()
@@ -94,8 +94,6 @@ export function LocationForm({
           />
         </>
       )}
-
-      {error ? <p className="text-sm text-red-300">{error}</p> : null}
 
       <ConsoleSubmitButton
         pending={pending}

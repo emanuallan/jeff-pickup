@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import type { Location } from '@/lib/locations'
 import { btnSecondary } from '../_components/console-ui'
 import { ConsoleSubmitButton } from '../_components/console-submit-button'
+import { useConsoleToast } from '../_components/console-toast'
 import { ScheduleFormFields } from './schedule-form-fields'
 
 type Props = {
@@ -17,8 +18,8 @@ type Props = {
 }
 
 export function ScheduleForm({ orgSlug, locations, createSchedule, onSuccess }: Props) {
+  const toast = useConsoleToast()
   const [timezone, setTimezone] = useState('UTC')
-  const [error, setError] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
 
   useEffect(() => {
@@ -30,13 +31,12 @@ export function ScheduleForm({ orgSlug, locations, createSchedule, onSuccess }: 
   }, [])
 
   async function handleSubmit(formData: FormData) {
-    setError(null)
     setPending(true)
     formData.set('timezone', Intl.DateTimeFormat().resolvedOptions().timeZone)
     const result = await createSchedule(orgSlug, formData)
     setPending(false)
     if (result?.error) {
-      setError(result.error)
+      toast.error(result.error)
       return
     }
     onSuccess?.()
@@ -45,8 +45,6 @@ export function ScheduleForm({ orgSlug, locations, createSchedule, onSuccess }: 
   return (
     <form action={handleSubmit} className="space-y-3">
       <ScheduleFormFields locations={locations} timezone={timezone} />
-
-      {error ? <p className="text-sm text-red-300">{error}</p> : null}
 
       <ConsoleSubmitButton
         pending={pending}

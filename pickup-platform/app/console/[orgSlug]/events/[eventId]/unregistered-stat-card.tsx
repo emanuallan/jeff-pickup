@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { BottomSheet } from '@/app/_components/bottom-sheet'
 import { BottomSheetLoading } from '../../../_components/bottom-sheet-loading'
 import { ConsoleCard } from '../../../_components/console-ui'
+import { useConsoleToast } from '../../../_components/console-toast'
 
 type UnregisteredPerson = {
   participantId: string
@@ -50,14 +51,15 @@ function StatCardContent({
 }
 
 export function UnregisteredStatCard({ orgSlug, eventId, count, timezone }: Props) {
+  const toast = useConsoleToast()
   const [open, setOpen] = useState(false)
   const [people, setPeople] = useState<UnregisteredPerson[] | null>(null)
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [loadFailed, setLoadFailed] = useState(false)
 
   const loadPeople = useCallback(async (signal: AbortSignal) => {
     setLoading(true)
-    setError(null)
+    setLoadFailed(false)
 
     try {
       const res = await fetch(
@@ -73,13 +75,15 @@ export function UnregisteredStatCard({ orgSlug, eventId, count, timezone }: Prop
       setPeople(data.people)
     } catch (err) {
       if (signal.aborted) return
-      setError(err instanceof Error ? err.message : 'Something went wrong')
+      const message = err instanceof Error ? err.message : 'Something went wrong'
+      toast.error(message)
+      setLoadFailed(true)
     } finally {
       if (!signal.aborted) {
         setLoading(false)
       }
     }
-  }, [orgSlug, eventId])
+  }, [orgSlug, eventId, toast])
 
   useEffect(() => {
     if (!open) return
@@ -127,8 +131,8 @@ export function UnregisteredStatCard({ orgSlug, eventId, count, timezone }: Prop
         <div className="mt-4" aria-busy={loading}>
           {loading ? (
             <BottomSheetLoading label="Loading unregistered people…" rows={Math.min(count, 4)} />
-          ) : error ? (
-            <p className="text-sm text-red-400">{error}</p>
+          ) : loadFailed ? (
+            <p className="text-sm text-zinc-500">Could not load unregistered people.</p>
           ) : people && people.length === 0 ? (
             <p className="text-sm text-zinc-500">No one has unregistered yet.</p>
           ) : (
