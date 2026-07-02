@@ -44,16 +44,20 @@ Run migrations 013–040 in order as well if this is a fresh project — see `su
 
 ## 3. Auth settings
 
-Under **Authentication → URL configuration**, add redirect URLs:
+Enable **Email** provider. Password auth is not needed.
 
-- `http://localhost:3000/auth/callback` (local)
-- `https://organizr.co/auth/callback` (production)
-- `https://www.organizr.co/auth/callback` (production)
+Organizer sign-in uses **email OTP** (6-digit code). Copy [`templates/email-otp.html`](templates/email-otp.html)
+into **Authentication → Email Templates → Magic Link** in the Supabase dashboard. (Supabase labels this
+template "Magic Link" in the UI, but the content must be OTP-only.)
 
-Enable **Email** provider (magic link). Password auth is not needed.
+The template must include `{{ .Token }}` and must **not** include `{{ .ConfirmationURL }}`.
 
-Custom **Magic Link** template: copy from [`templates/magic-link.html`](templates/magic-link.html) into
-**Authentication → Email Templates → Magic Link** in the Supabase dashboard.
+OTP length is set in **Authentication → Providers → Email** (we use **6** digits; keep app and dashboard in sync).
+
+Redirect URLs (`/auth/callback`) are **not** required for OTP sign-in.
+
+Recommended: configure custom SMTP (SendGrid, Resend, Brevo, etc.) under **Authentication → SMTP** —
+the built-in Supabase sender has a low rate limit.
 
 ## 4. Seed a test org (optional)
 

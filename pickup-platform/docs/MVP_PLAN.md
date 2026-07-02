@@ -98,7 +98,7 @@ These are the validated, high-value features. They are reframed around **org →
                     ┌───────────▼────────────┐
                     │       Supabase          │
                     │  - Postgres (+ RLS)     │
-                    │  - Auth (email magic    │
+                    │  - Auth (email OTP)     │
                     │    link; phone OTP      │
                     │    scaffolded, dormant) │
                     │  - Edge Functions       │
@@ -147,7 +147,7 @@ Two distinct actor types, two friction levels.
 
 ### 7.2 Organizers / admins (real auth)
 
-- **Auth:** Supabase Auth — **email magic link** (passwordless) for MVP. Phone OTP for organizers is supported by Supabase but left dormant alongside participant OTP.
+- **Auth:** Supabase Auth — **email OTP** (6-digit code, passwordless) for MVP. Phone OTP for organizers is supported by Supabase but left dormant alongside participant OTP.
 - **Roles (`org_members.role`):**
   - `owner` — created the org; full control, can transfer/delete.
   - `admin` — manage schedules, events, locations, announcements, settings, see contact info.
@@ -307,7 +307,7 @@ from a fixed, app-defined set — useful info for organizers and other players. 
 ### 10.1 Organizer onboarding (self-serve)
 
 1. Land on marketing/root (`organizr.co` / `www`), click **Create your group**.
-2. **Sign in** (passwordless email magic link) → creates an `auth.user`.
+2. **Sign in** (passwordless email OTP) → creates an `auth.user`.
 3. **Create org:** name + **activity** label + desired **slug** (live availability check against reserved + taken list) → `<slug>.organizr.co`.
    - Org created with `status = 'active'` by default; we can flip the default to `'pending'`
      to hand-approve the first cohort without code changes.
@@ -402,7 +402,7 @@ pickup-platform/
 Sequenced so each phase is shippable/testable. Fundamentals first; engagement features come only
 after the core loop works.
 
-- **Phase 0 — Foundation:** Next.js app, Supabase project, Tailwind, organizer auth (email magic link), base schema (`orgs`, `org_members`), subdomain (`*.organizr.co`) middleware + reserved slugs, RLS scaffolding.
+- **Phase 0 — Foundation:** Next.js app, Supabase project, Tailwind, organizer auth (email OTP), base schema (`orgs`, `org_members`), subdomain (`*.organizr.co`) middleware + reserved slugs, RLS scaffolding.
 - **Phase 1 — Org + events core:** activity-agnostic org profile, locations, schedules, event materializer cron, organizer console to create them, public org page rendering upcoming events.
 - **Phase 2 — Participant identity + roster (the core loop):** phone-keyed participants, device sessions, frictionless join/unregister, guest counts, **arrival statuses** (§9.1), capacity + auto status promotion, announcements. OTP seams present but **dormant** (`require_phone_verification` flag, verify step stubbed, no SMS provider).
 - **Phase 3 — Lightweight polish:** weather, i18n (EN/ES), share text, branding, and the end-to-end self-serve org-creation wizard with slug availability UX. Create the Jeff org as the first real tenant.
