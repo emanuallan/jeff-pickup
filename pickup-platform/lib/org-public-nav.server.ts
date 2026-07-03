@@ -20,7 +20,7 @@ type OrgPublicNavDefinition = {
 export const ORG_PUBLIC_NAV_DEFINITIONS: OrgPublicNavDefinition[] = [
   {
     key: HIDDEN_DEFAULT_TAB,
-    label: 'Matchday',
+    label: 'Session',
     isVisible: () => true,
   },
   {

@@ -117,6 +117,12 @@ export function LiveDot({ accent, live = false }: { accent: string; live?: boole
 
 type EventTimingFields = Pick<EventWithLocation, 'starts_at' | 'duration_min' | 'timezone' | 'status'>
 
+function upcomingHappeningLabel(event: EventTimingFields): string {
+  const when = formatEventHappening(event)
+  if (when === 'coming up soon') return 'Coming up soon'
+  return `Happening ${when}`
+}
+
 /** Left-side timing label for event cards (pulse, happening now, already happened). */
 export function EventTimingBadge({
   event,
@@ -151,7 +157,7 @@ export function EventTimingBadge({
 
   const label = inProgress
     ? 'Happening now'
-    : (upcomingLabel ?? `Happening ${formatEventHappening(event)}`)
+    : (upcomingLabel ?? upcomingHappeningLabel(event))
   const labelColor = inProgress ? '#f87171' : accentOnDark(accent)
 
   return (

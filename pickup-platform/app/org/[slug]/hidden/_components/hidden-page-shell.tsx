@@ -1,8 +1,8 @@
 import type { ReactNode } from 'react'
 
-/** Bottom padding: fixed nav/footer height plus content breathing room. */
+/** Bottom padding: tab bar + footer strip plus content breathing room. */
 export const HIDDEN_BOTTOM_CHROME_PADDING =
-  'pb-[calc(7.5rem+env(safe-area-inset-bottom))]'
+  'pb-[calc(8rem+env(safe-area-inset-bottom))]'
 
 export function HiddenPageShell({
   children,
