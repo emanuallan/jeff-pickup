@@ -40,6 +40,7 @@ export default async function HiddenOrgLayout({ children, params }: Props) {
 
   return (
     <HiddenPageShell
+      footerOnly={navItems.length <= 1}
       bottomChrome={
         <Suspense fallback={null}>
           <HiddenBottomNav
