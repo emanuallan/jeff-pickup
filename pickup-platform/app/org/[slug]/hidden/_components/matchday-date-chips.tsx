@@ -23,6 +23,33 @@ type Props = {
   accent: string
 }
 
+function animateScrollLeft(
+  container: HTMLElement,
+  to: number,
+  durationMs: number,
+): Promise<void> {
+  return new Promise((resolve) => {
+    const from = container.scrollLeft
+    const start = performance.now()
+
+    function step(now: number) {
+      const progress = Math.min(1, (now - start) / durationMs)
+      const eased =
+        progress < 0.5
+          ? 2 * progress * progress
+          : 1 - (-2 * progress + 2) ** 2 / 2
+      container.scrollLeft = from + (to - from) * eased
+      if (progress < 1) {
+        requestAnimationFrame(step)
+      } else {
+        resolve()
+      }
+    }
+
+    requestAnimationFrame(step)
+  })
+}
+
 export function MatchdayDateChips({ events, activeEventId, accent }: Props) {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -42,6 +69,60 @@ export function MatchdayDateChips({ events, activeEventId, accent }: Props) {
       active.offsetLeft - container.clientWidth / 2 + active.offsetWidth / 2
     container.scrollTo({ left: Math.max(0, targetLeft), behavior: 'smooth' })
   }, [activeEventId])
+
+  useEffect(() => {
+    const container = scrollRef.current
+    if (!container || events.length <= 1) {
+      return
+    }
+
+    const firstEventId = events[0]?.short_id
+    if (!firstEventId || activeEventId !== firstEventId) {
+      return
+    }
+
+    const evParam = searchParams.get('ev')
+    if (evParam && evParam !== firstEventId) {
+      return
+    }
+
+    if (container.scrollWidth <= container.clientWidth + 4) {
+      return
+    }
+
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      return
+    }
+
+    let cancelled = false
+
+    const startTimer = setTimeout(async () => {
+      if (cancelled) {
+        return
+      }
+
+      const startLeft = container.scrollLeft
+      const maxScroll = container.scrollWidth - container.clientWidth
+      const peek = Math.min(44, maxScroll * 0.28)
+
+      await animateScrollLeft(container, startLeft + peek, 620)
+      if (cancelled) {
+        return
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, 120))
+      if (cancelled) {
+        return
+      }
+
+      await animateScrollLeft(container, startLeft, 700)
+    }, 700)
+
+    return () => {
+      cancelled = true
+      clearTimeout(startTimer)
+    }
+  }, [events, activeEventId, searchParams])
 
   useEffect(() => {
     const container = scrollRef.current
