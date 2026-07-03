@@ -12,13 +12,39 @@ type ChipEvent = {
   pastReference?: boolean
 }
 
+function dayKey(event: ChipEvent): string {
+  return new Date(event.starts_at).toLocaleDateString('en-CA', {
+    timeZone: event.timezone || 'UTC',
+  })
+}
+
+function duplicateDayKeys(events: ChipEvent[]): Set<string> {
+  const counts = new Map<string, number>()
+  for (const event of events) {
+    const key = dayKey(event)
+    counts.set(key, (counts.get(key) ?? 0) + 1)
+  }
+  return new Set(
+    [...counts.entries()].filter(([, count]) => count > 1).map(([key]) => key),
+  )
+}
+
 function chipParts(event: ChipEvent) {
   const zone = event.timezone || 'UTC'
   const d = new Date(event.starts_at)
+  const time = d
+    .toLocaleString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+      timeZone: zone,
+    })
+    .replace(' AM', 'am')
+    .replace(' PM', 'pm')
   return {
     month: d.toLocaleString('en-US', { month: 'short', timeZone: zone }),
     day: d.toLocaleString('en-US', { day: 'numeric', timeZone: zone }),
     weekday: d.toLocaleString('en-US', { weekday: 'short', timeZone: zone }),
+    time,
   }
 }
 
@@ -157,6 +183,7 @@ export function MatchdayDateChips({ events, activeEventId, accent }: Props) {
   }
 
   const accentFg = accentOnDark(accent)
+  const sharedDays = duplicateDayKeys(events)
 
   function selectEvent(shortId: string) {
     const params = new URLSearchParams(searchParams.toString())
@@ -192,7 +219,9 @@ export function MatchdayDateChips({ events, activeEventId, accent }: Props) {
           const active = event.short_id === activeEventId
           const cancelled = event.status === 'cancelled'
           const pastRef = event.pastReference === true
-          const { month, day, weekday } = chipParts(event)
+          const { month, day, weekday, time } = chipParts(event)
+          const showTime = sharedDays.has(dayKey(event))
+          const bottomLabel = showTime ? time : weekday
           const strike = cancelled ? 'line-through decoration-zinc-500/80' : ''
 
           return (
@@ -204,13 +233,19 @@ export function MatchdayDateChips({ events, activeEventId, accent }: Props) {
               aria-current={active ? 'true' : undefined}
               aria-label={
                 pastRef
-                  ? `${month} ${day}, past session`
+                  ? `${month} ${day}${showTime ? `, ${time}` : ''}, past session`
                   : cancelled
-                    ? `${month} ${day}, cancelled session`
-                    : `${month} ${day}, ${weekday}`
+                    ? `${month} ${day}${showTime ? `, ${time}` : ''}, cancelled session`
+                    : `${month} ${day}, ${showTime ? time : weekday}`
               }
               className={`flex shrink-0 flex-col items-center justify-center rounded-lg border py-1.5 transition-all duration-200 ${
-                active ? 'w-[4.25rem] px-2' : 'w-14 px-1.5'
+                active
+                  ? showTime
+                    ? 'w-[4.75rem] px-2'
+                    : 'w-[4.25rem] px-2'
+                  : showTime
+                    ? 'w-16 px-1.5'
+                    : 'w-14 px-1.5'
               } ${
                 active
                   ? 'border-white/15 text-zinc-100'
@@ -239,9 +274,9 @@ export function MatchdayDateChips({ events, activeEventId, accent }: Props) {
                 {day}
               </span>
               <span
-                className={`text-[9px] font-medium ${active ? 'text-inherit opacity-80' : 'text-zinc-600'} ${strike}`}
+                className={`text-[9px] font-medium tabular-nums ${active ? 'text-inherit opacity-80' : 'text-zinc-600'} ${strike}`}
               >
-                {weekday}
+                {bottomLabel}
               </span>
             </button>
           )
