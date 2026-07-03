@@ -2,10 +2,15 @@
 
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
-import type { EventWithLocation } from '@/lib/events'
 import { accentOnDark, hexToRgba } from '@/lib/colors'
 
-type ChipEvent = Pick<EventWithLocation, 'short_id' | 'starts_at' | 'timezone'>
+type ChipEvent = {
+  short_id: string
+  starts_at: string
+  timezone: string
+  status: string
+  pastReference?: boolean
+}
 
 function chipParts(event: ChipEvent) {
   const zone = event.timezone || 'UTC'
@@ -153,10 +158,16 @@ export function MatchdayDateChips({ events, activeEventId, accent }: Props) {
 
   const accentFg = accentOnDark(accent)
 
-  function selectEvent(shortId: string) {
+  function selectEvent(shortId: string, options?: { viewPast?: boolean }) {
     const params = new URLSearchParams(searchParams.toString())
     params.delete('tab')
     params.set('ev', shortId)
+    params.delete('past')
+    if (options?.viewPast) {
+      params.set('view', 'past')
+    } else {
+      params.delete('view')
+    }
     const query = params.toString()
     router.replace(query ? `/hidden?${query}` : '/hidden', { scroll: false })
   }
@@ -183,22 +194,32 @@ export function MatchdayDateChips({ events, activeEventId, accent }: Props) {
       >
         {events.map((event) => {
           const active = event.short_id === activeEventId
+          const cancelled = event.status === 'cancelled'
+          const pastRef = event.pastReference === true
           const { month, day, weekday } = chipParts(event)
+          const strike = cancelled ? 'line-through decoration-zinc-500/80' : ''
 
           return (
             <button
               key={event.short_id}
               ref={active ? activeRef : undefined}
               type="button"
-              onClick={() => selectEvent(event.short_id)}
+              onClick={() => selectEvent(event.short_id, { viewPast: pastRef })}
               aria-current={active ? 'true' : undefined}
+              aria-label={
+                pastRef
+                  ? `${month} ${day}, past session`
+                  : cancelled
+                    ? `${month} ${day}, cancelled session`
+                    : `${month} ${day}, ${weekday}`
+              }
               className={`flex shrink-0 flex-col items-center justify-center rounded-lg border py-1.5 transition-all duration-200 ${
                 active ? 'w-[4.25rem] px-2' : 'w-14 px-1.5'
               } ${
                 active
                   ? 'border-white/15 text-zinc-100'
                   : 'border-white/5 text-zinc-400 hover:border-white/10 hover:text-zinc-200'
-              }`}
+              } ${cancelled || pastRef ? 'opacity-60' : ''}`}
               style={{
                 backgroundImage: active
                   ? `linear-gradient(180deg, ${hexToRgba(accent, 0.22)} 0%, ${hexToRgba(accent, 0.08)} 100%)`
@@ -210,19 +231,19 @@ export function MatchdayDateChips({ events, activeEventId, accent }: Props) {
               <span
                 className={`text-[10px] font-medium uppercase tracking-wide ${
                   active ? 'text-inherit' : 'text-zinc-600'
-                }`}
+                } ${strike}`}
               >
                 {month}
               </span>
               <span
                 className={`font-semibold tabular-nums leading-tight ${
                   active ? 'text-base' : 'text-sm'
-                }`}
+                } ${strike}`}
               >
                 {day}
               </span>
               <span
-                className={`text-[9px] font-medium ${active ? 'text-inherit opacity-80' : 'text-zinc-600'}`}
+                className={`text-[9px] font-medium ${active ? 'text-inherit opacity-80' : 'text-zinc-600'} ${strike}`}
               >
                 {weekday}
               </span>

@@ -1,5 +1,5 @@
 import { cookies, headers } from 'next/headers'
-import { createClient } from '@/lib/supabase/server'
+import { createPublicClient } from '@/lib/supabase/public'
 import { SESSION_COOKIE } from '@/lib/participant-session'
 import { VISITOR_COOKIE } from '@/lib/visitor-cookie'
 
@@ -27,7 +27,7 @@ export async function lookupParticipantId(
   orgId: string,
   sessionToken: string,
 ): Promise<string | null> {
-  const supabase = await createClient()
+  const supabase = createPublicClient()
   const { data } = await supabase.rpc('get_participant_for_session', {
     p_session_token: sessionToken,
     p_org_id: orgId,
@@ -41,7 +41,7 @@ export async function recordEventPageView(
   eventId: string,
   context: PageViewContext,
 ): Promise<void> {
-  const supabase = await createClient()
+  const supabase = createPublicClient()
   const { error } = await supabase.rpc('record_event_page_view', {
     p_event_id: eventId,
     p_viewer_key: context.viewerKey,
