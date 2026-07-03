@@ -19,7 +19,7 @@ export function LeaderboardPanel({ org, capsRows, streakRows }: Props) {
   const leadersCount = capsRows.filter((row) => row.caps === topCapsValue).length
 
   return (
-    <>
+    <div className="flex flex-col gap-5 [&>*]:!mt-0">
       <LeaderboardSummary
         playerCount={capsRows.length}
         topName={topCaps?.display_name ?? null}
@@ -31,6 +31,6 @@ export function LeaderboardPanel({ org, capsRows, streakRows }: Props) {
       <CapsLeaderboard rows={capsRows} accent={accent} />
 
       <StreakLeaderboard rows={streakRows} accent={accent} />
-    </>
+    </div>
   )
 }
