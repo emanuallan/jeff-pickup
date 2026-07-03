@@ -111,7 +111,7 @@ export function HiddenBottomNav({ items, accent, basePath, slug }: Props) {
     <div className="fixed inset-x-0 bottom-0 z-30 border-t border-zinc-800/80 bg-zinc-950/95 backdrop-blur-md">
       <nav
         aria-label="Group sections"
-        className="mx-auto flex max-w-lg justify-center px-4 pt-2"
+        className="mx-auto flex max-w-lg justify-center px-4 pb-2 pt-2.5"
       >
         <div
           ref={trackRef}
@@ -161,7 +161,7 @@ export function HiddenBottomNav({ items, accent, basePath, slug }: Props) {
         </div>
       </nav>
 
-      <footer className="mx-auto flex max-w-lg items-center justify-between gap-3 px-5 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 text-[10px] text-zinc-600">
+      <footer className="mx-auto flex max-w-lg items-center justify-between gap-2 border-t border-white/10 px-5 py-1 pb-[max(0.125rem,env(safe-area-inset-bottom))] text-[10px] leading-none text-zinc-600">
         <p className="truncate font-medium tracking-wide">
           {slug}.{getRootDomain()}
         </p>

@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 
 /** Bottom padding reserves space for the fixed nav dock + footer strip. */
 export const HIDDEN_BOTTOM_CHROME_PADDING =
-  'pb-[calc(6.75rem+env(safe-area-inset-bottom))]'
+  'pb-[calc(6.25rem+env(safe-area-inset-bottom))]'
 
 export function HiddenPageShell({
   children,
