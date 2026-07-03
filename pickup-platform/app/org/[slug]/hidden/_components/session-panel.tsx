@@ -1,0 +1,122 @@
+import { Suspense } from 'react'
+import { after } from 'next/server'
+import type { Org } from '@/lib/orgs'
+import type { EventWithLocation } from '@/lib/events'
+import { isEventInProgress, isEventEnded } from '@/lib/events'
+import {
+  lookupParticipantId,
+  recordEventPageView,
+  resolvePageViewTrackingKeys,
+} from '@/lib/record-page-view'
+import { WeatherPill } from '../../cal/[eventId]/weather-pill'
+import { EventHeadcount, EventHeadcountFallback } from '../../cal/[eventId]/event-headcount'
+import { EventParticipation } from '../../cal/[eventId]/event-participation'
+import { ParticipationFallback } from '../../cal/[eventId]/participation-fallback'
+import {
+  StatusPill,
+  EventDateTimeRow,
+  EventLocationRow,
+  EventTimingBadge,
+  eventName,
+  isEventCancelled,
+  cancelledEventClasses,
+} from '../../_components/event-ui'
+
+type Props = {
+  slug: string
+  org: Org
+  event: EventWithLocation
+  eventId: string
+}
+
+export async function SessionPanel({ slug, org, event, eventId }: Props) {
+  const tracking = await resolvePageViewTrackingKeys()
+
+  const { viewerKey, sessionToken } = tracking
+  if (viewerKey) {
+    after(async () => {
+      const participantId = sessionToken
+        ? await lookupParticipantId(org.id, sessionToken)
+        : null
+      await recordEventPageView(event.id, { viewerKey, participantId })
+    })
+  }
+
+  const isCancelled = isEventCancelled(event.status)
+  const cancelledClasses = cancelledEventClasses(isCancelled)
+  const isLive = isEventInProgress(event) && event.status === 'on'
+  const isEnded = isEventEnded(event)
+  const accent = org.branding.accent_color
+
+  return (
+    <>
+      <section>
+        <div className="overflow-hidden rounded-3xl border border-zinc-800 bg-linear-to-b from-zinc-900 to-zinc-950 p-6">
+          <div className="flex items-center justify-between gap-3">
+            <EventTimingBadge event={event} accent={accent} cancelled={isCancelled} />
+            <StatusPill
+              status={event.status}
+              accent={accent}
+              live={isLive}
+              ended={isEnded}
+            />
+          </div>
+
+          <h2
+            className={`mt-4 text-2xl font-semibold tracking-tight ${cancelledClasses.titleLg}`}
+          >
+            {eventName(event)}
+          </h2>
+
+          <EventDateTimeRow event={event} cancelled={isCancelled} />
+
+          <EventLocationRow
+            event={event}
+            className="mt-3 flex gap-2 text-sm text-zinc-400"
+          />
+
+          {event.announcement ? (
+            <p className="mt-4 rounded-xl border border-zinc-800 bg-black/30 px-3 py-2 text-sm text-zinc-300">
+              {event.announcement}
+            </p>
+          ) : null}
+
+          <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-zinc-800 pt-4 text-sm">
+            <Suspense
+              fallback={
+                <EventHeadcountFallback
+                  capacity={event.capacity}
+                  minPlayers={event.min_players}
+                  ended={isEnded}
+                />
+              }
+            >
+              <EventHeadcount
+                orgSlug={slug}
+                eventRef={eventId}
+                eventId={event.id}
+                capacity={event.capacity}
+                minPlayers={event.min_players}
+                accent={accent}
+                pollActive={!isCancelled && !isEnded}
+                ended={isEnded}
+              />
+            </Suspense>
+            <Suspense fallback={null}>
+              <WeatherPill
+                lat={event.location_lat}
+                lon={event.location_lon}
+                startsAt={event.starts_at}
+                timeZone={event.timezone}
+              />
+            </Suspense>
+          </div>
+        </div>
+      </section>
+
+      <Suspense fallback={<ParticipationFallback />}>
+        <EventParticipation slug={slug} eventId={eventId} org={org} event={event} />
+      </Suspense>
+    </>
+  )
+}

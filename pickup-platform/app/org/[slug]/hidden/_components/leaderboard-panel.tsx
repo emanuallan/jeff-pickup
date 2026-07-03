@@ -1,0 +1,36 @@
+import type { Org } from '@/lib/orgs'
+import type { CapsLeaderboardRow, StreakLeaderboardRow } from '@/lib/engagement'
+import {
+  CapsLeaderboard,
+  LeaderboardSummary,
+  StreakLeaderboard,
+} from '../../_components/leaderboard-ui'
+
+type Props = {
+  org: Org
+  capsRows: CapsLeaderboardRow[]
+  streakRows: StreakLeaderboardRow[]
+}
+
+export function LeaderboardPanel({ org, capsRows, streakRows }: Props) {
+  const accent = org.branding.accent_color
+  const topCaps = capsRows[0]
+  const topCapsValue = topCaps?.caps ?? 0
+  const leadersCount = capsRows.filter((row) => row.caps === topCapsValue).length
+
+  return (
+    <>
+      <LeaderboardSummary
+        playerCount={capsRows.length}
+        topName={topCaps?.display_name ?? null}
+        topCaps={topCapsValue}
+        leadersCount={leadersCount}
+        accent={accent}
+      />
+
+      <CapsLeaderboard rows={capsRows} accent={accent} />
+
+      <StreakLeaderboard rows={streakRows} accent={accent} />
+    </>
+  )
+}
