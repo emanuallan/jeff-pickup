@@ -158,16 +158,12 @@ export function MatchdayDateChips({ events, activeEventId, accent }: Props) {
 
   const accentFg = accentOnDark(accent)
 
-  function selectEvent(shortId: string, options?: { viewPast?: boolean }) {
+  function selectEvent(shortId: string) {
     const params = new URLSearchParams(searchParams.toString())
     params.delete('tab')
     params.set('ev', shortId)
     params.delete('past')
-    if (options?.viewPast) {
-      params.set('view', 'past')
-    } else {
-      params.delete('view')
-    }
+    params.delete('view')
     const query = params.toString()
     router.replace(query ? `/hidden?${query}` : '/hidden', { scroll: false })
   }
@@ -204,7 +200,7 @@ export function MatchdayDateChips({ events, activeEventId, accent }: Props) {
               key={event.short_id}
               ref={active ? activeRef : undefined}
               type="button"
-              onClick={() => selectEvent(event.short_id, { viewPast: pastRef })}
+              onClick={() => selectEvent(event.short_id)}
               aria-current={active ? 'true' : undefined}
               aria-label={
                 pastRef

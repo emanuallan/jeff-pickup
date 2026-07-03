@@ -38,7 +38,7 @@ export function MatchdayPanel({
             starts_at: ev.starts_at,
             timezone: ev.timezone,
             status: ev.status,
-            pastReference: prefixIds.has(ev.short_id),
+            pastReference: prefixIds.has(ev.short_id) && ev.short_id !== event.short_id,
           }))}
           activeEventId={event.short_id}
           accent={accent}

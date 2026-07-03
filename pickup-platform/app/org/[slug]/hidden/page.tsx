@@ -1,4 +1,4 @@
-import { notFound, redirect } from 'next/navigation'
+import { notFound } from 'next/navigation'
 import { getPublicOrgBySlug, getPublicUpcomingEventsForOrg, getPublicOrgAndEvent } from '@/lib/public-data'
 import { getOrgCapsLeaderboard, getOrgStreakLeaderboard } from '@/lib/engagement'
 import { orgFeatures } from '@/lib/org-features'
@@ -10,12 +10,12 @@ import { LeaderboardPanel } from './_components/leaderboard-panel'
 
 type Props = {
   params: Promise<{ slug: string }>
-  searchParams: Promise<{ tab?: string; ev?: string; past?: string; view?: string }>
+  searchParams: Promise<{ tab?: string; ev?: string }>
 }
 
 export default async function HiddenPage({ params, searchParams }: Props) {
   const { slug } = await params
-  const { tab, ev, past, view } = await searchParams
+  const { tab, ev } = await searchParams
   const org = await getPublicOrgBySlug(slug)
 
   if (!org || org.status !== 'active') {
@@ -40,24 +40,7 @@ export default async function HiddenPage({ params, searchParams }: Props) {
   const defaultEvent =
     activeEvents.find((event) => !isEventCancelled(event.status)) ?? activeEvents[0] ?? null
 
-  if (ev != null && ev !== '' && !past && view !== 'past' && defaultEvent) {
-    const activeMatch = activeEvents.find((event) => event.short_id === ev)
-    if (!activeMatch) {
-      const linked = (await getPublicOrgAndEvent(slug, ev))?.event ?? null
-      if (linked?.org_id === org.id && isEventEnded(linked)) {
-        redirect(`/hidden?ev=${defaultEvent.short_id}&past=${ev}`)
-      }
-    }
-  }
-
-  const chipPrefixEvents: typeof events = []
-  if (past != null && past !== '') {
-    const pastEvent = (await getPublicOrgAndEvent(slug, past))?.event ?? null
-    if (pastEvent?.org_id === org.id) {
-      chipPrefixEvents.push(pastEvent)
-    }
-  }
-
+  let chipPrefixEvents: typeof events = []
   let selectedEvent = defaultEvent
 
   if (ev != null && ev !== '') {
@@ -68,6 +51,9 @@ export default async function HiddenPage({ params, searchParams }: Props) {
       const linked = (await getPublicOrgAndEvent(slug, ev))?.event ?? null
       if (linked?.org_id === org.id) {
         selectedEvent = linked
+        if (isEventEnded(linked)) {
+          chipPrefixEvents = [linked]
+        }
       }
     }
   }

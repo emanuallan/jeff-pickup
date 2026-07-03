@@ -68,10 +68,10 @@ export default async function HiddenOrgLayout({ children, params }: Props) {
         title={org.name}
         subtitle={org.description}
         logoPriority
-        className="mt-4"
+        className="mt-2"
       />
 
-      <div className="mt-8 flex-1">{children}</div>
+      <div className="mt-6 flex-1">{children}</div>
     </HiddenPageShell>
   )
 }
