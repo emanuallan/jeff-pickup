@@ -15,6 +15,7 @@ import { BackToOrganizrLink } from '../_components/back-to-organizr-link'
 import { ShareButton } from '../share-button-lazy'
 import { HiddenPageShell } from './_components/hidden-page-shell'
 import { HiddenBottomNav } from './_components/hidden-bottom-nav'
+import { HiddenPageFooter } from './_components/hidden-page-footer'
 
 type Props = {
   children: ReactNode
@@ -37,19 +38,21 @@ export default async function HiddenOrgLayout({ children, params }: Props) {
   const featured = pickFeaturedUpcomingEvent(events)
   const accent = org.branding.accent_color
   const navItems = resolveOrgPublicNavItems({ org }, HIDDEN_ORG_NAV_BASE)
+  const hasTabBar = navItems.length > 1
 
   return (
     <HiddenPageShell
-      footerOnly={navItems.length <= 1}
+      hasTabBar={hasTabBar}
       bottomChrome={
-        <Suspense fallback={null}>
-          <HiddenBottomNav
-            items={navItems}
-            accent={accent}
-            basePath={HIDDEN_ORG_NAV_BASE}
-            slug={slug}
-          />
-        </Suspense>
+        hasTabBar ? (
+          <Suspense fallback={null}>
+            <HiddenBottomNav
+              items={navItems}
+              accent={accent}
+              basePath={HIDDEN_ORG_NAV_BASE}
+            />
+          </Suspense>
+        ) : null
       }
     >
       <nav
@@ -72,7 +75,10 @@ export default async function HiddenOrgLayout({ children, params }: Props) {
         className="mt-2"
       />
 
-      <div className="mt-6 flex-1">{children}</div>
+      <div className="mt-6 flex flex-1 flex-col">
+        <div className="flex-1">{children}</div>
+        <HiddenPageFooter />
+      </div>
     </HiddenPageShell>
   )
 }

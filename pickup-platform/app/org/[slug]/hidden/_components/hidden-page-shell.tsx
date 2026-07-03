@@ -1,25 +1,23 @@
 import type { ReactNode } from 'react'
 
-/** Bottom padding when tab bar + footer strip are shown. */
-export const HIDDEN_BOTTOM_CHROME_PADDING =
-  'pb-[calc(8rem+env(safe-area-inset-bottom))]'
+/** Bottom padding when the fixed tab bar is shown. */
+export const HIDDEN_TAB_BAR_PADDING =
+  'pb-[calc(4.75rem+env(safe-area-inset-bottom))]'
 
-/** Bottom padding when only the footer strip is shown (single tab). */
-export const HIDDEN_FOOTER_ONLY_PADDING =
-  'pb-[calc(3.5rem+env(safe-area-inset-bottom))]'
+/** Bottom padding when there is no fixed bottom chrome. */
+export const HIDDEN_NO_TAB_BAR_PADDING =
+  'pb-[calc(1.5rem+env(safe-area-inset-bottom))]'
 
 export function HiddenPageShell({
   children,
   bottomChrome,
-  footerOnly = false,
+  hasTabBar = true,
 }: {
   children: ReactNode
   bottomChrome: ReactNode
-  footerOnly?: boolean
+  hasTabBar?: boolean
 }) {
-  const bottomPadding = footerOnly
-    ? HIDDEN_FOOTER_ONLY_PADDING
-    : HIDDEN_BOTTOM_CHROME_PADDING
+  const bottomPadding = hasTabBar ? HIDDEN_TAB_BAR_PADDING : HIDDEN_NO_TAB_BAR_PADDING
 
   return (
     <>
