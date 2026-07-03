@@ -39,6 +39,7 @@ In the Supabase **SQL Editor**, run in order:
 12. `supabase/migrations/012_normalize_phone_us10.sql`
 13. `supabase/migrations/041_org_logo_storage.sql` (after all prior migrations through 040)
 14. `supabase/migrations/042_org_logo_storage_select.sql`
+15. `supabase/migrations/043_refresh_demo_org.sql` (demo seed — safe to re-run anytime)
 
 Run migrations 013–040 in order as well if this is a fresh project — see `supabase/migrations/` for the full sequence.
 
@@ -71,6 +72,13 @@ values ('jeffsoccer', 'Jeff Soccer', 'Pickup soccer', 'YOUR_USER_ID');
 ```
 
 Visit `http://jeffsoccer.localhost:3000` locally.
+
+### Demo org (`demo.organizr.co`)
+
+Re-run [`migrations/043_refresh_demo_org.sql`](migrations/043_refresh_demo_org.sql) in the SQL Editor
+anytime you want fresh relative dates and roster data. It **only** deletes and recreates the org with
+`slug = 'demo'` (cascades all child rows). Grants console owner access to `emanuallan@gmail.com`
+(`23f1a201-aafe-4fd6-826d-3f753f092d33`) when that auth user exists.
 
 ## 5. Service role key (Phase 1+)
 
