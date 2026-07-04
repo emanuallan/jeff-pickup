@@ -13,7 +13,7 @@ import { formatGuestSuffix } from '@/lib/format-guest-suffix'
 import type { RosterBadgeInfo } from '@/lib/badges'
 import { useParticipationMotion } from './participation-motion'
 
-const ROSTER_EXIT_MS = 240
+const ROSTER_EXIT_MS = 200
 
 function TooltipBadge({
   tip,
@@ -130,6 +130,8 @@ export function RosterList(props: {
   const [error, setError] = useState<string | null>(null)
   const [exitingIds, setExitingIds] = useState<Set<string>>(() => new Set())
   const knownIdsRef = useRef(new Set(props.entries.map((entry) => entry.id)))
+  const myRowRef = useRef<HTMLLIElement>(null)
+  const prevMySignupIdRef = useRef<string | null | undefined>(props.mySignupId)
   const accent = props.accent ?? '#2563eb'
   const accentFg = accentOnDark(accent)
   const isWaitlist = props.variant === 'waitlist'
@@ -137,6 +139,17 @@ export function RosterList(props: {
   useEffect(() => {
     knownIdsRef.current = new Set(props.entries.map((entry) => entry.id))
   }, [props.entries])
+
+  useEffect(() => {
+    if (props.mySignupId && props.mySignupId !== prevMySignupIdRef.current) {
+      const frame = requestAnimationFrame(() => {
+        myRowRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+      })
+      prevMySignupIdRef.current = props.mySignupId
+      return () => cancelAnimationFrame(frame)
+    }
+    prevMySignupIdRef.current = props.mySignupId ?? null
+  }, [props.mySignupId])
 
   if (props.entries.length === 0) {
     return (
@@ -160,6 +173,7 @@ export function RosterList(props: {
               ? 'px-3 py-2.5 text-zinc-100'
               : 'border-zinc-800 bg-black/20 px-3 py-2 text-sm',
             isExiting ? 'roster-row-exit' : isNew ? 'roster-row-enter' : '',
+            isMe && isNew ? 'roster-row-you-new' : '',
           ]
             .filter(Boolean)
             .join(' ')
@@ -168,6 +182,7 @@ export function RosterList(props: {
             return (
               <li
                 key={e.id}
+                ref={myRowRef}
                 className={rowClass}
                 style={{
                   backgroundImage: `linear-gradient(135deg, ${hexToRgba(accent, 0.18)}, ${hexToRgba(accent, 0.04)})`,

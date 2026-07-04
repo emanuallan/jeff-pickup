@@ -10,7 +10,11 @@ import { RosterListLazy } from './roster-list-lazy'
 import { SignedInControlsLazy } from './signed-in-controls-lazy'
 import { WaitlistSection } from './waitlist-section'
 import { AnimatedPresenceSection } from './animated-presence-section'
-import { ParticipationMotionProvider, useParticipationMotion } from './participation-motion'
+import {
+  CONTROLS_REVEAL_MS,
+  ParticipationMotionProvider,
+  useParticipationMotion,
+} from './participation-motion'
 
 type JoinProps = {
   orgSlug: string
@@ -62,9 +66,9 @@ function ParticipationPanelBody({
   joinProps,
 }: Props & { showJoin: boolean; joinProps: JoinProps }) {
   const motion = useParticipationMotion()
-  const joinClosing = motion?.joinClosing ?? false
   const controlsClosing = motion?.controlsClosing ?? false
   const showControls = Boolean(mySignup && canUpdateStatus)
+  const [controlsRevealed, setControlsRevealed] = useState(false)
   const lastControlsSignupRef = useRef<MySignup | null>(null)
 
   if (mySignup && canUpdateStatus) {
@@ -77,24 +81,33 @@ function ParticipationPanelBody({
     }
   }, [controlsClosing, mySignup])
 
+  useEffect(() => {
+    if (!showControls) {
+      setControlsRevealed(false)
+      return
+    }
+
+    const timer = window.setTimeout(() => setControlsRevealed(true), CONTROLS_REVEAL_MS)
+    return () => window.clearTimeout(timer)
+  }, [showControls, mySignup?.signup_id])
+
   const controlsSignup =
     mySignup && canUpdateStatus ? mySignup : controlsClosing ? lastControlsSignupRef.current : null
   const showControlsSection = Boolean(controlsSignup && (showControls || controlsClosing))
+  const controlsOpen = showControls ? controlsRevealed : controlsClosing
 
   return (
     <>
       {cancelledCallout}
 
-      <AnimatedPresenceSection show={showJoin || joinClosing} closing={joinClosing}>
+      <AnimatedPresenceSection show={showJoin} mode="fade">
         <JoinSectionLazy {...joinProps} />
       </AnimatedPresenceSection>
 
       <section className="mt-5 rounded-3xl border border-zinc-800 bg-zinc-900/50 p-5">
         <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-400">
           {rosterHeading}{' '}
-          <span key={headcount} className="participation-headcount inline-block tabular-nums">
-            ({headcount})
-          </span>
+          <span className="tabular-nums">({headcount})</span>
         </h2>
         <div className="mt-4">
           <RosterListLazy
@@ -121,7 +134,11 @@ function ParticipationPanelBody({
         ) : null}
 
         {showControlsSection && controlsSignup ? (
-          <AnimatedPresenceSection show={showControls} closing={controlsClosing}>
+          <AnimatedPresenceSection
+            show={controlsOpen}
+            closing={controlsClosing}
+            mode="fade"
+          >
             <SignedInControlsLazy
               orgSlug={joinProps.orgSlug}
               eventId={joinProps.eventId}

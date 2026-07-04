@@ -13,7 +13,6 @@ import { arrowRight } from '@/lib/text-arrows'
 import { PhoneInput } from '@/app/_components/phone-input'
 import type { Participant, MySignup } from '@/lib/participant'
 import { ReturningSignupModal } from './returning-signup-modal'
-import { useParticipationMotion } from './participation-motion'
 
 export type { Participant, MySignup }
 
@@ -150,7 +149,6 @@ function RecoverSession({
 
 export function JoinSection(props: Props) {
   const router = useRouter()
-  const motion = useParticipationMotion()
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [guestCount, setGuestCount] = useState(0)
@@ -201,7 +199,6 @@ export function JoinSection(props: Props) {
           onClick={async () => {
             setLoading(true)
             setError(null)
-            motion?.dismissJoinPanel()
             const result = await quickJoinEvent(
               props.orgSlug,
               props.eventId,
@@ -209,10 +206,8 @@ export function JoinSection(props: Props) {
               guestCount,
             )
             setLoading(false)
-            if (result.error) {
-              motion?.reopenJoinPanel()
-              setError(result.error)
-            } else void fireConfetti(props.accent)
+            if (result.error) setError(result.error)
+            else void fireConfetti(props.accent)
           }}
           className="w-full rounded-xl px-4 py-3.5 text-sm font-semibold shadow-lg transition-opacity hover:opacity-90 disabled:opacity-50"
           style={{
@@ -267,13 +262,10 @@ export function JoinSection(props: Props) {
         action={async (formData) => {
           setLoading(true)
           setError(null)
-          motion?.dismissJoinPanel()
           const result = await joinEvent(props.orgSlug, props.eventId, formData)
           setLoading(false)
-          if (result.error) {
-            motion?.reopenJoinPanel()
-            setError(result.error)
-          } else void fireConfetti(props.accent)
+          if (result.error) setError(result.error)
+          else void fireConfetti(props.accent)
         }}
         className="space-y-4"
       >
