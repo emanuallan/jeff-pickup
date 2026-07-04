@@ -1,5 +1,4 @@
 import { Suspense } from 'react'
-import type { Metadata } from 'next'
 import type { ReactNode } from 'react'
 import { notFound } from 'next/navigation'
 import { getPublicOrgBySlug, getPublicUpcomingEventsForOrg } from '@/lib/public-data'
@@ -22,10 +21,6 @@ import { OrgHomeShareButton } from './_components/org-home-share-button'
 type Props = {
   children: ReactNode
   params: Promise<{ slug: string }>
-}
-
-export const metadata: Metadata = {
-  robots: { index: false, follow: false },
 }
 
 export default async function OrgHomeLayout({ children, params }: Props) {

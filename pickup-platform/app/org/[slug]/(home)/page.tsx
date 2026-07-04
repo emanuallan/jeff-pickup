@@ -1,9 +1,16 @@
+import type { Metadata } from 'next'
 import { notFound, redirect } from 'next/navigation'
 import { getPublicOrgBySlug, getPublicUpcomingEventsForOrg, getPublicOrgAndEvent } from '@/lib/public-data'
 import { getOrgCapsLeaderboard, getOrgStreakLeaderboard } from '@/lib/engagement'
 import { orgFeatures } from '@/lib/org-features'
-import { isEventCancelled, isEventEnded } from '@/lib/events'
-import { orgPublicEventHref, orgPublicTabHref, resolveCalEventId } from '@/lib/org-public-nav'
+import { formatEventTime, isEventCancelled, isEventEnded, pickFeaturedUpcomingEvent } from '@/lib/events'
+import { buildOrgMetadata } from '@/lib/og-metadata'
+import {
+  orgHomeCanonicalPath,
+  orgPublicEventHref,
+  orgPublicTabHref,
+  resolveCalEventId,
+} from '@/lib/org-public-nav'
 import { buildEventJsonLd } from '@/lib/seo'
 import { JsonLd } from '@/app/_components/json-ld'
 import { MatchdayPanel } from './_components/matchday-panel'
@@ -12,6 +19,63 @@ import { LeaderboardPanel } from './_components/leaderboard-panel'
 type Props = {
   params: Promise<{ slug: string }>
   searchParams: Promise<{ tab?: string; cal?: string; ev?: string }>
+}
+
+export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {
+  const { slug } = await params
+  const { tab, cal, ev } = await searchParams
+  const org = await getPublicOrgBySlug(slug)
+
+  if (!org || org.status !== 'active') {
+    return {}
+  }
+
+  const eventRef = resolveCalEventId(cal, ev)
+  let previewEvent = null
+
+  if (eventRef) {
+    const linked = await getPublicOrgAndEvent(slug, eventRef)
+    if (linked?.event && linked.org.id === org.id) {
+      previewEvent = linked.event
+    }
+  }
+
+  if (!previewEvent) {
+    const events = await getPublicUpcomingEventsForOrg(org.id, 20, true)
+    previewEvent = pickFeaturedUpcomingEvent(events)
+  }
+
+  const path = orgHomeCanonicalPath({ tab, cal: eventRef })
+
+  if (previewEvent) {
+    const when = formatEventTime(previewEvent)
+    const title = `${when} · ${org.name}`
+    const groupDescription = org.description || 'a session'
+    const locationPreposition = previewEvent.location_is_online ? 'on' : 'at'
+    const where = previewEvent.location_label
+      ? ` ${locationPreposition} ${previewEvent.location_label}`
+      : ''
+    const description = `Join ${org.name} for ${groupDescription} on ${when}${where}. See who's coming and confirm you're in — it only takes a few seconds.`
+
+    return buildOrgMetadata({
+      slug,
+      path,
+      imagePath: `/cal/${previewEvent.short_id}/og-image`,
+      title,
+      description,
+      siteName: org.name,
+    })
+  }
+
+  const groupDescription = org.description || 'group sessions'
+  return buildOrgMetadata({
+    slug,
+    path,
+    imagePath: '/cal/og-image',
+    title: org.name,
+    description: `See the schedule of upcoming ${groupDescription} with ${org.name}. Check who's coming and confirm you're in — it only takes a few seconds.`,
+    siteName: org.name,
+  })
 }
 
 export default async function OrgHomePage({ params, searchParams }: Props) {

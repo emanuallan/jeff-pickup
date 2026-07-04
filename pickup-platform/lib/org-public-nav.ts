@@ -51,6 +51,22 @@ export function hiddenTabHref(
   return orgPublicTabHref(basePath, tab, cal)
 }
 
+/** Canonical org home path from tab and session query params. */
+export function orgHomeCanonicalPath(options: {
+  tab?: string | null
+  cal?: string | null
+}): string {
+  const params = new URLSearchParams()
+  if (options.tab === 'leaderboard') {
+    params.set('tab', 'leaderboard')
+  }
+  if (options.cal) {
+    params.set('cal', options.cal)
+  }
+  const query = params.toString()
+  return query ? `/?${query}` : '/'
+}
+
 /** Resolve selected session from `cal` (preferred) or legacy `ev`. */
 export function resolveCalEventId(
   cal: string | null | undefined,
