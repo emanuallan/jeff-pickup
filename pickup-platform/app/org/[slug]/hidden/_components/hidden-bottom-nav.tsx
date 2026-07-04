@@ -3,18 +3,29 @@
 import Link from 'next/link'
 import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { usePathname, useSearchParams } from 'next/navigation'
+import { getRootDomain } from '@/lib/tenancy/parse-host'
 import {
   hiddenTabHref,
   orgPublicNavActiveKey,
   type OrgPublicNavItem,
 } from '@/lib/org-public-nav'
 import { accentOnDark } from '@/lib/colors'
+import { OrganizrLogo } from '@/app/_components/organizr-logo'
 import { IconLeaderboard, IconMatchday } from './hidden-nav-icons'
+
+function rootBaseUrl(): string {
+  const root = process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? 'organizr.co'
+  if (process.env.NODE_ENV === 'development') {
+    return 'http://localhost:3000'
+  }
+  return `https://${root}`
+}
 
 type Props = {
   items: OrgPublicNavItem[]
   accent: string
   basePath: string
+  slug: string
 }
 
 type Indicator = {
@@ -27,7 +38,7 @@ function NavIcon({ itemKey }: { itemKey: OrgPublicNavItem['key'] }) {
   return <IconMatchday />
 }
 
-export function HiddenBottomNav({ items, accent, basePath }: Props) {
+export function HiddenBottomNav({ items, accent, basePath, slug }: Props) {
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const tab = searchParams.get('tab')
@@ -88,59 +99,80 @@ export function HiddenBottomNav({ items, accent, basePath }: Props) {
     }
   }, [measureIndicator, navItems])
 
-  if (navItems.length <= 1) {
+  if (navItems.length === 0) {
     return null
   }
 
+  const showTabs = navItems.length > 1
   const accentFg = accentOnDark(accent)
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-30 border-t border-zinc-800/80 bg-zinc-950/95 backdrop-blur-md">
-      <nav
-        ref={navRef}
-        aria-label="Group sections"
-        className="relative mx-auto grid max-w-lg px-2 pt-1 pb-[max(0.25rem,env(safe-area-inset-bottom))]"
-        style={{ gridTemplateColumns: `repeat(${navItems.length}, minmax(0, 1fr))` }}
-      >
-        {indicator ? (
-          <span
-            aria-hidden
-            className="pointer-events-none absolute top-0 h-0.5 rounded-full transition-[left,width] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]"
-            style={{
-              left: indicator.left,
-              width: indicator.width,
-              backgroundColor: accent,
-            }}
-          />
-        ) : null}
-        {navItems.map((item) => {
-          const active = item.key === activeKey
-          return (
-            <Link
-              key={item.key}
-              ref={(node) => {
-                if (node) {
-                  linkRefs.current.set(item.key, node)
-                } else {
-                  linkRefs.current.delete(item.key)
-                }
+    <div className="fixed inset-x-0 bottom-0 z-30 bg-zinc-950/95 backdrop-blur-md">
+      {showTabs ? (
+        <nav
+          ref={navRef}
+          aria-label="Group sections"
+          className="relative mx-auto grid max-w-lg border-t border-zinc-800/80 px-2 pt-1"
+          style={{ gridTemplateColumns: `repeat(${navItems.length}, minmax(0, 1fr))` }}
+        >
+          {indicator ? (
+            <span
+              aria-hidden
+              className="pointer-events-none absolute top-0 h-0.5 rounded-full transition-[left,width] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]"
+              style={{
+                left: indicator.left,
+                width: indicator.width,
+                backgroundColor: accent,
               }}
-              href={item.href}
-              scroll={item.key === 'sessions'}
-              aria-current={active ? 'page' : undefined}
-              className={`relative flex flex-col items-center gap-1 px-2 py-2.5 transition-colors ${
-                active ? 'text-zinc-100' : 'text-zinc-500 hover:text-zinc-300'
-              }`}
-              style={active ? { color: accentFg } : undefined}
-            >
-              <NavIcon itemKey={item.key} />
-              <span className="text-[10px] font-medium leading-none tracking-wide">
-                {item.label}
-              </span>
-            </Link>
-          )
-        })}
-      </nav>
+            />
+          ) : null}
+          {navItems.map((item) => {
+            const active = item.key === activeKey
+            return (
+              <Link
+                key={item.key}
+                ref={(node) => {
+                  if (node) {
+                    linkRefs.current.set(item.key, node)
+                  } else {
+                    linkRefs.current.delete(item.key)
+                  }
+                }}
+                href={item.href}
+                scroll={item.key === 'sessions'}
+                aria-current={active ? 'page' : undefined}
+                className={`relative flex flex-col items-center gap-1 px-2 py-2.5 transition-colors ${
+                  active ? 'text-zinc-100' : 'text-zinc-500 hover:text-zinc-300'
+                }`}
+                style={active ? { color: accentFg } : undefined}
+              >
+                <NavIcon itemKey={item.key} />
+                <span className="text-[10px] font-medium leading-none tracking-wide">
+                  {item.label}
+                </span>
+              </Link>
+            )
+          })}
+        </nav>
+      ) : null}
+
+      <footer
+        className={`mx-auto flex max-w-lg items-center justify-between gap-2 px-5 py-1.5 pb-[max(0.25rem,env(safe-area-inset-bottom))] text-[10px] leading-none text-zinc-600 ${
+          showTabs ? 'border-t border-white/10' : 'border-t border-zinc-800/80'
+        }`}
+      >
+        <p className="truncate font-medium tracking-wide">
+          {slug}.{getRootDomain()}
+        </p>
+        <a
+          href={rootBaseUrl()}
+          title="Create your own group on Organizr"
+          className="inline-flex shrink-0 items-center gap-1 text-zinc-500 transition-colors hover:text-zinc-400"
+        >
+          <span>Powered by</span>
+          <OrganizrLogo size={12} showWordmark wordmarkClassName="font-medium text-zinc-500" />
+        </a>
+      </footer>
     </div>
   )
 }
