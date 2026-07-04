@@ -11,6 +11,7 @@ import {
 
 const DISMISS_THRESHOLD = 72
 const SHEET_EASING = 'cubic-bezier(0.32, 0.72, 0, 1)'
+const SHEET_EXIT_MS = 280
 
 function initialSwipeEnabled(variant: 'console' | 'fixed' | 'top') {
   if (variant === 'fixed' || variant === 'top') return true
@@ -70,6 +71,8 @@ export function BottomSheet({
   dismissDisabled = false,
 }: Props) {
   const dragUp = variant === 'top'
+  const [present, setPresent] = useState(open)
+  const [exiting, setExiting] = useState(false)
   const [dragOffset, setDragOffset] = useState(0)
   const [isDragging, setIsDragging] = useState(false)
   const [swipeEnabled, setSwipeEnabled] = useState(() => initialSwipeEnabled(variant))
@@ -93,10 +96,10 @@ export function BottomSheet({
   }, [])
 
   const requestClose = useCallback(() => {
-    if (dismissDisabled) return
+    if (dismissDisabled || exiting) return
     resetDrag()
     onClose()
-  }, [dismissDisabled, onClose, resetDrag])
+  }, [dismissDisabled, exiting, onClose, resetDrag])
 
   const onDragStart = useCallback(
     (clientY: number) => {
@@ -140,7 +143,28 @@ export function BottomSheet({
   }, [dismissDisabled, onClose, resetDrag])
 
   useEffect(() => {
-    if (!open) return
+    if (open) {
+      setPresent(true)
+      setExiting(false)
+      return
+    }
+    if (present) {
+      setExiting(true)
+    }
+  }, [open, present])
+
+  useEffect(() => {
+    if (!exiting) return
+    const timer = window.setTimeout(() => {
+      setPresent(false)
+      setExiting(false)
+      resetDrag()
+    }, SHEET_EXIT_MS)
+    return () => window.clearTimeout(timer)
+  }, [exiting, resetDrag])
+
+  useEffect(() => {
+    if (!present) return
 
     function onKeyDown(event: KeyboardEvent) {
       if (event.key === 'Escape') requestClose()
@@ -153,21 +177,18 @@ export function BottomSheet({
       document.removeEventListener('keydown', onKeyDown)
       document.body.style.overflow = prev
     }
-  }, [open, requestClose])
+  }, [present, requestClose])
 
-  useEffect(() => {
-    if (!open) resetDrag()
-  }, [open, resetDrag])
-
-  if (!open) return null
+  if (!present) return null
 
   const overlayClass =
     variant === 'console'
       ? 'fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-4'
       : 'fixed inset-0 z-50'
 
-  const backdropClass =
-    'absolute inset-0 bg-black/60 backdrop-blur-sm animate-[backdrop-in_200ms_ease-out]'
+  const backdropClass = exiting
+    ? 'absolute inset-0 bg-black/60 backdrop-blur-sm animate-[backdrop-out_200ms_ease-in_forwards]'
+    : 'absolute inset-0 bg-black/60 backdrop-blur-sm animate-[backdrop-in_200ms_ease-out]'
 
   const panelBase =
     variant === 'console'
@@ -179,12 +200,22 @@ export function BottomSheet({
   const translateY =
     dragOffset > 0 ? (dragUp ? -dragOffset : dragOffset) : 0
 
+  const exitAnimation = exiting
+    ? variant === 'top'
+      ? 'notification-sheet-out 220ms ease-in forwards'
+      : variant === 'fixed' || (variant === 'console' && swipeEnabled)
+        ? `bottom-sheet-out ${SHEET_EXIT_MS}ms ${SHEET_EASING} forwards`
+        : variant === 'console'
+          ? `dialog-out 200ms ${SHEET_EASING} forwards`
+          : undefined
+    : undefined
+
   const enterAnimation =
-    dragOffset === 0 && !isDragging
+    !exiting && dragOffset === 0 && !isDragging
       ? variant === 'top'
         ? `notification-sheet-in 220ms ease-out`
         : variant === 'fixed' || (variant === 'console' && swipeEnabled)
-          ? `bottom-sheet-in 280ms ${SHEET_EASING}`
+          ? `bottom-sheet-in ${SHEET_EXIT_MS}ms ${SHEET_EASING}`
           : variant === 'console'
             ? `dialog-in 200ms ${SHEET_EASING}`
             : undefined
@@ -192,13 +223,18 @@ export function BottomSheet({
 
   const dragStyle: CSSProperties = {
     ...panelStyle,
-    transform: translateY !== 0 ? `translateY(${translateY}px)` : panelStyle?.transform,
+    transform:
+      !exiting && translateY !== 0
+        ? `translateY(${translateY}px)`
+        : exiting
+          ? undefined
+          : panelStyle?.transform,
     transition: isDragging
       ? 'none'
-      : dragOffset === 0
-        ? `transform 280ms ${SHEET_EASING}`
+      : dragOffset === 0 && !exiting
+        ? `transform ${SHEET_EXIT_MS}ms ${SHEET_EASING}`
         : undefined,
-    animation: enterAnimation,
+    animation: exitAnimation ?? enterAnimation,
   }
 
   const handleProps = {
@@ -221,6 +257,7 @@ export function BottomSheet({
       aria-modal="true"
       aria-labelledby={ariaLabelledby}
       aria-label={ariaLabel}
+      style={{ pointerEvents: exiting ? 'none' : undefined }}
     >
       <button
         type="button"
