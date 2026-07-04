@@ -6,6 +6,7 @@ import { formatGuestSuffix } from '@/lib/format-guest-suffix'
 import { buildRosterAnalytics, fetchEventAnalyticsDb } from '@/lib/event-analytics'
 import { arrivalStatusEmoji } from '@/lib/arrival-status'
 import { orgBaseUrl } from '@/lib/og-metadata'
+import { orgPublicEventHref } from '@/lib/org-public-nav'
 import { arrowNe } from '@/lib/text-arrows'
 import {
   ConsolePage,
@@ -49,7 +50,7 @@ export default async function ConsoleEventAnalyticsPage({ params }: Props) {
   ])
   const { confirmed: roster, waitlisted } = splitRosterByStatus(allRoster)
   const analytics = buildRosterAnalytics(roster, event.capacity, dbAnalytics)
-  const publicEventUrl = `${orgBaseUrl(orgSlug)}/cal/${event.short_id}`
+  const publicEventUrl = `${orgBaseUrl(orgSlug)}${orgPublicEventHref(event.short_id)}`
   const isLive = isEventInProgress(event) && event.status === 'on'
   const hasSignupActivity = analytics.uniqueSignups > 0 || analytics.uniqueLeft > 0
   const hasTraffic = analytics.uniqueVisitors > 0 || analytics.uniqueSignups > 0

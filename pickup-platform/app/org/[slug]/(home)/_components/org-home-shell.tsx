@@ -1,14 +1,14 @@
 import type { ReactNode } from 'react'
 
 /** Bottom padding when tab bar + footer strip are shown. */
-export const HIDDEN_BOTTOM_CHROME_PADDING =
+export const ORG_HOME_BOTTOM_CHROME_PADDING =
   'pb-[calc(8rem+env(safe-area-inset-bottom))]'
 
 /** Bottom padding when only the footer strip is shown (single tab). */
-export const HIDDEN_FOOTER_ONLY_PADDING =
+export const ORG_HOME_FOOTER_ONLY_PADDING =
   'pb-[calc(3.5rem+env(safe-area-inset-bottom))]'
 
-export function HiddenPageShell({
+export function OrgHomeShell({
   children,
   bottomChrome,
   footerOnly = false,
@@ -18,8 +18,8 @@ export function HiddenPageShell({
   footerOnly?: boolean
 }) {
   const bottomPadding = footerOnly
-    ? HIDDEN_FOOTER_ONLY_PADDING
-    : HIDDEN_BOTTOM_CHROME_PADDING
+    ? ORG_HOME_FOOTER_ONLY_PADDING
+    : ORG_HOME_BOTTOM_CHROME_PADDING
 
   return (
     <>

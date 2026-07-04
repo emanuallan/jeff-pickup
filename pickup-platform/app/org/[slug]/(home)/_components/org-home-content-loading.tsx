@@ -3,7 +3,7 @@ type Props = {
 }
 
 /** Content-only skeleton — header and bottom nav stay in the layout. */
-export function HiddenContentLoading({ variant = 'session' }: Props) {
+export function OrgHomeContentLoading({ variant = 'session' }: Props) {
   return (
     <div className="space-y-4" role="status" aria-live="polite">
       <p className="text-sm text-zinc-500">

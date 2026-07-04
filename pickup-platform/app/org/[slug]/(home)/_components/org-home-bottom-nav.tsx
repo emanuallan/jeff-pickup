@@ -5,13 +5,14 @@ import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { usePathname, useSearchParams } from 'next/navigation'
 import { getRootDomain } from '@/lib/tenancy/parse-host'
 import {
-  hiddenTabHref,
   orgPublicNavActiveKey,
+  orgPublicTabHref,
+  resolveCalEventId,
   type OrgPublicNavItem,
 } from '@/lib/org-public-nav'
 import { accentOnDark } from '@/lib/colors'
 import { OrganizrLogo } from '@/app/_components/organizr-logo'
-import { IconLeaderboard, IconMatchday } from './hidden-nav-icons'
+import { IconLeaderboard, IconMatchday } from './org-home-nav-icons'
 
 function rootBaseUrl(): string {
   const root = process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? 'organizr.co'
@@ -38,11 +39,11 @@ function NavIcon({ itemKey }: { itemKey: OrgPublicNavItem['key'] }) {
   return <IconMatchday />
 }
 
-export function HiddenBottomNav({ items, accent, basePath, slug }: Props) {
+export function OrgHomeBottomNav({ items, accent, basePath, slug }: Props) {
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const tab = searchParams.get('tab')
-  const ev = searchParams.get('ev')
+  const cal = resolveCalEventId(searchParams.get('cal'), searchParams.get('ev'))
   const activeKey = orgPublicNavActiveKey(pathname, tab, basePath)
   const navRef = useRef<HTMLElement>(null)
   const linkRefs = useRef(new Map<string, HTMLAnchorElement>())
@@ -52,10 +53,10 @@ export function HiddenBottomNav({ items, accent, basePath, slug }: Props) {
     () =>
       items.map((item) =>
         item.key === 'sessions'
-          ? { ...item, href: hiddenTabHref(basePath, 'sessions', ev) }
+          ? { ...item, href: orgPublicTabHref(basePath, 'sessions', cal) }
           : item,
       ),
-    [items, basePath, ev],
+    [items, basePath, cal],
   )
 
   const measureIndicator = useCallback(() => {

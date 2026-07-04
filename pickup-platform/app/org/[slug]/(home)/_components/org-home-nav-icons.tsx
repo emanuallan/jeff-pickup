@@ -1,4 +1,4 @@
-/** Icons for the hidden preview bottom nav. */
+/** Icons for the org home bottom nav. */
 
 export function IconMatchday() {
   return (

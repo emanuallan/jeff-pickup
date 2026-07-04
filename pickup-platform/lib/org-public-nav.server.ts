@@ -1,8 +1,8 @@
 import type { Org } from '@/lib/orgs'
 import { orgFeatures } from '@/lib/org-features'
 import {
-  hiddenTabHref,
-  HIDDEN_DEFAULT_TAB,
+  orgPublicTabHref,
+  ORG_PUBLIC_DEFAULT_TAB,
   type OrgPublicNavItem,
   type OrgPublicNavKey,
 } from '@/lib/org-public-nav'
@@ -19,7 +19,7 @@ type OrgPublicNavDefinition = {
 
 export const ORG_PUBLIC_NAV_DEFINITIONS: OrgPublicNavDefinition[] = [
   {
-    key: HIDDEN_DEFAULT_TAB,
+    key: ORG_PUBLIC_DEFAULT_TAB,
     label: 'Session',
     isVisible: () => true,
   },
@@ -33,13 +33,13 @@ export const ORG_PUBLIC_NAV_DEFINITIONS: OrgPublicNavDefinition[] = [
 export function resolveOrgPublicNavItems(
   ctx: OrgPublicNavContext,
   basePath: string,
-  ev?: string | null,
+  cal?: string | null,
 ): OrgPublicNavItem[] {
   return ORG_PUBLIC_NAV_DEFINITIONS.filter((item) => item.isVisible(ctx)).map(
     ({ key, label }) => ({
       key,
       label,
-      href: hiddenTabHref(basePath, key, key === HIDDEN_DEFAULT_TAB ? ev : null),
+      href: orgPublicTabHref(basePath, key, key === ORG_PUBLIC_DEFAULT_TAB ? cal : null),
     }),
   )
 }

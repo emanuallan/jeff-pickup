@@ -112,8 +112,8 @@ export function MatchdayDateChips({ events, activeEventId, accent }: Props) {
       return
     }
 
-    const evParam = searchParams.get('ev')
-    if (evParam && evParam !== firstEventId) {
+    const calParam = searchParams.get('cal') ?? searchParams.get('ev')
+    if (calParam && calParam !== firstEventId) {
       return
     }
 
@@ -188,11 +188,12 @@ export function MatchdayDateChips({ events, activeEventId, accent }: Props) {
   function selectEvent(shortId: string) {
     const params = new URLSearchParams(searchParams.toString())
     params.delete('tab')
-    params.set('ev', shortId)
+    params.delete('ev')
+    params.set('cal', shortId)
     params.delete('past')
     params.delete('view')
     const query = params.toString()
-    router.replace(query ? `/hidden?${query}` : '/hidden', { scroll: false })
+    router.replace(query ? `/?${query}` : '/', { scroll: false })
   }
 
   return (

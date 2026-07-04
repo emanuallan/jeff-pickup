@@ -1,8 +1,8 @@
-export const HIDDEN_ORG_NAV_BASE = '/hidden'
+export const ORG_PUBLIC_NAV_BASE = '/'
 
-export type HiddenTab = 'sessions' | 'leaderboard'
+export type OrgPublicTab = 'sessions' | 'leaderboard'
 
-export type OrgPublicNavKey = HiddenTab
+export type OrgPublicNavKey = OrgPublicTab
 
 export type OrgPublicNavItem = {
   key: OrgPublicNavKey
@@ -10,22 +10,54 @@ export type OrgPublicNavItem = {
   label: string
 }
 
-export const HIDDEN_DEFAULT_TAB: HiddenTab = 'sessions'
+export const ORG_PUBLIC_DEFAULT_TAB: OrgPublicTab = 'sessions'
 
-export function hiddenTabHref(
+/** @deprecated Use {@link ORG_PUBLIC_DEFAULT_TAB}. */
+export const HIDDEN_DEFAULT_TAB = ORG_PUBLIC_DEFAULT_TAB
+
+/** Public event deep link on the org home shell — e.g. `/?cal=ZbG6e5qK`. */
+export function orgPublicEventHref(shortId: string, basePath = ORG_PUBLIC_NAV_BASE): string {
+  const params = new URLSearchParams()
+  params.set('cal', shortId)
+  const query = params.toString()
+  return basePath === '/' ? `/?${query}` : `${basePath}?${query}`
+}
+
+export function orgPublicTabHref(
   basePath: string,
-  tab: HiddenTab,
-  ev?: string | null,
+  tab: OrgPublicTab,
+  cal?: string | null,
 ): string {
   const params = new URLSearchParams()
-  if (tab !== HIDDEN_DEFAULT_TAB) {
+  if (tab !== ORG_PUBLIC_DEFAULT_TAB) {
     params.set('tab', tab)
   }
-  if (tab === 'sessions' && ev) {
-    params.set('ev', ev)
+  if (tab === 'sessions' && cal) {
+    params.set('cal', cal)
   }
   const query = params.toString()
-  return query ? `${basePath}?${query}` : basePath
+  if (!query) {
+    return basePath
+  }
+  return basePath === '/' ? `/?${query}` : `${basePath}?${query}`
+}
+
+/** @deprecated Use {@link orgPublicTabHref}. */
+export function hiddenTabHref(
+  basePath: string,
+  tab: OrgPublicTab,
+  cal?: string | null,
+): string {
+  return orgPublicTabHref(basePath, tab, cal)
+}
+
+/** Resolve selected session from `cal` (preferred) or legacy `ev`. */
+export function resolveCalEventId(
+  cal: string | null | undefined,
+  ev: string | null | undefined,
+): string | undefined {
+  const id = cal ?? ev
+  return id != null && id !== '' ? id : undefined
 }
 
 /** Map the current URL to the active bottom-nav tab. */
@@ -34,13 +66,13 @@ export function orgPublicNavActiveKey(
   tab: string | null | undefined,
   basePath: string,
 ): OrgPublicNavKey {
-  if (!pathname.startsWith(basePath)) {
-    return HIDDEN_DEFAULT_TAB
+  if (basePath !== '/' && !pathname.startsWith(basePath)) {
+    return ORG_PUBLIC_DEFAULT_TAB
   }
 
   if (tab === 'leaderboard') {
     return 'leaderboard'
   }
 
-  return HIDDEN_DEFAULT_TAB
+  return ORG_PUBLIC_DEFAULT_TAB
 }
