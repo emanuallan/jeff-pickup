@@ -83,6 +83,8 @@ function markReturningSignupSeen(orgSlug: string, eventId: string) {
   }
 }
 
+const RETURNING_SIGNUP_PROMPT_DELAY_MS = 1500
+
 export function ReturningSignupModal({
   orgSlug,
   orgId,
@@ -106,7 +108,16 @@ export function ReturningSignupModal({
   }, [orgSlug, eventId])
 
   useEffect(() => {
-    setOpen(!hasSeenReturningSignup(orgSlug, eventId))
+    if (hasSeenReturningSignup(orgSlug, eventId)) {
+      setOpen(false)
+      return
+    }
+
+    const timer = window.setTimeout(() => {
+      setOpen(true)
+    }, RETURNING_SIGNUP_PROMPT_DELAY_MS)
+
+    return () => window.clearTimeout(timer)
   }, [orgSlug, eventId])
 
   const dismiss = useCallback(() => {
