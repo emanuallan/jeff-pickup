@@ -11,6 +11,9 @@ import {
 import { hexToRgba, accentOnDark } from '@/lib/colors'
 import { formatGuestSuffix } from '@/lib/format-guest-suffix'
 import type { RosterBadgeInfo } from '@/lib/badges'
+import { useParticipationMotion } from './participation-motion'
+
+const ROSTER_EXIT_MS = 240
 
 function TooltipBadge({
   tip,
@@ -122,11 +125,18 @@ export function RosterList(props: {
   accent?: string
   variant?: 'confirmed' | 'waitlist'
 }) {
+  const motion = useParticipationMotion()
   const [leaving, setLeaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [exitingIds, setExitingIds] = useState<Set<string>>(() => new Set())
+  const knownIdsRef = useRef(new Set(props.entries.map((entry) => entry.id)))
   const accent = props.accent ?? '#2563eb'
   const accentFg = accentOnDark(accent)
   const isWaitlist = props.variant === 'waitlist'
+
+  useEffect(() => {
+    knownIdsRef.current = new Set(props.entries.map((entry) => entry.id))
+  }, [props.entries])
 
   if (props.entries.length === 0) {
     return (
@@ -142,12 +152,23 @@ export function RosterList(props: {
         {props.entries.map((e, index) => {
           const isMe = props.mySignupId != null && e.id === props.mySignupId
           const position = index + 1
+          const isExiting = exitingIds.has(e.id)
+          const isNew = !knownIdsRef.current.has(e.id)
+          const rowClass = [
+            'roster-row flex items-center justify-between gap-2 rounded-xl border text-sm',
+            isMe
+              ? 'px-3 py-2.5 text-zinc-100'
+              : 'border-zinc-800 bg-black/20 px-3 py-2 text-sm',
+            isExiting ? 'roster-row-exit' : isNew ? 'roster-row-enter' : '',
+          ]
+            .filter(Boolean)
+            .join(' ')
 
           if (isMe) {
             return (
               <li
                 key={e.id}
-                className="flex items-center justify-between gap-2 rounded-xl border px-3 py-2.5 text-sm text-zinc-100"
+                className={rowClass}
                 style={{
                   backgroundImage: `linear-gradient(135deg, ${hexToRgba(accent, 0.18)}, ${hexToRgba(accent, 0.04)})`,
                   borderColor: hexToRgba(accentFg, 0.45),
@@ -180,9 +201,19 @@ export function RosterList(props: {
                       onClick={async () => {
                         setLeaving(true)
                         setError(null)
+                        motion?.dismissSignedInControls()
+                        setExitingIds((prev) => new Set(prev).add(e.id))
+                        await new Promise((resolve) => window.setTimeout(resolve, ROSTER_EXIT_MS))
                         const result = await leaveEvent(props.orgSlug!, props.eventId!, e.id)
                         setLeaving(false)
-                        if (result.error) setError(result.error)
+                        if (result.error) {
+                          setExitingIds((prev) => {
+                            const next = new Set(prev)
+                            next.delete(e.id)
+                            return next
+                          })
+                          setError(result.error)
+                        }
                       }}
                       className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white/5 text-zinc-400 transition-colors hover:bg-white/10 hover:text-zinc-200 disabled:opacity-50"
                     >
@@ -206,10 +237,7 @@ export function RosterList(props: {
           }
 
           return (
-            <li
-              key={e.id}
-              className="flex items-center justify-between gap-2 rounded-xl border border-zinc-800 bg-black/20 px-3 py-2 text-sm"
-            >
+            <li key={e.id} className={rowClass}>
               <span className="inline-flex min-w-0 flex-1 flex-wrap items-center gap-x-1 gap-y-0.5">
                 {isWaitlist ? (
                   <span className="mr-1 text-zinc-600">#{position}</span>
