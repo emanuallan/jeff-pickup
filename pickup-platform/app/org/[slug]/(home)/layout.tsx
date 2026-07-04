@@ -5,6 +5,7 @@ import { getPublicOrgBySlug, getPublicUpcomingEventsForOrg } from '@/lib/public-
 import { pickFeaturedUpcomingEvent } from '@/lib/events'
 import { getOrgForMember } from '@/lib/orgs'
 import { ORG_PUBLIC_NAV_BASE } from '@/lib/org-public-nav'
+import { isLeaderboardUnlocked } from '@/lib/engagement'
 import { resolveOrgPublicNavItems } from '@/lib/org-public-nav.server'
 import {
   buildEventShareText,
@@ -32,13 +33,14 @@ export default async function OrgHomeLayout({ children, params }: Props) {
     notFound()
   }
 
-  const [events, membership] = await Promise.all([
+  const [events, membership, leaderboardUnlocked] = await Promise.all([
     getPublicUpcomingEventsForOrg(org.id, 20, true),
     getOrgForMember(slug),
+    isLeaderboardUnlocked(org.id),
   ])
   const featured = pickFeaturedUpcomingEvent(events)
   const accent = org.branding.accent_color
-  const navItems = resolveOrgPublicNavItems({ org }, ORG_PUBLIC_NAV_BASE)
+  const navItems = resolveOrgPublicNavItems({ org, leaderboardUnlocked }, ORG_PUBLIC_NAV_BASE)
   const socialLinks = org.branding.links
   const calendarShare = {
     title: buildOrgCalendarShareTitle(org.name, featured),

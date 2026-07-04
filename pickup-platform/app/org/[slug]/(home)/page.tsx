@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { notFound, redirect } from 'next/navigation'
 import { getPublicOrgBySlug, getPublicUpcomingEventsForOrg, getPublicOrgAndEvent } from '@/lib/public-data'
+import { isLeaderboardUnlocked } from '@/lib/engagement'
 import { orgFeatures } from '@/lib/org-features'
 import { formatEventTime, isEventCancelled, isEventEnded, pickFeaturedUpcomingEvent } from '@/lib/events'
 import { buildOrgMetadata } from '@/lib/og-metadata'
@@ -94,6 +95,11 @@ export default async function OrgHomePage({ params, searchParams }: Props) {
   if (tab === 'leaderboard') {
     if (!orgFeatures(org).leaderboard) {
       notFound()
+    }
+
+    const leaderboardUnlocked = await isLeaderboardUnlocked(org.id)
+    if (!leaderboardUnlocked) {
+      redirect(orgPublicTabHref('/', 'sessions', eventRef))
     }
 
     return <LeaderboardPanelSection org={org} />

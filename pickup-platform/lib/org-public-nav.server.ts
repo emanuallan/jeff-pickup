@@ -9,6 +9,8 @@ import {
 
 export type OrgPublicNavContext = {
   org: Org
+  /** When false, the leaderboard tab stays hidden until the org has enough session history. */
+  leaderboardUnlocked?: boolean
 }
 
 type OrgPublicNavDefinition = {
@@ -26,7 +28,8 @@ export const ORG_PUBLIC_NAV_DEFINITIONS: OrgPublicNavDefinition[] = [
   {
     key: 'leaderboard',
     label: 'Leaderboard',
-    isVisible: ({ org }) => orgFeatures(org).leaderboard,
+    isVisible: ({ org, leaderboardUnlocked }) =>
+      orgFeatures(org).leaderboard && leaderboardUnlocked === true,
   },
 ]
 
