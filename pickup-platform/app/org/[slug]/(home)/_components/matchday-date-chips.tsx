@@ -16,6 +16,8 @@ type DateChipButtonProps = {
   active: boolean
   accent: string
   accentFg: string
+  baseWidthClass: string
+  activeWidthClass: string
   buttonRef?: Ref<HTMLButtonElement>
   onSelect: (shortId: string) => void
 }
@@ -25,6 +27,8 @@ const DateChipButton = memo(function DateChipButton({
   active,
   accent,
   accentFg,
+  baseWidthClass,
+  activeWidthClass,
   buttonRef,
   onSelect,
 }: DateChipButtonProps) {
@@ -38,14 +42,8 @@ const DateChipButton = memo(function DateChipButton({
       onClick={() => onSelect(chip.shortId)}
       aria-current={active ? 'true' : undefined}
       aria-label={chip.ariaLabel}
-      className={`flex shrink-0 touch-manipulation select-none flex-col items-center justify-center rounded-lg border py-1.5 transition-[border-color,color,opacity] duration-150 ${
-        active
-          ? chip.showTime
-            ? 'w-[4.75rem] px-2'
-            : 'w-[4.25rem] px-2'
-          : chip.showTime
-            ? 'w-16 px-1.5'
-            : 'w-14 px-1.5'
+      className={`flex shrink-0 touch-manipulation select-none flex-col items-center justify-center rounded-lg border px-2 py-1.5 transition-[border-color,color,opacity,width] duration-150 ${
+        active ? activeWidthClass : baseWidthClass
       } ${
         active
           ? 'border-white/15 text-zinc-100'
@@ -254,6 +252,9 @@ export function MatchdayDateChips({ chips, activeEventId, accent }: Props) {
   }
 
   const accentFg = accentOnDark(accent)
+  const usesTimedLayout = chips.some((chip) => chip.showTime)
+  const baseWidthClass = usesTimedLayout ? 'w-[4.75rem]' : 'w-[4.25rem]'
+  const activeWidthClass = usesTimedLayout ? 'w-[5.5rem]' : 'w-[5rem]'
 
   return (
     <div className="relative -mx-5 mb-4 sm:-mx-6">
@@ -284,6 +285,8 @@ export function MatchdayDateChips({ chips, activeEventId, accent }: Props) {
               active={active}
               accent={accent}
               accentFg={accentFg}
+              baseWidthClass={baseWidthClass}
+              activeWidthClass={activeWidthClass}
               buttonRef={active ? activeRef : undefined}
               onSelect={selectEvent}
             />
