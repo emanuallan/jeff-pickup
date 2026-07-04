@@ -237,7 +237,7 @@ textarea {
 
 .signup-kick-leg {
 	transform-box: fill-box;
-	transform-origin: 50% 0%;
+	transform-origin: 0 0;
 	animation: signup-leg-kick 1.4s ease-in-out forwards;
 }
 

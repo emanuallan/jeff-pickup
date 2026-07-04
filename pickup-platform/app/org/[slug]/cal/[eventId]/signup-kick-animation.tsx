@@ -29,9 +29,11 @@ function KickerFigure() {
       <path d="M24 15v22" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
       <path d="M24 20 14 30" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
       <path d="M24 20 36 28" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
-      <path d="M24 37v16" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
-      <g className="signup-kick-leg">
-        <path d="M24 37 38 50" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+      <path d="M24 37 24 53" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+      <g transform="translate(24 37)">
+        <g className="signup-kick-leg">
+          <path d="M0 0 14 13" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+        </g>
       </g>
     </svg>
   )
