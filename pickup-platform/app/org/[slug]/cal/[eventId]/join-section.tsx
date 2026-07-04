@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useEffect, useState, useTransition, type FormEvent } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   joinEvent,
@@ -71,15 +71,37 @@ function RecoverSession({
   orgSlug,
   eventId,
   accent,
+  onRecovered,
 }: {
   orgSlug: string
   eventId: string
   accent: string
+  onRecovered: () => void
 }) {
   const router = useRouter()
+  const [, startTransition] = useTransition()
   const [open, setOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const [phoneDigits, setPhoneDigits] = useState('')
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    setLoading(true)
+    setError(null)
+    const result = await recoverSession(orgSlug, eventId, phoneDigits)
+    if (result.error) {
+      setLoading(false)
+      setError(result.error)
+      return
+    }
+    setOpen(false)
+    setPhoneDigits('')
+    onRecovered()
+    startTransition(() => {
+      router.refresh()
+    })
+  }
 
   if (!open) {
     return (
@@ -98,28 +120,12 @@ function RecoverSession({
   return (
     <div className="border-t border-white/5 pt-4">
       <p className="text-xs text-zinc-600">Pick up where you left off on this device</p>
-      <form
-        action={async (formData) => {
-          setLoading(true)
-          setError(null)
-          const result = await recoverSession(
-            orgSlug,
-            eventId,
-            String(formData.get('phone') ?? ''),
-          )
-          if (result.error) {
-            setLoading(false)
-            setError(result.error)
-            return
-          }
-          setOpen(false)
-          router.refresh()
-        }}
-        className="mt-2 flex items-end gap-2"
-      >
+      <form onSubmit={(event) => void handleSubmit(event)} className="mt-2 flex items-end gap-2">
         <label className="block min-w-0 flex-1">
           <span className="text-xs text-zinc-600">Phone</span>
           <PhoneInput
+            value={phoneDigits}
+            onChange={setPhoneDigits}
             className={recoverInputClass}
             style={{ '--tw-ring-color': accent } as React.CSSProperties}
           />
@@ -138,6 +144,7 @@ function RecoverSession({
         onClick={() => {
           setOpen(false)
           setError(null)
+          setPhoneDigits('')
         }}
         className="mt-2 text-xs text-zinc-700 transition-colors hover:text-zinc-600"
       >
@@ -155,6 +162,12 @@ export function JoinSection(props: Props) {
   const [loading, setLoading] = useState(false)
   const [guestCount, setGuestCount] = useState(0)
   const [optedOutOfReturningSession, setOptedOutOfReturningSession] = useState(false)
+
+  useEffect(() => {
+    if (!props.participant) {
+      setOptedOutOfReturningSession(false)
+    }
+  }, [props.participant])
 
   // Signed-up users are handled in the roster (highlighted row + status picker
   // below the attendee list), so the join card collapses for them.
@@ -363,7 +376,15 @@ export function JoinSection(props: Props) {
       </button>
       </form>
 
-      <RecoverSession orgSlug={props.orgSlug} eventId={props.eventId} accent={props.accent} />
+      <RecoverSession
+        orgSlug={props.orgSlug}
+        eventId={props.eventId}
+        accent={props.accent}
+        onRecovered={() => {
+          setOptedOutOfReturningSession(false)
+          motion?.reopenJoinPanel()
+        }}
+      />
     </div>
   )
 }

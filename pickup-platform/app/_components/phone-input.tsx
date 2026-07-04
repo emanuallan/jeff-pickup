@@ -6,10 +6,14 @@ import { formatPhoneDisplay, normalizePhoneDigits } from '@/lib/phone'
 type Props = {
   className?: string
   style?: React.CSSProperties
+  value?: string
+  onChange?: (digits: string) => void
 }
 
-export function PhoneInput({ className, style }: Props) {
-  const [digits, setDigits] = useState('')
+export function PhoneInput({ className, style, value, onChange }: Props) {
+  const [internalDigits, setInternalDigits] = useState('')
+  const digits = value ?? internalDigits
+  const setDigits = onChange ?? setInternalDigits
 
   return (
     <>
