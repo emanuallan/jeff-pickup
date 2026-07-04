@@ -205,11 +205,11 @@ export type OrgOgCardProps = {
   locationOnline?: boolean
   cta?: string
   logoUrl?: string | null
+  organizrLogoSrc: string
 }
 
 /** Tenant preview — uses the group&apos;s accent color and logo. */
 export function OrgOgCard({
-  slug,
   orgName,
   accent,
   eyebrow,
@@ -218,10 +218,10 @@ export function OrgOgCard({
   locationOnline,
   cta,
   logoUrl,
+  organizrLogoSrc,
 }: OrgOgCardProps) {
   const accentText = readableTextColor(accent)
   const accentFg = accentOnDark(accent)
-  const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? 'organizr.co'
 
   return (
     <div
@@ -432,17 +432,7 @@ export function OrgOgCard({
         ) : (
           <div />
         )}
-        <div
-          style={{
-            display: 'flex',
-            ...font(400),
-            fontSize: '20px',
-            color: '#52525b',
-            letterSpacing: '-0.01em',
-          }}
-        >
-          {slug}.{rootDomain}
-        </div>
+        <SharePoweredByPill logoSrc={organizrLogoSrc} />
       </div>
     </div>
   )
@@ -453,9 +443,12 @@ export async function renderMarketingOgImage() {
   return new ImageResponse(<MarketingOgCard logoSrc={logoSrc} />, { ...ogImageSize, fonts })
 }
 
-export async function renderOrgOgImage(props: OrgOgCardProps) {
-  const fonts = await getOgFonts()
-  return new ImageResponse(<OrgOgCard {...props} />, { ...ogImageSize, fonts })
+export async function renderOrgOgImage(props: Omit<OrgOgCardProps, 'organizrLogoSrc'>) {
+  const [fonts, organizrLogoSrc] = await Promise.all([getOgFonts(), getOrganizrLogoDataUrl()])
+  return new ImageResponse(
+    <OrgOgCard {...props} organizrLogoSrc={organizrLogoSrc} />,
+    { ...ogImageSize, fonts },
+  )
 }
 
 export const shareImageSize = { width: 1080, height: 1080 }
