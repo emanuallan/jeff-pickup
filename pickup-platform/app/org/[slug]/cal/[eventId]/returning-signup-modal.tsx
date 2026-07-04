@@ -83,7 +83,7 @@ function markReturningSignupSeen(orgSlug: string, eventId: string) {
   }
 }
 
-const RETURNING_SIGNUP_PROMPT_DELAY_MS = 1400
+const RETURNING_SIGNUP_PROMPT_DELAY_MS = 1000
 
 export function ReturningSignupModal({
   orgSlug,
