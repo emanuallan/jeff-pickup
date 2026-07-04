@@ -177,6 +177,26 @@ export function JoinSection(props: Props) {
 
   const joiningWaitlist = props.isFull && props.waitlistEnabled
 
+  async function handleNewUserJoin(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (!motion?.runSignupCelebration) return
+    setLoading(true)
+    setError(null)
+    const formData = new FormData(event.currentTarget)
+    const result = await motion.runSignupCelebration(
+      () => joinEvent(props.orgSlug, props.eventId, formData),
+      props.accent,
+    )
+    setLoading(false)
+    if (result.error) {
+      setError(result.error)
+      return
+    }
+    startTransition(() => {
+      router.refresh()
+    })
+  }
+
   if (props.participant && !optedOutOfReturningSession) {
     const welcomeBack = (
       <div className="space-y-3">
@@ -290,17 +310,7 @@ export function JoinSection(props: Props) {
   return (
     <div className="space-y-4">
       <form
-        action={async (formData) => {
-          if (!motion?.runSignupCelebration) return
-          setLoading(true)
-          setError(null)
-          const result = await motion.runSignupCelebration(
-            () => joinEvent(props.orgSlug, props.eventId, formData),
-            props.accent,
-          )
-          setLoading(false)
-          if (result.error) setError(result.error)
-        }}
+        onSubmit={(event) => void handleNewUserJoin(event)}
         className="space-y-4"
       >
       <div>

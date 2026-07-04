@@ -107,6 +107,24 @@ function animateScrollLeft(
   })
 }
 
+const MATCHDAY_SCROLL_HINT_KEY = 'organizr:matchday-scroll-hint-seen'
+
+function hasSeenMatchdayScrollHint() {
+  try {
+    return localStorage.getItem(MATCHDAY_SCROLL_HINT_KEY) === '1'
+  } catch {
+    return false
+  }
+}
+
+function markMatchdayScrollHintSeen() {
+  try {
+    localStorage.setItem(MATCHDAY_SCROLL_HINT_KEY, '1')
+  } catch {
+    // ignore quota / private mode
+  }
+}
+
 export function MatchdayDateChips({ chips, activeEventId, accent }: Props) {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -161,12 +179,18 @@ export function MatchdayDateChips({ chips, activeEventId, accent }: Props) {
       return
     }
 
+    if (hasSeenMatchdayScrollHint()) {
+      return
+    }
+
     let cancelled = false
 
     const startTimer = setTimeout(async () => {
       if (cancelled || userInteractedRef.current) {
         return
       }
+
+      markMatchdayScrollHintSeen()
 
       const startLeft = container.scrollLeft
       const maxScroll = container.scrollWidth - container.clientWidth
