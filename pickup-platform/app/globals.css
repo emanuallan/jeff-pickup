@@ -249,7 +249,8 @@ textarea {
 	height: 0.875rem;
 	border-radius: 9999px;
 	background: var(--kick-accent, #60a5fa);
-	box-shadow: 0 0 10px color-mix(in srgb, var(--kick-accent, #60a5fa) 55%, transparent);
+	box-shadow: 0 0 10px
+		color-mix(in srgb, var(--kick-accent, #60a5fa) 55%, transparent);
 	animation: signup-ball-roll 1.4s ease-in-out forwards;
 }
 
@@ -280,13 +281,13 @@ textarea {
 	animation-delay: calc(var(--receiver-i, 0) * 45ms);
 }
 
-.signup-kick-scene[data-guest-figures='4'] .signup-kick-receiver,
-.signup-kick-scene[data-guest-figures='5'] .signup-kick-receiver {
+.signup-kick-scene[data-guest-figures="4"] .signup-kick-receiver,
+.signup-kick-scene[data-guest-figures="5"] .signup-kick-receiver {
 	width: 1.4rem;
 	height: 1.9rem;
 }
 
-.signup-kick-scene[data-guest-figures='5'] .signup-kick-receivers {
+.signup-kick-scene[data-guest-figures="5"] .signup-kick-receivers {
 	gap: 0.15rem;
 	right: 3%;
 }
@@ -389,54 +390,95 @@ textarea {
 
 .leave-walk-figure {
 	position: absolute;
-	left: 62%;
+	left: calc(50% - 1.125rem);
 	bottom: 0.65rem;
 	width: 2.25rem;
 	height: 3rem;
-	animation: leave-figure-exit 1.4s ease-in-out forwards;
+	animation:
+		leave-figure-exit 1.4s ease-in-out forwards,
+		leave-figure-sway 1.4s ease-in-out forwards;
 }
 
 .leave-wave-arm {
 	transform-box: fill-box;
-	transform-origin: 50% 100%;
+	transform-origin: 0 0;
 	animation: leave-wave-arm 1.4s ease-in-out forwards;
 }
 
 .leave-walk-legs {
 	transform-box: fill-box;
 	transform-origin: 50% 0%;
-	animation: leave-walk-step 0.36s ease-in-out 0.42s infinite;
+	animation: leave-walk-step 0.36s ease-in-out 0.68s infinite;
 }
 
 .leave-walk-ball {
-	position: absolute;
-	bottom: 0.95rem;
-	left: 56%;
-	width: 0.875rem;
-	height: 0.875rem;
-	border-radius: 9999px;
-	background: var(--leave-accent, #60a5fa);
-	box-shadow: 0 0 10px color-mix(in srgb, var(--leave-accent, #60a5fa) 55%, transparent);
-	animation: leave-ball-exit 1.4s ease-in-out forwards;
+	fill: var(--leave-accent, #60a5fa);
+	filter: drop-shadow(
+		0 0 5px color-mix(in srgb, var(--leave-accent, #60a5fa) 55%, transparent)
+	);
+}
+
+.leave-carry-arm {
+	transform-box: fill-box;
+	transform-origin: 24px 20px;
+	animation: leave-carry-arm 0.36s ease-in-out 0.68s infinite;
 }
 
 @keyframes leave-wave-arm {
 	0%,
-	14% {
+	6% {
 		transform: rotate(0deg);
 	}
-	22% {
+	11% {
+		transform: rotate(-66deg);
+	}
+	18% {
 		transform: rotate(-42deg);
 	}
-	32% {
-		transform: rotate(18deg);
+	25% {
+		transform: rotate(-62deg);
 	}
-	42% {
-		transform: rotate(-36deg);
+	32% {
+		transform: rotate(-44deg);
+	}
+	39% {
+		transform: rotate(-58deg);
+	}
+	46% {
+		transform: rotate(-46deg);
 	}
 	52%,
 	100% {
-		transform: rotate(8deg);
+		transform: rotate(-18deg);
+	}
+}
+
+@keyframes leave-carry-arm {
+	0%,
+	100% {
+		transform: translateY(0);
+	}
+	50% {
+		transform: translateY(-1px);
+	}
+}
+
+@keyframes leave-figure-sway {
+	0%,
+	6%,
+	52%,
+	100% {
+		transform: rotate(0deg);
+	}
+	11%,
+	25%,
+	39% {
+		transform: rotate(2deg);
+	}
+	18%,
+	32%,
+	46% {
+		transform: rotate(-2deg);
 	}
 }
 
@@ -452,26 +494,12 @@ textarea {
 
 @keyframes leave-figure-exit {
 	0%,
-	38% {
-		left: 62%;
+	48% {
+		left: calc(50% - 1.125rem);
 		opacity: 1;
 	}
 	100% {
 		left: 108%;
 		opacity: 0.85;
-	}
-}
-
-@keyframes leave-ball-exit {
-	0%,
-	38% {
-		left: 56%;
-		opacity: 1;
-		transform: rotate(0deg);
-	}
-	100% {
-		left: 104%;
-		opacity: 0.15;
-		transform: rotate(-360deg);
 	}
 }
