@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import type { Participant, MySignup } from '@/lib/participant'
 import type { RosterEntry, SignupListStatus } from '@/lib/signups'
 import type { RosterBadgeInfo } from '@/lib/badges'
@@ -65,6 +65,21 @@ function ParticipationPanelBody({
   const joinClosing = motion?.joinClosing ?? false
   const controlsClosing = motion?.controlsClosing ?? false
   const showControls = Boolean(mySignup && canUpdateStatus)
+  const lastControlsSignupRef = useRef<MySignup | null>(null)
+
+  if (mySignup && canUpdateStatus) {
+    lastControlsSignupRef.current = mySignup
+  }
+
+  useEffect(() => {
+    if (!controlsClosing && !mySignup) {
+      lastControlsSignupRef.current = null
+    }
+  }, [controlsClosing, mySignup])
+
+  const controlsSignup =
+    mySignup && canUpdateStatus ? mySignup : controlsClosing ? lastControlsSignupRef.current : null
+  const showControlsSection = Boolean(controlsSignup && (showControls || controlsClosing))
 
   return (
     <>
@@ -105,15 +120,15 @@ function ParticipationPanelBody({
           />
         ) : null}
 
-        {(showControls || controlsClosing) ? (
+        {showControlsSection && controlsSignup ? (
           <AnimatedPresenceSection show={showControls} closing={controlsClosing}>
             <SignedInControlsLazy
               orgSlug={joinProps.orgSlug}
               eventId={joinProps.eventId}
-              signupId={mySignup!.signup_id}
-              guestCount={mySignup!.guest_count}
-              arrivalStatus={mySignup!.arrival_status as ArrivalStatus}
-              listStatus={mySignup!.list_status as SignupListStatus}
+              signupId={controlsSignup.signup_id}
+              guestCount={controlsSignup.guest_count}
+              arrivalStatus={controlsSignup.arrival_status as ArrivalStatus}
+              listStatus={controlsSignup.list_status as SignupListStatus}
               isOnline={joinProps.isOnline}
               accent={joinProps.accent}
             />

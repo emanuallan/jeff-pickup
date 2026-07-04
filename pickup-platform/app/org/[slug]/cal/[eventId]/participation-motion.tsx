@@ -2,12 +2,15 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 
+const CONTROLS_CLOSE_MS = 280
+
 type MotionContextValue = {
   joinClosing: boolean
   controlsClosing: boolean
   dismissJoinPanel: () => void
   reopenJoinPanel: () => void
   dismissSignedInControls: () => void
+  reopenSignedInControls: () => void
 }
 
 const ParticipationMotionContext = createContext<MotionContextValue | null>(null)
@@ -24,7 +27,10 @@ export function ParticipationMotionProvider({
 
   useEffect(() => {
     setJoinClosing(false)
-    setControlsClosing(false)
+    // Leave sets resetKey to "unsigned" while controls are still animating out.
+    if (resetKey !== 'unsigned') {
+      setControlsClosing(false)
+    }
   }, [resetKey])
 
   const dismissJoinPanel = useCallback(() => {
@@ -37,6 +43,11 @@ export function ParticipationMotionProvider({
 
   const dismissSignedInControls = useCallback(() => {
     setControlsClosing(true)
+    window.setTimeout(() => setControlsClosing(false), CONTROLS_CLOSE_MS)
+  }, [])
+
+  const reopenSignedInControls = useCallback(() => {
+    setControlsClosing(false)
   }, [])
 
   const value = useMemo(
@@ -46,8 +57,16 @@ export function ParticipationMotionProvider({
       dismissJoinPanel,
       reopenJoinPanel,
       dismissSignedInControls,
+      reopenSignedInControls,
     }),
-    [joinClosing, controlsClosing, dismissJoinPanel, reopenJoinPanel, dismissSignedInControls],
+    [
+      joinClosing,
+      controlsClosing,
+      dismissJoinPanel,
+      reopenJoinPanel,
+      dismissSignedInControls,
+      reopenSignedInControls,
+    ],
   )
 
   return (

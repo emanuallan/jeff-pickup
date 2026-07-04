@@ -207,6 +207,7 @@ export function RosterList(props: {
                         const result = await leaveEvent(props.orgSlug!, props.eventId!, e.id)
                         setLeaving(false)
                         if (result.error) {
+                          motion?.reopenSignedInControls()
                           setExitingIds((prev) => {
                             const next = new Set(prev)
                             next.delete(e.id)
