@@ -12,28 +12,86 @@ const VISITOR_COOKIE_OPTIONS = {
   path: '/',
 }
 
-/** Org public event detail pages (subdomain path or apex rewrite path). */
+/** Org public pages where anonymous visitors should get a stable key. */
 function isPublicEventPage(pathname: string): boolean {
-  return (
-    /^\/cal\/[^/]+/.test(pathname) ||
-    /^\/org\/[^/]+\/cal\/[^/]+/.test(pathname)
-  )
+  if (pathname === '/') return true
+  if (pathname === '/cal' || pathname === '/leaderboard') return true
+  if (/^\/cal\/[^/]+$/.test(pathname)) return true
+  if (/^\/org\/[^/]+$/.test(pathname)) return true
+  if (/^\/org\/[^/]+\/cal$/.test(pathname)) return true
+  if (/^\/org\/[^/]+\/cal\/[^/]+$/.test(pathname)) return true
+  if (/^\/org\/[^/]+\/leaderboard$/.test(pathname)) return true
+  return false
 }
 
-/** Legacy /events URLs — redirect to /cal so shared links and OG caches keep working. */
-function redirectEventsToCal(request: NextRequest): NextResponse | null {
+/** Legacy public URLs — redirect to the org home shell. */
+function redirectLegacyOrgPaths(request: NextRequest): NextResponse | null {
   const { pathname } = request.nextUrl
 
-  if (pathname === '/events' || pathname.startsWith('/events/')) {
+  if (pathname === '/cal' || pathname === '/events') {
     const url = request.nextUrl.clone()
-    url.pathname = `/cal${pathname.slice('/events'.length)}`
+    url.pathname = '/'
     return NextResponse.redirect(url, 308)
   }
 
-  const apexMatch = /^(\/org\/[^/]+)\/events(\/.*)?$/.exec(pathname)
-  if (apexMatch) {
+  if (pathname === '/leaderboard') {
     const url = request.nextUrl.clone()
-    url.pathname = `${apexMatch[1]}/cal${apexMatch[2] ?? ''}`
+    url.pathname = '/'
+    url.searchParams.set('tab', 'leaderboard')
+    return NextResponse.redirect(url, 308)
+  }
+
+  const calEvent = /^\/cal\/([^/]+)$/.exec(pathname)
+  if (calEvent) {
+    const url = request.nextUrl.clone()
+    url.pathname = '/'
+    url.searchParams.set('cal', calEvent[1])
+    return NextResponse.redirect(url, 308)
+  }
+
+  const legacyEvent = /^\/events\/([^/]+)$/.exec(pathname)
+  if (legacyEvent) {
+    const url = request.nextUrl.clone()
+    url.pathname = '/'
+    url.searchParams.set('cal', legacyEvent[1])
+    return NextResponse.redirect(url, 308)
+  }
+
+  const apexCal = /^(\/org\/[^/]+)\/cal$/.exec(pathname)
+  if (apexCal) {
+    const url = request.nextUrl.clone()
+    url.pathname = apexCal[1]
+    return NextResponse.redirect(url, 308)
+  }
+
+  const apexLeaderboard = /^(\/org\/[^/]+)\/leaderboard$/.exec(pathname)
+  if (apexLeaderboard) {
+    const url = request.nextUrl.clone()
+    url.pathname = apexLeaderboard[1]
+    url.searchParams.set('tab', 'leaderboard')
+    return NextResponse.redirect(url, 308)
+  }
+
+  const apexCalEvent = /^(\/org\/[^/]+)\/cal\/([^/]+)$/.exec(pathname)
+  if (apexCalEvent) {
+    const url = request.nextUrl.clone()
+    url.pathname = apexCalEvent[1]
+    url.searchParams.set('cal', apexCalEvent[2])
+    return NextResponse.redirect(url, 308)
+  }
+
+  const apexEvents = /^(\/org\/[^/]+)\/events$/.exec(pathname)
+  if (apexEvents) {
+    const url = request.nextUrl.clone()
+    url.pathname = apexEvents[1]
+    return NextResponse.redirect(url, 308)
+  }
+
+  const apexLegacyEvent = /^(\/org\/[^/]+)\/events\/([^/]+)$/.exec(pathname)
+  if (apexLegacyEvent) {
+    const url = request.nextUrl.clone()
+    url.pathname = apexLegacyEvent[1]
+    url.searchParams.set('cal', apexLegacyEvent[2])
     return NextResponse.redirect(url, 308)
   }
 
@@ -56,7 +114,7 @@ function attachVisitorKey(request: NextRequest, requestHeaders: Headers): string
   return visitorKey
 }
 
-/** Apex paths like /org/demo/cal — public tenant pages. */
+/** Apex paths like /org/demo — public tenant pages. */
 function isApexPublicOrgRoute(pathname: string): boolean {
   return /^\/org\/[^/]+(\/|$)/.test(pathname)
 }
@@ -77,7 +135,7 @@ export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname
 
   if (orgSlug) {
-    const legacyRedirect = redirectEventsToCal(request)
+    const legacyRedirect = redirectLegacyOrgPaths(request)
     if (legacyRedirect) return legacyRedirect
 
     if (
@@ -110,7 +168,7 @@ export async function middleware(request: NextRequest) {
   }
 
   if (isApexPublicOrgRoute(pathname)) {
-    const legacyRedirect = redirectEventsToCal(request)
+    const legacyRedirect = redirectLegacyOrgPaths(request)
     if (legacyRedirect) return legacyRedirect
 
     const requestHeaders = new Headers(request.headers)

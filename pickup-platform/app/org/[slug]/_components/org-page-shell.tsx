@@ -2,6 +2,7 @@ import Link from 'next/link'
 import type { ReactNode } from 'react'
 import { getRootDomain } from '@/lib/tenancy/parse-host'
 import { rootBaseUrl } from '@/lib/og-metadata'
+import { orgPublicTabHref } from '@/lib/org-public-nav'
 import { accentOnDark } from '@/lib/colors'
 import { arrowRight } from '@/lib/text-arrows'
 import { OrganizrLogo } from '../../../_components/organizr-logo'
@@ -80,7 +81,7 @@ export function OrgPageFooter({
 export function LeaderboardLink({ accent }: { accent: string }) {
   return (
     <Link
-      href="/leaderboard"
+      href={orgPublicTabHref('/', 'leaderboard')}
       className="inline-flex items-center gap-1 text-sm transition-opacity hover:opacity-80"
       style={{ color: accentOnDark(accent) }}
     >

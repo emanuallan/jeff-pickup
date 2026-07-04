@@ -1,4 +1,8 @@
 import { cookies } from 'next/headers'
+import {
+  clearParticipantSession,
+  getParticipantCookieOptions,
+} from '@/lib/auth-cookies'
 
 export const SESSION_COOKIE = 'hc_session'
 
@@ -9,16 +13,10 @@ export async function getSessionToken(): Promise<string | null> {
 
 export async function setSessionToken(token: string) {
   const store = await cookies()
-  store.set(SESSION_COOKIE, token, {
-    httpOnly: true,
-    sameSite: 'lax',
-    secure: process.env.NODE_ENV === 'production',
-    maxAge: 60 * 60 * 24 * 365,
-    path: '/',
-  })
+  store.set(SESSION_COOKIE, token, getParticipantCookieOptions())
 }
 
 export async function clearSessionToken() {
   const store = await cookies()
-  store.delete(SESSION_COOKIE)
+  clearParticipantSession(store)
 }

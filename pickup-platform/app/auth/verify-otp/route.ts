@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server'
+import { clearParticipantSessionForSignIn } from '@/lib/auth-cookies'
 import { isCompleteOtp, normalizeLoginEmail, normalizeOtpInput } from '@/lib/login-otp'
 import { mapOtpAuthError } from '@/lib/login-errors'
 import { safeNextPath } from '@/lib/safe-next'
@@ -42,5 +43,6 @@ export async function POST(request: NextRequest) {
     )
   }
 
+  await clearParticipantSessionForSignIn(response)
   return response
 }

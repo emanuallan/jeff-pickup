@@ -5,6 +5,7 @@ import { LEADERBOARD_MIN_SESSIONS } from '@/lib/engagement'
 import { getActivePublicOrgSlugs } from '@/lib/orgs'
 import { orgFeatures } from '@/lib/org-features'
 import { orgBaseUrl, rootBaseUrl } from '@/lib/og-metadata'
+import { orgHomeCanonicalPath, orgPublicEventHref } from '@/lib/org-public-nav'
 import { parseOrgSlugFromHost } from '@/lib/tenancy/parse-host'
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
@@ -25,7 +26,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const orgSlugs = await getActivePublicOrgSlugs()
     for (const orgSlug of orgSlugs) {
       entries.push({
-        url: `${orgBaseUrl(orgSlug)}/cal`,
+        url: orgBaseUrl(orgSlug),
         lastModified: now,
         changeFrequency: 'daily',
         priority: 0.7,
@@ -49,7 +50,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const entries: MetadataRoute.Sitemap = [
     {
-      url: `${base}/cal`,
+      url: base,
       changeFrequency: 'daily',
       priority: 0.9,
     },
@@ -57,7 +58,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   for (const event of events) {
     entries.push({
-      url: `${base}/cal/${event.short_id}`,
+      url: `${base}${orgPublicEventHref(event.short_id)}`,
       lastModified: new Date(event.starts_at),
       changeFrequency: 'daily',
       priority: 0.8,
@@ -66,7 +67,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   if (leaderboardUnlocked && orgFeatures(org).leaderboard) {
     entries.push({
-      url: `${base}/leaderboard`,
+      url: `${base}${orgHomeCanonicalPath({ tab: 'leaderboard' })}`,
       changeFrequency: 'weekly',
       priority: 0.6,
     })
