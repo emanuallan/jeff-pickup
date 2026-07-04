@@ -83,6 +83,14 @@ function markReturningSignupSeen(orgSlug: string, eventId: string) {
   }
 }
 
+export function clearReturningSignupSeen(orgSlug: string, eventId: string) {
+  try {
+    localStorage.removeItem(returningSignupStorageKey(orgSlug, eventId))
+  } catch {
+    // ignore quota / private mode
+  }
+}
+
 const RETURNING_SIGNUP_PROMPT_DELAY_MS = 1000
 
 export function ReturningSignupModal({
@@ -226,7 +234,7 @@ export function ReturningSignupModal({
         {error ? <p className="mt-4 text-sm text-red-300">{error}</p> : null}
       </BottomSheet>
 
-      {open === false ? (
+      {open !== true ? (
         <>
           {children}
           {error ? <p className="mt-3 text-sm text-red-300">{error}</p> : null}

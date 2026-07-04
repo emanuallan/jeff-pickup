@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   joinEvent,
@@ -11,7 +11,7 @@ import {
 import { arrowRight } from '@/lib/text-arrows'
 import { PhoneInput } from '@/app/_components/phone-input'
 import type { Participant, MySignup } from '@/lib/participant'
-import { ReturningSignupModal } from './returning-signup-modal'
+import { ReturningSignupModal, clearReturningSignupSeen } from './returning-signup-modal'
 import { useParticipationMotion } from './participation-motion'
 
 export type { Participant, MySignup }
@@ -150,9 +150,11 @@ function RecoverSession({
 export function JoinSection(props: Props) {
   const router = useRouter()
   const motion = useParticipationMotion()
+  const [, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [guestCount, setGuestCount] = useState(0)
+  const [optedOutOfReturningSession, setOptedOutOfReturningSession] = useState(false)
 
   // Signed-up users are handled in the roster (highlighted row + status picker
   // below the attendee list), so the join card collapses for them.
@@ -162,7 +164,7 @@ export function JoinSection(props: Props) {
 
   const joiningWaitlist = props.isFull && props.waitlistEnabled
 
-  if (props.participant) {
+  if (props.participant && !optedOutOfReturningSession) {
     const welcomeBack = (
       <div className="space-y-3">
         <div>
@@ -212,7 +214,13 @@ export function JoinSection(props: Props) {
               props.accent,
             )
             setLoading(false)
-            if (result.error) setError(result.error)
+            if (result.error) {
+              setError(result.error)
+              return
+            }
+            startTransition(() => {
+              router.refresh()
+            })
           }}
           className="w-full rounded-xl px-4 py-3.5 text-sm font-semibold shadow-lg transition-opacity hover:opacity-90 disabled:opacity-50"
           style={{
@@ -227,8 +235,13 @@ export function JoinSection(props: Props) {
           <button
             type="button"
             onClick={async () => {
+              setOptedOutOfReturningSession(true)
+              clearReturningSignupSeen(props.orgSlug, props.eventId)
+              motion?.reopenJoinPanel()
               await clearParticipantSession(props.orgSlug, props.eventId)
-              router.refresh()
+              startTransition(() => {
+                router.refresh()
+              })
             }}
             className="text-xs text-zinc-600 transition-colors hover:text-zinc-500"
           >

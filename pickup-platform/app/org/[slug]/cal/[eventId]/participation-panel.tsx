@@ -198,7 +198,9 @@ export function ParticipationPanel(props: Props) {
   }
 
   return (
-    <ParticipationMotionProvider resetKey={mySignup?.signup_id ?? 'unsigned'}>
+    <ParticipationMotionProvider
+      resetKey={mySignup?.signup_id ?? rest.participant?.phone ?? 'unsigned'}
+    >
       <ParticipationPanelBody
         {...rest}
         mySignup={mySignup}
