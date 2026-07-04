@@ -10,18 +10,21 @@ import {
   type ReactNode,
 } from 'react'
 import { fireConfetti } from '@/lib/confetti'
+import { waitForLeaveWalk } from './leave-walk-animation'
 import { waitForSignupKick } from './signup-kick-animation'
 
 const CONTROLS_CLOSE_MS = 280
 
-type SignupAction = () => Promise<{ error?: string }>
+type ParticipationAction = () => Promise<{ error?: string }>
 
 type MotionContextValue = {
   kickActive: boolean
-  kickAccent: string
+  leaveActive: boolean
+  celebrationAccent: string
   joinClosing: boolean
   controlsClosing: boolean
-  runSignupCelebration: (action: SignupAction, accent: string) => Promise<{ error?: string }>
+  runSignupCelebration: (action: ParticipationAction, accent: string) => Promise<{ error?: string }>
+  runLeaveCelebration: (action: ParticipationAction, accent: string) => Promise<{ error?: string }>
   dismissJoinPanel: () => void
   reopenJoinPanel: () => void
   dismissSignedInControls: () => void
@@ -38,7 +41,8 @@ export function ParticipationMotionProvider({
   resetKey: string
 }) {
   const [kickActive, setKickActive] = useState(false)
-  const [kickAccent, setKickAccent] = useState('#2563eb')
+  const [leaveActive, setLeaveActive] = useState(false)
+  const [celebrationAccent, setCelebrationAccent] = useState('#2563eb')
   const [joinClosing, setJoinClosing] = useState(false)
   const [controlsClosing, setControlsClosing] = useState(false)
 
@@ -67,8 +71,8 @@ export function ParticipationMotionProvider({
   }, [])
 
   const runSignupCelebration = useCallback(
-    async (action: SignupAction, accent: string) => {
-      setKickAccent(accent)
+    async (action: ParticipationAction, accent: string) => {
+      setCelebrationAccent(accent)
       setKickActive(true)
 
       const [result] = await Promise.all([action(), waitForSignupKick()])
@@ -86,13 +90,36 @@ export function ParticipationMotionProvider({
     [],
   )
 
+  const runLeaveCelebration = useCallback(
+    async (action: ParticipationAction, accent: string) => {
+      setCelebrationAccent(accent)
+      setLeaveActive(true)
+      setControlsClosing(true)
+
+      const [result] = await Promise.all([action(), waitForLeaveWalk()])
+
+      setLeaveActive(false)
+
+      if (result.error) {
+        setControlsClosing(false)
+        return result
+      }
+
+      window.setTimeout(() => setControlsClosing(false), CONTROLS_CLOSE_MS)
+      return {}
+    },
+    [],
+  )
+
   const value = useMemo(
     () => ({
       kickActive,
-      kickAccent,
+      leaveActive,
+      celebrationAccent,
       joinClosing,
       controlsClosing,
       runSignupCelebration,
+      runLeaveCelebration,
       dismissJoinPanel,
       reopenJoinPanel,
       dismissSignedInControls,
@@ -100,10 +127,12 @@ export function ParticipationMotionProvider({
     }),
     [
       kickActive,
-      kickAccent,
+      leaveActive,
+      celebrationAccent,
       joinClosing,
       controlsClosing,
       runSignupCelebration,
+      runLeaveCelebration,
       dismissJoinPanel,
       reopenJoinPanel,
       dismissSignedInControls,

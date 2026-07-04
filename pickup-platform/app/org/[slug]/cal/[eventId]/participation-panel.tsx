@@ -12,6 +12,7 @@ import { WaitlistSection } from './waitlist-section'
 import { AnimatedPresenceSection } from './animated-presence-section'
 import { ParticipationMotionProvider, useParticipationMotion } from './participation-motion'
 import { SignupKickAnimation } from './signup-kick-animation'
+import { LeaveWalkAnimation } from './leave-walk-animation'
 
 type JoinProps = {
   orgSlug: string
@@ -64,7 +65,9 @@ function ParticipationPanelBody({
 }: Props & { showJoin: boolean; joinProps: JoinProps }) {
   const motion = useParticipationMotion()
   const kickActive = motion?.kickActive ?? false
-  const kickAccent = motion?.kickAccent ?? joinProps.accent
+  const leaveActive = motion?.leaveActive ?? false
+  const celebrationActive = kickActive || leaveActive
+  const celebrationAccent = motion?.celebrationAccent ?? joinProps.accent
   const joinClosing = motion?.joinClosing ?? false
   const controlsClosing = motion?.controlsClosing ?? false
   const showControls = Boolean(mySignup && canUpdateStatus)
@@ -86,15 +89,21 @@ function ParticipationPanelBody({
 
   return (
     <div className="relative">
-      {kickActive ? (
+      {celebrationActive ? (
         <div className="pointer-events-none absolute inset-0 z-20 flex items-center">
-          <SignupKickAnimation accent={kickAccent} className="w-full" />
+          {kickActive ? (
+            <SignupKickAnimation accent={celebrationAccent} className="w-full" />
+          ) : (
+            <LeaveWalkAnimation accent={celebrationAccent} className="w-full" />
+          )}
         </div>
       ) : null}
 
       <div
         className={
-          kickActive ? 'pointer-events-none select-none opacity-20 transition-opacity duration-200' : ''
+          celebrationActive
+            ? 'pointer-events-none select-none opacity-20 transition-opacity duration-200'
+            : ''
         }
       >
         {cancelledCallout}

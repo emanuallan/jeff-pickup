@@ -13,8 +13,6 @@ import { formatGuestSuffix } from '@/lib/format-guest-suffix'
 import type { RosterBadgeInfo } from '@/lib/badges'
 import { useParticipationMotion } from './participation-motion'
 
-const ROSTER_EXIT_MS = 240
-
 function TooltipBadge({
   tip,
   className,
@@ -128,7 +126,6 @@ export function RosterList(props: {
   const motion = useParticipationMotion()
   const [leaving, setLeaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [exitingIds, setExitingIds] = useState<Set<string>>(() => new Set())
   const knownIdsRef = useRef(new Set(props.entries.map((entry) => entry.id)))
   const accent = props.accent ?? '#2563eb'
   const accentFg = accentOnDark(accent)
@@ -152,14 +149,13 @@ export function RosterList(props: {
         {props.entries.map((e, index) => {
           const isMe = props.mySignupId != null && e.id === props.mySignupId
           const position = index + 1
-          const isExiting = exitingIds.has(e.id)
           const isNew = !knownIdsRef.current.has(e.id)
           const rowClass = [
             'roster-row flex items-center justify-between gap-2 rounded-xl border text-sm',
             isMe
               ? 'px-3 py-2.5 text-zinc-100'
               : 'border-zinc-800 bg-black/20 px-3 py-2 text-sm',
-            isExiting ? 'roster-row-exit' : isNew ? 'roster-row-enter' : '',
+            isNew ? 'roster-row-enter' : '',
           ]
             .filter(Boolean)
             .join(' ')
@@ -199,22 +195,17 @@ export function RosterList(props: {
                       aria-label="Leave this session"
                       title="Leave this session"
                       onClick={async () => {
+                        if (!motion?.runLeaveCelebration || !props.orgSlug || !props.eventId) {
+                          return
+                        }
                         setLeaving(true)
                         setError(null)
-                        motion?.dismissSignedInControls()
-                        setExitingIds((prev) => new Set(prev).add(e.id))
-                        await new Promise((resolve) => window.setTimeout(resolve, ROSTER_EXIT_MS))
-                        const result = await leaveEvent(props.orgSlug!, props.eventId!, e.id)
+                        const result = await motion.runLeaveCelebration(
+                          () => leaveEvent(props.orgSlug!, props.eventId!, e.id),
+                          accent,
+                        )
                         setLeaving(false)
-                        if (result.error) {
-                          motion?.reopenSignedInControls()
-                          setExitingIds((prev) => {
-                            const next = new Set(prev)
-                            next.delete(e.id)
-                            return next
-                          })
-                          setError(result.error)
-                        }
+                        if (result.error) setError(result.error)
                       }}
                       className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white/5 text-zinc-400 transition-colors hover:bg-white/10 hover:text-zinc-200 disabled:opacity-50"
                     >
