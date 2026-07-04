@@ -1,6 +1,7 @@
 'use client'
 
-import { useRef, useState, useEffect } from 'react'
+import { useRef, useState, useEffect, useTransition } from 'react'
+import { useRouter } from 'next/navigation'
 import { leaveEvent, updateArrivalStatus, updateGuestCount } from './actions'
 import {
   arrivalStatuses,
@@ -123,6 +124,8 @@ export function RosterList(props: {
   accent?: string
   variant?: 'confirmed' | 'waitlist'
 }) {
+  const router = useRouter()
+  const [, startTransition] = useTransition()
   const motion = useParticipationMotion()
   const [leaving, setLeaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -201,7 +204,15 @@ export function RosterList(props: {
                         setLeaving(true)
                         setError(null)
                         const result = await motion.runLeaveCelebration(
-                          () => leaveEvent(props.orgSlug!, props.eventId!, e.id),
+                          async () => {
+                            const r = await leaveEvent(props.orgSlug!, props.eventId!, e.id)
+                            if (!r.error) {
+                              startTransition(() => {
+                                router.refresh()
+                              })
+                            }
+                            return r
+                          },
                           accent,
                         )
                         setLeaving(false)

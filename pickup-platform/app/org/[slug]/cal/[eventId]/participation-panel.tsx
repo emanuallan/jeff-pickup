@@ -11,8 +11,6 @@ import { SignedInControlsLazy } from './signed-in-controls-lazy'
 import { WaitlistSection } from './waitlist-section'
 import { AnimatedPresenceSection } from './animated-presence-section'
 import { ParticipationMotionProvider, useParticipationMotion } from './participation-motion'
-import { SignupKickAnimation } from './signup-kick-animation'
-import { LeaveWalkAnimation } from './leave-walk-animation'
 
 type JoinProps = {
   orgSlug: string
@@ -66,10 +64,6 @@ function ParticipationPanelBody({
   joinProps,
 }: Props & { showJoin: boolean; joinProps: JoinProps }) {
   const motion = useParticipationMotion()
-  const kickActive = motion?.kickActive ?? false
-  const leaveActive = motion?.leaveActive ?? false
-  const celebrationActive = kickActive || leaveActive
-  const celebrationAccent = motion?.celebrationAccent ?? joinProps.accent
   const joinClosing = motion?.joinClosing ?? false
   const controlsClosing = motion?.controlsClosing ?? false
   const showControls = Boolean(mySignup && canUpdateStatus)
@@ -91,23 +85,7 @@ function ParticipationPanelBody({
 
   return (
     <div className="relative">
-      {celebrationActive ? (
-        <div className="pointer-events-none absolute inset-0 z-20 flex items-center">
-          {kickActive ? (
-            <SignupKickAnimation accent={celebrationAccent} className="w-full" />
-          ) : (
-            <LeaveWalkAnimation accent={celebrationAccent} className="w-full" />
-          )}
-        </div>
-      ) : null}
-
-      <div
-        className={
-          celebrationActive
-            ? 'pointer-events-none select-none opacity-20 transition-opacity duration-200'
-            : ''
-        }
-      >
+      <div>
         {cancelledCallout}
 
         <AnimatedPresenceSection show={showJoin || joinClosing} closing={joinClosing}>

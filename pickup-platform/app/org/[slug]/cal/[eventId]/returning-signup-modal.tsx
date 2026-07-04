@@ -6,6 +6,7 @@ import { quickJoinEvent } from './actions'
 import { accentOnDark, hexToRgba } from '@/lib/colors'
 import { BottomSheet } from '@/app/_components/bottom-sheet'
 import { useParticipationMotion } from './participation-motion'
+import { SignupKickAnimation } from './signup-kick-animation'
 
 function PinIcon({ className }: { className?: string }) {
   return (
@@ -141,21 +142,30 @@ export function ReturningSignupModal({
     markSeen()
     setLoading(status)
     setError(null)
-    setOpen(false)
 
     const result = await motion.runSignupCelebration(
-      () => quickJoinEvent(orgSlug, eventId, orgId, 0, status),
+      async () => {
+        const r = await quickJoinEvent(orgSlug, eventId, orgId, 0, status)
+        if (!r.error) {
+          startTransition(() => {
+            router.refresh()
+          })
+        }
+        return r
+      },
       accent,
+      { placement: 'sheet' },
     )
     setLoading(null)
     if (result.error) {
       setError(result.error)
       return
     }
-    startTransition(() => {
-      router.refresh()
-    })
+    setOpen(false)
   }
+
+  const sheetCelebrating =
+    motion?.kickActive === true && motion?.celebrationPlacement === 'sheet'
 
   return (
     <>
@@ -163,75 +173,82 @@ export function ReturningSignupModal({
         open={open === true}
         onClose={dismiss}
         variant="fixed"
-        dismissDisabled={loading !== null}
-        ariaLabelledby="returning-signup-title"
+        dismissDisabled={loading !== null || sheetCelebrating}
+        ariaLabelledby={sheetCelebrating ? undefined : 'returning-signup-title'}
+        ariaLabel={sheetCelebrating ? 'Signing you up' : undefined}
         panelStyle={{
           boxShadow: `0 -8px 40px -8px rgba(0, 0, 0, 0.5), inset 0 1px 0 0 ${hexToRgba(accent, 0.2)}`,
         }}
       >
-        <h2
-          id="returning-signup-title"
-          className="text-lg font-semibold tracking-tight text-zinc-50"
-        >
-          {eventTitle}
-        </h2>
-        <p className="mt-1 text-sm text-zinc-400">{eventWhen}</p>
-        <div className="mt-2 flex items-start gap-2 text-sm text-zinc-400">
-          <PinIcon className="mt-0.5" />
-          {locationMapsUrl ? (
-            <a
-              href={locationMapsUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={markSeen}
-              className="min-w-0 truncate transition-colors hover:opacity-80"
-              style={{ color: accentOnDark(accent) }}
+        {sheetCelebrating ? (
+          <SignupKickAnimation accent={accent} className="py-2" />
+        ) : (
+          <>
+            <h2
+              id="returning-signup-title"
+              className="text-lg font-semibold tracking-tight text-zinc-50"
             >
-              {locationLabel}
-            </a>
-          ) : (
-            <span className="min-w-0 truncate">{locationLabel}</span>
-          )}
-        </div>
+              {eventTitle}
+            </h2>
+            <p className="mt-1 text-sm text-zinc-400">{eventWhen}</p>
+            <div className="mt-2 flex items-start gap-2 text-sm text-zinc-400">
+              <PinIcon className="mt-0.5" />
+              {locationMapsUrl ? (
+                <a
+                  href={locationMapsUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={markSeen}
+                  className="min-w-0 truncate transition-colors hover:opacity-80"
+                  style={{ color: accentOnDark(accent) }}
+                >
+                  {locationLabel}
+                </a>
+              ) : (
+                <span className="min-w-0 truncate">{locationLabel}</span>
+              )}
+            </div>
 
-        <div className="mt-5 border-t border-zinc-800 pt-5">
-          <p
-            className="text-2xl font-semibold tracking-tight"
-            style={{ color: accentOnDark(accent) }}
-          >
-            {firstName}, you in?
-          </p>
-          <p className="mt-1 text-sm text-zinc-500">One tap lets the group know.</p>
-        </div>
+            <div className="mt-5 border-t border-zinc-800 pt-5">
+              <p
+                className="text-2xl font-semibold tracking-tight"
+                style={{ color: accentOnDark(accent) }}
+              >
+                {firstName}, you in?
+              </p>
+              <p className="mt-1 text-sm text-zinc-500">One tap lets the group know.</p>
+            </div>
 
-        <div className="mt-5 space-y-3">
-          <button
-            type="button"
-            disabled={loading !== null}
-            onClick={() => void handleJoin('maybe')}
-            className="flex w-full items-center justify-center gap-2 rounded-xl border border-white/10 bg-zinc-950/40 px-4 py-3.5 text-sm font-semibold text-zinc-200 transition-colors hover:border-zinc-700 hover:bg-zinc-900/60 disabled:opacity-50"
-          >
-            <MaybeIcon />
-            {loading === 'maybe' ? 'Saving…' : 'Maybe'}
-          </button>
+            <div className="mt-5 space-y-3">
+              <button
+                type="button"
+                disabled={loading !== null}
+                onClick={() => void handleJoin('maybe')}
+                className="flex w-full items-center justify-center gap-2 rounded-xl border border-white/10 bg-zinc-950/40 px-4 py-3.5 text-sm font-semibold text-zinc-200 transition-colors hover:border-zinc-700 hover:bg-zinc-900/60 disabled:opacity-50"
+              >
+                <MaybeIcon />
+                {loading === 'maybe' ? 'Saving…' : 'Maybe'}
+              </button>
 
-          <button
-            type="button"
-            disabled={loading !== null}
-            onClick={() => void handleJoin('confirmed')}
-            className="flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3.5 text-sm font-semibold shadow-lg transition-opacity hover:opacity-90 disabled:opacity-50"
-            style={{
-              backgroundColor: accent,
-              color: accentText,
-              boxShadow: `0 10px 30px -12px ${accent}`,
-            }}
-          >
-            <CheckIcon />
-            {loading === 'confirmed' ? 'Counting you in…' : "I'm in"}
-          </button>
-        </div>
+              <button
+                type="button"
+                disabled={loading !== null}
+                onClick={() => void handleJoin('confirmed')}
+                className="flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3.5 text-sm font-semibold shadow-lg transition-opacity hover:opacity-90 disabled:opacity-50"
+                style={{
+                  backgroundColor: accent,
+                  color: accentText,
+                  boxShadow: `0 10px 30px -12px ${accent}`,
+                }}
+              >
+                <CheckIcon />
+                {loading === 'confirmed' ? 'Counting you in…' : "I'm in"}
+              </button>
+            </div>
 
-        {error ? <p className="mt-4 text-sm text-red-300">{error}</p> : null}
+            {error ? <p className="mt-4 text-sm text-red-300">{error}</p> : null}
+          </>
+        )}
       </BottomSheet>
 
       {open !== true ? (

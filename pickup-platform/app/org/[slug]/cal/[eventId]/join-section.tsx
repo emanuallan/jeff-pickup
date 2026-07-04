@@ -184,7 +184,15 @@ export function JoinSection(props: Props) {
     setError(null)
     const formData = new FormData(event.currentTarget)
     const result = await motion.runSignupCelebration(
-      () => joinEvent(props.orgSlug, props.eventId, formData),
+      async () => {
+        const r = await joinEvent(props.orgSlug, props.eventId, formData)
+        if (!r.error) {
+          startTransition(() => {
+            router.refresh()
+          })
+        }
+        return r
+      },
       props.accent,
     )
     setLoading(false)
@@ -192,9 +200,6 @@ export function JoinSection(props: Props) {
       setError(result.error)
       return
     }
-    startTransition(() => {
-      router.refresh()
-    })
   }
 
   if (props.participant && !optedOutOfReturningSession) {
@@ -237,13 +242,20 @@ export function JoinSection(props: Props) {
             setLoading(true)
             setError(null)
             const result = await motion.runSignupCelebration(
-              () =>
-                quickJoinEvent(
+              async () => {
+                const r = await quickJoinEvent(
                   props.orgSlug,
                   props.eventId,
                   props.orgId,
                   guestCount,
-                ),
+                )
+                if (!r.error) {
+                  startTransition(() => {
+                    router.refresh()
+                  })
+                }
+                return r
+              },
               props.accent,
             )
             setLoading(false)
@@ -251,9 +263,6 @@ export function JoinSection(props: Props) {
               setError(result.error)
               return
             }
-            startTransition(() => {
-              router.refresh()
-            })
           }}
           className="w-full rounded-xl px-4 py-3.5 text-sm font-semibold shadow-lg transition-opacity hover:opacity-90 disabled:opacity-50"
           style={{
