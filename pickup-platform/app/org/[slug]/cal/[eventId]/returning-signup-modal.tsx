@@ -6,6 +6,7 @@ import { quickJoinEvent } from './actions'
 import { fireConfetti } from '@/lib/confetti'
 import { accentOnDark, hexToRgba } from '@/lib/colors'
 import { BottomSheet } from '@/app/_components/bottom-sheet'
+import { useParticipationMotion } from './participation-motion'
 
 function PinIcon({ className }: { className?: string }) {
   return (
@@ -99,6 +100,7 @@ export function ReturningSignupModal({
   children,
 }: Props) {
   const router = useRouter()
+  const motion = useParticipationMotion()
   const [, startTransition] = useTransition()
   const [open, setOpen] = useState<boolean | null>(null)
   const [loading, setLoading] = useState<'confirmed' | 'maybe' | null>(null)
@@ -129,11 +131,13 @@ export function ReturningSignupModal({
 
   async function handleJoin(status: 'confirmed' | 'maybe') {
     markSeen()
+    motion?.dismissJoinPanel()
     setLoading(status)
     setError(null)
     const result = await quickJoinEvent(orgSlug, eventId, orgId, 0, status)
     setLoading(null)
     if (result.error) {
+      motion?.reopenJoinPanel()
       setError(result.error)
       return
     }

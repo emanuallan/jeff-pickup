@@ -2,10 +2,13 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 
-const CONTROLS_CLOSE_MS = 200
+const CONTROLS_CLOSE_MS = 280
 
 type MotionContextValue = {
+  joinClosing: boolean
   controlsClosing: boolean
+  dismissJoinPanel: () => void
+  reopenJoinPanel: () => void
   dismissSignedInControls: () => void
   reopenSignedInControls: () => void
 }
@@ -19,13 +22,24 @@ export function ParticipationMotionProvider({
   children: ReactNode
   resetKey: string
 }) {
+  const [joinClosing, setJoinClosing] = useState(false)
   const [controlsClosing, setControlsClosing] = useState(false)
 
   useEffect(() => {
+    setJoinClosing(false)
+    // Leave sets resetKey to "unsigned" while controls are still animating out.
     if (resetKey !== 'unsigned') {
       setControlsClosing(false)
     }
   }, [resetKey])
+
+  const dismissJoinPanel = useCallback(() => {
+    setJoinClosing(true)
+  }, [])
+
+  const reopenJoinPanel = useCallback(() => {
+    setJoinClosing(false)
+  }, [])
 
   const dismissSignedInControls = useCallback(() => {
     setControlsClosing(true)
@@ -38,11 +52,21 @@ export function ParticipationMotionProvider({
 
   const value = useMemo(
     () => ({
+      joinClosing,
       controlsClosing,
+      dismissJoinPanel,
+      reopenJoinPanel,
       dismissSignedInControls,
       reopenSignedInControls,
     }),
-    [controlsClosing, dismissSignedInControls, reopenSignedInControls],
+    [
+      joinClosing,
+      controlsClosing,
+      dismissJoinPanel,
+      reopenJoinPanel,
+      dismissSignedInControls,
+      reopenSignedInControls,
+    ],
   )
 
   return (
@@ -53,6 +77,3 @@ export function ParticipationMotionProvider({
 export function useParticipationMotion() {
   return useContext(ParticipationMotionContext)
 }
-
-/** Delay before guest/status controls appear — lets roster + confetti land first. */
-export const CONTROLS_REVEAL_MS = 480
