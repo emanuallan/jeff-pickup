@@ -11,6 +11,7 @@ import { SignedInControlsLazy } from './signed-in-controls-lazy'
 import { WaitlistSection } from './waitlist-section'
 import { AnimatedPresenceSection } from './animated-presence-section'
 import { ParticipationMotionProvider, useParticipationMotion } from './participation-motion'
+import { SignupKickAnimation } from './signup-kick-animation'
 
 type JoinProps = {
   orgSlug: string
@@ -62,6 +63,8 @@ function ParticipationPanelBody({
   joinProps,
 }: Props & { showJoin: boolean; joinProps: JoinProps }) {
   const motion = useParticipationMotion()
+  const kickActive = motion?.kickActive ?? false
+  const kickAccent = motion?.kickAccent ?? joinProps.accent
   const joinClosing = motion?.joinClosing ?? false
   const controlsClosing = motion?.controlsClosing ?? false
   const showControls = Boolean(mySignup && canUpdateStatus)
@@ -82,14 +85,25 @@ function ParticipationPanelBody({
   const showControlsSection = Boolean(controlsSignup && (showControls || controlsClosing))
 
   return (
-    <>
-      {cancelledCallout}
+    <div className="relative">
+      {kickActive ? (
+        <div className="pointer-events-none absolute inset-0 z-20 flex items-center">
+          <SignupKickAnimation accent={kickAccent} className="w-full" />
+        </div>
+      ) : null}
 
-      <AnimatedPresenceSection show={showJoin || joinClosing} closing={joinClosing}>
-        <JoinSectionLazy {...joinProps} />
-      </AnimatedPresenceSection>
+      <div
+        className={
+          kickActive ? 'pointer-events-none select-none opacity-20 transition-opacity duration-200' : ''
+        }
+      >
+        {cancelledCallout}
 
-      <section className="mt-5 rounded-3xl border border-zinc-800 bg-zinc-900/50 p-5">
+        <AnimatedPresenceSection show={showJoin || joinClosing} closing={joinClosing}>
+          <JoinSectionLazy {...joinProps} />
+        </AnimatedPresenceSection>
+
+        <section className="mt-5 rounded-3xl border border-zinc-800 bg-zinc-900/50 p-5">
         <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-400">
           {rosterHeading}{' '}
           <span key={headcount} className="participation-headcount inline-block tabular-nums">
@@ -134,8 +148,9 @@ function ParticipationPanelBody({
             />
           </AnimatedPresenceSection>
         ) : null}
-      </section>
-    </>
+        </section>
+      </div>
+    </div>
   )
 }
 

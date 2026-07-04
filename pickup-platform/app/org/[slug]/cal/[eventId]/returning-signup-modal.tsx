@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useState, useTransition, type ReactNode } from 'react'
 import { useRouter } from 'next/navigation'
 import { quickJoinEvent } from './actions'
-import { fireConfetti } from '@/lib/confetti'
 import { accentOnDark, hexToRgba } from '@/lib/colors'
 import { BottomSheet } from '@/app/_components/bottom-sheet'
 import { useParticipationMotion } from './participation-motion'
@@ -130,19 +129,21 @@ export function ReturningSignupModal({
   }, [markSeen])
 
   async function handleJoin(status: 'confirmed' | 'maybe') {
+    if (!motion?.runSignupCelebration) return
     markSeen()
-    motion?.dismissJoinPanel()
     setLoading(status)
     setError(null)
-    const result = await quickJoinEvent(orgSlug, eventId, orgId, 0, status)
+    setOpen(false)
+
+    const result = await motion.runSignupCelebration(
+      () => quickJoinEvent(orgSlug, eventId, orgId, 0, status),
+      accent,
+    )
     setLoading(null)
     if (result.error) {
-      motion?.reopenJoinPanel()
       setError(result.error)
       return
     }
-    dismiss()
-    void fireConfetti(accent)
     startTransition(() => {
       router.refresh()
     })
@@ -225,7 +226,12 @@ export function ReturningSignupModal({
         {error ? <p className="mt-4 text-sm text-red-300">{error}</p> : null}
       </BottomSheet>
 
-      {open === false ? children : null}
+      {open === false ? (
+        <>
+          {children}
+          {error ? <p className="mt-3 text-sm text-red-300">{error}</p> : null}
+        </>
+      ) : null}
     </>
   )
 }

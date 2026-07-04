@@ -205,3 +205,99 @@ textarea {
 .participation-headcount {
 	animation: participation-headcount-tick 420ms ease-out;
 }
+
+.signup-kick-scene {
+	position: relative;
+	height: 4.5rem;
+	color: #d4d4d8;
+}
+
+.signup-kick-ground {
+	position: absolute;
+	inset-inline: 6%;
+	bottom: 0.85rem;
+	height: 1px;
+	background: linear-gradient(
+		to right,
+		transparent,
+		rgb(255 255 255 / 0.18) 12%,
+		rgb(255 255 255 / 0.18) 88%,
+		transparent
+	);
+}
+
+.signup-kick-figure {
+	position: absolute;
+	left: 7%;
+	bottom: 0.65rem;
+	width: 2.25rem;
+	height: 3rem;
+	animation: signup-figure-lean 1.4s ease-in-out forwards;
+}
+
+.signup-kick-leg {
+	transform-box: fill-box;
+	transform-origin: 50% 0%;
+	animation: signup-leg-kick 1.4s ease-in-out forwards;
+}
+
+.signup-kick-ball {
+	position: absolute;
+	bottom: 0.95rem;
+	left: 14%;
+	width: 0.875rem;
+	height: 0.875rem;
+	border-radius: 9999px;
+	background: var(--kick-accent, #60a5fa);
+	box-shadow: 0 0 10px color-mix(in srgb, var(--kick-accent, #60a5fa) 55%, transparent);
+	animation: signup-ball-roll 1.4s ease-in-out forwards;
+}
+
+@keyframes signup-figure-lean {
+	0%,
+	18% {
+		transform: rotate(0deg);
+	}
+	32% {
+		transform: rotate(-4deg);
+	}
+	100% {
+		transform: rotate(-2deg);
+	}
+}
+
+@keyframes signup-leg-kick {
+	0%,
+	20% {
+		transform: rotate(0deg);
+	}
+	34% {
+		transform: rotate(-62deg);
+	}
+	48%,
+	100% {
+		transform: rotate(-8deg);
+	}
+}
+
+@keyframes signup-ball-roll {
+	0%,
+	22% {
+		left: 14%;
+		transform: rotate(0deg) translateY(0);
+	}
+	34% {
+		left: 19%;
+		transform: rotate(90deg) translateY(-2px);
+	}
+	100% {
+		left: 86%;
+		transform: rotate(720deg) translateY(0);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.signup-kick-scene {
+		display: none;
+	}
+}

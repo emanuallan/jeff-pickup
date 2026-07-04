@@ -8,7 +8,6 @@ import {
   recoverSession,
   clearParticipantSession,
 } from './actions'
-import { fireConfetti } from '@/lib/confetti'
 import { arrowRight } from '@/lib/text-arrows'
 import { PhoneInput } from '@/app/_components/phone-input'
 import type { Participant, MySignup } from '@/lib/participant'
@@ -199,20 +198,21 @@ export function JoinSection(props: Props) {
           type="button"
           disabled={loading}
           onClick={async () => {
+            if (!motion?.runSignupCelebration) return
             setLoading(true)
             setError(null)
-            motion?.dismissJoinPanel()
-            const result = await quickJoinEvent(
-              props.orgSlug,
-              props.eventId,
-              props.orgId,
-              guestCount,
+            const result = await motion.runSignupCelebration(
+              () =>
+                quickJoinEvent(
+                  props.orgSlug,
+                  props.eventId,
+                  props.orgId,
+                  guestCount,
+                ),
+              props.accent,
             )
             setLoading(false)
-            if (result.error) {
-              motion?.reopenJoinPanel()
-              setError(result.error)
-            } else void fireConfetti(props.accent)
+            if (result.error) setError(result.error)
           }}
           className="w-full rounded-xl px-4 py-3.5 text-sm font-semibold shadow-lg transition-opacity hover:opacity-90 disabled:opacity-50"
           style={{
@@ -265,15 +265,15 @@ export function JoinSection(props: Props) {
     <div className="space-y-4">
       <form
         action={async (formData) => {
+          if (!motion?.runSignupCelebration) return
           setLoading(true)
           setError(null)
-          motion?.dismissJoinPanel()
-          const result = await joinEvent(props.orgSlug, props.eventId, formData)
+          const result = await motion.runSignupCelebration(
+            () => joinEvent(props.orgSlug, props.eventId, formData),
+            props.accent,
+          )
           setLoading(false)
-          if (result.error) {
-            motion?.reopenJoinPanel()
-            setError(result.error)
-          } else void fireConfetti(props.accent)
+          if (result.error) setError(result.error)
         }}
         className="space-y-4"
       >
