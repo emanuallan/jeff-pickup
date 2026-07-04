@@ -53,6 +53,7 @@ function ParticipationPanelBody({
   waitlist,
   headcount,
   isEnded,
+  isCancelled = false,
   waitlistEnabled,
   confirmedMySignupId,
   waitlistMySignupId,
@@ -113,6 +114,7 @@ function ParticipationPanelBody({
           <JoinSectionLazy {...joinProps} />
         </AnimatedPresenceSection>
 
+        {!isCancelled ? (
         <section className="mt-5 rounded-3xl border border-zinc-800 bg-zinc-900/50 p-5">
         <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-400">
           {rosterHeading}{' '}
@@ -159,6 +161,7 @@ function ParticipationPanelBody({
           </AnimatedPresenceSection>
         ) : null}
         </section>
+        ) : null}
       </div>
     </div>
   )
@@ -206,6 +209,7 @@ export function ParticipationPanel(props: Props) {
         {...rest}
         mySignup={mySignup}
         isEnded={isEnded}
+        isCancelled={isCancelled}
         showJoin={showJoin}
         joinProps={joinProps}
       />
