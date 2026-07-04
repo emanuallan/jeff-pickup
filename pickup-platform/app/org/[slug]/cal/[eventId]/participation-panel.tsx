@@ -38,6 +38,7 @@ type Props = JoinProps & {
   waitlist: RosterEntry[]
   headcount: number
   isEnded: boolean
+  isCancelled?: boolean
   confirmedMySignupId: string | null
   waitlistMySignupId: string | null
   canUpdateStatus: boolean
@@ -164,19 +165,19 @@ function ParticipationPanelBody({
 }
 
 export function ParticipationPanel(props: Props) {
-  const { mySignup, isEnded, ...rest } = props
-  const showJoinInitial = !mySignup && !isEnded
-  const [showJoin, setShowJoin] = useState(showJoinInitial)
+  const { mySignup, isEnded, isCancelled = false, ...rest } = props
+  const canJoin = !mySignup && !isEnded && !isCancelled
+  const [showJoin, setShowJoin] = useState(canJoin)
 
   useEffect(() => {
-    if (mySignup) {
+    if (mySignup || isCancelled) {
       setShowJoin(false)
       return
     }
     if (!isEnded) {
       setShowJoin(true)
     }
-  }, [mySignup, isEnded])
+  }, [mySignup, isEnded, isCancelled])
 
   const joinProps: JoinProps = {
     orgSlug: rest.orgSlug,

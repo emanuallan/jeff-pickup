@@ -2,7 +2,7 @@
 
 import { revalidatePath, revalidateTag } from 'next/cache'
 import { getOrgBySlug } from '@/lib/orgs'
-import { canUpdateArrivalStatus, getEventByRef } from '@/lib/events'
+import { canUpdateArrivalStatus, getEventByRef, isEventCancelled } from '@/lib/events'
 import type { EventWithLocation } from '@/lib/events'
 import { createClient } from '@/lib/supabase/server'
 import { setSessionToken, getSessionToken, clearSessionToken } from '@/lib/participant-session'
@@ -22,6 +22,10 @@ async function getOpenEvent(
   const event = await getEventByRef(eventRef, org.id)
   if (!event) {
     return { error: 'Session not found.' }
+  }
+
+  if (isEventCancelled(event.status)) {
+    return { error: 'This session has been cancelled.' }
   }
 
   if (!canUpdateArrivalStatus(event)) {

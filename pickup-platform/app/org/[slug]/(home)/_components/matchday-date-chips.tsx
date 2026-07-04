@@ -2,7 +2,7 @@
 
 import { memo, useCallback, useEffect, useRef, useState, useTransition, type Ref } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { accentOnDark, hexToRgba } from '@/lib/colors'
+import { accentOnDark } from '@/lib/colors'
 import type { MatchdayChipDisplay } from '@/lib/matchday-chip-display'
 
 type Props = {
@@ -14,10 +14,8 @@ type Props = {
 type DateChipButtonProps = {
   chip: MatchdayChipDisplay
   active: boolean
-  accent: string
   accentFg: string
-  baseWidthClass: string
-  activeWidthClass: string
+  chipWidthClass: string
   buttonRef?: Ref<HTMLButtonElement>
   onSelect: (shortId: string) => void
 }
@@ -25,10 +23,8 @@ type DateChipButtonProps = {
 const DateChipButton = memo(function DateChipButton({
   chip,
   active,
-  accent,
   accentFg,
-  baseWidthClass,
-  activeWidthClass,
+  chipWidthClass,
   buttonRef,
   onSelect,
 }: DateChipButtonProps) {
@@ -42,37 +38,31 @@ const DateChipButton = memo(function DateChipButton({
       onClick={() => onSelect(chip.shortId)}
       aria-current={active ? 'true' : undefined}
       aria-label={chip.ariaLabel}
-      className={`flex shrink-0 touch-manipulation select-none flex-col items-center justify-center rounded-lg border px-2 py-1.5 transition-[border-color,color,opacity,width] duration-150 ${
-        active ? activeWidthClass : baseWidthClass
-      } ${
+      className={`flex shrink-0 touch-manipulation select-none flex-col items-center justify-center rounded-xl border px-2 py-2 transition-[border-color,background-color,box-shadow,color] duration-200 ${chipWidthClass} ${
         active
-          ? 'border-white/15 text-zinc-100'
-          : 'border-white/5 text-zinc-400 hover:border-white/10 hover:text-zinc-200'
+          ? 'border-zinc-700 bg-zinc-900 shadow-sm ring-1 ring-white/10'
+          : 'border-zinc-800/90 bg-zinc-900/40 hover:border-zinc-700 hover:bg-zinc-900/65'
       } ${dimmed ? 'opacity-60' : ''} [-webkit-tap-highlight-color:transparent]`}
-      style={{
-        backgroundImage: active
-          ? `linear-gradient(180deg, ${hexToRgba(accent, 0.22)} 0%, ${hexToRgba(accent, 0.08)} 100%)`
-          : `linear-gradient(180deg, ${hexToRgba(accent, 0.08)} 0%, ${hexToRgba(accent, 0.02)} 100%)`,
-        borderColor: active ? hexToRgba(accent, 0.35) : hexToRgba(accent, 0.1),
-        color: active ? accentFg : undefined,
-      }}
     >
       <span
         className={`text-[10px] font-medium uppercase tracking-wide ${
-          active ? 'text-inherit' : 'text-zinc-600'
+          active ? 'text-zinc-500' : 'text-zinc-600'
         } ${strike}`}
       >
         {chip.month}
       </span>
       <span
         className={`font-semibold tabular-nums leading-tight ${
-          active ? 'text-base' : 'text-sm'
+          active ? 'text-lg' : 'text-sm text-zinc-300'
         } ${strike}`}
+        style={active ? { color: accentFg } : undefined}
       >
         {chip.day}
       </span>
       <span
-        className={`text-[9px] font-medium tabular-nums ${active ? 'text-inherit opacity-80' : 'text-zinc-600'} ${strike}`}
+        className={`text-[9px] font-medium tabular-nums ${
+          active ? 'text-zinc-500' : 'text-zinc-600'
+        } ${strike}`}
       >
         {chip.bottomLabel}
       </span>
@@ -277,21 +267,20 @@ export function MatchdayDateChips({ chips, activeEventId, accent }: Props) {
 
   const accentFg = accentOnDark(accent)
   const usesTimedLayout = chips.some((chip) => chip.showTime)
-  const baseWidthClass = usesTimedLayout ? 'w-[4.75rem]' : 'w-[4.25rem]'
-  const activeWidthClass = usesTimedLayout ? 'w-[5.5rem]' : 'w-[5rem]'
+  const chipWidthClass = usesTimedLayout ? 'w-[4.75rem]' : 'w-[4.25rem]'
 
   return (
     <div className="relative -mx-5 mb-4 sm:-mx-6">
       {fadeLeft ? (
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-y-0 left-0 z-10 w-10 bg-gradient-to-r from-black to-transparent"
+          className="pointer-events-none absolute inset-y-0 left-0 z-10 w-10 bg-gradient-to-r from-zinc-950 to-transparent"
         />
       ) : null}
       {fadeRight ? (
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-y-0 right-0 z-10 w-10 bg-gradient-to-l from-black to-transparent"
+          className="pointer-events-none absolute inset-y-0 right-0 z-10 w-10 bg-gradient-to-l from-zinc-950 to-transparent"
         />
       ) : null}
 
@@ -307,10 +296,8 @@ export function MatchdayDateChips({ chips, activeEventId, accent }: Props) {
               key={chip.shortId}
               chip={chip}
               active={active}
-              accent={accent}
               accentFg={accentFg}
-              baseWidthClass={baseWidthClass}
-              activeWidthClass={activeWidthClass}
+              chipWidthClass={chipWidthClass}
               buttonRef={active ? activeRef : undefined}
               onSelect={selectEvent}
             />

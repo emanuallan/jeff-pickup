@@ -81,6 +81,7 @@ export async function EventParticipation({ slug, eventId, org, event }: Props) {
         waitlist={waitlist}
         headcount={headcount}
         isEnded={isEnded}
+        isCancelled={isCancelled}
         confirmedMySignupId={confirmedMySignupId}
         waitlistMySignupId={waitlistMySignupId}
         canUpdateStatus={canUpdateStatus}
