@@ -2,7 +2,9 @@ import { Suspense } from 'react'
 import type { Org } from '@/lib/orgs'
 import type { EventWithLocation } from '@/lib/events'
 import { isEventEnded } from '@/lib/events'
+import { buildMatchdayChipDisplays } from '@/lib/matchday-chip-display'
 import { SessionPanel } from './session-panel'
+import { SessionPanelSkeleton } from './session-panel-skeleton'
 import { MatchdayDateChips } from './matchday-date-chips'
 
 type Props = {
@@ -28,23 +30,22 @@ export function MatchdayPanel({
     ...upcomingEvents.filter((ev) => !isEventEnded(ev) && !prefixIds.has(ev.short_id)),
   ]
   const accent = org.branding.accent_color
+  const chips = buildMatchdayChipDisplays(
+    chipEvents.map((ev) => ({
+      short_id: ev.short_id,
+      starts_at: ev.starts_at,
+      timezone: ev.timezone,
+      status: ev.status,
+      pastReference: prefixIds.has(ev.short_id) && ev.short_id !== event.short_id,
+    })),
+  )
 
   return (
     <>
-      <Suspense fallback={null}>
-        <MatchdayDateChips
-          events={chipEvents.map((ev) => ({
-            short_id: ev.short_id,
-            starts_at: ev.starts_at,
-            timezone: ev.timezone,
-            status: ev.status,
-            pastReference: prefixIds.has(ev.short_id) && ev.short_id !== event.short_id,
-          }))}
-          activeEventId={event.short_id}
-          accent={accent}
-        />
+      <MatchdayDateChips chips={chips} activeEventId={event.short_id} accent={accent} />
+      <Suspense fallback={<SessionPanelSkeleton />} key={eventId}>
+        <SessionPanel slug={slug} org={org} event={event} eventId={eventId} />
       </Suspense>
-      <SessionPanel slug={slug} org={org} event={event} eventId={eventId} />
     </>
   )
 }

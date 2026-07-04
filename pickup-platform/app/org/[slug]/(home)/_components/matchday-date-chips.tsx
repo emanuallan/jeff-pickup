@@ -1,58 +1,86 @@
 'use client'
 
+import { memo, useCallback, useEffect, useRef, useState, useTransition, type Ref } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useEffect, useRef, useState } from 'react'
 import { accentOnDark, hexToRgba } from '@/lib/colors'
-
-type ChipEvent = {
-  short_id: string
-  starts_at: string
-  timezone: string
-  status: string
-  pastReference?: boolean
-}
-
-function dayKey(event: ChipEvent): string {
-  return new Date(event.starts_at).toLocaleDateString('en-CA', {
-    timeZone: event.timezone || 'UTC',
-  })
-}
-
-function duplicateDayKeys(events: ChipEvent[]): Set<string> {
-  const counts = new Map<string, number>()
-  for (const event of events) {
-    const key = dayKey(event)
-    counts.set(key, (counts.get(key) ?? 0) + 1)
-  }
-  return new Set(
-    [...counts.entries()].filter(([, count]) => count > 1).map(([key]) => key),
-  )
-}
-
-function chipParts(event: ChipEvent) {
-  const zone = event.timezone || 'UTC'
-  const d = new Date(event.starts_at)
-  const time = d
-    .toLocaleString('en-US', {
-      hour: 'numeric',
-      minute: '2-digit',
-      timeZone: zone,
-    })
-    .replace(' AM', 'am')
-    .replace(' PM', 'pm')
-  return {
-    month: d.toLocaleString('en-US', { month: 'short', timeZone: zone }),
-    day: d.toLocaleString('en-US', { day: 'numeric', timeZone: zone }),
-    weekday: d.toLocaleString('en-US', { weekday: 'short', timeZone: zone }),
-    time,
-  }
-}
+import type { MatchdayChipDisplay } from '@/lib/matchday-chip-display'
 
 type Props = {
-  events: ChipEvent[]
+  chips: MatchdayChipDisplay[]
   activeEventId: string
   accent: string
 }
+
+type DateChipButtonProps = {
+  chip: MatchdayChipDisplay
+  active: boolean
+  accent: string
+  accentFg: string
+  buttonRef?: Ref<HTMLButtonElement>
+  onSelect: (shortId: string) => void
+}
+
+const DateChipButton = memo(function DateChipButton({
+  chip,
+  active,
+  accent,
+  accentFg,
+  buttonRef,
+  onSelect,
+}: DateChipButtonProps) {
+  const strike = chip.cancelled ? 'line-through decoration-zinc-500/80' : ''
+  const dimmed = chip.cancelled || chip.pastReference
+
+  return (
+    <button
+      ref={buttonRef}
+      type="button"
+      onClick={() => onSelect(chip.shortId)}
+      aria-current={active ? 'true' : undefined}
+      aria-label={chip.ariaLabel}
+      className={`flex shrink-0 touch-manipulation select-none flex-col items-center justify-center rounded-lg border py-1.5 transition-[border-color,color,opacity] duration-150 ${
+        active
+          ? chip.showTime
+            ? 'w-[4.75rem] px-2'
+            : 'w-[4.25rem] px-2'
+          : chip.showTime
+            ? 'w-16 px-1.5'
+            : 'w-14 px-1.5'
+      } ${
+        active
+          ? 'border-white/15 text-zinc-100'
+          : 'border-white/5 text-zinc-400 hover:border-white/10 hover:text-zinc-200'
+      } ${dimmed ? 'opacity-60' : ''} [-webkit-tap-highlight-color:transparent]`}
+      style={{
+        backgroundImage: active
+          ? `linear-gradient(180deg, ${hexToRgba(accent, 0.22)} 0%, ${hexToRgba(accent, 0.08)} 100%)`
+          : `linear-gradient(180deg, ${hexToRgba(accent, 0.08)} 0%, ${hexToRgba(accent, 0.02)} 100%)`,
+        borderColor: active ? hexToRgba(accent, 0.35) : hexToRgba(accent, 0.1),
+        color: active ? accentFg : undefined,
+      }}
+    >
+      <span
+        className={`text-[10px] font-medium uppercase tracking-wide ${
+          active ? 'text-inherit' : 'text-zinc-600'
+        } ${strike}`}
+      >
+        {chip.month}
+      </span>
+      <span
+        className={`font-semibold tabular-nums leading-tight ${
+          active ? 'text-base' : 'text-sm'
+        } ${strike}`}
+      >
+        {chip.day}
+      </span>
+      <span
+        className={`text-[9px] font-medium tabular-nums ${active ? 'text-inherit opacity-80' : 'text-zinc-600'} ${strike}`}
+      >
+        {chip.bottomLabel}
+      </span>
+    </button>
+  )
+})
 
 function animateScrollLeft(
   container: HTMLElement,
@@ -81,13 +109,23 @@ function animateScrollLeft(
   })
 }
 
-export function MatchdayDateChips({ events, activeEventId, accent }: Props) {
+export function MatchdayDateChips({ chips, activeEventId, accent }: Props) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const scrollRef = useRef<HTMLDivElement>(null)
   const activeRef = useRef<HTMLButtonElement>(null)
+  const fadeFrameRef = useRef<number | null>(null)
   const [fadeLeft, setFadeLeft] = useState(false)
   const [fadeRight, setFadeRight] = useState(false)
+  const [selectedId, setSelectedId] = useState(activeEventId)
+  const [isPending, startTransition] = useTransition()
+  const userInteractedRef = useRef(false)
+
+  useEffect(() => {
+    setSelectedId(activeEventId)
+  }, [activeEventId])
+
+  const displayActiveId = selectedId
 
   useEffect(() => {
     const container = scrollRef.current
@@ -99,16 +137,16 @@ export function MatchdayDateChips({ events, activeEventId, accent }: Props) {
     const targetLeft =
       active.offsetLeft - container.clientWidth / 2 + active.offsetWidth / 2
     container.scrollTo({ left: Math.max(0, targetLeft), behavior: 'smooth' })
-  }, [activeEventId])
+  }, [displayActiveId])
 
   useEffect(() => {
     const container = scrollRef.current
-    if (!container || events.length <= 1) {
+    if (!container || chips.length <= 1 || isPending || userInteractedRef.current) {
       return
     }
 
-    const firstEventId = events[0]?.short_id
-    if (!firstEventId || activeEventId !== firstEventId) {
+    const firstEventId = chips[0]?.shortId
+    if (!firstEventId || displayActiveId !== firstEventId) {
       return
     }
 
@@ -128,7 +166,7 @@ export function MatchdayDateChips({ events, activeEventId, accent }: Props) {
     let cancelled = false
 
     const startTimer = setTimeout(async () => {
-      if (cancelled) {
+      if (cancelled || userInteractedRef.current) {
         return
       }
 
@@ -153,7 +191,7 @@ export function MatchdayDateChips({ events, activeEventId, accent }: Props) {
       cancelled = true
       clearTimeout(startTimer)
     }
-  }, [events, activeEventId, searchParams])
+  }, [chips, displayActiveId, searchParams, isPending])
 
   useEffect(() => {
     const container = scrollRef.current
@@ -162,9 +200,15 @@ export function MatchdayDateChips({ events, activeEventId, accent }: Props) {
     }
 
     const updateFades = () => {
-      const { scrollLeft, clientWidth, scrollWidth } = container
-      setFadeLeft(scrollLeft > 4)
-      setFadeRight(scrollLeft + clientWidth < scrollWidth - 4)
+      if (fadeFrameRef.current != null) {
+        return
+      }
+      fadeFrameRef.current = requestAnimationFrame(() => {
+        fadeFrameRef.current = null
+        const { scrollLeft, clientWidth, scrollWidth } = container
+        setFadeLeft(scrollLeft > 4)
+        setFadeRight(scrollLeft + clientWidth < scrollWidth - 4)
+      })
     }
 
     updateFades()
@@ -175,26 +219,41 @@ export function MatchdayDateChips({ events, activeEventId, accent }: Props) {
     return () => {
       container.removeEventListener('scroll', updateFades)
       observer.disconnect()
+      if (fadeFrameRef.current != null) {
+        cancelAnimationFrame(fadeFrameRef.current)
+      }
     }
-  }, [events])
+  }, [chips.length])
 
-  if (events.length <= 1) {
+  const selectEvent = useCallback(
+    (shortId: string) => {
+      if (shortId === displayActiveId) {
+        return
+      }
+
+      userInteractedRef.current = true
+      setSelectedId(shortId)
+
+      const params = new URLSearchParams(searchParams.toString())
+      params.delete('tab')
+      params.delete('ev')
+      params.set('cal', shortId)
+      params.delete('past')
+      params.delete('view')
+      const query = params.toString()
+
+      startTransition(() => {
+        router.replace(query ? `/?${query}` : '/', { scroll: false })
+      })
+    },
+    [displayActiveId, router, searchParams],
+  )
+
+  if (chips.length <= 1) {
     return null
   }
 
   const accentFg = accentOnDark(accent)
-  const sharedDays = duplicateDayKeys(events)
-
-  function selectEvent(shortId: string) {
-    const params = new URLSearchParams(searchParams.toString())
-    params.delete('tab')
-    params.delete('ev')
-    params.set('cal', shortId)
-    params.delete('past')
-    params.delete('view')
-    const query = params.toString()
-    router.replace(query ? `/?${query}` : '/', { scroll: false })
-  }
 
   return (
     <div className="relative -mx-5 mb-4 sm:-mx-6">
@@ -216,70 +275,18 @@ export function MatchdayDateChips({ events, activeEventId, accent }: Props) {
         className="flex gap-2 overflow-x-auto px-5 pb-1 sm:px-6 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         aria-label="Upcoming matchdays"
       >
-        {events.map((event) => {
-          const active = event.short_id === activeEventId
-          const cancelled = event.status === 'cancelled'
-          const pastRef = event.pastReference === true
-          const { month, day, weekday, time } = chipParts(event)
-          const showTime = sharedDays.has(dayKey(event))
-          const bottomLabel = showTime ? time : weekday
-          const strike = cancelled ? 'line-through decoration-zinc-500/80' : ''
-
+        {chips.map((chip) => {
+          const active = chip.shortId === displayActiveId
           return (
-            <button
-              key={event.short_id}
-              ref={active ? activeRef : undefined}
-              type="button"
-              onClick={() => selectEvent(event.short_id)}
-              aria-current={active ? 'true' : undefined}
-              aria-label={
-                pastRef
-                  ? `${month} ${day}${showTime ? `, ${time}` : ''}, past session`
-                  : cancelled
-                    ? `${month} ${day}${showTime ? `, ${time}` : ''}, cancelled session`
-                    : `${month} ${day}, ${showTime ? time : weekday}`
-              }
-              className={`flex shrink-0 flex-col items-center justify-center rounded-lg border py-1.5 transition-all duration-200 ${
-                active
-                  ? showTime
-                    ? 'w-[4.75rem] px-2'
-                    : 'w-[4.25rem] px-2'
-                  : showTime
-                    ? 'w-16 px-1.5'
-                    : 'w-14 px-1.5'
-              } ${
-                active
-                  ? 'border-white/15 text-zinc-100'
-                  : 'border-white/5 text-zinc-400 hover:border-white/10 hover:text-zinc-200'
-              } ${cancelled || pastRef ? 'opacity-60' : ''}`}
-              style={{
-                backgroundImage: active
-                  ? `linear-gradient(180deg, ${hexToRgba(accent, 0.22)} 0%, ${hexToRgba(accent, 0.08)} 100%)`
-                  : `linear-gradient(180deg, ${hexToRgba(accent, 0.08)} 0%, ${hexToRgba(accent, 0.02)} 100%)`,
-                borderColor: active ? hexToRgba(accent, 0.35) : hexToRgba(accent, 0.1),
-                color: active ? accentFg : undefined,
-              }}
-            >
-              <span
-                className={`text-[10px] font-medium uppercase tracking-wide ${
-                  active ? 'text-inherit' : 'text-zinc-600'
-                } ${strike}`}
-              >
-                {month}
-              </span>
-              <span
-                className={`font-semibold tabular-nums leading-tight ${
-                  active ? 'text-base' : 'text-sm'
-                } ${strike}`}
-              >
-                {day}
-              </span>
-              <span
-                className={`text-[9px] font-medium tabular-nums ${active ? 'text-inherit opacity-80' : 'text-zinc-600'} ${strike}`}
-              >
-                {bottomLabel}
-              </span>
-            </button>
+            <DateChipButton
+              key={chip.shortId}
+              chip={chip}
+              active={active}
+              accent={accent}
+              accentFg={accentFg}
+              buttonRef={active ? activeRef : undefined}
+              onSelect={selectEvent}
+            />
           )
         })}
       </div>

@@ -1,7 +1,6 @@
 import type { Metadata } from 'next'
 import { notFound, redirect } from 'next/navigation'
 import { getPublicOrgBySlug, getPublicUpcomingEventsForOrg, getPublicOrgAndEvent } from '@/lib/public-data'
-import { getOrgCapsLeaderboard, getOrgStreakLeaderboard } from '@/lib/engagement'
 import { orgFeatures } from '@/lib/org-features'
 import { formatEventTime, isEventCancelled, isEventEnded, pickFeaturedUpcomingEvent } from '@/lib/events'
 import { buildOrgMetadata } from '@/lib/og-metadata'
@@ -14,7 +13,7 @@ import {
 import { buildEventJsonLd } from '@/lib/seo'
 import { JsonLd } from '@/app/_components/json-ld'
 import { MatchdayPanel } from './_components/matchday-panel'
-import { LeaderboardPanel } from './_components/leaderboard-panel'
+import { LeaderboardPanelSection } from './_components/leaderboard-panel-section'
 
 type Props = {
   params: Promise<{ slug: string }>
@@ -97,12 +96,7 @@ export default async function OrgHomePage({ params, searchParams }: Props) {
       notFound()
     }
 
-    const [capsRows, streakRows] = await Promise.all([
-      getOrgCapsLeaderboard(org.id),
-      getOrgStreakLeaderboard(org.id),
-    ])
-
-    return <LeaderboardPanel org={org} capsRows={capsRows} streakRows={streakRows} />
+    return <LeaderboardPanelSection org={org} />
   }
 
   const events = await getPublicUpcomingEventsForOrg(org.id, 20, true)

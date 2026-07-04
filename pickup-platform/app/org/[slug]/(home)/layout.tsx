@@ -32,7 +32,10 @@ export default async function OrgHomeLayout({ children, params }: Props) {
     notFound()
   }
 
-  const events = await getPublicUpcomingEventsForOrg(org.id, 20, true)
+  const [events, membership] = await Promise.all([
+    getPublicUpcomingEventsForOrg(org.id, 20, true),
+    getOrgForMember(slug),
+  ])
   const featured = pickFeaturedUpcomingEvent(events)
   const accent = org.branding.accent_color
   const navItems = resolveOrgPublicNavItems({ org }, ORG_PUBLIC_NAV_BASE)
@@ -48,7 +51,7 @@ export default async function OrgHomeLayout({ children, params }: Props) {
     text: buildEventShareText(org.name, event),
   }))
   const defaultEventShortId = featured?.short_id ?? events[0]?.short_id ?? null
-  const isOrganizer = !!(await getOrgForMember(slug))
+  const isOrganizer = !!membership
 
   return (
     <OrgHomeShell
