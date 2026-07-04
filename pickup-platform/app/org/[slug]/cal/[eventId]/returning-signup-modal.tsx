@@ -181,7 +181,7 @@ export function ReturningSignupModal({
         }}
       >
         {sheetCelebrating ? (
-          <SignupKickAnimation accent={accent} className="py-2" />
+          <SignupKickAnimation accent={accent} guestCount={motion?.kickGuestCount ?? 0} className="py-2" />
         ) : (
           <>
             <h2

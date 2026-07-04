@@ -253,6 +253,44 @@ textarea {
 	animation: signup-ball-roll 1.4s ease-in-out forwards;
 }
 
+.signup-kick-receivers {
+	position: absolute;
+	right: 5%;
+	bottom: 0.65rem;
+	display: flex;
+	flex-direction: row;
+	align-items: flex-end;
+	justify-content: flex-start;
+	gap: 0.3rem;
+	max-width: 46%;
+}
+
+.signup-kick-receiver {
+	width: 1.75rem;
+	height: 2.35rem;
+	flex-shrink: 0;
+	animation: signup-receiver-bounce 1.4s ease-out forwards;
+	animation-delay: calc(var(--receiver-i, 0) * 45ms);
+}
+
+.signup-kick-receiver-arms {
+	transform-box: fill-box;
+	transform-origin: 50% 30%;
+	animation: signup-receiver-arms 1.4s ease-out forwards;
+	animation-delay: calc(var(--receiver-i, 0) * 45ms);
+}
+
+.signup-kick-scene[data-guest-figures='4'] .signup-kick-receiver,
+.signup-kick-scene[data-guest-figures='5'] .signup-kick-receiver {
+	width: 1.4rem;
+	height: 1.9rem;
+}
+
+.signup-kick-scene[data-guest-figures='5'] .signup-kick-receivers {
+	gap: 0.15rem;
+	right: 3%;
+}
+
 @keyframes signup-figure-lean {
 	0%,
 	18% {
@@ -293,6 +331,32 @@ textarea {
 	100% {
 		left: 86%;
 		transform: rotate(720deg) translateY(0);
+	}
+}
+
+@keyframes signup-receiver-bounce {
+	0%,
+	68% {
+		transform: translateY(0);
+	}
+	78% {
+		transform: translateY(-3px);
+	}
+	100% {
+		transform: translateY(0);
+	}
+}
+
+@keyframes signup-receiver-arms {
+	0%,
+	64% {
+		transform: rotate(0deg);
+	}
+	74% {
+		transform: rotate(-16deg);
+	}
+	100% {
+		transform: rotate(-6deg);
 	}
 }
 

@@ -183,6 +183,8 @@ export function JoinSection(props: Props) {
     setLoading(true)
     setError(null)
     const formData = new FormData(event.currentTarget)
+    const rawGuests = Number.parseInt(String(formData.get('guest_count') ?? '0'), 10)
+    const guests = Number.isFinite(rawGuests) ? Math.max(0, Math.min(20, rawGuests)) : 0
     const result = await motion.runSignupCelebration(
       async () => {
         const r = await joinEvent(props.orgSlug, props.eventId, formData)
@@ -194,6 +196,7 @@ export function JoinSection(props: Props) {
         return r
       },
       props.accent,
+      { guestCount: guests },
     )
     setLoading(false)
     if (result.error) {
@@ -257,6 +260,7 @@ export function JoinSection(props: Props) {
                 return r
               },
               props.accent,
+              { guestCount },
             )
             setLoading(false)
             if (result.error) {

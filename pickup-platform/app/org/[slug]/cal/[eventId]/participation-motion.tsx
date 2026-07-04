@@ -11,7 +11,7 @@ import {
 } from 'react'
 import { fireConfetti } from '@/lib/confetti'
 import { waitForLeaveWalk } from './leave-walk-animation'
-import { waitForSignupKick } from './signup-kick-animation'
+import { waitForSignupKick, signupKickGuestFigures } from './signup-kick-animation'
 import { ParticipationCelebrationModal } from './participation-celebration-modal'
 
 const CONTROLS_CLOSE_MS = 280
@@ -23,10 +23,12 @@ export type CelebrationPlacement = 'modal' | 'sheet'
 type SignupCelebrationOptions = {
   placement?: CelebrationPlacement
   scrollToRoster?: boolean
+  guestCount?: number
 }
 
 type MotionContextValue = {
   kickActive: boolean
+  kickGuestCount: number
   leaveActive: boolean
   celebrationPlacement: CelebrationPlacement | null
   celebrationAccent: string
@@ -58,6 +60,7 @@ export function ParticipationMotionProvider({
   resetKey: string
 }) {
   const [kickActive, setKickActive] = useState(false)
+  const [kickGuestCount, setKickGuestCount] = useState(0)
   const [leaveActive, setLeaveActive] = useState(false)
   const [celebrationPlacement, setCelebrationPlacement] = useState<CelebrationPlacement | null>(
     null,
@@ -105,11 +108,13 @@ export function ParticipationMotionProvider({
       const placement = options?.placement ?? 'modal'
       setCelebrationAccent(accent)
       setCelebrationPlacement(placement)
+      setKickGuestCount(signupKickGuestFigures(options?.guestCount ?? 0))
       setKickActive(true)
 
       const [result] = await Promise.all([action(), waitForSignupKick()])
 
       setKickActive(false)
+      setKickGuestCount(0)
       setCelebrationPlacement(null)
 
       if (result.error) {
@@ -156,6 +161,7 @@ export function ParticipationMotionProvider({
   const value = useMemo(
     () => ({
       kickActive,
+      kickGuestCount,
       leaveActive,
       celebrationPlacement,
       celebrationAccent,
@@ -174,6 +180,7 @@ export function ParticipationMotionProvider({
     }),
     [
       kickActive,
+      kickGuestCount,
       leaveActive,
       celebrationPlacement,
       celebrationAccent,
@@ -199,6 +206,7 @@ export function ParticipationMotionProvider({
         open={showCelebrationModal}
         accent={celebrationAccent}
         kickActive={kickActive}
+        kickGuestCount={kickGuestCount}
         leaveActive={leaveActive}
       />
     </ParticipationMotionContext.Provider>

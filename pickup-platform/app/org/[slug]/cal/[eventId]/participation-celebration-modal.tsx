@@ -9,6 +9,7 @@ type Props = {
   open: boolean
   accent: string
   kickActive: boolean
+  kickGuestCount: number
   leaveActive: boolean
 }
 
@@ -17,6 +18,7 @@ export function ParticipationCelebrationModal({
   open,
   accent,
   kickActive,
+  kickGuestCount,
   leaveActive,
 }: Props) {
   const [mounted, setMounted] = useState(false)
@@ -50,7 +52,7 @@ export function ParticipationCelebrationModal({
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" aria-hidden />
       <div className="relative w-full max-w-sm overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-6 shadow-2xl">
         {kickActive ? (
-          <SignupKickAnimation accent={accent} />
+          <SignupKickAnimation accent={accent} guestCount={kickGuestCount} />
         ) : (
           <LeaveWalkAnimation accent={accent} />
         )}
