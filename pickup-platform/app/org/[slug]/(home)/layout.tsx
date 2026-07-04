@@ -3,6 +3,7 @@ import type { ReactNode } from 'react'
 import { notFound } from 'next/navigation'
 import { getPublicOrgBySlug, getPublicUpcomingEventsForOrg } from '@/lib/public-data'
 import { pickFeaturedUpcomingEvent } from '@/lib/events'
+import { getOrgForMember } from '@/lib/orgs'
 import { ORG_PUBLIC_NAV_BASE } from '@/lib/org-public-nav'
 import { resolveOrgPublicNavItems } from '@/lib/org-public-nav.server'
 import {
@@ -47,10 +48,12 @@ export default async function OrgHomeLayout({ children, params }: Props) {
     text: buildEventShareText(org.name, event),
   }))
   const defaultEventShortId = featured?.short_id ?? events[0]?.short_id ?? null
+  const isOrganizer = !!(await getOrgForMember(slug))
 
   return (
     <OrgHomeShell
       footerOnly={navItems.length <= 1}
+      isOrganizer={isOrganizer}
       bottomChrome={
         <Suspense fallback={null}>
           <OrgHomeBottomNav
@@ -58,6 +61,7 @@ export default async function OrgHomeLayout({ children, params }: Props) {
             accent={accent}
             basePath={ORG_PUBLIC_NAV_BASE}
             slug={slug}
+            isOrganizer={isOrganizer}
           />
         </Suspense>
       }

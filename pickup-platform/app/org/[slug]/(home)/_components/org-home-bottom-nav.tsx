@@ -12,6 +12,7 @@ import {
 } from '@/lib/org-public-nav'
 import { accentOnDark } from '@/lib/colors'
 import { OrganizrLogo } from '@/app/_components/organizr-logo'
+import { OrganizerConsoleFooterLink } from '../../_components/organizer-console-footer-link'
 import { IconLeaderboard, IconMatchday } from './org-home-nav-icons'
 
 function rootBaseUrl(): string {
@@ -27,6 +28,7 @@ type Props = {
   accent: string
   basePath: string
   slug: string
+  isOrganizer?: boolean
 }
 
 type Indicator = {
@@ -39,7 +41,7 @@ function NavIcon({ itemKey }: { itemKey: OrgPublicNavItem['key'] }) {
   return <IconMatchday />
 }
 
-export function OrgHomeBottomNav({ items, accent, basePath, slug }: Props) {
+export function OrgHomeBottomNav({ items, accent, basePath, slug, isOrganizer = false }: Props) {
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const tab = searchParams.get('tab')
@@ -157,23 +159,30 @@ export function OrgHomeBottomNav({ items, accent, basePath, slug }: Props) {
         </nav>
       ) : null}
 
-      <footer
-        className={`mx-auto flex max-w-lg items-center justify-between gap-2 px-5 py-1.5 pb-[max(0.25rem,env(safe-area-inset-bottom))] text-[10px] leading-none text-zinc-600 ${
-          showTabs ? 'border-t border-white/10' : 'border-t border-zinc-800/80'
-        }`}
-      >
-        <p className="truncate font-medium tracking-wide">
-          {slug}.{getRootDomain()}
-        </p>
-        <a
-          href={rootBaseUrl()}
-          title="Create your own group on Organizr"
-          className="inline-flex shrink-0 items-center gap-1 text-zinc-500 transition-colors hover:text-zinc-400"
+      {isOrganizer ? (
+        <footer className="relative border-t border-indigo-500/30 bg-zinc-950/95 shadow-[0_-8px_32px_rgba(0,0,0,0.45)]">
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-indigo-400/40 to-transparent" />
+          <OrganizerConsoleFooterLink slug={slug} label="Back to console" />
+        </footer>
+      ) : (
+        <footer
+          className={`mx-auto flex max-w-lg items-center justify-between gap-2 px-5 py-1.5 pb-[max(0.25rem,env(safe-area-inset-bottom))] text-[10px] leading-none text-zinc-600 ${
+            showTabs ? 'border-t border-white/10' : 'border-t border-zinc-800/80'
+          }`}
         >
-          <span>Powered by</span>
-          <OrganizrLogo size={12} showWordmark wordmarkClassName="font-medium text-zinc-500" />
-        </a>
-      </footer>
+          <p className="truncate font-medium tracking-wide">
+            {slug}.{getRootDomain()}
+          </p>
+          <a
+            href={rootBaseUrl()}
+            title="Create your own group on Organizr"
+            className="inline-flex shrink-0 items-center gap-1 text-zinc-500 transition-colors hover:text-zinc-400"
+          >
+            <span>Powered by</span>
+            <OrganizrLogo size={12} showWordmark wordmarkClassName="font-medium text-zinc-500" />
+          </a>
+        </footer>
+      )}
     </div>
   )
 }
