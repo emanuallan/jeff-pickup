@@ -13,6 +13,7 @@ import { hexToRgba, accentOnDark } from '@/lib/colors'
 import { formatGuestSuffix } from '@/lib/format-guest-suffix'
 import type { RosterBadgeInfo } from '@/lib/badges'
 import { useParticipationMotion } from './participation-motion'
+import { scrollToMyRosterRowAfterJoinCollapse } from './scroll-to-my-roster'
 
 function TooltipBadge({
   tip,
@@ -138,6 +139,15 @@ export function RosterList(props: {
     knownIdsRef.current = new Set(props.entries.map((entry) => entry.id))
   }, [props.entries])
 
+  useEffect(() => {
+    if (!motion?.pendingRosterScroll || props.mySignupId == null) {
+      return
+    }
+
+    const signupId = props.mySignupId
+    scrollToMyRosterRowAfterJoinCollapse(signupId, motion.clearPendingRosterScroll)
+  }, [motion?.pendingRosterScroll, motion?.clearPendingRosterScroll, props.mySignupId])
+
   if (props.entries.length === 0) {
     return (
       <p className="text-sm text-zinc-500">
@@ -167,6 +177,7 @@ export function RosterList(props: {
             return (
               <li
                 key={e.id}
+                id={`roster-signup-${e.id}`}
                 className={rowClass}
                 style={{
                   backgroundImage: `linear-gradient(135deg, ${hexToRgba(accent, 0.18)}, ${hexToRgba(accent, 0.04)})`,

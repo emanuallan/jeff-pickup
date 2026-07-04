@@ -11,6 +11,10 @@ import { SignedInControlsLazy } from './signed-in-controls-lazy'
 import { WaitlistSection } from './waitlist-section'
 import { AnimatedPresenceSection } from './animated-presence-section'
 import { ParticipationMotionProvider, useParticipationMotion } from './participation-motion'
+import {
+  EVENT_JOIN_SECTION_ID,
+  scrollToJoinSectionAfterLeave,
+} from './scroll-to-my-roster'
 
 type JoinProps = {
   orgSlug: string
@@ -83,14 +87,24 @@ function ParticipationPanelBody({
     mySignup && canUpdateStatus ? mySignup : controlsClosing ? lastControlsSignupRef.current : null
   const showControlsSection = Boolean(controlsSignup && (showControls || controlsClosing))
 
+  useEffect(() => {
+    if (!motion?.pendingJoinScroll || !showJoin || joinClosing) {
+      return
+    }
+
+    scrollToJoinSectionAfterLeave(motion.clearPendingJoinScroll)
+  }, [motion?.pendingJoinScroll, motion?.clearPendingJoinScroll, showJoin, joinClosing])
+
   return (
     <div className="relative">
       <div>
         {cancelledCallout}
 
-        <AnimatedPresenceSection show={showJoin || joinClosing} closing={joinClosing}>
-          <JoinSectionLazy {...joinProps} />
-        </AnimatedPresenceSection>
+        <div id={EVENT_JOIN_SECTION_ID}>
+          <AnimatedPresenceSection show={showJoin || joinClosing} closing={joinClosing}>
+            <JoinSectionLazy {...joinProps} />
+          </AnimatedPresenceSection>
+        </div>
 
         {!isCancelled ? (
         <section className="mt-5 rounded-3xl border border-zinc-800 bg-zinc-900/50 p-5">

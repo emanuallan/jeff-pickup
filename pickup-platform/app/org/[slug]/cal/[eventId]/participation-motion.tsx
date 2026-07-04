@@ -22,6 +22,7 @@ export type CelebrationPlacement = 'modal' | 'sheet'
 
 type SignupCelebrationOptions = {
   placement?: CelebrationPlacement
+  scrollToRoster?: boolean
 }
 
 type MotionContextValue = {
@@ -31,6 +32,10 @@ type MotionContextValue = {
   celebrationAccent: string
   joinClosing: boolean
   controlsClosing: boolean
+  pendingRosterScroll: boolean
+  clearPendingRosterScroll: () => void
+  pendingJoinScroll: boolean
+  clearPendingJoinScroll: () => void
   runSignupCelebration: (
     action: ParticipationAction,
     accent: string,
@@ -60,6 +65,8 @@ export function ParticipationMotionProvider({
   const [celebrationAccent, setCelebrationAccent] = useState('#2563eb')
   const [joinClosing, setJoinClosing] = useState(false)
   const [controlsClosing, setControlsClosing] = useState(false)
+  const [pendingRosterScroll, setPendingRosterScroll] = useState(false)
+  const [pendingJoinScroll, setPendingJoinScroll] = useState(false)
 
   useEffect(() => {
     setJoinClosing(false)
@@ -85,6 +92,14 @@ export function ParticipationMotionProvider({
     setControlsClosing(false)
   }, [])
 
+  const clearPendingRosterScroll = useCallback(() => {
+    setPendingRosterScroll(false)
+  }, [])
+
+  const clearPendingJoinScroll = useCallback(() => {
+    setPendingJoinScroll(false)
+  }, [])
+
   const runSignupCelebration = useCallback(
     async (action: ParticipationAction, accent: string, options?: SignupCelebrationOptions) => {
       const placement = options?.placement ?? 'modal'
@@ -102,6 +117,9 @@ export function ParticipationMotionProvider({
       }
 
       await fireConfetti(accent)
+      if (options?.scrollToRoster !== false) {
+        setPendingRosterScroll(true)
+      }
       setJoinClosing(true)
       return {}
     },
@@ -125,6 +143,7 @@ export function ParticipationMotionProvider({
         return result
       }
 
+      setPendingJoinScroll(true)
       window.setTimeout(() => setControlsClosing(false), CONTROLS_CLOSE_MS)
       return {}
     },
@@ -142,6 +161,10 @@ export function ParticipationMotionProvider({
       celebrationAccent,
       joinClosing,
       controlsClosing,
+      pendingRosterScroll,
+      clearPendingRosterScroll,
+      pendingJoinScroll,
+      clearPendingJoinScroll,
       runSignupCelebration,
       runLeaveCelebration,
       dismissJoinPanel,
@@ -156,6 +179,10 @@ export function ParticipationMotionProvider({
       celebrationAccent,
       joinClosing,
       controlsClosing,
+      pendingRosterScroll,
+      clearPendingRosterScroll,
+      pendingJoinScroll,
+      clearPendingJoinScroll,
       runSignupCelebration,
       runLeaveCelebration,
       dismissJoinPanel,
