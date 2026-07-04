@@ -49,6 +49,7 @@ export function SignedInStatusSheet({
           isOnline={isOnline}
           accent={accent}
           hideHeading
+          onSuccess={onClose}
         />
       </div>
     </BottomSheet>

@@ -367,6 +367,7 @@ export function ArrivalStatusPicker(props: {
   isOnline: boolean
   accent: string
   hideHeading?: boolean
+  onSuccess?: () => void
 }) {
   const [status, setStatus] = useState<ArrivalStatus>(props.currentStatus)
   const [loading, setLoading] = useState(false)
@@ -386,6 +387,7 @@ export function ArrivalStatusPicker(props: {
               type="button"
               disabled={loading}
               onClick={async () => {
+                if (s.value === status) return
                 const prev = status
                 setStatus(s.value)
                 setLoading(true)
@@ -400,7 +402,9 @@ export function ArrivalStatusPicker(props: {
                 if (result.error) {
                   setStatus(prev)
                   setError(result.error)
+                  return
                 }
+                props.onSuccess?.()
               }}
               className="rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors disabled:opacity-50"
               style={
