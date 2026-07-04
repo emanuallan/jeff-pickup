@@ -11,7 +11,11 @@ import {
 
 const DISMISS_THRESHOLD = 72
 const SHEET_EASING = 'cubic-bezier(0.32, 0.72, 0, 1)'
-const SHEET_EXIT_MS = 280
+const SHEET_ENTER_MS = 280
+const SHEET_EXIT_MS = 420
+const BACKDROP_EXIT_MS = 380
+const NOTIFICATION_EXIT_MS = 360
+const DIALOG_EXIT_MS = 320
 
 function initialSwipeEnabled(variant: 'console' | 'fixed' | 'top') {
   if (variant === 'fixed' || variant === 'top') return true
@@ -186,10 +190,6 @@ export function BottomSheet({
       ? 'fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-4'
       : 'fixed inset-0 z-50'
 
-  const backdropClass = exiting
-    ? 'absolute inset-0 bg-black/60 backdrop-blur-sm animate-[backdrop-out_200ms_ease-in_forwards]'
-    : 'absolute inset-0 bg-black/60 backdrop-blur-sm animate-[backdrop-in_200ms_ease-out]'
-
   const panelBase =
     variant === 'console'
       ? 'relative max-h-[90dvh] w-full max-w-lg overflow-y-auto rounded-t-2xl border border-white/10 bg-zinc-900 shadow-xl sm:rounded-xl'
@@ -202,11 +202,11 @@ export function BottomSheet({
 
   const exitAnimation = exiting
     ? variant === 'top'
-      ? 'notification-sheet-out 220ms ease-in forwards'
+      ? `notification-sheet-out ${NOTIFICATION_EXIT_MS}ms ease-in forwards`
       : variant === 'fixed' || (variant === 'console' && swipeEnabled)
         ? `bottom-sheet-out ${SHEET_EXIT_MS}ms ${SHEET_EASING} forwards`
         : variant === 'console'
-          ? `dialog-out 200ms ${SHEET_EASING} forwards`
+          ? `dialog-out ${DIALOG_EXIT_MS}ms ${SHEET_EASING} forwards`
           : undefined
     : undefined
 
@@ -215,7 +215,7 @@ export function BottomSheet({
       ? variant === 'top'
         ? `notification-sheet-in 220ms ease-out`
         : variant === 'fixed' || (variant === 'console' && swipeEnabled)
-          ? `bottom-sheet-in ${SHEET_EXIT_MS}ms ${SHEET_EASING}`
+          ? `bottom-sheet-in ${SHEET_ENTER_MS}ms ${SHEET_EASING}`
           : variant === 'console'
             ? `dialog-in 200ms ${SHEET_EASING}`
             : undefined
@@ -232,7 +232,7 @@ export function BottomSheet({
     transition: isDragging
       ? 'none'
       : dragOffset === 0 && !exiting
-        ? `transform ${SHEET_EXIT_MS}ms ${SHEET_EASING}`
+        ? `transform ${SHEET_ENTER_MS}ms ${SHEET_EASING}`
         : undefined,
     animation: exitAnimation ?? enterAnimation,
   }
@@ -261,7 +261,16 @@ export function BottomSheet({
     >
       <button
         type="button"
-        className={backdropClass}
+        className={
+          exiting
+            ? 'absolute inset-0 bg-black/60 backdrop-blur-sm'
+            : 'absolute inset-0 bg-black/60 backdrop-blur-sm animate-[backdrop-in_200ms_ease-out]'
+        }
+        style={
+          exiting
+            ? { animation: `backdrop-out ${BACKDROP_EXIT_MS}ms ease-in forwards` }
+            : undefined
+        }
         aria-label="Close"
         onClick={requestClose}
       />
