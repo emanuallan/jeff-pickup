@@ -1,5 +1,6 @@
 import type { Location } from "@/lib/locations";
 import type { Schedule } from "@/lib/schedules";
+import { CollapsibleAdditionalInformationField } from "../_components/collapsible-additional-information-field";
 import { consoleInput } from "../_components/console-ui";
 
 const WEEKDAYS = [
@@ -141,6 +142,10 @@ export function ScheduleFormFields({ locations, schedule, timezone }: Props) {
 					/>
 				</label>
 			</div>
+
+			<CollapsibleAdditionalInformationField
+				defaultValue={schedule?.additional_information}
+			/>
 
 			<p className="text-xs text-zinc-500">Timezone: {timezone}</p>
 		</>

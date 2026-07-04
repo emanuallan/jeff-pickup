@@ -15,6 +15,7 @@ import {
   durationMinFromLocalRange,
 } from '@/lib/one-off-datetime'
 import { consoleInput, consoleLabel, btnSecondary } from '../_components/console-ui'
+import { CollapsibleAdditionalInformationField } from '../_components/collapsible-additional-information-field'
 import { ConsoleSubmitButton } from '../_components/console-submit-button'
 import { useConsoleToast } from '../_components/console-toast'
 
@@ -204,6 +205,10 @@ export function SessionForm({
           />
         </label>
       </div>
+
+      <CollapsibleAdditionalInformationField
+        defaultValue={initial?.additionalInformation}
+      />
 
       <p className="text-xs text-zinc-500">Timezone: {activeTimezone()}</p>
 

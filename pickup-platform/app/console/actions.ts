@@ -18,6 +18,10 @@ import { getOrgForMember } from '@/lib/orgs'
 import { isValidSlug, normalizeSlug } from '@/lib/tenancy/reserved-slugs'
 import { MAX_ORG_LINKS, normalizeLinkUrl } from '@/lib/social-links'
 import { orgSettings, orgWaitlistSettings, type OrgFeatures, type OrgWaitlistSettings } from '@/lib/org-features'
+import {
+  ADDITIONAL_INFORMATION_MAX_LENGTH,
+  normalizeAdditionalInformation,
+} from '@/lib/additional-information'
 import { isInteriorOperator } from '@/lib/interior'
 import {
   ORG_LOGO_BUCKET,
@@ -65,6 +69,7 @@ type ParsedSessionFields = {
   durationMin: number
   capacity: number | null
   minPlayers: number | null
+  additionalInformation: string
 }
 
 function parseSessionFormData(
@@ -77,6 +82,16 @@ function parseSessionFormData(
   const durationMin = Number.parseInt(String(formData.get('duration_min') ?? '90'), 10)
   const capacity = parseOptionalInt(formData.get('capacity'))
   const minParticipants = parseOptionalMinParticipants(formData.get('min_players'))
+
+  const additionalInformation = normalizeAdditionalInformation(
+    formData.get('additional_information'),
+  )
+  if (additionalInformation.length > ADDITIONAL_INFORMATION_MAX_LENGTH) {
+    return {
+      ok: false,
+      error: `Additional information must be ${ADDITIONAL_INFORMATION_MAX_LENGTH} characters or fewer.`,
+    }
+  }
 
   if (!title || !locationId || !startsAtLocal) {
     return { ok: false, error: 'Session name, location, and date are required.' }
@@ -112,6 +127,7 @@ function parseSessionFormData(
       durationMin,
       capacity,
       minPlayers: minParticipants.value,
+      additionalInformation,
     },
   }
 }
@@ -158,6 +174,16 @@ function parseScheduleFormData(
     return { ok: false, error: 'Frequency must be between every 1 and 52 weeks.' }
   }
 
+  const additionalInformation = normalizeAdditionalInformation(
+    formData.get('additional_information'),
+  )
+  if (additionalInformation.length > ADDITIONAL_INFORMATION_MAX_LENGTH) {
+    return {
+      ok: false,
+      error: `Additional information must be ${ADDITIONAL_INFORMATION_MAX_LENGTH} characters or fewer.`,
+    }
+  }
+
   return {
     ok: true,
     values: {
@@ -170,6 +196,7 @@ function parseScheduleFormData(
       durationMin,
       intervalWeeks,
       byweekday,
+      additionalInformation,
     },
   }
 }
@@ -378,6 +405,7 @@ export async function createSchedule(orgSlug: string, formData: FormData) {
     durationMin,
     intervalWeeks,
     byweekday,
+    additionalInformation,
   } = parsed.values
 
   const anchorDate = new Date().toLocaleDateString('en-CA', { timeZone: timezone || 'UTC' })
@@ -394,6 +422,7 @@ export async function createSchedule(orgSlug: string, formData: FormData) {
     duration_min: durationMin,
     interval_weeks: intervalWeeks,
     anchor_date: anchorDate,
+    additional_information: additionalInformation,
   })
 
   if (error) {
@@ -424,7 +453,7 @@ export async function createOneOffEvent(orgSlug: string, formData: FormData): Pr
   if (!parsed.ok) {
     return
   }
-  const { title, locationId, startsAtIso, timezone, durationMin, capacity, minPlayers } =
+  const { title, locationId, startsAtIso, timezone, durationMin, capacity, minPlayers, additionalInformation } =
     parsed.values
 
   const { error } = await supabase.from('events').insert({
@@ -437,7 +466,7 @@ export async function createOneOffEvent(orgSlug: string, formData: FormData): Pr
     timezone,
     capacity,
     min_players: minPlayers,
-    announcement: '',
+    additional_information: additionalInformation,
     status: initialEventStatus(minPlayers),
   })
 
@@ -470,7 +499,7 @@ export async function updateEvent(
   if (!parsed.ok) {
     return { error: parsed.error }
   }
-  const { title, locationId, startsAtIso, timezone, durationMin, capacity, minPlayers } =
+  const { title, locationId, startsAtIso, timezone, durationMin, capacity, minPlayers, additionalInformation } =
     parsed.values
 
   if (event.schedule_id && event.starts_at !== startsAtIso) {
@@ -498,6 +527,7 @@ export async function updateEvent(
       duration_min: durationMin,
       capacity,
       min_players: minPlayers,
+      additional_information: additionalInformation,
     })
     .eq('id', event.id)
     .eq('org_id', org.id)
@@ -724,6 +754,7 @@ export async function updateSchedule(
       duration_min: values.durationMin,
       interval_weeks: values.intervalWeeks,
       anchor_date: anchorDate,
+      additional_information: values.additionalInformation,
     })
     .eq('id', scheduleId)
     .eq('org_id', org.id)
@@ -761,6 +792,7 @@ export async function updateSchedule(
           capacity: values.capacity,
           min_players: values.minPlayers,
           timezone: values.timezone,
+          additional_information: values.additionalInformation,
         })
         .eq('schedule_id', scheduleId)
         .eq('org_id', org.id)

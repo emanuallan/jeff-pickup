@@ -72,7 +72,7 @@ export function EventAnnouncementEditor({ orgSlug, eventId, announcement: initia
             rows={3}
             maxLength={500}
             disabled={pending}
-            placeholder="Shown on the public event page — parking tips, what to bring, etc."
+            placeholder="Shown above the event on your public page — last-minute updates, cancellations, etc."
             className={`mt-1 ${consoleInput} resize-y`}
           />
         </label>

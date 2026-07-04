@@ -14,6 +14,7 @@ export type Schedule = {
   anchor_date: string
   timezone: string
   is_active: boolean
+  additional_information: string
 }
 
 const WEEKDAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
@@ -55,6 +56,7 @@ export type ScheduleFormValues = {
   durationMin: number
   intervalWeeks: number
   byweekday: number[]
+  additionalInformation: string
 }
 
 export function isStructuralScheduleChange(

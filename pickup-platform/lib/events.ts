@@ -33,6 +33,7 @@ export type Event = {
 	min_players: number | null;
 	status: EventStatus;
 	announcement: string;
+	additional_information: string;
 };
 
 export type EventWithLocation = Event & {
@@ -103,6 +104,11 @@ export function mapEventRow(row: Record<string, unknown>): EventWithLocation {
 	const { locations: _locations, schedules: _schedules, ...event } = row;
 	return {
 		...(event as Event),
+		announcement: typeof event.announcement === "string" ? event.announcement : "",
+		additional_information:
+			typeof event.additional_information === "string"
+				? event.additional_information
+				: "",
 		timezone: String(event.timezone ?? "UTC"),
 		title: overrides.title ?? schedule.title,
 		duration_min: overrides.duration_min ?? schedule.duration_min,

@@ -10,6 +10,7 @@ export type SessionFormInitial = {
   durationMin: number
   capacity: number | null
   minPlayers: number | null
+  additionalInformation: string
 }
 
 type SessionFormEvent = {
@@ -20,6 +21,7 @@ type SessionFormEvent = {
   duration_min: number
   capacity: number | null
   min_players: number | null
+  additional_information: string
 }
 
 export function sessionFormInitialFromEvent(event: SessionFormEvent): SessionFormInitial {
@@ -37,5 +39,6 @@ export function sessionFormInitialFromEvent(event: SessionFormEvent): SessionFor
     durationMin: event.duration_min,
     capacity: event.capacity,
     minPlayers: event.min_players,
+    additionalInformation: event.additional_information,
   }
 }

@@ -21,6 +21,7 @@ import {
   isEventCancelled,
   cancelledEventClasses,
 } from '../../_components/event-ui'
+import { EventAnnouncementBanner } from '../../_components/event-announcement-banner'
 
 type Props = {
   slug: string
@@ -50,6 +51,8 @@ export async function SessionPanel({ slug, org, event, eventId }: Props) {
 
   return (
     <>
+      <EventAnnouncementBanner text={event.announcement} accent={accent} />
+
       <section>
         <div className="overflow-hidden rounded-3xl border border-zinc-800 bg-linear-to-b from-zinc-900 to-zinc-950 p-6">
           <div className="flex items-center justify-between gap-3">
@@ -75,9 +78,9 @@ export async function SessionPanel({ slug, org, event, eventId }: Props) {
             className="mt-3 flex gap-2 text-sm text-zinc-400"
           />
 
-          {event.announcement ? (
+          {event.additional_information ? (
             <p className="mt-4 rounded-xl border border-zinc-800 bg-black/30 px-3 py-2 text-sm text-zinc-300">
-              {event.announcement}
+              {event.additional_information}
             </p>
           ) : null}
 
