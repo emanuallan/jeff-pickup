@@ -7,8 +7,9 @@ import type { RosterBadgeInfo } from '@/lib/badges'
 import type { ArrivalStatus } from '@/lib/arrival-status'
 import { JoinSectionLazy } from './join-section-lazy'
 import { RosterListLazy } from './roster-list-lazy'
-import { SignedInControlsLazy } from './signed-in-controls-lazy'
 import { WaitlistSection } from './waitlist-section'
+import { SignedInStatusSheet } from './signed-in-status-sheet'
+import { SignedInGuestSection } from './signed-in-guest-section'
 import { AnimatedPresenceSection } from './animated-presence-section'
 import { ParticipationMotionProvider, useParticipationMotion } from './participation-motion'
 import {
@@ -70,6 +71,7 @@ function ParticipationPanelBody({
   const motion = useParticipationMotion()
   const joinClosing = motion?.joinClosing ?? false
   const controlsClosing = motion?.controlsClosing ?? false
+  const [statusSheetOpen, setStatusSheetOpen] = useState(false)
   const showControls = Boolean(mySignup && canUpdateStatus)
   const lastControlsSignupRef = useRef<MySignup | null>(null)
 
@@ -86,6 +88,15 @@ function ParticipationPanelBody({
   const controlsSignup =
     mySignup && canUpdateStatus ? mySignup : controlsClosing ? lastControlsSignupRef.current : null
   const showControlsSection = Boolean(controlsSignup && (showControls || controlsClosing))
+  const isWaitlisted = mySignup?.list_status === 'waitlisted'
+  const openStatusSheet =
+    showControls && !isWaitlisted ? () => setStatusSheetOpen(true) : undefined
+
+  useEffect(() => {
+    if (!mySignup || !canUpdateStatus) {
+      setStatusSheetOpen(false)
+    }
+  }, [mySignup, canUpdateStatus])
 
   useEffect(() => {
     if (!motion?.pendingJoinScroll || !showJoin || joinClosing) {
@@ -124,6 +135,7 @@ function ParticipationPanelBody({
             orgSlug={joinProps.orgSlug}
             eventId={joinProps.eventId}
             accent={joinProps.accent}
+            onOpenStatusSheet={openStatusSheet}
           />
         </div>
 
@@ -135,22 +147,34 @@ function ParticipationPanelBody({
             orgSlug={joinProps.orgSlug}
             eventId={joinProps.eventId}
             accent={joinProps.accent}
+            isOnline={joinProps.isOnline}
           />
         ) : null}
 
         {showControlsSection && controlsSignup ? (
           <AnimatedPresenceSection show={showControls} closing={controlsClosing}>
-            <SignedInControlsLazy
+            <SignedInGuestSection
               orgSlug={joinProps.orgSlug}
               eventId={joinProps.eventId}
               signupId={controlsSignup.signup_id}
               guestCount={controlsSignup.guest_count}
-              arrivalStatus={controlsSignup.arrival_status as ArrivalStatus}
               listStatus={controlsSignup.list_status as SignupListStatus}
-              isOnline={joinProps.isOnline}
               accent={joinProps.accent}
             />
           </AnimatedPresenceSection>
+        ) : null}
+
+        {showControls && mySignup && !isWaitlisted ? (
+          <SignedInStatusSheet
+            open={statusSheetOpen}
+            onClose={() => setStatusSheetOpen(false)}
+            orgSlug={joinProps.orgSlug}
+            eventId={joinProps.eventId}
+            signupId={mySignup.signup_id}
+            arrivalStatus={mySignup.arrival_status as ArrivalStatus}
+            isOnline={joinProps.isOnline}
+            accent={joinProps.accent}
+          />
         ) : null}
         </section>
         ) : null}

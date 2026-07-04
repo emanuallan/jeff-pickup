@@ -53,13 +53,28 @@ function TooltipBadge({
 function ArrivalStatusIcon({
   status,
   isOnline,
+  onPress,
 }: {
   status: string
   isOnline?: boolean
+  onPress?: () => void
 }) {
   const emoji = arrivalStatusEmoji(status, isOnline)
   const label = arrivalStatusLabel(status, isOnline)
   if (!emoji) return null
+
+  if (onPress) {
+    return (
+      <button
+        type="button"
+        className="mr-0.5 inline-flex items-center rounded-md leading-none transition-colors hover:bg-white/10 active:scale-95"
+        aria-label={`${label}. Update your status.`}
+        onClick={onPress}
+      >
+        {emoji}
+      </button>
+    )
+  }
 
   return (
     <TooltipBadge tip={label} className="mr-0.5 inline-flex items-center">
@@ -124,6 +139,7 @@ export function RosterList(props: {
   eventId?: string
   accent?: string
   variant?: 'confirmed' | 'waitlist'
+  onOpenStatusSheet?: () => void
 }) {
   const router = useRouter()
   const [, startTransition] = useTransition()
@@ -188,7 +204,11 @@ export function RosterList(props: {
                   {isWaitlist ? (
                     <span className="mr-1 text-zinc-500">#{position}</span>
                   ) : (
-                    <ArrivalStatusIcon status={e.arrival_status} isOnline={props.isOnline} />
+                    <ArrivalStatusIcon
+                      status={e.arrival_status}
+                      isOnline={props.isOnline}
+                      onPress={props.onOpenStatusSheet}
+                    />
                   )}
                   <span>{e.display_name}</span>
                   <span className="text-zinc-400">
@@ -346,6 +366,7 @@ export function ArrivalStatusPicker(props: {
   currentStatus: ArrivalStatus
   isOnline: boolean
   accent: string
+  hideHeading?: boolean
 }) {
   const [status, setStatus] = useState<ArrivalStatus>(props.currentStatus)
   const [loading, setLoading] = useState(false)
@@ -353,8 +374,10 @@ export function ArrivalStatusPicker(props: {
 
   return (
     <div>
-      <p className="text-xs font-medium text-zinc-400">Update your status</p>
-      <div className="mt-2 flex flex-wrap gap-2">
+      {!props.hideHeading ? (
+        <p className="text-xs font-medium text-zinc-400">Update your status</p>
+      ) : null}
+      <div className={`flex flex-wrap gap-2${props.hideHeading ? '' : ' mt-2'}`}>
         {arrivalStatuses(props.isOnline).map((s) => {
           const selected = status === s.value
           return (

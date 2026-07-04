@@ -1,3 +1,5 @@
+'use client'
+
 import type { RosterEntry } from '@/lib/signups'
 import { RosterListLazy } from './roster-list-lazy'
 
@@ -8,6 +10,7 @@ type Props = {
   orgSlug: string
   eventId: string
   accent: string
+  isOnline?: boolean
 }
 
 export function WaitlistSection({
@@ -17,6 +20,7 @@ export function WaitlistSection({
   orgSlug,
   eventId,
   accent,
+  isOnline,
 }: Props) {
   if (waitlist.length === 0) {
     return null
@@ -48,6 +52,7 @@ export function WaitlistSection({
           orgSlug={orgSlug}
           eventId={eventId}
           accent={accent}
+          isOnline={isOnline}
           variant="waitlist"
         />
       </div>
