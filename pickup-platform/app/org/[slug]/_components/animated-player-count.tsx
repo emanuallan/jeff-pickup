@@ -12,25 +12,25 @@ function easeOutCubic(t: number): number {
   return 1 - (1 - t) ** 3
 }
 
-/** Count-up stat with brand accent color on completion. */
+/** Count-up stat with a brief brand-color flash when the target is reached. */
 export function AnimatedPlayerCount({ value, accent }: Props) {
   const [display, setDisplay] = useState(0)
-  const [done, setDone] = useState(false)
+  const [flash, setFlash] = useState(false)
   const accentColor = accentOnDark(accent)
 
   useEffect(() => {
     setDisplay(0)
-    setDone(false)
+    setFlash(false)
 
     if (typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       setDisplay(value)
-      setDone(true)
       return
     }
 
-    const durationMs = Math.min(1400, Math.max(650, value * 28))
+    const durationMs = Math.min(3200, Math.max(1800, value * 80))
     const start = performance.now()
     let frame = 0
+    let flashTimer: ReturnType<typeof setTimeout> | undefined
 
     function tick(now: number) {
       const progress = Math.min(1, (now - start) / durationMs)
@@ -39,20 +39,22 @@ export function AnimatedPlayerCount({ value, accent }: Props) {
       if (progress < 1) {
         frame = requestAnimationFrame(tick)
       } else {
-        setDone(true)
+        setFlash(true)
+        flashTimer = setTimeout(() => setFlash(false), 450)
       }
     }
 
     frame = requestAnimationFrame(tick)
-    return () => cancelAnimationFrame(frame)
+    return () => {
+      cancelAnimationFrame(frame)
+      if (flashTimer) clearTimeout(flashTimer)
+    }
   }, [value])
 
   return (
     <p
-      className={`mt-0.5 text-2xl font-bold tabular-nums transition-colors duration-500 ${
-        done ? '' : 'text-zinc-50'
-      }`}
-      style={done ? { color: accentColor } : undefined}
+      className="mt-0.5 text-2xl font-bold tabular-nums transition-colors duration-500"
+      style={{ color: flash ? accentColor : 'rgb(250 250 250)' }}
     >
       {display}
     </p>
