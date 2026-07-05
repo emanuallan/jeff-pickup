@@ -28,6 +28,7 @@ type Props = {
   initial?: SessionFormInitial
   submitLabel?: string
   pendingLabel?: string
+  successMessage?: string
   /** When true (create flow), submit uses the browser timezone. Edit keeps the event timezone. */
   useBrowserTimezone?: boolean
 }
@@ -47,6 +48,7 @@ export function SessionForm({
   initial,
   submitLabel = 'Add session',
   pendingLabel = 'Adding…',
+  successMessage,
   useBrowserTimezone = true,
 }: Props) {
   const toast = useConsoleToast()
@@ -116,6 +118,7 @@ export function SessionForm({
       toast.error(result.error)
       return
     }
+    toast.success(successMessage ?? (submitLabel === 'Save changes' ? 'Saved.' : 'Session added.'))
     onSuccess?.()
   }
 

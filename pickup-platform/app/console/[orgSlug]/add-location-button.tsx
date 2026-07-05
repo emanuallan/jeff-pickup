@@ -8,7 +8,7 @@ import { BottomSheet } from '@/app/_components/bottom-sheet'
 export function AddLocationButton({
   addLocation,
 }: {
-  addLocation: (formData: FormData) => Promise<void>
+  addLocation: (formData: FormData) => Promise<{ ok: true } | { error: string }>
 }) {
   const [open, setOpen] = useState(false)
 

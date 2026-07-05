@@ -5,7 +5,7 @@ import { SessionForm } from './session-form'
 
 type Props = {
   locations: Location[]
-  createOneOff: (formData: FormData) => Promise<void>
+  createOneOff: (formData: FormData) => Promise<{ ok: true } | { error: string }>
   onSuccess?: () => void
 }
 

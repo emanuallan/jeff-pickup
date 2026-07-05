@@ -14,6 +14,7 @@ type Props = {
   onSuccess?: () => void
   submitLabel?: string
   pendingLabel?: string
+  successMessage?: string
 }
 
 export function LocationForm({
@@ -22,6 +23,7 @@ export function LocationForm({
   onSuccess,
   submitLabel = 'Add location',
   pendingLabel = 'Adding…',
+  successMessage,
 }: Props) {
   const toast = useConsoleToast()
   const [isOnline, setIsOnline] = useState(location?.is_online ?? false)
@@ -35,6 +37,7 @@ export function LocationForm({
       toast.error(result.error)
       return
     }
+    toast.success(successMessage ?? (submitLabel === 'Save changes' ? 'Saved.' : 'Location added.'))
     onSuccess?.()
   }
 

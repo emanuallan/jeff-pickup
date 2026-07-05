@@ -239,13 +239,16 @@ export async function createOrg(formData: FormData) {
   redirect(`/console/${slug}/setup`)
 }
 
-export async function createLocation(orgSlug: string, formData: FormData): Promise<void> {
+export async function createLocation(
+  orgSlug: string,
+  formData: FormData,
+): Promise<{ ok: true } | { error: string }> {
   const org = await requireOrgAdmin(orgSlug)
   const supabase = await createClient()
 
   const parsed = parseLocationFormData(formData)
   if (!parsed.ok) {
-    return
+    return { error: parsed.error }
   }
 
   const { label, isOnline, address, mapsUrl, meetingUrl } = parsed.values
@@ -266,10 +269,11 @@ export async function createLocation(orgSlug: string, formData: FormData): Promi
   })
 
   if (error) {
-    return
+    return { error: error.message }
   }
 
   revalidatePath(`/console/${orgSlug}`)
+  return { ok: true }
 }
 
 function parseLocationFormData(formData: FormData) {
@@ -445,13 +449,16 @@ export async function createSchedule(orgSlug: string, formData: FormData) {
   return { ok: true }
 }
 
-export async function createOneOffEvent(orgSlug: string, formData: FormData): Promise<void> {
+export async function createOneOffEvent(
+  orgSlug: string,
+  formData: FormData,
+): Promise<{ ok: true } | { error: string }> {
   const org = await requireOrgAdmin(orgSlug)
   const supabase = await createClient()
 
   const parsed = parseSessionFormData(formData)
   if (!parsed.ok) {
-    return
+    return { error: parsed.error }
   }
   const { title, locationId, startsAtIso, timezone, durationMin, capacity, minPlayers, additionalInformation } =
     parsed.values
@@ -471,12 +478,13 @@ export async function createOneOffEvent(orgSlug: string, formData: FormData): Pr
   })
 
   if (error) {
-    return
+    return { error: error.message }
   }
 
   revalidatePath(`/console/${orgSlug}`)
   revalidatePath(`/console/${orgSlug}/setup`)
   revalidatePath(`/org/${orgSlug}`)
+  return { ok: true }
 }
 
 export async function updateEvent(

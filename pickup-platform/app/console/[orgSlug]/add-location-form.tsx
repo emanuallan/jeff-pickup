@@ -3,16 +3,14 @@
 import { LocationForm } from './location-form'
 
 type Props = {
-  addLocation: (formData: FormData) => Promise<void>
+  addLocation: (formData: FormData) => Promise<{ ok: true } | { error: string }>
   onSuccess?: () => void
 }
 
 export function AddLocationForm({ addLocation, onSuccess }: Props) {
   return (
     <LocationForm
-      saveLocation={async (formData) => {
-        await addLocation(formData)
-      }}
+      saveLocation={(formData) => addLocation(formData)}
       onSuccess={onSuccess}
     />
   )

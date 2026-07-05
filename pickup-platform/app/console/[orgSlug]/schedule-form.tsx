@@ -39,6 +39,7 @@ export function ScheduleForm({ orgSlug, locations, createSchedule, onSuccess }: 
       toast.error(result.error)
       return
     }
+    toast.success('Schedule added.')
     onSuccess?.()
   }
 

@@ -44,6 +44,7 @@ export function EventAnnouncementEditor({ orgSlug, eventId, announcement: initia
       setAnnouncement(next)
       setDraft(next)
       setEditing(false)
+      toast.success('Saved.')
     })
   }
 
@@ -58,6 +59,7 @@ export function EventAnnouncementEditor({ orgSlug, eventId, announcement: initia
       setAnnouncement('')
       setDraft('')
       setEditing(false)
+      toast.success('Announcement removed.')
     })
   }
 

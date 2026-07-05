@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState } from 'react'
 import { deleteSchedule, type DeleteScheduleMode } from '../actions'
 import type { ScheduleDeleteImpact } from '@/lib/schedules'
 import { chipAction } from '../_components/console-ui'
@@ -19,7 +19,7 @@ export function DeleteScheduleButton({ orgSlug, scheduleId, scheduleTitle, impac
   const [open, setOpen] = useState(false)
   const [mode, setMode] = useState<DeleteScheduleMode>('schedule_only')
   const [acknowledgeSignupLoss, setAcknowledgeSignupLoss] = useState(false)
-  const [pending, startTransition] = useTransition()
+  const [pending, setPending] = useState(false)
 
   const needsSignupAck =
     mode === 'with_future_events' && impact.signupCount > 0
@@ -37,19 +37,22 @@ export function DeleteScheduleButton({ orgSlug, scheduleId, scheduleTitle, impac
     setAcknowledgeSignupLoss(false)
   }
 
-  function handleDelete() {
+  async function handleDelete() {
     if (!mode) return
     if (needsSignupAck && !acknowledgeSignupLoss) return
-    startTransition(async () => {
-      const result = await deleteSchedule(orgSlug, scheduleId, mode, {
-        acknowledgeSignupLoss: needsSignupAck ? acknowledgeSignupLoss : undefined,
-      })
-      if (result && 'error' in result) {
-        toast.error(result.error)
-      } else {
-        closeModal()
-      }
+    setPending(true)
+    const result = await deleteSchedule(orgSlug, scheduleId, mode, {
+      acknowledgeSignupLoss: needsSignupAck ? acknowledgeSignupLoss : undefined,
     })
+    setPending(false)
+    if (result && 'error' in result) {
+      toast.error(result.error)
+      return
+    }
+    toast.success('Schedule deleted.')
+    setOpen(false)
+    setMode('schedule_only')
+    setAcknowledgeSignupLoss(false)
   }
 
   return (

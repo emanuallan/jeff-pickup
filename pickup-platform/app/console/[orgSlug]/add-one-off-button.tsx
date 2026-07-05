@@ -13,7 +13,7 @@ export function AddOneOffButton({
   className = btnAccent,
 }: {
   locations: Location[]
-  createOneOff: (formData: FormData) => Promise<void>
+  createOneOff: (formData: FormData) => Promise<{ ok: true } | { error: string }>
   className?: string
 }) {
   const [open, setOpen] = useState(false)

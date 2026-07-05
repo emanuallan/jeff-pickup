@@ -52,7 +52,7 @@ export function LinksButton({ links }: Props) {
         <h2 id="links-sheet-title" className="text-lg font-semibold tracking-tight text-zinc-50">
           Links
         </h2>
-        <p className="mt-1 text-sm text-zinc-500">Find this group elsewhere on the web.</p>
+        <p className="mt-1 text-sm text-zinc-500">Join us elsewhere on the web.</p>
 
         <nav aria-label="Group links" className="mt-5 space-y-3">
           {links.map((url) => (
