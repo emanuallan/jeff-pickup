@@ -248,7 +248,6 @@ export function JoinSection(props: Props) {
                 const r = await quickJoinEvent(
                   props.orgSlug,
                   props.eventId,
-                  props.orgId,
                   guestCount,
                 )
                 if (!r.error) {

@@ -14,6 +14,7 @@ import {
   type EventWithLocation,
 } from '@/lib/events'
 import { orgPublicEventHref } from '@/lib/org-public-nav'
+import { safeExternalHref } from '@/lib/social-links'
 import { arrowNe, arrowRight } from '@/lib/text-arrows'
 import { accentOnDark, hexToRgba } from '@/lib/colors'
 
@@ -292,10 +293,9 @@ export function EventLocationRow({
   compact?: boolean
   className?: string
 }) {
-  const mapsUrl = event.location_maps_url.trim()
+  const safeMapsUrl = safeExternalHref(event.location_maps_url)
   const address = event.location_address.trim()
-  const meetingUrl = event.location_meeting_url.trim()
-  const hasMaps = Boolean(mapsUrl)
+  const safeMeetingUrl = safeExternalHref(event.location_meeting_url)
   const linkClass = mapsLinkClass
 
   const rowClass =
@@ -309,9 +309,9 @@ export function EventLocationRow({
       <div className={rowClass}>
         {!compact ? <OnlineIcon /> : null}
         <div className="min-w-0">
-          {meetingUrl && !compact ? (
+          {safeMeetingUrl && !compact ? (
             <ExternalLocationLink
-              href={meetingUrl}
+              href={safeMeetingUrl}
               nestedInLink={nestedInLink}
               className={`truncate ${linkClass}`}
             >
@@ -320,7 +320,7 @@ export function EventLocationRow({
           ) : (
             <span className="truncate">
               {event.location_label}
-              {meetingUrl ? ` · Join online ${arrowNe}` : ' · Online'}
+              {safeMeetingUrl ? ` · Join online ${arrowNe}` : ' · Online'}
             </span>
           )}
         </div>
@@ -340,9 +340,9 @@ export function EventLocationRow({
     <div className={rowClass}>
       <PinIcon className="mt-0.5" />
       <div className="min-w-0">
-        {hasMaps ? (
+        {safeMapsUrl ? (
           <ExternalLocationLink
-            href={mapsUrl}
+            href={safeMapsUrl}
             nestedInLink={nestedInLink}
             className={`block truncate ${linkClass}`}
           >
@@ -352,9 +352,9 @@ export function EventLocationRow({
           <span className="block truncate">{event.location_label}</span>
         )}
         {address ? (
-          hasMaps ? (
+          safeMapsUrl ? (
             <ExternalLocationLink
-              href={mapsUrl}
+              href={safeMapsUrl}
               nestedInLink={nestedInLink}
               className={`mt-0.5 block truncate text-xs text-zinc-500 ${linkClass}`}
             >

@@ -180,6 +180,13 @@ export function detectPlatform(rawUrl: string): SocialPlatform {
  * Normalize a user-entered link for storage. Adds https:// when no scheme is
  * present, keeps mailto: links, and returns null for anything unparseable.
  */
+/** Safe http(s) href for user-supplied external links — null when invalid or unsafe. */
+export function safeExternalHref(input: string): string | null {
+  const raw = input.trim()
+  if (!raw) return null
+  return normalizeLinkUrl(raw)
+}
+
 export function normalizeLinkUrl(input: string): string | null {
   const raw = input.trim()
   if (!raw) return null

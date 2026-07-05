@@ -15,6 +15,22 @@ describe('safe-next', () => {
     expect(safeNextPath('https://evil.com')).toBe('/console')
   })
 
+  it('blocks backslash hostname tricks', () => {
+    expect(safeNextPath('/\\evil.com')).toBe('/console')
+  })
+
+  it('blocks at-sign hostname tricks', () => {
+    expect(safeNextPath('/user@evil.com')).toBe('/console')
+  })
+
+  it('blocks encoded protocol-relative paths', () => {
+    expect(safeNextPath('/%2F%2Fevil.com')).toBe('/console')
+  })
+
+  it('blocks control characters', () => {
+    expect(safeNextPath('/console\u0000')).toBe('/console')
+  })
+
   it('uses custom fallback', () => {
     expect(safeNextPath(null, '/login')).toBe('/login')
   })

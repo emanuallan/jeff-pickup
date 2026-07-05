@@ -145,7 +145,7 @@ export function ReturningSignupModal({
 
     const result = await motion.runSignupCelebration(
       async () => {
-        const r = await quickJoinEvent(orgSlug, eventId, orgId, 0, status)
+        const r = await quickJoinEvent(orgSlug, eventId, 0, status)
         if (!r.error) {
           startTransition(() => {
             router.refresh()

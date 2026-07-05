@@ -1,7 +1,7 @@
 'use server'
 
 import { revalidatePath, revalidateTag } from 'next/cache'
-import { getOrgBySlug } from '@/lib/orgs'
+import { getPublicOrgBySlug } from '@/lib/public-data'
 import { canUpdateArrivalStatus, getEventByRef, isEventCancelled } from '@/lib/events'
 import type { EventWithLocation } from '@/lib/events'
 import { createClient } from '@/lib/supabase/server'
@@ -16,7 +16,7 @@ async function getOpenEvent(
   orgSlug: string,
   eventRef: string,
 ): Promise<{ event: EventWithLocation; orgId: string } | { error: string }> {
-  const org = await getOrgBySlug(orgSlug)
+  const org = await getPublicOrgBySlug(orgSlug)
   if (!org) {
     return { error: 'Organization not found.' }
   }
@@ -44,7 +44,7 @@ function revalidatePublicEvent(orgSlug: string, eventRef: string, eventId: strin
 }
 
 async function revalidatePublicEventByRef(orgSlug: string, eventRef: string) {
-  const org = await getOrgBySlug(orgSlug)
+  const org = await getPublicOrgBySlug(orgSlug)
   if (!org) {
     revalidatePath(`/org/${orgSlug}`)
     return
@@ -90,7 +90,7 @@ export async function joinEvent(
     return { error: open.error }
   }
 
-  const org = await getOrgBySlug(orgSlug)
+  const org = await getPublicOrgBySlug(orgSlug)
   const guests = resolveGuestCount(
     guestCount,
     org ? orgFeatures(org).guest_signups : false,
@@ -132,7 +132,7 @@ export async function recoverSession(
   eventId: string,
   phone: string,
 ): Promise<{ error?: string }> {
-  const org = await getOrgBySlug(orgSlug)
+  const org = await getPublicOrgBySlug(orgSlug)
   if (!org) {
     return { error: 'Group not found.' }
   }
@@ -164,7 +164,6 @@ export async function recoverSession(
 export async function quickJoinEvent(
   orgSlug: string,
   eventId: string,
-  orgId: string,
   guestCount = 0,
   arrivalStatus: ArrivalStatus = 'confirmed',
 ): Promise<{ error?: string }> {
@@ -173,11 +172,16 @@ export async function quickJoinEvent(
     return { error: 'No saved session' }
   }
 
+  const org = await getPublicOrgBySlug(orgSlug)
+  if (!org) {
+    return { error: 'Organization not found.' }
+  }
+
   const supabase = await createClient()
 
   const { data: participant, error: pError } = await supabase.rpc('get_participant_for_session', {
     p_session_token: token,
-    p_org_id: orgId,
+    p_org_id: org.id,
   })
 
   if (pError || !participant) {
@@ -198,8 +202,7 @@ export async function quickJoinEvent(
     return { error: open.error }
   }
 
-  const org = await getOrgBySlug(orgSlug)
-  const resolvedGuests = resolveGuestCount(guests, org ? orgFeatures(org).guest_signups : false)
+  const resolvedGuests = resolveGuestCount(guests, orgFeatures(org).guest_signups)
 
   const { data, error } = await supabase.rpc('join_event', {
     p_event_id: open.event.id,
@@ -253,7 +256,7 @@ export async function updateGuestCount(
     return { error: open.error }
   }
 
-  const org = await getOrgBySlug(orgSlug)
+  const org = await getPublicOrgBySlug(orgSlug)
   if (!org || !orgFeatures(org).guest_signups) {
     return { error: 'Guest sign-ups are not enabled for this group.' }
   }

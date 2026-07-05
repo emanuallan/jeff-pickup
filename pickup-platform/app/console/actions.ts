@@ -25,10 +25,12 @@ import {
   parseOurBucketLogoPath,
   publicLogoUrl,
   validateLogoFile,
+  validateLogoFileContent,
 } from '@/lib/org-logo'
 import { parseSessionFormData } from '@/lib/console/parse-session-form'
 import { parseScheduleFormData } from '@/lib/console/parse-schedule-form'
 import { parseLocationFormData } from '@/lib/console/parse-location-form'
+import { assertLocationInOrg } from '@/lib/console/location-ownership'
 
 async function requireOrgAdmin(slug: string) {
   const org = await getOrgForMember(slug)
@@ -232,6 +234,11 @@ export async function createSchedule(orgSlug: string, formData: FormData) {
     additionalInformation,
   } = parsed.values
 
+  const locationCheck = await assertLocationInOrg(supabase, org.id, locationId)
+  if ('error' in locationCheck) {
+    return { error: locationCheck.error }
+  }
+
   const anchorDate = new Date().toLocaleDateString('en-CA', { timeZone: timezone || 'UTC' })
 
   const { error } = await supabase.from('schedules').insert({
@@ -283,6 +290,11 @@ export async function createOneOffEvent(
   const { title, locationId, startsAtIso, timezone, durationMin, capacity, minPlayers, additionalInformation } =
     parsed.values
 
+  const locationCheck = await assertLocationInOrg(supabase, org.id, locationId)
+  if ('error' in locationCheck) {
+    return { error: locationCheck.error }
+  }
+
   const { error } = await supabase.from('events').insert({
     org_id: org.id,
     schedule_id: null,
@@ -329,6 +341,11 @@ export async function updateEvent(
   }
   const { title, locationId, startsAtIso, timezone, durationMin, capacity, minPlayers, additionalInformation } =
     parsed.values
+
+  const locationCheck = await assertLocationInOrg(supabase, org.id, locationId)
+  if ('error' in locationCheck) {
+    return { error: locationCheck.error }
+  }
 
   if (event.schedule_id && event.starts_at !== startsAtIso) {
     const { error: skipError } = await supabase.from('schedule_event_skips').upsert(
@@ -565,6 +582,12 @@ export async function updateSchedule(
 
   const before = existing as Schedule
   const values = parsed.values
+
+  const locationCheck = await assertLocationInOrg(supabase, org.id, values.locationId)
+  if ('error' in locationCheck) {
+    return { error: locationCheck.error }
+  }
+
   const anchorDate = new Date().toLocaleDateString('en-CA', {
     timeZone: values.timezone || 'UTC',
   })
@@ -796,7 +819,7 @@ export async function uploadOrgLogo(orgSlug: string, formData: FormData) {
     return { error: 'Choose an image to upload.' }
   }
 
-  const validation = validateLogoFile(file)
+  const validation = await validateLogoFileContent(file)
   if (!validation.ok) {
     return { error: validation.error }
   }

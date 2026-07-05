@@ -1,3 +1,10 @@
+import { normalizeLinkUrl } from '@/lib/social-links'
+
+function normalizeOptionalExternalUrl(raw: string): string {
+  if (!raw.trim()) return ''
+  return normalizeLinkUrl(raw) ?? ''
+}
+
 export function parseLocationFormData(
   formData: FormData,
 ):
@@ -15,8 +22,8 @@ export function parseLocationFormData(
   const label = String(formData.get('label') ?? '').trim()
   const isOnline = formData.get('is_online') === 'on' || formData.get('is_online') === 'true'
   const address = String(formData.get('address') ?? '').trim()
-  const mapsUrl = String(formData.get('maps_url') ?? '').trim()
-  const meetingUrl = String(formData.get('meeting_url') ?? '').trim()
+  const mapsUrl = normalizeOptionalExternalUrl(String(formData.get('maps_url') ?? ''))
+  const meetingUrl = normalizeOptionalExternalUrl(String(formData.get('meeting_url') ?? ''))
 
   if (!label) {
     return { ok: false, error: 'Location name is required.' }
