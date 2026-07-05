@@ -18,6 +18,8 @@ type Props = {
   active: boolean
   /** Past session — show "came" instead of "coming". */
   ended?: boolean
+  /** Cancelled sessions hide the headcount chip entirely. */
+  cancelled?: boolean
 }
 
 export function LiveHeadcountPill({
@@ -28,6 +30,7 @@ export function LiveHeadcountPill({
   accent,
   active,
   ended = false,
+  cancelled = false,
 }: Props) {
   const router = useRouter()
   const [headcount, setHeadcount] = useState(initialHeadcount)
@@ -97,7 +100,7 @@ export function LiveHeadcountPill({
     }
   }, [active, orgSlug, eventRef, router])
 
-  if (!showHeadcountChipOnCard(headcount)) {
+  if (!showHeadcountChipOnCard(headcount, { cancelled })) {
     return null
   }
 

@@ -104,6 +104,7 @@ export async function SessionPanel({ slug, org, event, eventId }: Props) {
                 accent={accent}
                 pollActive={!isCancelled && !isEnded}
                 ended={isEnded}
+                cancelled={isCancelled}
               />
             </Suspense>
             <Suspense fallback={null}>

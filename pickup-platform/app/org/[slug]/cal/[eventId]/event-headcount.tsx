@@ -11,6 +11,7 @@ type Props = {
   accent: string
   pollActive: boolean
   ended?: boolean
+  cancelled?: boolean
 }
 
 export async function EventHeadcount({
@@ -22,8 +23,9 @@ export async function EventHeadcount({
   accent,
   pollActive,
   ended = false,
+  cancelled = false,
 }: Props) {
-  const roster = await getPublicRoster(eventId)
+  const roster = cancelled ? [] : await getPublicRoster(eventId)
   const headcount = rosterHeadcount(roster)
 
   return (
@@ -36,6 +38,7 @@ export async function EventHeadcount({
         accent={accent}
         active={pollActive}
         ended={ended}
+        cancelled={cancelled}
       />
       {minPlayers != null ? (
         <span className="rounded-lg bg-zinc-800/60 px-2.5 py-1 text-zinc-400">
