@@ -7,3 +7,7 @@ export const ORG_PUBLIC_DESKTOP_SHELL_PADDING = 'md:pb-12'
 /** Sticky offset for tablet/desktop event cards while scrolling the roster column. */
 export const ORG_PUBLIC_DESKTOP_STICKY_CARD =
   'md:sticky md:top-8 md:max-h-[calc(100dvh-4rem)] md:self-start md:overflow-y-auto'
+
+/** Session event card + participation column layout. */
+export const ORG_PUBLIC_SESSION_PANEL_GRID =
+  'flex flex-col gap-5 md:grid md:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] md:items-start md:gap-8'

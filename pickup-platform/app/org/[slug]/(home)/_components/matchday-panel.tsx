@@ -4,7 +4,7 @@ import type { EventWithLocation } from '@/lib/events'
 import { isEventEnded } from '@/lib/events'
 import { buildMatchdayChipDisplays } from '@/lib/matchday-chip-display'
 import { SessionPanel } from './session-panel'
-import { SessionPanelSkeleton } from './session-panel-skeleton'
+import { SessionPanelSkeleton } from '../../_components/session-skeleton-ui'
 import { MatchdayDateChips } from './matchday-date-chips'
 
 type Props = {
