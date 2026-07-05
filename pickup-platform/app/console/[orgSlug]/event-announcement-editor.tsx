@@ -5,6 +5,52 @@ import { updateEventAnnouncement } from '../actions'
 import { chipAction, consoleInput } from '../_components/console-ui'
 import { useConsoleToast } from '../_components/console-toast'
 
+const iconButtonClass =
+  'inline-flex h-8 w-8 items-center justify-center rounded-lg text-zinc-500 transition hover:bg-white/5 disabled:opacity-50'
+
+function PencilIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className="h-3.5 w-3.5" aria-hidden>
+      <path
+        d="M12 20h9"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+      <path
+        d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
+function TrashIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className="h-3.5 w-3.5" aria-hidden>
+      <path d="M3 6h18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <path
+        d="M8 6V4h8v2"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path d="M10 11v6M14 11v6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  )
+}
+
 type Props = {
   orgSlug: string
   eventId: string
@@ -104,26 +150,32 @@ export function EventAnnouncementEditor({ orgSlug, eventId, announcement: initia
   if (announcement) {
     return (
       <div className="mt-2.5 border-t border-white/5 pt-2.5">
-        <p className="text-xs font-medium text-zinc-500">Announcement</p>
-        <p className="mt-1 whitespace-pre-wrap text-xs leading-relaxed text-zinc-300">{announcement}</p>
-        <div className="mt-2 flex flex-wrap gap-1">
-          <button
-            type="button"
-            onClick={openEditor}
-            disabled={pending}
-            className={`${chipAction} text-indigo-300 hover:bg-indigo-500/10 hover:text-indigo-200 disabled:opacity-50`}
-          >
-            Edit
-          </button>
-          <button
-            type="button"
-            onClick={remove}
-            disabled={pending}
-            className={`${chipAction} text-zinc-400 hover:bg-red-500/10 hover:text-red-300 disabled:opacity-50`}
-          >
-            {pending ? 'Removing…' : 'Remove'}
-          </button>
+        <div className="flex items-center justify-between gap-2">
+          <p className="text-xs font-medium text-zinc-500">Announcement</p>
+          <div className="flex shrink-0 items-center gap-0.5">
+            <button
+              type="button"
+              onClick={openEditor}
+              disabled={pending}
+              aria-label="Edit announcement"
+              className={`${iconButtonClass} hover:text-indigo-300`}
+            >
+              <PencilIcon />
+            </button>
+            <button
+              type="button"
+              onClick={remove}
+              disabled={pending}
+              aria-label="Remove announcement"
+              className={`${iconButtonClass} hover:bg-red-500/10 hover:text-red-300`}
+            >
+              <TrashIcon />
+            </button>
+          </div>
         </div>
+        <p className="mt-1 whitespace-pre-wrap text-xs leading-relaxed text-zinc-300">
+          {announcement}
+        </p>
       </div>
     )
   }
