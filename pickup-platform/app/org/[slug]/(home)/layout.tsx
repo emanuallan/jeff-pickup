@@ -14,8 +14,8 @@ import {
   buildOrgCalendarShareTitle,
 } from '@/lib/public-share-text'
 import { OrgHeader } from '../_components/org-header'
-import { SocialLinks } from '../_components/social-links'
 import { BackToOrganizrLink } from '../_components/back-to-organizr-link'
+import { LinksButton } from '../links-button'
 import { OrgHomeShell } from './_components/org-home-shell'
 import { OrgHomeBottomNav } from './_components/org-home-bottom-nav'
 import { OrgHomeShareButton } from './_components/org-home-share-button'
@@ -71,25 +71,26 @@ export default async function OrgHomeLayout({ children, params }: Props) {
         </Suspense>
       }
     >
-      <nav
-        className={`flex min-h-9 items-center gap-3 ${slug === 'demo' ? 'justify-between' : 'justify-end'}`}
-      >
-        {slug === 'demo' ? <BackToOrganizrLink /> : null}
-        <Suspense
-          fallback={
-            <span
-              className="inline-flex h-[34px] w-[76px] shrink-0 rounded-full border border-zinc-800 bg-zinc-900/60"
-              aria-hidden
+      <nav className="flex min-h-9 items-center justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-3">
+          {slug === 'demo' ? <BackToOrganizrLink /> : null}
+          <Suspense
+            fallback={
+              <span
+                className="inline-flex h-[34px] w-[76px] shrink-0 rounded-full border border-zinc-800 bg-zinc-900/60"
+                aria-hidden
+              />
+            }
+          >
+            <OrgHomeShareButton
+              accent={accent}
+              calendar={calendarShare}
+              events={eventShares}
+              defaultEventShortId={defaultEventShortId}
             />
-          }
-        >
-          <OrgHomeShareButton
-            accent={accent}
-            calendar={calendarShare}
-            events={eventShares}
-            defaultEventShortId={defaultEventShortId}
-          />
-        </Suspense>
+          </Suspense>
+        </div>
+        {socialLinks.length > 0 ? <LinksButton links={socialLinks} /> : null}
       </nav>
 
       <OrgHeader
@@ -100,13 +101,7 @@ export default async function OrgHomeLayout({ children, params }: Props) {
         className="mt-2"
       />
 
-      {socialLinks.length > 0 ? (
-        <div className="mt-4">
-          <SocialLinks links={socialLinks} />
-        </div>
-      ) : null}
-
-      <div className={`flex-1 ${socialLinks.length > 0 ? 'mt-5' : 'mt-6'}`}>{children}</div>
+      <div className="mt-6 flex-1">{children}</div>
     </OrgHomeShell>
   )
 }
