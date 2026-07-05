@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { checkSlugAvailability, createOrg } from './actions'
+import { browserTimeZone } from '@/lib/datetime'
 import { normalizeSlug } from '@/lib/tenancy/reserved-slugs'
 import { consoleInput, consoleLabel, btnPrimary } from './_components/console-ui'
 import { ConsoleSubmitButton } from './_components/console-submit-button'
@@ -19,11 +20,7 @@ export function CreateOrgForm() {
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
-    try {
-      setTimezone(Intl.DateTimeFormat().resolvedOptions().timeZone)
-    } catch {
-      setTimezone('UTC')
-    }
+    setTimezone(browserTimeZone())
   }, [])
 
   function onSlugChange(next: string) {

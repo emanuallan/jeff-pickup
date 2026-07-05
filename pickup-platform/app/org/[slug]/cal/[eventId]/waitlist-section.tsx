@@ -1,5 +1,3 @@
-'use client'
-
 import type { RosterEntry } from '@/lib/signups'
 import { RosterListLazy } from './roster-list-lazy'
 

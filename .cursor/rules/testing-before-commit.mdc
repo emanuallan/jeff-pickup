@@ -1,0 +1,45 @@
+---
+description: Run tests before commit; add or fix tests for features and refactors
+alwaysApply: true
+---
+
+# Testing before commit (alpha+)
+
+All product work is in `pickup-platform/`. Vitest + Testing Library is the test stack.
+
+## Before commit or push
+
+Run in `pickup-platform/`:
+
+```bash
+npm run test
+npm run typecheck   # when types changed
+npm run build       # for substantive changes
+```
+
+Do **not** commit or push until tests pass. Fix failures caused by the change before proceeding.
+
+## New features
+
+Add meaningful tests for the behavior you introduced. Prioritize:
+
+- Pure logic in `lib/` (unit tests, colocated `*.test.ts`)
+- Form validation and data transforms
+- Critical user interactions (RTL + user-event)
+- API route auth/validation (mock Supabase and other I/O)
+
+Skip snapshot-heavy tests, styling assertions, and full E2E unless explicitly requested.
+
+## Major refactors
+
+Update existing tests when behavior or module boundaries change. Do not leave broken or obsolete tests.
+
+If a refactor extracts testable helpers from server actions or pages, add unit tests for those helpers.
+
+## What not to do
+
+- Commit failing tests or a red test suite
+- Chase 100% coverage on UI chrome
+- Add paid testing tools
+
+CI (`.github/workflows/test.yml`) runs `test`, `typecheck`, `lint`, and `build` on every push to `main`.

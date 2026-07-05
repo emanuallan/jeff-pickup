@@ -1,12 +1,6 @@
 import { OrganizrLogo } from '@/app/_components/organizr-logo'
+import { consoleOrgUrl } from '@/lib/site-url'
 import { arrowLeft, arrowRight } from '@/lib/text-arrows'
-
-function consoleOrgUrl(slug: string): string {
-  const root = process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? 'organizr.co'
-  const apex =
-    process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : `https://${root}`
-  return `${apex}/console/${slug}`
-}
 
 type Props = {
   slug: string

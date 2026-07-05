@@ -26,6 +26,9 @@ Before non-trivial work, read these (authoritative over any summary):
 
 ## Working agreements
 
+- **Testing (alpha+):** Before commit/push on new features or major refactors, run `npm run test` in
+  `pickup-platform/` and ensure it passes. New features need new tests; refactors must update or fix
+  existing tests. See `.cursor/rules/testing-before-commit.mdc`.
 - Verify with `npm run build` in `pickup-platform/` after substantive changes.
 - Only commit/push when explicitly asked; push to `main` with concise messages.
 - When using shell globs, quote paths containing `[brackets]`.

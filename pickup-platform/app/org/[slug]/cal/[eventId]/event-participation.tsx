@@ -30,6 +30,7 @@ export async function EventParticipation({ slug, eventId, org, event }: Props) {
   const accent = org.branding.accent_color
   const accentText = readableTextColor(accent)
   const waitlistEnabled = event.capacity != null
+  const features = orgFeatures(org)
 
   const [{ participant, mySignup }, roster, waitlist] = await Promise.all([
     getSessionToken().then((token) => getSessionInfo(token, org.id, event.id)),
@@ -45,7 +46,7 @@ export async function EventParticipation({ slug, eventId, org, event }: Props) {
   const waitlistMySignupId = isWaitlisted ? mySignup?.signup_id ?? null : null
 
   let badgesByParticipantId: Record<string, RosterBadgeInfo> = {}
-  if (!isCancelled && orgFeatures(org).user_badges) {
+  if (!isCancelled && features.user_badges) {
     const participantIds = roster.map((e) => e.participant_id)
     const [engagementStats, leaderboardUnlocked, isInauguralSession] = await Promise.all([
       getParticipantEngagementStats(org.id, participantIds),
@@ -56,42 +57,6 @@ export async function EventParticipation({ slug, eventId, org, event }: Props) {
       capsLeaderUnlocked: leaderboardUnlocked,
       newBadgeUnlocked: !isInauguralSession,
     })
-  }
-
-  if (isCancelled) {
-    return (
-      <ParticipationPanel
-        orgSlug={slug}
-        orgId={org.id}
-        eventId={eventId}
-        accent={accent}
-        accentText={accentText}
-        isFull={isFull}
-        waitlistEnabled={waitlistEnabled}
-        isOnline={event.location_is_online}
-        spotsLeft={spotsLeft}
-        participant={participant}
-        mySignup={mySignup}
-        eventTitle={eventName(event)}
-        eventWhen={formatEventWhenLine(event)}
-        locationLabel={event.location_label}
-        locationMapsUrl={event.location_is_online ? null : event.location_maps_url.trim() || null}
-        returningSignupModalEnabled={orgFeatures(org).returning_signup_modal}
-        publicRosterEnabled={orgFeatures(org).public_roster}
-        guestsEnabled={orgFeatures(org).guest_signups}
-        roster={roster}
-        waitlist={waitlist}
-        headcount={headcount}
-        isEnded={isEnded}
-        isCancelled={isCancelled}
-        confirmedMySignupId={confirmedMySignupId}
-        waitlistMySignupId={waitlistMySignupId}
-        canUpdateStatus={canUpdateStatus}
-        badgesByParticipantId={badgesByParticipantId}
-        rosterHeading="Who's coming"
-        cancelledCallout={<CancelledCallout hasSignup={!!mySignup} />}
-      />
-    )
   }
 
   return (
@@ -111,18 +76,22 @@ export async function EventParticipation({ slug, eventId, org, event }: Props) {
       eventWhen={formatEventWhenLine(event)}
       locationLabel={event.location_label}
       locationMapsUrl={event.location_is_online ? null : event.location_maps_url.trim() || null}
-      returningSignupModalEnabled={orgFeatures(org).returning_signup_modal}
-      publicRosterEnabled={orgFeatures(org).public_roster}
-      guestsEnabled={orgFeatures(org).guest_signups}
+      returningSignupModalEnabled={features.returning_signup_modal}
+      publicRosterEnabled={features.public_roster}
+      guestsEnabled={features.guest_signups}
       roster={roster}
       waitlist={waitlist}
       headcount={headcount}
       isEnded={isEnded}
+      isCancelled={isCancelled}
       confirmedMySignupId={confirmedMySignupId}
       waitlistMySignupId={waitlistMySignupId}
       canUpdateStatus={canUpdateStatus}
       badgesByParticipantId={badgesByParticipantId}
-      rosterHeading={isEnded ? 'Who came' : "Who's coming"}
+      rosterHeading={isCancelled ? "Who's coming" : isEnded ? 'Who came' : "Who's coming"}
+      cancelledCallout={
+        isCancelled ? <CancelledCallout hasSignup={!!mySignup} /> : undefined
+      }
     />
   )
 }

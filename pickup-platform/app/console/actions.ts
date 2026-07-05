@@ -9,19 +9,13 @@ import {
   getScheduleDeleteImpact,
   isStructuralScheduleChange,
   type Schedule,
-  type ScheduleFormValues,
 } from '@/lib/schedules'
 import { geocodeAddress } from '@/lib/geocode'
-import { localDateTimeInZoneToUtcIso } from '@/lib/datetime'
 import { type EventStatus, initialEventStatus, getEventByRef, isEventEnded } from '@/lib/events'
 import { getOrgForMember } from '@/lib/orgs'
 import { isValidSlug, normalizeSlug } from '@/lib/tenancy/reserved-slugs'
 import { MAX_ORG_LINKS, normalizeLinkUrl } from '@/lib/social-links'
 import { orgSettings, orgWaitlistSettings, type OrgFeatures, type OrgWaitlistSettings } from '@/lib/org-features'
-import {
-  ADDITIONAL_INFORMATION_MAX_LENGTH,
-  normalizeAdditionalInformation,
-} from '@/lib/additional-information'
 import { isInteriorOperator } from '@/lib/interior'
 import {
   ORG_LOGO_BUCKET,
@@ -32,6 +26,9 @@ import {
   publicLogoUrl,
   validateLogoFile,
 } from '@/lib/org-logo'
+import { parseSessionFormData } from '@/lib/console/parse-session-form'
+import { parseScheduleFormData } from '@/lib/console/parse-schedule-form'
+import { parseLocationFormData } from '@/lib/console/parse-location-form'
 
 async function requireOrgAdmin(slug: string) {
   const org = await getOrgForMember(slug)
@@ -39,166 +36,6 @@ async function requireOrgAdmin(slug: string) {
     throw new Error('Not authorized')
   }
   return org
-}
-
-/** Returns null when the field is blank/invalid (capacity = "no limit"). */
-function parseOptionalInt(value: FormDataEntryValue | null): number | null {
-  const raw = String(value ?? '').trim()
-  if (!raw) return null
-  const n = Number.parseInt(raw, 10)
-  return Number.isFinite(n) ? n : null
-}
-
-function parseOptionalMinParticipants(
-  value: FormDataEntryValue | null,
-): { value: number | null; error?: string } {
-  const raw = String(value ?? '').trim()
-  if (!raw) return { value: null }
-  const n = Number.parseInt(raw, 10)
-  if (!Number.isFinite(n) || n < 2 || n > 999) {
-    return { value: null, error: 'Min participants must be between 2 and 999.' }
-  }
-  return { value: n }
-}
-
-type ParsedSessionFields = {
-  title: string
-  locationId: string
-  startsAtIso: string
-  timezone: string
-  durationMin: number
-  capacity: number | null
-  minPlayers: number | null
-  additionalInformation: string
-}
-
-function parseSessionFormData(
-  formData: FormData,
-): { ok: true; values: ParsedSessionFields } | { ok: false; error: string } {
-  const title = String(formData.get('title') ?? '').trim()
-  const locationId = String(formData.get('location_id') ?? '')
-  const startsAtLocal = String(formData.get('starts_at') ?? '')
-  const timezone = String(formData.get('timezone') ?? 'UTC').trim()
-  const durationMin = Number.parseInt(String(formData.get('duration_min') ?? '90'), 10)
-  const capacity = parseOptionalInt(formData.get('capacity'))
-  const minParticipants = parseOptionalMinParticipants(formData.get('min_players'))
-
-  const additionalInformation = normalizeAdditionalInformation(
-    formData.get('additional_information'),
-  )
-  if (additionalInformation.length > ADDITIONAL_INFORMATION_MAX_LENGTH) {
-    return {
-      ok: false,
-      error: `Additional information must be ${ADDITIONAL_INFORMATION_MAX_LENGTH} characters or fewer.`,
-    }
-  }
-
-  if (!title || !locationId || !startsAtLocal) {
-    return { ok: false, error: 'Session name, location, and date are required.' }
-  }
-  if (!Number.isFinite(durationMin) || durationMin < 15 || durationMin > 480) {
-    return { ok: false, error: 'Duration must be between 15 and 480 minutes.' }
-  }
-  if (minParticipants.error) {
-    return { ok: false, error: minParticipants.error }
-  }
-  if (
-    minParticipants.value != null &&
-    capacity != null &&
-    minParticipants.value > capacity
-  ) {
-    return { ok: false, error: 'Min participants cannot exceed capacity.' }
-  }
-
-  let startsAtIso: string
-  try {
-    startsAtIso = localDateTimeInZoneToUtcIso(startsAtLocal, timezone)
-  } catch {
-    return { ok: false, error: 'Invalid date or time.' }
-  }
-
-  return {
-    ok: true,
-    values: {
-      title,
-      locationId,
-      startsAtIso,
-      timezone,
-      durationMin,
-      capacity,
-      minPlayers: minParticipants.value,
-      additionalInformation,
-    },
-  }
-}
-
-function parseScheduleFormData(
-  formData: FormData,
-): { ok: true; values: ScheduleFormValues } | { ok: false; error: string } {
-  const locationId = String(formData.get('location_id') ?? '')
-  const title = String(formData.get('title') ?? '').trim()
-  const startTime = String(formData.get('start_time') ?? '18:00')
-  const timezone = String(formData.get('timezone') ?? 'UTC').trim()
-  const capacity = parseOptionalInt(formData.get('capacity'))
-  const minParticipants = parseOptionalMinParticipants(formData.get('min_players'))
-  const durationMin = Number.parseInt(String(formData.get('duration_min') ?? '90'), 10)
-  const intervalWeeks = Number.parseInt(String(formData.get('interval_weeks') ?? '1'), 10)
-  const byweekday = formData
-    .getAll('byweekday')
-    .map((v) => Number.parseInt(String(v), 10))
-    .filter((n) => n >= 0 && n <= 6)
-
-  if (!locationId) {
-    return { ok: false, error: 'Pick a location.' }
-  }
-  if (!title) {
-    return { ok: false, error: 'Enter a recurring session name.' }
-  }
-  if (byweekday.length === 0) {
-    return { ok: false, error: 'Pick at least one day of the week.' }
-  }
-  if (!/^\d{2}:\d{2}$/.test(startTime)) {
-    return { ok: false, error: 'Invalid start time.' }
-  }
-  if (minParticipants.error) {
-    return { ok: false, error: minParticipants.error }
-  }
-  if (
-    minParticipants.value != null &&
-    capacity != null &&
-    minParticipants.value > capacity
-  ) {
-    return { ok: false, error: 'Min participants cannot exceed capacity.' }
-  }
-  if (!Number.isFinite(intervalWeeks) || intervalWeeks < 1 || intervalWeeks > 52) {
-    return { ok: false, error: 'Frequency must be between every 1 and 52 weeks.' }
-  }
-
-  const additionalInformation = normalizeAdditionalInformation(
-    formData.get('additional_information'),
-  )
-  if (additionalInformation.length > ADDITIONAL_INFORMATION_MAX_LENGTH) {
-    return {
-      ok: false,
-      error: `Additional information must be ${ADDITIONAL_INFORMATION_MAX_LENGTH} characters or fewer.`,
-    }
-  }
-
-  return {
-    ok: true,
-    values: {
-      locationId,
-      title,
-      startTime,
-      timezone,
-      capacity,
-      minPlayers: minParticipants.value,
-      durationMin,
-      intervalWeeks,
-      byweekday,
-      additionalInformation,
-    },
-  }
 }
 
 export async function createOrg(formData: FormData) {
@@ -274,23 +111,6 @@ export async function createLocation(
 
   revalidatePath(`/console/${orgSlug}`)
   return { ok: true }
-}
-
-function parseLocationFormData(formData: FormData) {
-  const label = String(formData.get('label') ?? '').trim()
-  const isOnline = formData.get('is_online') === 'on' || formData.get('is_online') === 'true'
-  const address = String(formData.get('address') ?? '').trim()
-  const mapsUrl = String(formData.get('maps_url') ?? '').trim()
-  const meetingUrl = String(formData.get('meeting_url') ?? '').trim()
-
-  if (!label) {
-    return { ok: false as const, error: 'Location name is required.' }
-  }
-
-  return {
-    ok: true as const,
-    values: { label, isOnline, address, mapsUrl, meetingUrl },
-  }
 }
 
 export async function updateLocation(

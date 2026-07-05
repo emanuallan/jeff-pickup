@@ -32,17 +32,15 @@ type Props = {
 }
 
 export async function SessionPanel({ slug, org, event, eventId }: Props) {
-  const tracking = await resolvePageViewTrackingKeys()
+  after(async () => {
+    const { viewerKey, sessionToken } = await resolvePageViewTrackingKeys()
+    if (!viewerKey) return
 
-  const { viewerKey, sessionToken } = tracking
-  if (viewerKey) {
-    after(async () => {
-      const participantId = sessionToken
-        ? await lookupParticipantId(org.id, sessionToken)
-        : null
-      await recordEventPageView(event.id, { viewerKey, participantId })
-    })
-  }
+    const participantId = sessionToken
+      ? await lookupParticipantId(org.id, sessionToken)
+      : null
+    await recordEventPageView(event.id, { viewerKey, participantId })
+  })
 
   const isCancelled = isEventCancelled(event.status)
   const cancelledClasses = cancelledEventClasses(isCancelled)

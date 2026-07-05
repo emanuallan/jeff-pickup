@@ -84,6 +84,9 @@ weekly streaks) and badges are computed from signups/events.
   a URL field only (no upload pipeline yet); SMS/OTP scaffolded but dormant.
 
 ## Working agreements
+- **Testing (alpha+):** Before commit/push on new features or major refactors, run `npm run test` in
+  pickup-platform/ and ensure it passes. New features need new tests; refactors must update or fix
+  existing tests. Stack: Vitest + Testing Library (`npm run test`, `npm run test:watch`).
 - Verify production builds with `npm run build` in pickup-platform/ after substantive changes.
 - Only commit/push when I explicitly ask. When I do: stage relevant files, write a concise
   conventional-style message, push to main. (Note: shell globbing needs paths with [brackets] quoted.)

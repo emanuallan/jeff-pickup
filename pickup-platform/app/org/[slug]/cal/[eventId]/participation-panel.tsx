@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import type { Participant, MySignup } from '@/lib/participant'
 import type { RosterEntry, SignupListStatus } from '@/lib/signups'
 import type { RosterBadgeInfo } from '@/lib/badges'
@@ -95,8 +95,14 @@ function ParticipationPanelBody({
     mySignup && canUpdateStatus ? mySignup : controlsClosing ? lastControlsSignupRef.current : null
   const showControlsSection = Boolean(controlsSignup && (showControls || controlsClosing))
   const isWaitlisted = mySignup?.list_status === 'waitlisted'
-  const openStatusSheet =
-    showControls && !isWaitlisted ? () => setStatusSheetOpen(true) : undefined
+  const openStatusSheet = useCallback(() => {
+    setStatusSheetOpen(true)
+  }, [])
+  const closeStatusSheet = useCallback(() => {
+    setStatusSheetOpen(false)
+  }, [])
+  const statusSheetHandler =
+    showControls && !isWaitlisted ? openStatusSheet : undefined
   const showConfirmation = Boolean(mySignup && !isCancelled && !isEnded && !joinClosing)
   const showRoster = publicRosterEnabled && !isCancelled
   const showJoinPanel = (showJoin || joinClosing) && !(controlsClosing && !mySignup)
@@ -139,7 +145,7 @@ function ParticipationPanelBody({
             isWaitlisted={isWaitlisted}
             canLeave={!isEnded}
             canUpdateStatus={canUpdateStatus}
-            onOpenStatusSheet={openStatusSheet}
+            onOpenStatusSheet={statusSheetHandler}
             showAccountActions={!showRoster}
             listStatus={mySignup.list_status as SignupListStatus}
             guestsEnabled={guestsEnabled}
@@ -164,7 +170,7 @@ function ParticipationPanelBody({
             orgSlug={joinProps.orgSlug}
             eventId={joinProps.eventId}
             accent={joinProps.accent}
-            onOpenStatusSheet={openStatusSheet}
+            onOpenStatusSheet={statusSheetHandler}
           />
         </div>
 
@@ -193,26 +199,13 @@ function ParticipationPanelBody({
             />
           </AnimatedPresenceSection>
         ) : null}
+        </section>
+        ) : null}
 
         {showControls && mySignup && !isWaitlisted ? (
           <SignedInStatusSheet
             open={statusSheetOpen}
-            onClose={() => setStatusSheetOpen(false)}
-            orgSlug={joinProps.orgSlug}
-            eventId={joinProps.eventId}
-            signupId={mySignup.signup_id}
-            arrivalStatus={mySignup.arrival_status as ArrivalStatus}
-            isOnline={joinProps.isOnline}
-            accent={joinProps.accent}
-          />
-        ) : null}
-        </section>
-        ) : null}
-
-        {!showRoster && showControls && mySignup && !isWaitlisted ? (
-          <SignedInStatusSheet
-            open={statusSheetOpen}
-            onClose={() => setStatusSheetOpen(false)}
+            onClose={closeStatusSheet}
             orgSlug={joinProps.orgSlug}
             eventId={joinProps.eventId}
             signupId={mySignup.signup_id}
@@ -241,25 +234,46 @@ export function ParticipationPanel(props: Props) {
     }
   }, [mySignup, isEnded, isCancelled])
 
-  const joinProps: JoinProps = {
-    orgSlug: rest.orgSlug,
-    orgId: rest.orgId,
-    eventId: rest.eventId,
-    accent: rest.accent,
-    accentText: rest.accentText,
-    isFull: rest.isFull,
-    waitlistEnabled: rest.waitlistEnabled,
-    isOnline: rest.isOnline,
-    spotsLeft: rest.spotsLeft,
-    participant: rest.participant,
-    mySignup,
-    eventTitle: rest.eventTitle,
-    eventWhen: rest.eventWhen,
-    locationLabel: rest.locationLabel,
-    locationMapsUrl: rest.locationMapsUrl,
-    returningSignupModalEnabled: rest.returningSignupModalEnabled,
-    guestsEnabled: rest.guestsEnabled,
-  }
+  const joinProps = useMemo<JoinProps>(
+    () => ({
+      orgSlug: rest.orgSlug,
+      orgId: rest.orgId,
+      eventId: rest.eventId,
+      accent: rest.accent,
+      accentText: rest.accentText,
+      isFull: rest.isFull,
+      waitlistEnabled: rest.waitlistEnabled,
+      isOnline: rest.isOnline,
+      spotsLeft: rest.spotsLeft,
+      participant: rest.participant,
+      mySignup,
+      eventTitle: rest.eventTitle,
+      eventWhen: rest.eventWhen,
+      locationLabel: rest.locationLabel,
+      locationMapsUrl: rest.locationMapsUrl,
+      returningSignupModalEnabled: rest.returningSignupModalEnabled,
+      guestsEnabled: rest.guestsEnabled,
+    }),
+    [
+      rest.orgSlug,
+      rest.orgId,
+      rest.eventId,
+      rest.accent,
+      rest.accentText,
+      rest.isFull,
+      rest.waitlistEnabled,
+      rest.isOnline,
+      rest.spotsLeft,
+      rest.participant,
+      mySignup,
+      rest.eventTitle,
+      rest.eventWhen,
+      rest.locationLabel,
+      rest.locationMapsUrl,
+      rest.returningSignupModalEnabled,
+      rest.guestsEnabled,
+    ],
+  )
 
   return (
     <ParticipationMotionProvider

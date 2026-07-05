@@ -1,37 +1,13 @@
 import type { Metadata } from 'next'
 import { ROBOTS_PUBLIC } from '@/lib/seo'
+import {
+  consoleOrgUrl,
+  orgBaseUrl,
+  orgEventsUrl,
+  rootBaseUrl,
+} from '@/lib/site-url'
 
-/**
- * Canonical public base URL for an org's subdomain.
- * Built deterministically from the slug so it never leaks the internal
- * /org/[slug] rewrite path or an unreliable header-derived host.
- */
-export function orgBaseUrl(slug: string): string {
-  const root = process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? 'organizr.co'
-  if (process.env.NODE_ENV === 'development') {
-    return `http://${slug}.localhost:3000`
-  }
-  return `https://${slug}.${root}`
-}
-
-/** Public org home on the org subdomain — canonical entry point for a group. */
-export function orgEventsUrl(slug: string): string {
-  return orgBaseUrl(slug)
-}
-
-/** Canonical apex URL for the marketing/landing page (no org subdomain). */
-export function rootBaseUrl(): string {
-  const root = process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? 'organizr.co'
-  if (process.env.NODE_ENV === 'development') {
-    return 'http://localhost:3000'
-  }
-  return `https://${root}`
-}
-
-/** Organizer console for an org — always on the apex domain. */
-export function consoleOrgUrl(slug: string): string {
-  return `${rootBaseUrl()}/console/${slug}`
-}
+export { consoleOrgUrl, orgBaseUrl, orgEventsUrl, rootBaseUrl } from '@/lib/site-url'
 
 /**
  * Trim a description to a target max length on a word boundary. Social previews

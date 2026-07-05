@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import type { Location } from '@/lib/locations'
+import { browserTimeZone } from '@/lib/datetime'
 import { btnSecondary } from '../_components/console-ui'
 import { ConsoleSubmitButton } from '../_components/console-submit-button'
 import { useConsoleToast } from '../_components/console-toast'
@@ -23,16 +24,12 @@ export function ScheduleForm({ orgSlug, locations, createSchedule, onSuccess }: 
   const [pending, setPending] = useState(false)
 
   useEffect(() => {
-    try {
-      setTimezone(Intl.DateTimeFormat().resolvedOptions().timeZone)
-    } catch {
-      setTimezone('UTC')
-    }
+    setTimezone(browserTimeZone())
   }, [])
 
   async function handleSubmit(formData: FormData) {
     setPending(true)
-    formData.set('timezone', Intl.DateTimeFormat().resolvedOptions().timeZone)
+    formData.set('timezone', browserTimeZone())
     const result = await createSchedule(orgSlug, formData)
     setPending(false)
     if (result?.error) {

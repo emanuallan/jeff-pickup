@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import type { EventWithLocation } from '@/lib/events'
 import { eventDisplayName } from '@/lib/events'
 import type { Org } from '@/lib/orgs'
-import { orgBaseUrl, rootBaseUrl } from '@/lib/og-metadata'
+import { orgBaseUrl, rootBaseUrl } from '@/lib/site-url'
 
 export const ROBOTS_PUBLIC: Metadata['robots'] = { index: true, follow: true }
 export const ROBOTS_PRIVATE: Metadata['robots'] = { index: false, follow: false }
