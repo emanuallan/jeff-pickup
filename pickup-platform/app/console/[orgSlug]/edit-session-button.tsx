@@ -33,7 +33,7 @@ export function EditSessionButton({
         onClick={() => setOpen(true)}
         className={`${chipAction} text-zinc-300 hover:bg-white/5 hover:text-zinc-100`}
       >
-        Edit session
+        Edit
       </button>
 
       <BottomSheet

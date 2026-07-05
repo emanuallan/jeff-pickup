@@ -49,17 +49,12 @@ export function SessionEventCard({
         </div>
         <EventStatusSelect orgSlug={orgSlug} eventId={event.short_id} status={event.status} />
       </div>
-
-      <div className="mt-3">
-        <EventAnnouncementEditor
-          orgSlug={orgSlug}
-          eventId={event.short_id}
-          announcement={event.announcement}
-          readOnly={past}
-        />
-      </div>
-
-      <div className="mt-3 flex items-center justify-between gap-2 border-t border-white/5 pt-3">
+      <EventAnnouncementEditor
+        orgSlug={orgSlug}
+        eventId={event.short_id}
+        announcement={event.announcement}
+      />
+      <div className="mt-2.5 flex items-center justify-between gap-2 border-t border-white/5 pt-2">
         <div className="flex flex-wrap items-center gap-1">
           {!past ? (
             <EditSessionButton
