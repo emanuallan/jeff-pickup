@@ -1,3 +1,5 @@
+import { ORG_PUBLIC_CONTENT_MAX } from '@/lib/org-public-layout'
+
 type Props = {
   variant?: 'list' | 'detail' | 'leaderboard'
 }
@@ -9,7 +11,7 @@ type Props = {
  */
 export function LoadingScreen({ variant = 'list' }: Props) {
   return (
-    <main className="mx-auto min-h-dvh max-w-lg px-5 py-10 sm:px-6">
+    <main className={`mx-auto min-h-dvh px-5 py-10 sm:px-6 ${ORG_PUBLIC_CONTENT_MAX}`}>
       <div className={variant === 'detail' ? 'flex items-center justify-between' : 'flex justify-end'}>
         {variant === 'detail' ? <div className="h-5 w-24 rounded bg-zinc-800/80" /> : null}
         <div className="h-9 w-20 rounded-full bg-zinc-800/80" />

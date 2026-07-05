@@ -11,6 +11,7 @@ import {
   type OrgPublicNavItem,
 } from '@/lib/org-public-nav'
 import { accentOnDark } from '@/lib/colors'
+import { ORG_PUBLIC_CONTENT_MAX } from '@/lib/org-public-layout'
 import { OrganizrLogo } from '@/app/_components/organizr-logo'
 import { OrganizerConsoleFooterLink } from '../../_components/organizer-console-footer-link'
 import { IconLeaderboard, IconMatchday } from './org-home-nav-icons'
@@ -36,30 +37,26 @@ type Indicator = {
   width: number
 }
 
+type NavTabsProps = {
+  items: OrgPublicNavItem[]
+  activeKey: string
+  accent: string
+  accentFg: string
+  navRef: React.RefObject<HTMLElement | null>
+  linkRefs: React.MutableRefObject<Map<string, HTMLAnchorElement>>
+  indicator: Indicator | null
+  placement: 'bottom' | 'top'
+}
+
 function NavIcon({ itemKey }: { itemKey: OrgPublicNavItem['key'] }) {
   if (itemKey === 'leaderboard') return <IconLeaderboard />
   return <IconMatchday />
 }
 
-export function OrgHomeBottomNav({ items, accent, basePath, slug, isOrganizer = false }: Props) {
-  const pathname = usePathname()
-  const searchParams = useSearchParams()
-  const tab = searchParams.get('tab')
-  const cal = resolveCalEventId(searchParams.get('cal'), searchParams.get('ev'))
-  const activeKey = orgPublicNavActiveKey(pathname, tab, basePath)
+function useOrgHomeNavIndicator(activeKey: string, navItems: OrgPublicNavItem[]) {
   const navRef = useRef<HTMLElement>(null)
   const linkRefs = useRef(new Map<string, HTMLAnchorElement>())
   const [indicator, setIndicator] = useState<Indicator | null>(null)
-
-  const navItems = useMemo(
-    () =>
-      items.map((item) =>
-        item.key === 'sessions'
-          ? { ...item, href: orgPublicTabHref(basePath, 'sessions', cal) }
-          : item,
-      ),
-    [items, basePath, cal],
-  )
 
   const measureIndicator = useCallback(() => {
     const nav = navRef.current
@@ -80,7 +77,7 @@ export function OrgHomeBottomNav({ items, accent, basePath, slug, isOrganizer = 
 
   useLayoutEffect(() => {
     measureIndicator()
-  }, [measureIndicator, navItems, pathname, tab])
+  }, [measureIndicator, navItems])
 
   useLayoutEffect(() => {
     const nav = navRef.current
@@ -102,6 +99,107 @@ export function OrgHomeBottomNav({ items, accent, basePath, slug, isOrganizer = 
     }
   }, [measureIndicator, navItems])
 
+  return { navRef, linkRefs, indicator }
+}
+
+function OrgHomeNavTabs({
+  items,
+  activeKey,
+  accent,
+  accentFg,
+  navRef,
+  linkRefs,
+  indicator,
+  placement,
+}: NavTabsProps) {
+  const isTop = placement === 'top'
+
+  return (
+    <nav
+      ref={navRef}
+      aria-label="Group sections"
+      className={`relative grid ${ORG_PUBLIC_CONTENT_MAX} ${
+        isTop
+          ? 'border-b border-zinc-800/80 pb-0'
+          : 'border-t border-zinc-800/80 px-2 pt-1'
+      }`}
+      style={{ gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))` }}
+    >
+      {indicator ? (
+        <span
+          aria-hidden
+          className={`pointer-events-none absolute rounded-full transition-[left,width] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${
+            isTop
+              ? 'bottom-0 h-0.5'
+              : 'top-0 h-0.5'
+          }`}
+          style={{
+            left: indicator.left,
+            width: indicator.width,
+            backgroundColor: accent,
+          }}
+        />
+      ) : null}
+      {items.map((item) => {
+        const active = item.key === activeKey
+        return (
+          <Link
+            key={item.key}
+            ref={(node) => {
+              if (node) {
+                linkRefs.current.set(item.key, node)
+              } else {
+                linkRefs.current.delete(item.key)
+              }
+            }}
+            href={item.href}
+            scroll={item.key === 'sessions'}
+            aria-current={active ? 'page' : undefined}
+            className={`relative flex flex-col items-center gap-1 px-2 transition-colors ${
+              isTop ? 'py-3' : 'py-2.5'
+            } ${active ? 'text-zinc-100' : 'text-zinc-500 hover:text-zinc-300'}`}
+            style={active ? { color: accentFg } : undefined}
+          >
+            <NavIcon itemKey={item.key} />
+            <span
+              className={`font-medium leading-none tracking-wide ${
+                isTop ? 'text-xs' : 'text-[10px]'
+              }`}
+            >
+              {item.label}
+            </span>
+          </Link>
+        )
+      })}
+    </nav>
+  )
+}
+
+function useOrgHomeNavState({ items, basePath }: Pick<Props, 'items' | 'basePath'>) {
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
+  const tab = searchParams.get('tab')
+  const cal = resolveCalEventId(searchParams.get('cal'), searchParams.get('ev'))
+  const activeKey = orgPublicNavActiveKey(pathname, tab, basePath)
+
+  const navItems = useMemo(
+    () =>
+      items.map((item) =>
+        item.key === 'sessions'
+          ? { ...item, href: orgPublicTabHref(basePath, 'sessions', cal) }
+          : item,
+      ),
+    [items, basePath, cal],
+  )
+
+  return { navItems, activeKey, pathname, tab }
+}
+
+/** Fixed bottom chrome — mobile only. */
+export function OrgHomeBottomNav({ items, accent, basePath, slug, isOrganizer = false }: Props) {
+  const { navItems, activeKey } = useOrgHomeNavState({ items, basePath })
+  const { navRef, linkRefs, indicator } = useOrgHomeNavIndicator(activeKey, navItems)
+
   if (navItems.length === 0) {
     return null
   }
@@ -110,53 +208,18 @@ export function OrgHomeBottomNav({ items, accent, basePath, slug, isOrganizer = 
   const accentFg = accentOnDark(accent)
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-30 bg-zinc-950/95 backdrop-blur-md">
+    <div className="fixed inset-x-0 bottom-0 z-30 bg-zinc-950/95 backdrop-blur-md lg:hidden">
       {showTabs ? (
-        <nav
-          ref={navRef}
-          aria-label="Group sections"
-          className="relative mx-auto grid max-w-lg border-t border-zinc-800/80 px-2 pt-1"
-          style={{ gridTemplateColumns: `repeat(${navItems.length}, minmax(0, 1fr))` }}
-        >
-          {indicator ? (
-            <span
-              aria-hidden
-              className="pointer-events-none absolute top-0 h-0.5 rounded-full transition-[left,width] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]"
-              style={{
-                left: indicator.left,
-                width: indicator.width,
-                backgroundColor: accent,
-              }}
-            />
-          ) : null}
-          {navItems.map((item) => {
-            const active = item.key === activeKey
-            return (
-              <Link
-                key={item.key}
-                ref={(node) => {
-                  if (node) {
-                    linkRefs.current.set(item.key, node)
-                  } else {
-                    linkRefs.current.delete(item.key)
-                  }
-                }}
-                href={item.href}
-                scroll={item.key === 'sessions'}
-                aria-current={active ? 'page' : undefined}
-                className={`relative flex flex-col items-center gap-1 px-2 py-2.5 transition-colors ${
-                  active ? 'text-zinc-100' : 'text-zinc-500 hover:text-zinc-300'
-                }`}
-                style={active ? { color: accentFg } : undefined}
-              >
-                <NavIcon itemKey={item.key} />
-                <span className="text-[10px] font-medium leading-none tracking-wide">
-                  {item.label}
-                </span>
-              </Link>
-            )
-          })}
-        </nav>
+        <OrgHomeNavTabs
+          items={navItems}
+          activeKey={activeKey}
+          accent={accent}
+          accentFg={accentFg}
+          navRef={navRef}
+          linkRefs={linkRefs}
+          indicator={indicator}
+          placement="bottom"
+        />
       ) : null}
 
       {isOrganizer ? (
@@ -192,6 +255,33 @@ export function OrgHomeBottomNav({ items, accent, basePath, slug, isOrganizer = 
           </a>
         </footer>
       )}
+    </div>
+  )
+}
+
+/** Inline tab bar — desktop only. */
+export function OrgHomeDesktopNav({ items, accent, basePath }: Pick<Props, 'items' | 'accent' | 'basePath'>) {
+  const { navItems, activeKey } = useOrgHomeNavState({ items, basePath })
+  const { navRef, linkRefs, indicator } = useOrgHomeNavIndicator(activeKey, navItems)
+
+  if (navItems.length <= 1) {
+    return null
+  }
+
+  const accentFg = accentOnDark(accent)
+
+  return (
+    <div className="hidden lg:block">
+      <OrgHomeNavTabs
+        items={navItems}
+        activeKey={activeKey}
+        accent={accent}
+        accentFg={accentFg}
+        navRef={navRef}
+        linkRefs={linkRefs}
+        indicator={indicator}
+        placement="top"
+      />
     </div>
   )
 }

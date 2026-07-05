@@ -1,4 +1,10 @@
 import type { ReactNode } from 'react'
+import {
+  ORG_PUBLIC_CONTENT_MAX,
+  ORG_PUBLIC_DESKTOP_SHELL_PADDING,
+} from '@/lib/org-public-layout'
+import { OrgPublicBackdrop } from '../../_components/org-public-backdrop'
+import { OrgPublicSiteFooter } from '../../_components/org-public-site-footer'
 
 /** Bottom padding when tab bar + slim footer strip are shown. */
 export const ORG_HOME_BOTTOM_CHROME_PADDING =
@@ -21,11 +27,18 @@ export function OrgHomeShell({
   bottomChrome,
   footerOnly = false,
   isOrganizer = false,
+  slug,
+  accent,
+  showDesktopSiteFooter = true,
 }: {
   children: ReactNode
   bottomChrome: ReactNode
   footerOnly?: boolean
   isOrganizer?: boolean
+  slug: string
+  accent: string
+  /** When false, skip the inline desktop footer (e.g. demo / organizer toolbar handles it). */
+  showDesktopSiteFooter?: boolean
 }) {
   const bottomPadding = footerOnly
     ? isOrganizer
@@ -37,10 +50,16 @@ export function OrgHomeShell({
 
   return (
     <>
+      <OrgPublicBackdrop accent={accent} />
       <main
-        className={`mx-auto flex min-h-dvh max-w-lg flex-col px-5 pt-6 sm:px-6 sm:pt-8 ${bottomPadding}`}
+        className={`mx-auto flex min-h-dvh flex-col px-5 pt-6 sm:px-6 sm:pt-8 ${ORG_PUBLIC_CONTENT_MAX} ${bottomPadding} ${ORG_PUBLIC_DESKTOP_SHELL_PADDING}`}
       >
         {children}
+        {showDesktopSiteFooter ? (
+          <div className="hidden lg:block">
+            <OrgPublicSiteFooter slug={slug} />
+          </div>
+        ) : null}
       </main>
       {bottomChrome}
     </>

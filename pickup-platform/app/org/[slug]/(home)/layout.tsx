@@ -13,10 +13,12 @@ import {
   buildOrgCalendarShareText,
   buildOrgCalendarShareTitle,
 } from '@/lib/public-share-text'
+import { rootBaseUrl } from '@/lib/og-metadata'
 import { OrgHeader } from '../_components/org-header'
 import { LinksButton } from '../links-button'
+import { OrganizerConsoleToolbarLink } from '../_components/organizer-console-toolbar-link'
 import { OrgHomeShell } from './_components/org-home-shell'
-import { OrgHomeBottomNav } from './_components/org-home-bottom-nav'
+import { OrgHomeBottomNav, OrgHomeDesktopNav } from './_components/org-home-bottom-nav'
 import { OrgHomeShareButton } from './_components/org-home-share-button'
 
 type Props = {
@@ -54,10 +56,15 @@ export default async function OrgHomeLayout({ children, params }: Props) {
   const defaultEventShortId = featured?.short_id ?? events[0]?.short_id ?? null
   const isOrganizer = !!membership
 
+  const showDesktopSiteFooter = !isOrganizer && slug !== 'demo'
+
   return (
     <OrgHomeShell
+      slug={slug}
+      accent={accent}
       footerOnly={navItems.length <= 1}
       isOrganizer={isOrganizer}
+      showDesktopSiteFooter={showDesktopSiteFooter}
       bottomChrome={
         <Suspense fallback={null}>
           <OrgHomeBottomNav
@@ -70,36 +77,83 @@ export default async function OrgHomeLayout({ children, params }: Props) {
         </Suspense>
       }
     >
-      <nav className="flex min-h-9 items-center justify-between gap-3">
-        <div className="flex min-w-0 items-center gap-3">
-          <Suspense
-            fallback={
-              <span
-                className="inline-flex h-[34px] w-[76px] shrink-0 rounded-full border border-zinc-800 bg-zinc-900/60"
-                aria-hidden
+      <div className="lg:hidden">
+        <nav className="flex min-h-9 items-center justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-3">
+            <Suspense
+              fallback={
+                <span
+                  className="inline-flex h-[34px] w-[76px] shrink-0 rounded-full border border-zinc-800 bg-zinc-900/60"
+                  aria-hidden
+                />
+              }
+            >
+              <OrgHomeShareButton
+                accent={accent}
+                calendar={calendarShare}
+                events={eventShares}
+                defaultEventShortId={defaultEventShortId}
               />
-            }
-          >
-            <OrgHomeShareButton
-              accent={accent}
-              calendar={calendarShare}
-              events={eventShares}
-              defaultEventShortId={defaultEventShortId}
-            />
-          </Suspense>
+            </Suspense>
+          </div>
+          {socialLinks.length > 0 ? <LinksButton links={socialLinks} /> : null}
+        </nav>
+
+        <OrgHeader
+          org={org}
+          title={org.name}
+          subtitle={org.description}
+          logoPriority
+          className="mt-2"
+        />
+      </div>
+
+      <div className="hidden lg:block">
+        <div className="flex items-start justify-between gap-10">
+          <OrgHeader
+            org={org}
+            title={org.name}
+            subtitle={org.description}
+            logoPriority
+            layout="desktop"
+            className="min-w-0 flex-1"
+          />
+
+          <div className="flex shrink-0 flex-col items-end gap-3 pt-1">
+            <nav className="flex items-center gap-2">
+              <Suspense
+                fallback={
+                  <span
+                    className="inline-flex h-[34px] w-[76px] shrink-0 rounded-full border border-zinc-800 bg-zinc-900/60"
+                    aria-hidden
+                  />
+                }
+              >
+                <OrgHomeShareButton
+                  accent={accent}
+                  calendar={calendarShare}
+                  events={eventShares}
+                  defaultEventShortId={defaultEventShortId}
+                />
+              </Suspense>
+              {socialLinks.length > 0 ? <LinksButton links={socialLinks} /> : null}
+              {isOrganizer ? (
+                <OrganizerConsoleToolbarLink slug={slug} label="Back to console" />
+              ) : slug === 'demo' ? (
+                <OrganizerConsoleToolbarLink
+                  slug={slug}
+                  label="Back to Organizr"
+                  href={rootBaseUrl()}
+                />
+              ) : null}
+            </nav>
+          </div>
         </div>
-        {socialLinks.length > 0 ? <LinksButton links={socialLinks} /> : null}
-      </nav>
 
-      <OrgHeader
-        org={org}
-        title={org.name}
-        subtitle={org.description}
-        logoPriority
-        className="mt-2"
-      />
+        <OrgHomeDesktopNav items={navItems} accent={accent} basePath={ORG_PUBLIC_NAV_BASE} />
+      </div>
 
-      <div className="mt-6 flex-1">{children}</div>
+      <div className="mt-6 flex-1 lg:mt-8">{children}</div>
     </OrgHomeShell>
   )
 }

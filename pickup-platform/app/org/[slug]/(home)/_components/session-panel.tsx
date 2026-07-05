@@ -53,8 +53,9 @@ export async function SessionPanel({ slug, org, event, eventId }: Props) {
     <>
       <EventAnnouncementBanner text={event.announcement} accent={accent} />
 
+      <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] lg:items-start lg:gap-8">
       <section>
-        <div className="overflow-hidden rounded-3xl border border-zinc-800 bg-linear-to-b from-zinc-900 to-zinc-950 p-6">
+        <div className="overflow-hidden rounded-3xl border border-zinc-800 bg-linear-to-b from-zinc-900 to-zinc-950 p-6 lg:p-7">
           <div className="flex items-center justify-between gap-3">
             <EventTimingBadge event={event} accent={accent} cancelled={isCancelled} />
             <StatusPill
@@ -117,9 +118,12 @@ export async function SessionPanel({ slug, org, event, eventId }: Props) {
         </div>
       </section>
 
-      <Suspense fallback={<ParticipationFallback />}>
-        <EventParticipation slug={slug} eventId={eventId} org={org} event={event} />
-      </Suspense>
+      <div className="mt-5 lg:mt-0 lg:min-w-0">
+        <Suspense fallback={<ParticipationFallback />}>
+          <EventParticipation slug={slug} eventId={eventId} org={org} event={event} />
+        </Suspense>
+      </div>
+      </div>
     </>
   )
 }

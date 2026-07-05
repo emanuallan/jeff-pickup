@@ -5,6 +5,8 @@ import { rootBaseUrl } from '@/lib/og-metadata'
 import { orgPublicTabHref } from '@/lib/org-public-nav'
 import { accentOnDark } from '@/lib/colors'
 import { arrowRight } from '@/lib/text-arrows'
+import { ORG_PUBLIC_CONTENT_MAX } from '@/lib/org-public-layout'
+import { OrgPublicBackdrop } from './org-public-backdrop'
 import { OrganizrLogo } from '../../../_components/organizr-logo'
 import { SocialLinks } from './social-links'
 import { OrganizerConsoleBarSlot } from './organizer-console-bar'
@@ -12,13 +14,20 @@ import { OrganizerConsoleBarSlot } from './organizer-console-bar'
 export function OrgPageShell({
   slug,
   children,
+  accent,
 }: {
   slug: string
   children: React.ReactNode
+  accent?: string
 }) {
   return (
     <>
-      <main className="mx-auto min-h-dvh max-w-lg px-5 py-10 sm:px-6">{children}</main>
+      {accent ? <OrgPublicBackdrop accent={accent} /> : null}
+      <main
+        className={`mx-auto min-h-dvh px-5 py-10 sm:px-6 ${ORG_PUBLIC_CONTENT_MAX} lg:py-14`}
+      >
+        {children}
+      </main>
       <OrganizerConsoleBarSlot slug={slug} />
     </>
   )

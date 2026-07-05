@@ -270,7 +270,7 @@ export function MatchdayDateChips({ chips, activeEventId, accent }: Props) {
   const chipWidthClass = usesTimedLayout ? 'w-[4.75rem]' : 'w-[4.25rem]'
 
   return (
-    <div className="relative -mx-5 mb-4 sm:-mx-6">
+    <div className="relative -mx-5 mb-4 sm:-mx-6 lg:mx-0 lg:mb-6">
       {fadeLeft ? (
         <div
           aria-hidden

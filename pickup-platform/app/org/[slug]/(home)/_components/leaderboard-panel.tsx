@@ -28,9 +28,10 @@ export function LeaderboardPanel({ org, capsRows, streakRows }: Props) {
         accent={accent}
       />
 
-      <CapsLeaderboard rows={capsRows} accent={accent} />
-
-      <StreakLeaderboard rows={streakRows} accent={accent} />
+      <div className="grid gap-5 lg:grid-cols-2 lg:gap-6">
+        <CapsLeaderboard rows={capsRows} accent={accent} />
+        <StreakLeaderboard rows={streakRows} accent={accent} />
+      </div>
     </div>
   )
 }
