@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
-import { computeConversionRate } from '@/lib/event-analytics'
+import { computeConversionRate, countUniquePageViewPeople } from '@/lib/event-analytics'
 import { getOrgCapsLeaderboard } from '@/lib/engagement'
 
 export type OrgAnalytics = {
@@ -70,7 +70,7 @@ async function getOrgAnalyticsLegacy(orgId: string): Promise<OrgAnalytics> {
 
   const [viewsRes, joinedRes, leftRes, pastEventsRes, upcomingEventsRes, signupsRes, topCaps] =
     await Promise.all([
-      supabase.from('event_page_views').select('viewer_key').eq('org_id', orgId),
+      supabase.from('event_page_views').select('viewer_key, participant_id').eq('org_id', orgId),
       supabase
         .from('event_signup_activity')
         .select('participant_id')
@@ -102,7 +102,7 @@ async function getOrgAnalyticsLegacy(orgId: string): Promise<OrgAnalytics> {
   const left = leftRes.data ?? []
   const signups = signupsRes.data ?? []
 
-  const uniqueVisitors = new Set(views.map((v) => v.viewer_key)).size
+  const uniqueVisitors = countUniquePageViewPeople(views)
   const uniqueSignups = new Set(joined.map((r) => r.participant_id)).size
   const { rate: conversionRate, capped: conversionCapped } = computeConversionRate(
     uniqueVisitors,

@@ -12,7 +12,6 @@ export type EventAnalytics = {
   headcount: number
   totalGuests: number
   conversionRate: number | null
-  /** True when sign-ups exceed cookie-based visitors (e.g. shared phone). */
   conversionCapped: boolean
   capacityFill: number | null
   arrivalStatusCounts: Partial<Record<ArrivalStatus, number>>
@@ -20,7 +19,7 @@ export type EventAnalytics = {
   lastSignupAt: string | null
 }
 
-/** Visitors are tracked per browser cookie; sign-ups are per person — cap when they diverge. */
+/** Sign-ups are per person; visitors are deduped the same way in analytics breakdowns. */
 export function computeConversionRate(
   uniqueVisitors: number,
   uniqueSignups: number,
@@ -34,6 +33,30 @@ export function computeConversionRate(
   const capped = uniqueVisitors > 0 && uniqueSignups > uniqueVisitors
 
   return { rate: Math.min(100, raw), capped }
+}
+
+export type PageViewPersonRow = {
+  viewer_key: string
+  participant_id: string | null
+}
+
+/** Distinct people: one per participant, plus one per anonymous viewer_key. */
+export function countUniquePageViewPeople(rows: PageViewPersonRow[]): number {
+  const perViewer = new Map<string, string | null>()
+
+  for (const row of rows) {
+    if (row.participant_id) {
+      perViewer.set(row.viewer_key, row.participant_id)
+    } else if (!perViewer.has(row.viewer_key)) {
+      perViewer.set(row.viewer_key, null)
+    }
+  }
+
+  const people = new Set<string>()
+  for (const [viewerKey, participantId] of perViewer) {
+    people.add(participantId ?? `guest:${viewerKey}`)
+  }
+  return people.size
 }
 
 export function buildRosterAnalytics(
@@ -243,6 +266,10 @@ export type EventGuestVisitors = {
 export type EventUniqueVisitorsBreakdown = {
   known: EventKnownVisitor[]
   guests: EventGuestVisitors
+}
+
+export function uniquePeopleCountFromBreakdown(breakdown: EventUniqueVisitorsBreakdown): number {
+  return breakdown.known.length + breakdown.guests.visitorCount
 }
 
 /** Per-person view counts for known participants; anonymous visitors rolled into guests. */

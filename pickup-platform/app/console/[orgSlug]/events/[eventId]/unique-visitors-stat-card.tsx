@@ -47,7 +47,7 @@ function StatCardContent({
       <div className="tabular-nums text-2xl font-semibold text-zinc-50">{count}</div>
       <div className="text-xs font-medium text-zinc-400">Unique visitors</div>
       <div className="text-[11px] text-zinc-600">
-        {interactive ? 'Tap to see who viewed' : 'Distinct people or devices'}
+        {interactive ? 'Tap to see who viewed' : 'Distinct people who viewed'}
       </div>
     </>
   )

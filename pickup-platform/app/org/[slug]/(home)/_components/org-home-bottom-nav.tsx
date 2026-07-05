@@ -164,6 +164,15 @@ export function OrgHomeBottomNav({ items, accent, basePath, slug, isOrganizer = 
           <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-indigo-400/40 to-transparent" />
           <OrganizerConsoleFooterLink slug={slug} label="Back to console" />
         </footer>
+      ) : slug === 'demo' ? (
+        <footer className="relative border-t border-indigo-500/30 bg-zinc-950/95 shadow-[0_-8px_32px_rgba(0,0,0,0.45)]">
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-indigo-400/40 to-transparent" />
+          <OrganizerConsoleFooterLink
+            slug={slug}
+            label="Back to Organizr"
+            href={rootBaseUrl()}
+          />
+        </footer>
       ) : (
         <footer
           className={`mx-auto flex max-w-lg items-center justify-between gap-2 px-5 py-1.5 pb-[max(0.25rem,env(safe-area-inset-bottom))] text-[10px] leading-none text-zinc-600 ${

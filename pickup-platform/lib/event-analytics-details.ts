@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { arrivalStatusEmoji, arrivalStatusLabel, type ArrivalStatus } from '@/lib/arrival-status'
 import { dayKeyInZone, formatInstantInZone } from '@/lib/events'
 import { getRosterWithContact, rosterHeadcount } from '@/lib/signups'
-import { computeConversionRate } from '@/lib/event-analytics'
+import { computeConversionRate, countUniquePageViewPeople } from '@/lib/event-analytics'
 import type {
   AllTimeSignupPerson,
   AnalyticsDetailMetric,
@@ -57,7 +57,7 @@ export async function getPageViewsDetail(
 
   const { data, error } = await supabase
     .from('event_page_views')
-    .select('viewer_key, viewed_at')
+    .select('viewer_key, participant_id, viewed_at')
     .eq('event_id', eventId)
     .order('viewed_at', { ascending: true })
 
@@ -66,10 +66,8 @@ export async function getPageViewsDetail(
   }
 
   const byDay = new Map<string, { viewCount: number; sampleAt: string }>()
-  const viewers = new Set<string>()
 
   for (const row of data) {
-    viewers.add(row.viewer_key)
     const key = dayKeyInZone(row.viewed_at, timezone)
     const existing = byDay.get(key)
     if (existing) {
@@ -85,7 +83,7 @@ export async function getPageViewsDetail(
   }))
 
   const totalViews = data.length
-  const uniqueVisitors = viewers.size
+  const uniqueVisitors = countUniquePageViewPeople(data)
 
   return {
     days,

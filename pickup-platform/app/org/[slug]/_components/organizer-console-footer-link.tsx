@@ -11,18 +11,20 @@ function consoleOrgUrl(slug: string): string {
 type Props = {
   slug: string
   label?: string
+  href?: string
 }
 
 /** Shared Organizr-branded console link for fixed footers. */
 export function OrganizerConsoleFooterLink({
   slug,
   label = 'Open console',
+  href,
 }: Props) {
   const arrow = label.toLowerCase().includes('back') ? arrowLeft : arrowRight
 
   return (
     <a
-      href={consoleOrgUrl(slug)}
+      href={href ?? consoleOrgUrl(slug)}
       className="mx-auto flex max-w-lg items-center justify-between gap-3 px-5 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] transition-colors hover:bg-indigo-500/[0.06] sm:px-6"
     >
       <span className="inline-flex min-w-0 items-center gap-1 text-sm font-medium text-indigo-300">

@@ -14,7 +14,6 @@ import {
   buildOrgCalendarShareTitle,
 } from '@/lib/public-share-text'
 import { OrgHeader } from '../_components/org-header'
-import { BackToOrganizrLink } from '../_components/back-to-organizr-link'
 import { LinksButton } from '../links-button'
 import { OrgHomeShell } from './_components/org-home-shell'
 import { OrgHomeBottomNav } from './_components/org-home-bottom-nav'
@@ -73,7 +72,6 @@ export default async function OrgHomeLayout({ children, params }: Props) {
     >
       <nav className="flex min-h-9 items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3">
-          {slug === 'demo' ? <BackToOrganizrLink /> : null}
           <Suspense
             fallback={
               <span
