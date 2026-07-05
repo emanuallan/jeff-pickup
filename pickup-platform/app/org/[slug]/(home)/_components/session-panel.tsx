@@ -32,8 +32,9 @@ type Props = {
 }
 
 export async function SessionPanel({ slug, org, event, eventId }: Props) {
+  const { viewerKey, sessionToken } = await resolvePageViewTrackingKeys()
+
   after(async () => {
-    const { viewerKey, sessionToken } = await resolvePageViewTrackingKeys()
     if (!viewerKey) return
 
     const participantId = sessionToken

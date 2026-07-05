@@ -8,7 +8,7 @@ export type PageViewContext = {
   participantId: string | null
 }
 
-/** Fast cookie/header read — safe to parallelize with page data fetches. */
+/** Cookie/header read — must run during render, not inside `after()`. */
 export async function resolvePageViewTrackingKeys(): Promise<{
   viewerKey: string | null
   sessionToken: string | null
