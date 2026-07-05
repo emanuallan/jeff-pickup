@@ -5,6 +5,7 @@ import {
 } from '@/lib/org-public-layout'
 import { OrgPublicBackdrop } from '../../_components/org-public-backdrop'
 import { OrgPublicSiteFooter } from '../../_components/org-public-site-footer'
+import { OrgDemoSiteFooter } from '../../_components/org-demo-site-footer'
 
 /** Bottom padding when tab bar + slim footer strip are shown. */
 export const ORG_HOME_BOTTOM_CHROME_PADDING =
@@ -37,7 +38,7 @@ export function OrgHomeShell({
   isOrganizer?: boolean
   slug: string
   accent: string
-  /** When false, skip the inline desktop footer (e.g. demo / organizer toolbar handles it). */
+  /** When false, skip the inline site footer (demo and organizer use their own chrome). */
   showDesktopSiteFooter?: boolean
 }) {
   const bottomPadding = footerOnly
@@ -58,6 +59,11 @@ export function OrgHomeShell({
         {showDesktopSiteFooter ? (
           <div className="hidden md:block">
             <OrgPublicSiteFooter slug={slug} />
+          </div>
+        ) : null}
+        {slug === 'demo' ? (
+          <div className="hidden md:block">
+            <OrgDemoSiteFooter />
           </div>
         ) : null}
       </main>

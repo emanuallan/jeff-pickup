@@ -13,7 +13,6 @@ import {
   buildOrgCalendarShareText,
   buildOrgCalendarShareTitle,
 } from '@/lib/public-share-text'
-import { rootBaseUrl } from '@/lib/og-metadata'
 import { OrgHeader } from '../_components/org-header'
 import { LinksButton } from '../links-button'
 import { OrganizerConsoleToolbarLink } from '../_components/organizer-console-toolbar-link'
@@ -139,12 +138,6 @@ export default async function OrgHomeLayout({ children, params }: Props) {
               {socialLinks.length > 0 ? <LinksButton links={socialLinks} /> : null}
               {isOrganizer ? (
                 <OrganizerConsoleToolbarLink slug={slug} label="Back to console" />
-              ) : slug === 'demo' ? (
-                <OrganizerConsoleToolbarLink
-                  slug={slug}
-                  label="Back to Organizr"
-                  href={rootBaseUrl()}
-                />
               ) : null}
             </nav>
           </div>
