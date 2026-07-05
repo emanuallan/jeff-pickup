@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState } from 'react'
 import type { Location } from '@/lib/locations'
 import type { Schedule } from '@/lib/schedules'
 import { updateSchedule, type UpdateScheduleMode } from '../actions'
@@ -19,7 +19,7 @@ export function EditScheduleButton({ orgSlug, schedule, locations }: Props) {
   const toast = useConsoleToast()
   const [open, setOpen] = useState(false)
   const [mode, setMode] = useState<UpdateScheduleMode | null>(null)
-  const [pending, startTransition] = useTransition()
+  const [pending, setPending] = useState(false)
 
   function closeModal() {
     if (pending) return
@@ -27,18 +27,20 @@ export function EditScheduleButton({ orgSlug, schedule, locations }: Props) {
     setMode(null)
   }
 
-  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     if (!mode) return
     const formData = new FormData(e.currentTarget)
-    startTransition(async () => {
-      const result = await updateSchedule(orgSlug, schedule.id, mode, formData)
-      if (result && 'error' in result) {
-        toast.error(result.error)
-      } else {
-        closeModal()
-      }
-    })
+    setPending(true)
+    const result = await updateSchedule(orgSlug, schedule.id, mode, formData)
+    setPending(false)
+    if (result && 'error' in result) {
+      toast.error(result.error)
+      return
+    }
+    toast.success('Saved.')
+    setOpen(false)
+    setMode(null)
   }
 
   return (
