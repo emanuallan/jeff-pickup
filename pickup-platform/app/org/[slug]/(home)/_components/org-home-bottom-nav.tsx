@@ -208,7 +208,7 @@ export function OrgHomeBottomNav({ items, accent, basePath, slug, isOrganizer = 
   const accentFg = accentOnDark(accent)
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-30 bg-zinc-950/95 backdrop-blur-md lg:hidden">
+    <div className="fixed inset-x-0 bottom-0 z-30 bg-zinc-950/95 backdrop-blur-md md:hidden">
       {showTabs ? (
         <OrgHomeNavTabs
           items={navItems}
@@ -259,7 +259,7 @@ export function OrgHomeBottomNav({ items, accent, basePath, slug, isOrganizer = 
   )
 }
 
-/** Inline tab bar — desktop only. */
+/** Inline tab bar — tablet and desktop only. */
 export function OrgHomeDesktopNav({ items, accent, basePath }: Pick<Props, 'items' | 'accent' | 'basePath'>) {
   const { navItems, activeKey } = useOrgHomeNavState({ items, basePath })
   const { navRef, linkRefs, indicator } = useOrgHomeNavIndicator(activeKey, navItems)
@@ -271,7 +271,7 @@ export function OrgHomeDesktopNav({ items, accent, basePath }: Pick<Props, 'item
   const accentFg = accentOnDark(accent)
 
   return (
-    <div className="hidden lg:block">
+    <div className="hidden md:block">
       <OrgHomeNavTabs
         items={navItems}
         activeKey={activeKey}

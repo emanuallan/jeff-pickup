@@ -1,11 +1,11 @@
 import { hexToRgba } from '@/lib/colors'
 
-/** Subtle branded backdrop — desktop only; mobile keeps a flat page background. */
+/** Subtle branded backdrop using the group's accent color. */
 export function OrgPublicBackdrop({ accent }: { accent: string }) {
   const glow = hexToRgba(accent, 0.14)
 
   return (
-    <div className="pointer-events-none fixed inset-0 -z-10 hidden bg-zinc-950 lg:block">
+    <div className="pointer-events-none fixed inset-0 -z-10 bg-zinc-950">
       <div
         className="absolute inset-x-0 top-0 h-[28rem]"
         style={{

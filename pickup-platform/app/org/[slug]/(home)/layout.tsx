@@ -77,7 +77,7 @@ export default async function OrgHomeLayout({ children, params }: Props) {
         </Suspense>
       }
     >
-      <div className="lg:hidden">
+      <div className="md:hidden">
         <nav className="flex min-h-9 items-center justify-between gap-3">
           <div className="flex min-w-0 items-center gap-3">
             <Suspense
@@ -108,7 +108,7 @@ export default async function OrgHomeLayout({ children, params }: Props) {
         />
       </div>
 
-      <div className="hidden lg:block">
+      <div className="hidden md:block">
         <div className="flex items-start justify-between gap-10">
           <OrgHeader
             org={org}
@@ -153,7 +153,7 @@ export default async function OrgHomeLayout({ children, params }: Props) {
         <OrgHomeDesktopNav items={navItems} accent={accent} basePath={ORG_PUBLIC_NAV_BASE} />
       </div>
 
-      <div className="mt-6 flex-1 lg:mt-8">{children}</div>
+      <div className="mt-6 flex-1 md:mt-8">{children}</div>
     </OrgHomeShell>
   )
 }

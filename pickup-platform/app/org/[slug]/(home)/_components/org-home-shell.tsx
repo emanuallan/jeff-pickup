@@ -56,7 +56,7 @@ export function OrgHomeShell({
       >
         {children}
         {showDesktopSiteFooter ? (
-          <div className="hidden lg:block">
+          <div className="hidden md:block">
             <OrgPublicSiteFooter slug={slug} />
           </div>
         ) : null}

@@ -24,7 +24,7 @@ export function OrgPageShell({
     <>
       {accent ? <OrgPublicBackdrop accent={accent} /> : null}
       <main
-        className={`mx-auto min-h-dvh px-5 py-10 sm:px-6 ${ORG_PUBLIC_CONTENT_MAX} lg:py-14`}
+        className={`mx-auto min-h-dvh px-5 py-10 sm:px-6 ${ORG_PUBLIC_CONTENT_MAX} md:py-14`}
       >
         {children}
       </main>
