@@ -26,10 +26,15 @@ type SignupCelebrationOptions = {
   guestCount?: number
 }
 
+type LeaveCelebrationOptions = {
+  guestCount?: number
+}
+
 type MotionContextValue = {
   kickActive: boolean
   kickGuestCount: number
   leaveActive: boolean
+  leaveGuestCount: number
   celebrationPlacement: CelebrationPlacement | null
   celebrationAccent: string
   joinClosing: boolean
@@ -43,7 +48,11 @@ type MotionContextValue = {
     accent: string,
     options?: SignupCelebrationOptions,
   ) => Promise<{ error?: string }>
-  runLeaveCelebration: (action: ParticipationAction, accent: string) => Promise<{ error?: string }>
+  runLeaveCelebration: (
+    action: ParticipationAction,
+    accent: string,
+    options?: LeaveCelebrationOptions,
+  ) => Promise<{ error?: string }>
   dismissJoinPanel: () => void
   reopenJoinPanel: () => void
   dismissSignedInControls: () => void
@@ -62,6 +71,7 @@ export function ParticipationMotionProvider({
   const [kickActive, setKickActive] = useState(false)
   const [kickGuestCount, setKickGuestCount] = useState(0)
   const [leaveActive, setLeaveActive] = useState(false)
+  const [leaveGuestCount, setLeaveGuestCount] = useState(0)
   const [celebrationPlacement, setCelebrationPlacement] = useState<CelebrationPlacement | null>(
     null,
   )
@@ -132,15 +142,17 @@ export function ParticipationMotionProvider({
   )
 
   const runLeaveCelebration = useCallback(
-    async (action: ParticipationAction, accent: string) => {
+    async (action: ParticipationAction, accent: string, options?: LeaveCelebrationOptions) => {
       setCelebrationAccent(accent)
       setCelebrationPlacement('modal')
+      setLeaveGuestCount(signupKickGuestFigures(options?.guestCount ?? 0))
       setLeaveActive(true)
       setControlsClosing(true)
 
       const [result] = await Promise.all([action(), waitForLeaveWalk()])
 
       setLeaveActive(false)
+      setLeaveGuestCount(0)
       setCelebrationPlacement(null)
 
       if (result.error) {
@@ -163,6 +175,7 @@ export function ParticipationMotionProvider({
       kickActive,
       kickGuestCount,
       leaveActive,
+      leaveGuestCount,
       celebrationPlacement,
       celebrationAccent,
       joinClosing,
@@ -182,6 +195,7 @@ export function ParticipationMotionProvider({
       kickActive,
       kickGuestCount,
       leaveActive,
+      leaveGuestCount,
       celebrationPlacement,
       celebrationAccent,
       joinClosing,
@@ -208,6 +222,7 @@ export function ParticipationMotionProvider({
         kickActive={kickActive}
         kickGuestCount={kickGuestCount}
         leaveActive={leaveActive}
+        leaveGuestCount={leaveGuestCount}
       />
     </ParticipationMotionContext.Provider>
   )

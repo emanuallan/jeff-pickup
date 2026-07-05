@@ -61,9 +61,29 @@ function ReceiverFigure({ index }: { index: number }) {
   )
 }
 
-/** Stick figure kicks a ball to guest receivers waiting on the other side. */
+function SoccerGoal() {
+  return (
+    <svg
+      className="signup-kick-goal"
+      viewBox="0 0 52 40"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden
+    >
+      <path d="M6 36V4" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+      <path d="M46 36V4" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+      <path d="M6 4H46" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+      <path d="M6 4 46 36" stroke="currentColor" strokeWidth="1.25" opacity="0.35" />
+      <path d="M46 4 6 36" stroke="currentColor" strokeWidth="1.25" opacity="0.35" />
+      <path d="M26 4V36" stroke="currentColor" strokeWidth="1.25" opacity="0.25" />
+    </svg>
+  )
+}
+
+/** Stick figure kicks a ball to guest receivers or into a goal when solo. */
 export function SignupKickAnimation({ accent, guestCount = 0, className = '' }: Props) {
   const guestFigures = signupKickGuestFigures(guestCount)
+  const kickTarget = guestFigures > 0 ? 'guests' : 'goal'
   const ariaLabel =
     guestFigures > 0
       ? `Signing you up with ${guestFigures} guest${guestFigures === 1 ? '' : 's'}`
@@ -73,6 +93,7 @@ export function SignupKickAnimation({ accent, guestCount = 0, className = '' }: 
     <div
       className={`signup-kick-scene ${className}`.trim()}
       data-guest-figures={guestFigures}
+      data-kick-target={kickTarget}
       style={{ '--kick-accent': accent } as CSSProperties}
       role="img"
       aria-label={ariaLabel}
@@ -86,7 +107,9 @@ export function SignupKickAnimation({ accent, guestCount = 0, className = '' }: 
             <ReceiverFigure key={index} index={index} />
           ))}
         </div>
-      ) : null}
+      ) : (
+        <SoccerGoal />
+      )}
     </div>
   )
 }

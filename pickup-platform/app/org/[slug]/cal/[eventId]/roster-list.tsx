@@ -245,6 +245,7 @@ export function RosterList(props: {
                             return r
                           },
                           accent,
+                          { guestCount: e.guest_count },
                         )
                         setLeaving(false)
                         if (result.error) setError(result.error)

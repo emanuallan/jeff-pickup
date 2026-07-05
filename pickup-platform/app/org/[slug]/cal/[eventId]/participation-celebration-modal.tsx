@@ -11,6 +11,7 @@ type Props = {
   kickActive: boolean
   kickGuestCount: number
   leaveActive: boolean
+  leaveGuestCount: number
 }
 
 /** Centered modal for signup / leave stick-figure celebrations. */
@@ -20,6 +21,7 @@ export function ParticipationCelebrationModal({
   kickActive,
   kickGuestCount,
   leaveActive,
+  leaveGuestCount,
 }: Props) {
   const [mounted, setMounted] = useState(false)
 
@@ -54,7 +56,7 @@ export function ParticipationCelebrationModal({
         {kickActive ? (
           <SignupKickAnimation accent={accent} guestCount={kickGuestCount} />
         ) : (
-          <LeaveWalkAnimation accent={accent} />
+          <LeaveWalkAnimation accent={accent} guestCount={leaveGuestCount} />
         )}
       </div>
     </div>,
