@@ -108,7 +108,7 @@ function ParticipationPanelBody({
 
   return (
     <div className="relative">
-      <div>
+      <div className="flex flex-col gap-5 [&_section]:!mt-0">
         {cancelledCallout}
 
         <div id={EVENT_JOIN_SECTION_ID}>
@@ -118,7 +118,7 @@ function ParticipationPanelBody({
         </div>
 
         {!isCancelled ? (
-        <section className="mt-5 rounded-3xl border border-zinc-800 bg-zinc-900/50 p-5">
+        <section className="rounded-3xl border border-zinc-800 bg-zinc-900/50 p-5">
         <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-400">
           {rosterHeading}{' '}
           <span key={headcount} className="participation-headcount inline-block tabular-nums">

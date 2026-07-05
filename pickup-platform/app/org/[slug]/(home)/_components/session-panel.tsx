@@ -54,7 +54,7 @@ export async function SessionPanel({ slug, org, event, eventId }: Props) {
     <>
       <EventAnnouncementBanner text={event.announcement} accent={accent} />
 
-      <div className="md:grid md:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] md:items-start md:gap-8">
+      <div className="flex flex-col gap-5 md:grid md:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] md:items-start md:gap-8">
       <section className={ORG_PUBLIC_DESKTOP_STICKY_CARD}>
         <div className="overflow-hidden rounded-3xl border border-zinc-800 bg-linear-to-b from-zinc-900 to-zinc-950 p-6 md:p-7">
           <div className="flex items-center justify-between gap-3">
@@ -119,7 +119,7 @@ export async function SessionPanel({ slug, org, event, eventId }: Props) {
         </div>
       </section>
 
-      <div className="mt-5 md:mt-0 md:min-w-0">
+      <div className="md:min-w-0">
         <Suspense fallback={<ParticipationFallback />}>
           <EventParticipation slug={slug} eventId={eventId} org={org} event={event} />
         </Suspense>
