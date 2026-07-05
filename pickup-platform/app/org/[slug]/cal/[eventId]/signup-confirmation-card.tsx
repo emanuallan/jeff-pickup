@@ -62,7 +62,7 @@ export function SignupConfirmationCard({
   return (
     <section
       id={SIGNUP_CONFIRMATION_ID}
-      className="overflow-hidden rounded-3xl border p-5 md:p-6"
+      className="participation-reveal overflow-hidden rounded-3xl border p-5 md:p-6"
       style={{
         borderColor: hexToRgba(accent, 0.35),
         background: `linear-gradient(135deg, ${hexToRgba(accent, 0.16)} 0%, rgba(24, 24, 27, 0.72) 58%)`,

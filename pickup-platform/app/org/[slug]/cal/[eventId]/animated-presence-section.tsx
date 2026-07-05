@@ -1,8 +1,7 @@
 'use client'
 
 import { useEffect, useState, type ReactNode } from 'react'
-
-const SECTION_MS = 280
+import { PARTICIPATION_SECTION_MS } from './participation-motion-tokens'
 
 type Props = {
   show: boolean
@@ -31,7 +30,7 @@ export function AnimatedPresenceSection({
     }
 
     setOpen(false)
-    const timer = window.setTimeout(() => setMounted(false), SECTION_MS)
+    const timer = window.setTimeout(() => setMounted(false), PARTICIPATION_SECTION_MS)
     return () => window.clearTimeout(timer)
   }, [show, closing])
 
@@ -41,7 +40,14 @@ export function AnimatedPresenceSection({
 
   return (
     <div
-      className={`participation-section ${open ? 'participation-section-open' : ''} ${className}`.trim()}
+      className={[
+        'participation-section',
+        open ? 'participation-section-open' : '',
+        closing && !open ? 'participation-section-closing' : '',
+        className,
+      ]
+        .filter(Boolean)
+        .join(' ')}
     >
       <div className={`participation-section-inner ${innerClassName}`.trim()}>{children}</div>
     </div>

@@ -13,8 +13,9 @@ import { fireConfetti } from '@/lib/confetti'
 import { waitForLeaveWalk } from './leave-walk-animation'
 import { waitForSignupKick, signupKickGuestFigures } from './signup-kick-animation'
 import { ParticipationCelebrationModal } from './participation-celebration-modal'
+import { PARTICIPATION_SECTION_MS } from './participation-motion-tokens'
 
-const CONTROLS_CLOSE_MS = 280
+const CONTROLS_CLOSE_MS = PARTICIPATION_SECTION_MS
 
 type ParticipationAction = () => Promise<{ error?: string }>
 

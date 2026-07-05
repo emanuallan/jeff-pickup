@@ -97,8 +97,9 @@ function ParticipationPanelBody({
   const isWaitlisted = mySignup?.list_status === 'waitlisted'
   const openStatusSheet =
     showControls && !isWaitlisted ? () => setStatusSheetOpen(true) : undefined
-  const showConfirmation = Boolean(mySignup && !isCancelled && !isEnded)
+  const showConfirmation = Boolean(mySignup && !isCancelled && !isEnded && !joinClosing)
   const showRoster = publicRosterEnabled && !isCancelled
+  const showJoinPanel = (showJoin || joinClosing) && !(controlsClosing && !mySignup)
 
   useEffect(() => {
     if (!mySignup || !canUpdateStatus) {
@@ -107,19 +108,19 @@ function ParticipationPanelBody({
   }, [mySignup, canUpdateStatus])
 
   useEffect(() => {
-    if (!motion?.pendingJoinScroll || !showJoin || joinClosing) {
+    if (!motion?.pendingJoinScroll || !showJoinPanel || joinClosing) {
       return
     }
 
     scrollToJoinSectionAfterLeave(motion.clearPendingJoinScroll)
-  }, [motion?.pendingJoinScroll, motion?.clearPendingJoinScroll, showJoin, joinClosing])
+  }, [motion?.pendingJoinScroll, motion?.clearPendingJoinScroll, showJoinPanel, joinClosing])
 
   return (
     <div className="relative">
       <div className="flex flex-col gap-5 [&_section]:!mt-0">
         {cancelledCallout}
 
-        {showJoin || joinClosing ? (
+        {showJoinPanel ? (
           <div id={EVENT_JOIN_SECTION_ID}>
             <AnimatedPresenceSection show={showJoin || joinClosing} closing={joinClosing}>
               <JoinSectionLazy {...joinProps} />
