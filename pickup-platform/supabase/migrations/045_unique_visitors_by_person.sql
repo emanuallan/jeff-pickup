@@ -9,7 +9,7 @@ set search_path = public
 as $$
   select count(distinct person_key)::int
   from (
-    select coalesce(max(participant_id)::text, 'guest:' || viewer_key) as person_key
+    select coalesce(max(participant_id::text), 'guest:' || viewer_key) as person_key
     from public.event_page_views
     where event_id = p_event_id
     group by viewer_key
@@ -24,7 +24,7 @@ set search_path = public
 as $$
   select count(distinct person_key)::int
   from (
-    select coalesce(max(participant_id)::text, 'guest:' || viewer_key) as person_key
+    select coalesce(max(participant_id::text), 'guest:' || viewer_key) as person_key
     from public.event_page_views
     where org_id = p_org_id
     group by viewer_key
