@@ -34,6 +34,7 @@ export default async function SchedulesPage({ params }: Props) {
   const impactByScheduleId = Object.fromEntries(
     deleteImpacts.map(({ scheduleId, impact }) => [scheduleId, impact]),
   )
+  const locationLabelById = Object.fromEntries(locations.map((loc) => [loc.id, loc.label]))
 
   return (
     <ConsolePage>
@@ -65,7 +66,8 @@ export default async function SchedulesPage({ params }: Props) {
                         <div className="font-medium text-zinc-100">{s.title}</div>
                         <div className="mt-0.5 text-xs text-zinc-500">
                           {formatIntervalWeeks(s.interval_weeks)} · {formatWeekdays(s.byweekday)} ·{' '}
-                          {formatTime(s.start_time)} · {s.timezone}
+                          {formatTime(s.start_time)} ·{' '}
+                          {locationLabelById[s.location_id] ?? 'Unknown location'}
                         </div>
                         <div className="mt-0.5 text-xs text-zinc-500">
                           {s.capacity ? `Capacity ${s.capacity}` : 'No capacity limit'}
