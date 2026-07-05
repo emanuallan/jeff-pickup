@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import type { Location } from '@/lib/locations'
 import type { SessionFormInitial } from '@/lib/session-form-values'
 import { browserTimeZone } from '@/lib/datetime'
@@ -52,6 +52,19 @@ export function SessionForm({
   useBrowserTimezone = true,
 }: Props) {
   const toast = useConsoleToast()
+  const [title, setTitle] = useState(initial?.title ?? '')
+  const [locationId, setLocationId] = useState(
+    initial?.locationId ?? locations[0]?.id ?? '',
+  )
+  const [capacity, setCapacity] = useState(
+    initial?.capacity != null ? String(initial.capacity) : '',
+  )
+  const [minPlayers, setMinPlayers] = useState(
+    initial?.minPlayers != null ? String(initial.minPlayers) : '',
+  )
+  const [additionalInformation, setAdditionalInformation] = useState(
+    initial?.additionalInformation ?? '',
+  )
   const [timezone, setTimezone] = useState(initial?.timezone ?? 'UTC')
   const [startsAtLocal, setStartsAtLocal] = useState(() =>
     defaultFormTimes(initial?.timezone ?? browserTimeZone(), initial).startsAtLocal,
@@ -63,6 +76,11 @@ export function SessionForm({
 
   useEffect(() => {
     if (initial?.timezone) {
+      setTitle(initial.title)
+      setLocationId(initial.locationId)
+      setCapacity(initial.capacity != null ? String(initial.capacity) : '')
+      setMinPlayers(initial.minPlayers != null ? String(initial.minPlayers) : '')
+      setAdditionalInformation(initial.additionalInformation ?? '')
       setTimezone(initial.timezone)
       setStartsAtLocal(initial.startsAtLocal)
       setEndsAtLocal(initial.endsAtLocal)
@@ -88,13 +106,20 @@ export function SessionForm({
     }
   }
 
-  async function handleSubmit(formData: FormData) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
     setPending(true)
 
     const tz = activeTimezone()
+    const formData = new FormData()
+    formData.set('title', title)
+    formData.set('location_id', locationId)
     formData.set('timezone', tz)
     formData.set('starts_at', startsAtLocal)
     formData.set('ends_at', endsAtLocal)
+    if (capacity.trim()) formData.set('capacity', capacity.trim())
+    if (minPlayers.trim()) formData.set('min_players', minPlayers.trim())
+    formData.set('additional_information', additionalInformation)
 
     const durationMin = durationMinFromLocalRange(startsAtLocal, endsAtLocal, tz)
     if (!Number.isFinite(durationMin) || durationMin <= 0) {
@@ -127,16 +152,15 @@ export function SessionForm({
   }
 
   return (
-    <form action={handleSubmit} className="space-y-3">
-      <input type="hidden" name="timezone" value={timezone} />
-
+    <form onSubmit={handleSubmit} className="space-y-3">
       <label className="block">
         <span className={consoleLabel}>Session name</span>
         <input
           name="title"
           required
           placeholder="e.g. Saturday pickup"
-          defaultValue={initial?.title}
+          value={title}
+          onChange={(event) => setTitle(event.target.value)}
           className={`mt-1 ${consoleInput}`}
         />
       </label>
@@ -146,8 +170,9 @@ export function SessionForm({
         <select
           name="location_id"
           required
+          value={locationId}
+          onChange={(event) => setLocationId(event.target.value)}
           className={`mt-1 ${consoleInput}`}
-          defaultValue={initial?.locationId ?? locations[0]?.id}
         >
           {locations.map((loc) => (
             <option key={loc.id} value={loc.id}>
@@ -191,7 +216,8 @@ export function SessionForm({
             min={2}
             max={999}
             placeholder="No limit"
-            defaultValue={initial?.capacity ?? undefined}
+            value={capacity}
+            onChange={(event) => setCapacity(event.target.value)}
             className={`mt-1 ${consoleInput}`}
           />
         </label>
@@ -203,14 +229,16 @@ export function SessionForm({
             min={2}
             max={999}
             placeholder="No minimum"
-            defaultValue={initial?.minPlayers ?? undefined}
+            value={minPlayers}
+            onChange={(event) => setMinPlayers(event.target.value)}
             className={`mt-1 ${consoleInput}`}
           />
         </label>
       </div>
 
       <CollapsibleAdditionalInformationField
-        defaultValue={initial?.additionalInformation}
+        value={additionalInformation}
+        onChange={setAdditionalInformation}
       />
 
       <p className="text-xs text-zinc-500">Timezone: {activeTimezone()}</p>

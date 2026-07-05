@@ -6,12 +6,22 @@ import { chipAction, consoleInput, consoleLabel } from './console-ui'
 
 type Props = {
   defaultValue?: string
+  value?: string
+  onChange?: (value: string) => void
 }
 
-export function CollapsibleAdditionalInformationField({ defaultValue = '' }: Props) {
+export function CollapsibleAdditionalInformationField({
+  defaultValue = '',
+  value: controlledValue,
+  onChange,
+}: Props) {
   const id = useId()
-  const [expanded, setExpanded] = useState(defaultValue.trim().length > 0)
-  const [value, setValue] = useState(defaultValue)
+  const [internalValue, setInternalValue] = useState(defaultValue)
+  const value = controlledValue ?? internalValue
+  const setValue = onChange ?? setInternalValue
+  const [expanded, setExpanded] = useState(
+    (controlledValue ?? defaultValue).trim().length > 0,
+  )
 
   if (!expanded) {
     return (
