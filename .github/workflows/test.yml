@@ -12,6 +12,13 @@ defaults:
 jobs:
   verify:
     runs-on: ubuntu-latest
+    env:
+      # Placeholders for `next build` prerender — no real Supabase connection in CI.
+      NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.ci-build-placeholder
+      NEXT_PUBLIC_ROOT_DOMAIN: organizr.co
+      SUPABASE_SERVICE_ROLE_KEY: ci-build-placeholder
+      CRON_SECRET: ci-build-placeholder
     steps:
       - uses: actions/checkout@v6
 
