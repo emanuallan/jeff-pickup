@@ -3,6 +3,16 @@ const CONTROLS_CLOSE_MS = 280
 const SCROLL_RETRY_MS = 200
 
 export const EVENT_JOIN_SECTION_ID = 'event-join-section'
+export const SIGNUP_CONFIRMATION_ID = 'signup-confirmation'
+
+export function scrollToSignupConfirmation(): boolean {
+  const el = document.getElementById(SIGNUP_CONFIRMATION_ID)
+  if (!el) return false
+
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  el.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'center' })
+  return true
+}
 
 export function scrollToMyRosterRow(signupId: string): boolean {
   const el = document.getElementById(`roster-signup-${signupId}`)
@@ -25,8 +35,16 @@ export function scrollToMyRosterRowAfterJoinCollapse(
       return
     }
 
+    if (scrollToSignupConfirmation()) {
+      onComplete?.()
+      return
+    }
+
     window.setTimeout(() => {
-      scrollToMyRosterRow(signupId)
+      if (scrollToMyRosterRow(signupId) || scrollToSignupConfirmation()) {
+        onComplete?.()
+        return
+      }
       onComplete?.()
     }, SCROLL_RETRY_MS)
   }, JOIN_SECTION_COLLAPSE_MS)

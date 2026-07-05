@@ -13,6 +13,8 @@ import { PhoneInput } from '@/app/_components/phone-input'
 import type { Participant, MySignup } from '@/lib/participant'
 import { ReturningSignupModal, clearReturningSignupSeen } from './returning-signup-modal'
 import { useParticipationMotion } from './participation-motion'
+import { GuestCountSelect } from './guest-count-select'
+import { clampGuestCount } from '@/lib/guest-signups'
 
 export type { Participant, MySignup }
 
@@ -33,6 +35,7 @@ type Props = {
   locationLabel: string
   locationMapsUrl: string | null
   returningSignupModalEnabled: boolean
+  guestsEnabled?: boolean
 }
 
 const inputClass =
@@ -176,6 +179,7 @@ export function JoinSection(props: Props) {
   }
 
   const joiningWaitlist = props.isFull && props.waitlistEnabled
+  const guestsEnabled = props.guestsEnabled !== false
 
   async function handleNewUserJoin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -184,7 +188,7 @@ export function JoinSection(props: Props) {
     setError(null)
     const formData = new FormData(event.currentTarget)
     const rawGuests = Number.parseInt(String(formData.get('guest_count') ?? '0'), 10)
-    const guests = Number.isFinite(rawGuests) ? Math.max(0, Math.min(20, rawGuests)) : 0
+    const guests = guestsEnabled ? clampGuestCount(rawGuests) : 0
     const result = await motion.runSignupCelebration(
       async () => {
         const r = await joinEvent(props.orgSlug, props.eventId, formData)
@@ -221,21 +225,16 @@ export function JoinSection(props: Props) {
           </p>
         </div>
 
-        <label className="block">
-          <span className="text-xs text-zinc-500">Guests</span>
-          <input
-            type="number"
-            min={0}
-            max={20}
-            value={guestCount}
-            onChange={(e) => {
-              const n = Number.parseInt(e.target.value, 10)
-              setGuestCount(Number.isFinite(n) ? Math.max(0, Math.min(20, n)) : 0)
-            }}
-            className={inputClass}
-            style={{ '--tw-ring-color': props.accent } as React.CSSProperties}
-          />
-        </label>
+        {guestsEnabled ? (
+          <label className="block">
+            <span className="text-xs text-zinc-500">Guests</span>
+            <GuestCountSelect
+              value={guestCount}
+              onChange={setGuestCount}
+              accent={props.accent}
+            />
+          </label>
+        ) : null}
 
         <button
           type="button"
@@ -370,18 +369,14 @@ export function JoinSection(props: Props) {
         />
       </label>
 
-      <label className="block">
-        <span className="text-xs text-zinc-500">Guests</span>
-        <input
-          name="guest_count"
-          type="number"
-          min={0}
-          max={20}
-          defaultValue={0}
-          className={inputClass}
-          style={{ '--tw-ring-color': props.accent } as React.CSSProperties}
-        />
-      </label>
+      {guestsEnabled ? (
+        <label className="block">
+          <span className="text-xs text-zinc-500">Guests</span>
+          <GuestCountSelect name="guest_count" defaultValue={0} accent={props.accent} />
+        </label>
+      ) : (
+        <input type="hidden" name="guest_count" value={0} />
+      )}
 
       {error ? <p className="text-sm text-red-300">{error}</p> : null}
 

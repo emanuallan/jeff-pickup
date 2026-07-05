@@ -9,6 +9,8 @@ import { setSessionToken, getSessionToken, clearSessionToken } from '@/lib/parti
 import type { ArrivalStatus } from '@/lib/arrival-status'
 import { normalizePhoneDigits, isValidPhoneDigits } from '@/lib/phone'
 import { validateDemoParticipantNames } from '@/lib/participant-name-moderation'
+import { orgFeatures } from '@/lib/org-features'
+import { resolveGuestCount } from '@/lib/guest-signups'
 
 async function getOpenEvent(
   orgSlug: string,
@@ -88,13 +90,19 @@ export async function joinEvent(
     return { error: open.error }
   }
 
+  const org = await getOrgBySlug(orgSlug)
+  const guests = resolveGuestCount(
+    guestCount,
+    org ? orgFeatures(org).guest_signups : false,
+  )
+
   const { data, error } = await supabase.rpc('join_event', {
     p_event_id: open.event.id,
     p_phone: phone,
     p_first_name: firstName,
     p_last_name: lastName,
     p_display_name: displayName || null,
-    p_guest_count: Number.isFinite(guestCount) ? guestCount : 0,
+    p_guest_count: guests,
   })
 
   if (error) {
@@ -190,13 +198,16 @@ export async function quickJoinEvent(
     return { error: open.error }
   }
 
+  const org = await getOrgBySlug(orgSlug)
+  const resolvedGuests = resolveGuestCount(guests, org ? orgFeatures(org).guest_signups : false)
+
   const { data, error } = await supabase.rpc('join_event', {
     p_event_id: open.event.id,
     p_phone: p.phone,
     p_first_name: p.first_name,
     p_last_name: p.last_name,
     p_display_name: p.display_name,
-    p_guest_count: guests,
+    p_guest_count: resolvedGuests,
   })
 
   if (error) {
@@ -242,7 +253,12 @@ export async function updateGuestCount(
     return { error: open.error }
   }
 
-  const guests = Number.isFinite(guestCount) ? Math.max(0, Math.min(20, guestCount)) : 0
+  const org = await getOrgBySlug(orgSlug)
+  if (!org || !orgFeatures(org).guest_signups) {
+    return { error: 'Guest sign-ups are not enabled for this group.' }
+  }
+
+  const guests = resolveGuestCount(guestCount, true)
 
   const supabase = await createClient()
   const { error } = await supabase.rpc('update_guest_count', {

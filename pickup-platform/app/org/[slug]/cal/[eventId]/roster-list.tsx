@@ -3,6 +3,7 @@
 import { useRef, useState, useEffect, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { leaveEvent, updateArrivalStatus, updateGuestCount } from './actions'
+import { GuestCountSelect } from './guest-count-select'
 import {
   arrivalStatuses,
   arrivalStatusEmoji,
@@ -306,54 +307,46 @@ export function GuestCountEditor(props: {
   const [count, setCount] = useState(props.currentCount)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [saved, setSaved] = useState(false)
 
   useEffect(() => {
     setCount(props.currentCount)
   }, [props.currentCount])
 
+  async function saveGuestCount(nextCount: number) {
+    if (nextCount === props.currentCount) {
+      return
+    }
+
+    setLoading(true)
+    setError(null)
+    const result = await updateGuestCount(
+      props.orgSlug,
+      props.eventId,
+      props.signupId,
+      nextCount,
+    )
+    setLoading(false)
+    if (result.error) {
+      setError(result.error)
+      setCount(props.currentCount)
+    }
+  }
+
   return (
     <div>
       <p className="text-xs font-medium text-zinc-400">Guests you&apos;re bringing</p>
       <div className="mt-2 flex items-center gap-2">
-        <input
-          type="number"
-          min={0}
-          max={20}
+        <GuestCountSelect
           value={count}
-          onChange={(e) => {
-            setSaved(false)
-            const n = Number.parseInt(e.target.value, 10)
-            setCount(Number.isFinite(n) ? Math.max(0, Math.min(20, n)) : 0)
+          onChange={(nextCount) => {
+            setCount(nextCount)
+            void saveGuestCount(nextCount)
           }}
-          className="w-20 rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-base outline-none focus:ring-2 sm:text-sm"
-          style={{ '--tw-ring-color': props.accent } as React.CSSProperties}
+          accent={props.accent}
+          className="min-w-[9.5rem] rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-base outline-none focus:ring-2 sm:text-sm"
+          disabled={loading}
         />
-        <button
-          type="button"
-          disabled={loading || count === props.currentCount}
-          onClick={async () => {
-            setLoading(true)
-            setError(null)
-            setSaved(false)
-            const result = await updateGuestCount(
-              props.orgSlug,
-              props.eventId,
-              props.signupId,
-              count,
-            )
-            setLoading(false)
-            if (result.error) {
-              setError(result.error)
-            } else {
-              setSaved(true)
-            }
-          }}
-          className="rounded-lg border border-zinc-700 px-3 py-2 text-xs font-medium text-zinc-200 transition-colors hover:border-zinc-600 hover:bg-zinc-800 disabled:opacity-50"
-        >
-          {loading ? 'Saving…' : 'Update'}
-        </button>
-        {saved ? <span className="text-xs text-zinc-500">Saved.</span> : null}
+        {loading ? <span className="text-xs text-zinc-500">Saving…</span> : null}
       </div>
       {error ? <p className="mt-2 text-sm text-red-300">{error}</p> : null}
     </div>

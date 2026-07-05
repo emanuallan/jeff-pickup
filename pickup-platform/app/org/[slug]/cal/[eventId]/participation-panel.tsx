@@ -10,6 +10,7 @@ import { RosterListLazy } from './roster-list-lazy'
 import { WaitlistSection } from './waitlist-section'
 import { SignedInStatusSheet } from './signed-in-status-sheet'
 import { SignedInGuestSection } from './signed-in-guest-section'
+import { SignupConfirmationCard } from './signup-confirmation-card'
 import { AnimatedPresenceSection } from './animated-presence-section'
 import { ParticipationMotionProvider, useParticipationMotion } from './participation-motion'
 import {
@@ -34,6 +35,7 @@ type JoinProps = {
   locationLabel: string
   locationMapsUrl: string | null
   returningSignupModalEnabled: boolean
+  guestsEnabled?: boolean
 }
 
 type Props = JoinProps & {
@@ -49,6 +51,8 @@ type Props = JoinProps & {
   badgesByParticipantId: Record<string, RosterBadgeInfo>
   rosterHeading: string
   cancelledCallout?: ReactNode
+  publicRosterEnabled?: boolean
+  guestsEnabled?: boolean
 }
 
 function ParticipationPanelBody({
@@ -65,6 +69,8 @@ function ParticipationPanelBody({
   badgesByParticipantId,
   rosterHeading,
   cancelledCallout,
+  publicRosterEnabled = true,
+  guestsEnabled = true,
   showJoin,
   joinProps,
 }: Props & { showJoin: boolean; joinProps: JoinProps }) {
@@ -91,6 +97,8 @@ function ParticipationPanelBody({
   const isWaitlisted = mySignup?.list_status === 'waitlisted'
   const openStatusSheet =
     showControls && !isWaitlisted ? () => setStatusSheetOpen(true) : undefined
+  const showConfirmation = Boolean(mySignup && !isCancelled && !isEnded)
+  const showRoster = publicRosterEnabled && !isCancelled
 
   useEffect(() => {
     if (!mySignup || !canUpdateStatus) {
@@ -119,7 +127,25 @@ function ParticipationPanelBody({
           </div>
         ) : null}
 
-        {!isCancelled ? (
+        {showConfirmation && mySignup ? (
+          <SignupConfirmationCard
+            participant={joinProps.participant}
+            mySignup={mySignup}
+            accent={joinProps.accent}
+            orgSlug={joinProps.orgSlug}
+            eventId={joinProps.eventId}
+            isOnline={joinProps.isOnline}
+            isWaitlisted={isWaitlisted}
+            canLeave={!isEnded}
+            canUpdateStatus={canUpdateStatus}
+            onOpenStatusSheet={openStatusSheet}
+            showAccountActions={!showRoster}
+            listStatus={mySignup.list_status as SignupListStatus}
+            guestsEnabled={guestsEnabled}
+          />
+        ) : null}
+
+        {showRoster ? (
         <section className="rounded-3xl border border-zinc-800 bg-zinc-900/50 p-5">
         <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-400">
           {rosterHeading}{' '}
@@ -162,6 +188,7 @@ function ParticipationPanelBody({
               guestCount={controlsSignup.guest_count}
               listStatus={controlsSignup.list_status as SignupListStatus}
               accent={joinProps.accent}
+              guestsEnabled={guestsEnabled}
             />
           </AnimatedPresenceSection>
         ) : null}
@@ -179,6 +206,19 @@ function ParticipationPanelBody({
           />
         ) : null}
         </section>
+        ) : null}
+
+        {!showRoster && showControls && mySignup && !isWaitlisted ? (
+          <SignedInStatusSheet
+            open={statusSheetOpen}
+            onClose={() => setStatusSheetOpen(false)}
+            orgSlug={joinProps.orgSlug}
+            eventId={joinProps.eventId}
+            signupId={mySignup.signup_id}
+            arrivalStatus={mySignup.arrival_status as ArrivalStatus}
+            isOnline={joinProps.isOnline}
+            accent={joinProps.accent}
+          />
         ) : null}
       </div>
     </div>
@@ -217,6 +257,7 @@ export function ParticipationPanel(props: Props) {
     locationLabel: rest.locationLabel,
     locationMapsUrl: rest.locationMapsUrl,
     returningSignupModalEnabled: rest.returningSignupModalEnabled,
+    guestsEnabled: rest.guestsEnabled,
   }
 
   return (

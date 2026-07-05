@@ -77,6 +77,8 @@ export async function EventParticipation({ slug, eventId, org, event }: Props) {
         locationLabel={event.location_label}
         locationMapsUrl={event.location_is_online ? null : event.location_maps_url.trim() || null}
         returningSignupModalEnabled={orgFeatures(org).returning_signup_modal}
+        publicRosterEnabled={orgFeatures(org).public_roster}
+        guestsEnabled={orgFeatures(org).guest_signups}
         roster={roster}
         waitlist={waitlist}
         headcount={headcount}
@@ -110,6 +112,8 @@ export async function EventParticipation({ slug, eventId, org, event }: Props) {
       locationLabel={event.location_label}
       locationMapsUrl={event.location_is_online ? null : event.location_maps_url.trim() || null}
       returningSignupModalEnabled={orgFeatures(org).returning_signup_modal}
+      publicRosterEnabled={orgFeatures(org).public_roster}
+      guestsEnabled={orgFeatures(org).guest_signups}
       roster={roster}
       waitlist={waitlist}
       headcount={headcount}

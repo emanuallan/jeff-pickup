@@ -1109,6 +1109,8 @@ export async function updateOrgFeatures(orgSlug: string, formData: FormData) {
     user_badges: formData.get('user_badges') === 'on',
     leaderboard: formData.get('leaderboard') === 'on',
     returning_signup_modal: formData.get('returning_signup_modal') === 'on',
+    public_roster: formData.get('public_roster') === 'on',
+    guest_signups: formData.get('guest_signups') === 'on',
   }
 
   const { error } = await supabase

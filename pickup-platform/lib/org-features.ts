@@ -2,6 +2,10 @@ export type OrgFeatures = {
   user_badges: boolean
   leaderboard: boolean
   returning_signup_modal: boolean
+  /** When false, public pages hide the roster and show signup confirmation only. */
+  public_roster: boolean
+  /** When false, participants cannot add guests to their sign-up. */
+  guest_signups: boolean
 }
 
 export type WaitlistPromotionMode = 'strict_fifo' | 'skip_ahead'
@@ -19,6 +23,8 @@ export const DEFAULT_ORG_FEATURES: OrgFeatures = {
   user_badges: true,
   leaderboard: true,
   returning_signup_modal: true,
+  public_roster: true,
+  guest_signups: true,
 }
 
 export const DEFAULT_ORG_WAITLIST_SETTINGS: OrgWaitlistSettings = {
@@ -48,6 +54,8 @@ export function parseOrgSettings(raw: unknown): OrgSettings {
       user_badges: features?.user_badges !== false,
       leaderboard: features?.leaderboard !== false,
       returning_signup_modal: features?.returning_signup_modal !== false,
+      public_roster: features?.public_roster !== false,
+      guest_signups: features?.guest_signups !== false,
     },
     waitlist: parseWaitlistSettings(settings?.waitlist),
   }
@@ -55,7 +63,7 @@ export function parseOrgSettings(raw: unknown): OrgSettings {
 
 /** Safe accessor — handles stale cached org rows missing settings. */
 export function orgSettings(org: { settings?: OrgSettings | null }): OrgSettings {
-  return org.settings ?? DEFAULT_ORG_SETTINGS
+  return parseOrgSettings(org.settings)
 }
 
 export function orgFeatures(org: { settings?: OrgSettings | null }): OrgFeatures {
@@ -88,5 +96,16 @@ export const ORG_FEATURE_DEFINITIONS: OrgFeatureDefinition[] = [
     label: 'Quick signup prompt',
     description:
       'Show returning participants a simplified one-tap signup modal before the full join form.',
+  },
+  {
+    key: 'public_roster',
+    label: 'Public roster',
+    description:
+      "Show who's coming on public session pages. When off, sign-ups still work and participants see a confirmation message.",
+  },
+  {
+    key: 'guest_signups',
+    label: 'Guest sign-ups',
+    description: 'Let participants bring guests when they join or update their sign-up.',
   },
 ]
