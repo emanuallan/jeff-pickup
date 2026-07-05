@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from 'next/server'
 import { updateSession } from '@/lib/supabase/middleware'
 import { safeNextPath } from '@/lib/safe-next'
+import { isCalAssetSegment } from '@/lib/org-public-nav'
 import { parseOrgSlugFromHost } from '@/lib/tenancy/parse-host'
 import { VISITOR_COOKIE } from '@/lib/visitor-cookie'
 
@@ -42,7 +43,7 @@ function redirectLegacyOrgPaths(request: NextRequest): NextResponse | null {
   }
 
   const calEvent = /^\/cal\/([^/]+)$/.exec(pathname)
-  if (calEvent) {
+  if (calEvent && !isCalAssetSegment(calEvent[1])) {
     const url = request.nextUrl.clone()
     url.pathname = '/'
     url.searchParams.set('cal', calEvent[1])
@@ -73,7 +74,7 @@ function redirectLegacyOrgPaths(request: NextRequest): NextResponse | null {
   }
 
   const apexCalEvent = /^(\/org\/[^/]+)\/cal\/([^/]+)$/.exec(pathname)
-  if (apexCalEvent) {
+  if (apexCalEvent && !isCalAssetSegment(apexCalEvent[2])) {
     const url = request.nextUrl.clone()
     url.pathname = apexCalEvent[1]
     url.searchParams.set('cal', apexCalEvent[2])

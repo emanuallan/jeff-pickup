@@ -15,6 +15,13 @@ export const ORG_PUBLIC_DEFAULT_TAB: OrgPublicTab = 'sessions'
 /** @deprecated Use {@link ORG_PUBLIC_DEFAULT_TAB}. */
 export const HIDDEN_DEFAULT_TAB = ORG_PUBLIC_DEFAULT_TAB
 
+/** Reserved `/cal/<segment>` paths — image routes, not legacy event short IDs. */
+export const CAL_ASSET_SEGMENTS = new Set(['share-image', 'og-image'])
+
+export function isCalAssetSegment(segment: string): boolean {
+  return CAL_ASSET_SEGMENTS.has(segment)
+}
+
 /** Public event deep link on the org home shell — e.g. `/?cal=ZbG6e5qK`. */
 export function orgPublicEventHref(shortId: string, basePath = ORG_PUBLIC_NAV_BASE): string {
   const params = new URLSearchParams()
