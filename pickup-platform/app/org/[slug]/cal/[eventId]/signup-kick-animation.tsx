@@ -108,7 +108,9 @@ export function SignupKickAnimation({ accent, guestCount = 0, className = '' }: 
           ))}
         </div>
       ) : (
-        <SoccerGoal />
+        <div className="signup-kick-goal-wrap" aria-hidden>
+          <SoccerGoal />
+        </div>
       )}
     </div>
   )

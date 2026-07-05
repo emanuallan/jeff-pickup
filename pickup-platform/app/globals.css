@@ -334,18 +334,26 @@ textarea {
 	right: 3%;
 }
 
-.signup-kick-goal {
+.signup-kick-goal-wrap {
 	position: absolute;
 	right: 4%;
 	bottom: 0.65rem;
 	width: 3rem;
 	height: 2.25rem;
+	z-index: 2;
+	pointer-events: none;
+}
+
+.signup-kick-goal {
+	width: 100%;
+	height: 100%;
 	color: #a1a1aa;
 	transform-origin: 50% 100%;
 	animation: signup-goal-shake 1.4s ease-out forwards;
 }
 
 .signup-kick-scene[data-kick-target="goal"] .signup-kick-ball {
+	z-index: 1;
 	animation-name: signup-ball-goal;
 }
 
@@ -353,32 +361,58 @@ textarea {
 	0%,
 	22% {
 		left: 14%;
-		transform: rotate(0deg) translateY(0);
+		bottom: 0.95rem;
+		transform: rotate(0deg) translateY(0) scale(1);
+		opacity: 1;
 	}
 	34% {
-		left: 19%;
-		transform: rotate(90deg) translateY(-2px);
+		left: 20%;
+		bottom: 0.95rem;
+		transform: rotate(180deg) translateY(-2px) scale(1);
+		opacity: 1;
 	}
-	72% {
-		left: 76%;
-		transform: rotate(540deg) translateY(0);
+	62% {
+		left: 58%;
+		bottom: 0.95rem;
+		transform: rotate(420deg) translateY(0) scale(1);
+		opacity: 1;
+	}
+	74% {
+		left: calc(96% - 3.4rem);
+		bottom: 0.98rem;
+		transform: rotate(560deg) translateY(-1px) scale(1);
+		opacity: 1;
+	}
+	82% {
+		left: calc(96% - 2.15rem);
+		bottom: 1.15rem;
+		transform: rotate(640deg) translateY(-5px) scale(0.92);
+		opacity: 1;
+	}
+	90% {
+		left: calc(96% - 1.9375rem);
+		bottom: 1.45rem;
+		transform: rotate(700deg) translateY(-2px) scale(0.72);
+		opacity: 0.85;
 	}
 	100% {
-		left: 79%;
-		transform: rotate(720deg) translateY(1px) scale(0.92);
+		left: calc(96% - 1.9375rem);
+		bottom: 1.65rem;
+		transform: rotate(720deg) translateY(0) scale(0.48);
+		opacity: 0.35;
 	}
 }
 
 @keyframes signup-goal-shake {
 	0%,
-	68% {
+	74% {
 		transform: rotate(0deg);
 	}
-	74% {
-		transform: rotate(-2.5deg);
-	}
 	80% {
-		transform: rotate(1.5deg);
+		transform: rotate(-3deg);
+	}
+	86% {
+		transform: rotate(2deg);
 	}
 	100% {
 		transform: rotate(0deg);
