@@ -1,4 +1,4 @@
--- Refresh demo org (slug: demo) — schema-current through 042.
+-- Refresh demo org (slug: demo) — schema-current through 046.
 -- Re-run safe: deletes and recreates ONLY the demo org (cascades all child rows).
 -- Paste this entire file into the Supabase SQL Editor whenever you want fresh relative dates.
 --
@@ -144,7 +144,9 @@ begin
       'features', jsonb_build_object(
         'user_badges', true,
         'leaderboard', true,
-        'returning_signup_modal', true
+        'returning_signup_modal', true,
+        'public_roster', true,
+        'guest_signups', true
       ),
       'waitlist', jsonb_build_object(
         'promotion_mode', 'strict_fifo'
@@ -197,7 +199,7 @@ begin
 
   insert into public.schedules (
     id, org_id, location_id, title, byweekday, start_time, duration_min,
-    capacity, min_players, timezone, interval_weeks
+    capacity, min_players, timezone, interval_weeks, additional_information
   )
   values
     (
@@ -211,7 +213,8 @@ begin
       24,
       14,
       v_tz,
-      1
+      1,
+      'Bring a light and dark shirt. Cleats recommended on grass.'
     ),
     (
       v_sched_skills,
@@ -224,7 +227,8 @@ begin
       20,
       10,
       v_tz,
-      1
+      1,
+      'Small-sided games — all levels welcome.'
     ),
     (
       v_sched_beginners,
@@ -237,7 +241,8 @@ begin
       16,
       8,
       v_tz,
-      2
+      2,
+      'No experience needed. We provide cones and bibs.'
     ),
     (
       v_sched_volunteers,
@@ -250,12 +255,13 @@ begin
       16,
       8,
       v_tz,
-      1
+      1,
+      ''
     );
 
   insert into public.events (
     id, org_id, schedule_id, location_id, starts_at, capacity, min_players,
-    status, announcement, timezone, short_id, title, duration_min
+    status, announcement, additional_information, timezone, short_id, title, duration_min
   )
   values
     (
@@ -268,6 +274,7 @@ begin
       14,
       'on',
       'Bring a white and a dark shirt — we split teams at kickoff. Park in the main lot off Brogden Ave.',
+      'Field 3 by the river — look for the flag.',
       v_tz,
       'DmPkLive',
       null,
@@ -283,6 +290,7 @@ begin
       14,
       'on',
       'Lights are on — field 3 by the river. Casual pace, all levels welcome.',
+      'Park in the main lot off Brogden Ave.',
       v_tz,
       'DmPkNxWk',
       null,
@@ -297,6 +305,7 @@ begin
       24,
       14,
       'on',
+      '',
       '',
       v_tz,
       'DmPkUp02',
@@ -313,6 +322,7 @@ begin
       14,
       'cancelled',
       'Field closed for maintenance — see you at the next session.',
+      '',
       v_tz,
       'DmPkCncl',
       null,
@@ -328,6 +338,7 @@ begin
       10,
       'tentative',
       'Need a few more yeses before we confirm — great for touches and small-sided games.',
+      '',
       v_tz,
       'DmPkTnWk',
       null,
@@ -343,6 +354,7 @@ begin
       8,
       'tentative',
       'Monthly sync for organizers and regulars. Link goes live 10 min before.',
+      '',
       v_tz,
       'DmPkZomm',
       null,
@@ -358,49 +370,50 @@ begin
       16,
       'on',
       'Friday night 7v7 under the lights — invite a friend. Indoor cleats or flats.',
+      'Indoor cleats or flats only. No studs.',
       v_tz,
       'DmPk7v7',
       'Friday Night 7v7',
       90
     ),
     (
-      v_ev_past1, v_org_id, v_sched_pickup, v_loc_park, (v_ev_past1_day + time '18:30') at time zone v_tz, 24, 14, 'on', '', v_tz, 'DmPkPs01', null, null
+      v_ev_past1, v_org_id, v_sched_pickup, v_loc_park, (v_ev_past1_day + time '18:30') at time zone v_tz, 24, 14, 'on', '', '', v_tz, 'DmPkPs01', null, null
     ),
     (
-      v_ev_past2, v_org_id, v_sched_pickup, v_loc_park, (v_ev_past2_day + time '18:30') at time zone v_tz, 24, 14, 'on', '', v_tz, 'DmPkPs02', null, null
+      v_ev_past2, v_org_id, v_sched_pickup, v_loc_park, (v_ev_past2_day + time '18:30') at time zone v_tz, 24, 14, 'on', '', '', v_tz, 'DmPkPs02', null, null
     ),
     (
-      v_ev_past3, v_org_id, v_sched_pickup, v_loc_park, (v_ev_past3_day + time '18:30') at time zone v_tz, 24, 14, 'on', '', v_tz, 'DmPkPs03', null, null
+      v_ev_past3, v_org_id, v_sched_pickup, v_loc_park, (v_ev_past3_day + time '18:30') at time zone v_tz, 24, 14, 'on', '', '', v_tz, 'DmPkPs03', null, null
     ),
     (
-      v_ev_past4, v_org_id, v_sched_pickup, v_loc_park, (v_ev_past4_day + time '18:30') at time zone v_tz, 24, 14, 'on', '', v_tz, 'DmPkPs04', null, null
+      v_ev_past4, v_org_id, v_sched_pickup, v_loc_park, (v_ev_past4_day + time '18:30') at time zone v_tz, 24, 14, 'on', '', '', v_tz, 'DmPkPs04', null, null
     ),
     (
-      v_ev_past5, v_org_id, v_sched_pickup, v_loc_park, (v_ev_past5_day + time '18:30') at time zone v_tz, 24, 14, 'on', '', v_tz, 'DmPkPs05', null, null
+      v_ev_past5, v_org_id, v_sched_pickup, v_loc_park, (v_ev_past5_day + time '18:30') at time zone v_tz, 24, 14, 'on', '', '', v_tz, 'DmPkPs05', null, null
     ),
     (
-      v_ev_past6, v_org_id, v_sched_pickup, v_loc_park, (v_ev_past6_day + time '18:30') at time zone v_tz, 24, 14, 'on', '', v_tz, 'DmPkPs06', null, null
+      v_ev_past6, v_org_id, v_sched_pickup, v_loc_park, (v_ev_past6_day + time '18:30') at time zone v_tz, 24, 14, 'on', '', '', v_tz, 'DmPkPs06', null, null
     ),
     (
-      v_ev_past7, v_org_id, v_sched_pickup, v_loc_park, (v_ev_past7_day + time '18:30') at time zone v_tz, 24, 14, 'on', '', v_tz, 'DmPkPs07', null, null
+      v_ev_past7, v_org_id, v_sched_pickup, v_loc_park, (v_ev_past7_day + time '18:30') at time zone v_tz, 24, 14, 'on', '', '', v_tz, 'DmPkPs07', null, null
     ),
     (
-      v_ev_past8, v_org_id, v_sched_pickup, v_loc_park, (v_ev_past8_day + time '18:30') at time zone v_tz, 24, 14, 'on', '', v_tz, 'DmPkPs08', null, null
+      v_ev_past8, v_org_id, v_sched_pickup, v_loc_park, (v_ev_past8_day + time '18:30') at time zone v_tz, 24, 14, 'on', '', '', v_tz, 'DmPkPs08', null, null
     ),
     (
-      v_ev_past9, v_org_id, v_sched_pickup, v_loc_park, (v_ev_past9_day + time '18:30') at time zone v_tz, 24, 14, 'on', '', v_tz, 'DmPkPs09', null, null
+      v_ev_past9, v_org_id, v_sched_pickup, v_loc_park, (v_ev_past9_day + time '18:30') at time zone v_tz, 24, 14, 'on', '', '', v_tz, 'DmPkPs09', null, null
     ),
     (
-      v_ev_past10, v_org_id, v_sched_pickup, v_loc_park, (v_ev_past10_day + time '18:30') at time zone v_tz, 24, 14, 'on', '', v_tz, 'DmPkPs10', null, null
+      v_ev_past10, v_org_id, v_sched_pickup, v_loc_park, (v_ev_past10_day + time '18:30') at time zone v_tz, 24, 14, 'on', '', '', v_tz, 'DmPkPs10', null, null
     ),
     (
-      v_ev_past_sk1, v_org_id, v_sched_skills, v_loc_park, (v_ev_past_sk1_day + time '10:00') at time zone v_tz, 20, 10, 'on', '', v_tz, 'DmSkPs01', null, null
+      v_ev_past_sk1, v_org_id, v_sched_skills, v_loc_park, (v_ev_past_sk1_day + time '10:00') at time zone v_tz, 20, 10, 'on', '', '', v_tz, 'DmSkPs01', null, null
     ),
     (
-      v_ev_past_sk2, v_org_id, v_sched_skills, v_loc_park, (v_ev_past_sk2_day + time '10:00') at time zone v_tz, 20, 10, 'on', '', v_tz, 'DmSkPs02', null, null
+      v_ev_past_sk2, v_org_id, v_sched_skills, v_loc_park, (v_ev_past_sk2_day + time '10:00') at time zone v_tz, 20, 10, 'on', '', '', v_tz, 'DmSkPs02', null, null
     ),
     (
-      v_ev_past_sk3, v_org_id, v_sched_skills, v_loc_park, (v_ev_past_sk3_day + time '10:00') at time zone v_tz, 20, 10, 'on', '', v_tz, 'DmSkPs03', null, null
+      v_ev_past_sk3, v_org_id, v_sched_skills, v_loc_park, (v_ev_past_sk3_day + time '10:00') at time zone v_tz, 20, 10, 'on', '', '', v_tz, 'DmSkPs03', null, null
     );
 
   insert into public.participants (id, org_id, phone, first_name, last_name, display_name)
@@ -602,21 +615,44 @@ begin
   values
     (v_org_id, v_ev_next, p_tyler, 'left', now() - interval '3 days');
 
-  -- Page views for live session + next session
-  insert into public.event_page_views (org_id, event_id, viewer_key, viewed_at)
-  select
-    v_org_id,
-    v_ev_live,
-    'demo-viewer-live-' || g::text,
-    now() - (g || ' hours')::interval
-  from generate_series(1, 24) as g;
-
-  insert into public.event_page_views (org_id, event_id, viewer_key, viewed_at)
-  select
-    v_org_id,
-    v_ev_next,
-    'demo-viewer-next-' || g::text,
-    now() - (g || ' hours')::interval
-  from generate_series(1, 16) as g;
+  -- Page views for live session + next session (known participants + guests for unique-visitor analytics)
+  insert into public.event_page_views (org_id, event_id, viewer_key, participant_id, viewed_at)
+  values
+    -- Live: 8 known participants on two devices each (deduped to 8 people)
+    (v_org_id, v_ev_live, 'demo-marcus-mobile', p_marcus, now() - interval '4 hours'),
+    (v_org_id, v_ev_live, 'demo-marcus-desktop', p_marcus, now() - interval '2 hours'),
+    (v_org_id, v_ev_live, 'demo-jen-phone', p_jen, now() - interval '5 hours'),
+    (v_org_id, v_ev_live, 'demo-jen-tablet', p_jen, now() - interval '1 hour'),
+    (v_org_id, v_ev_live, 'demo-diego-mobile', p_diego, now() - interval '6 hours'),
+    (v_org_id, v_ev_live, 'demo-diego-laptop', p_diego, now() - interval '3 hours'),
+    (v_org_id, v_ev_live, 'demo-sofia-mobile', p_sofia, now() - interval '7 hours'),
+    (v_org_id, v_ev_live, 'demo-sofia-desktop', p_sofia, now() - interval '90 minutes'),
+    (v_org_id, v_ev_live, 'demo-elena-mobile', p_elena, now() - interval '8 hours'),
+    (v_org_id, v_ev_live, 'demo-elena-tablet', p_elena, now() - interval '45 minutes'),
+    (v_org_id, v_ev_live, 'demo-jordan-phone', p_jordan, now() - interval '5 hours'),
+    (v_org_id, v_ev_live, 'demo-jordan-desktop', p_jordan, now() - interval '2 hours'),
+    (v_org_id, v_ev_live, 'demo-chris-mobile', p_chris, now() - interval '4 hours'),
+    (v_org_id, v_ev_live, 'demo-chris-laptop', p_chris, now() - interval '30 minutes'),
+    (v_org_id, v_ev_live, 'demo-amir-phone', p_amir, now() - interval '3 hours'),
+    (v_org_id, v_ev_live, 'demo-amir-tablet', p_amir, now() - interval '1 hour'),
+    -- Live: anonymous guests
+    (v_org_id, v_ev_live, 'demo-guest-live-01', null, now() - interval '9 hours'),
+    (v_org_id, v_ev_live, 'demo-guest-live-02', null, now() - interval '8 hours'),
+    (v_org_id, v_ev_live, 'demo-guest-live-03', null, now() - interval '6 hours'),
+    (v_org_id, v_ev_live, 'demo-guest-live-04', null, now() - interval '4 hours'),
+    (v_org_id, v_ev_live, 'demo-guest-live-05', null, now() - interval '2 hours'),
+    (v_org_id, v_ev_live, 'demo-guest-live-06', null, now() - interval '1 hour'),
+    -- Next: 5 known participants + 4 guests
+    (v_org_id, v_ev_next, 'demo-marcus-next', p_marcus, now() - interval '20 hours'),
+    (v_org_id, v_ev_next, 'demo-jen-next', p_jen, now() - interval '18 hours'),
+    (v_org_id, v_ev_next, 'demo-diego-next', p_diego, now() - interval '16 hours'),
+    (v_org_id, v_ev_next, 'demo-sofia-next-mobile', p_sofia, now() - interval '14 hours'),
+    (v_org_id, v_ev_next, 'demo-sofia-next-desktop', p_sofia, now() - interval '12 hours'),
+    (v_org_id, v_ev_next, 'demo-tyler-next', p_tyler, now() - interval '10 hours'),
+    (v_org_id, v_ev_next, 'demo-elena-next', p_elena, now() - interval '8 hours'),
+    (v_org_id, v_ev_next, 'demo-guest-next-01', null, now() - interval '22 hours'),
+    (v_org_id, v_ev_next, 'demo-guest-next-02', null, now() - interval '16 hours'),
+    (v_org_id, v_ev_next, 'demo-guest-next-03', null, now() - interval '10 hours'),
+    (v_org_id, v_ev_next, 'demo-guest-next-04', null, now() - interval '4 hours');
 end;
 $$;

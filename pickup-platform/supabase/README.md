@@ -76,7 +76,7 @@ Visit `http://jeffsoccer.localhost:3000` locally.
 ### Demo org (`demo.organizr.co`)
 
 Re-run [`migrations/043_refresh_demo_org.sql`](migrations/043_refresh_demo_org.sql) in the SQL Editor
-anytime you want fresh relative dates and roster data. It **only** deletes and recreates the org with
+anytime you want fresh relative dates and roster data (seed is current through migration 046). It **only** deletes and recreates the org with
 `slug = 'demo'` (cascades all child rows). Grants console owner access to `emanuallan@gmail.com`
 (`23f1a201-aafe-4fd6-826d-3f753f092d33`) when that auth user exists.
 
