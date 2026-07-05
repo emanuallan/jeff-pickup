@@ -111,11 +111,13 @@ function ParticipationPanelBody({
       <div className="flex flex-col gap-5 [&_section]:!mt-0">
         {cancelledCallout}
 
-        <div id={EVENT_JOIN_SECTION_ID}>
-          <AnimatedPresenceSection show={showJoin || joinClosing} closing={joinClosing}>
-            <JoinSectionLazy {...joinProps} />
-          </AnimatedPresenceSection>
-        </div>
+        {showJoin || joinClosing ? (
+          <div id={EVENT_JOIN_SECTION_ID}>
+            <AnimatedPresenceSection show={showJoin || joinClosing} closing={joinClosing}>
+              <JoinSectionLazy {...joinProps} />
+            </AnimatedPresenceSection>
+          </div>
+        ) : null}
 
         {!isCancelled ? (
         <section className="rounded-3xl border border-zinc-800 bg-zinc-900/50 p-5">
