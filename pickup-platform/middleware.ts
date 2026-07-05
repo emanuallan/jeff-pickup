@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from 'next/server'
 import { updateSession } from '@/lib/supabase/middleware'
 import { safeNextPath } from '@/lib/safe-next'
-import { isCalAssetSegment } from '@/lib/org-public-nav'
+import { getLegacyOrgPathRedirect } from '@/lib/legacy-org-path-redirect'
 import { parseOrgSlugFromHost } from '@/lib/tenancy/parse-host'
 import { VISITOR_COOKIE } from '@/lib/visitor-cookie'
 
@@ -27,76 +27,15 @@ function isPublicEventPage(pathname: string): boolean {
 
 /** Legacy public URLs — redirect to the org home shell. */
 function redirectLegacyOrgPaths(request: NextRequest): NextResponse | null {
-  const { pathname } = request.nextUrl
+  const target = getLegacyOrgPathRedirect(request.nextUrl.pathname)
+  if (!target) return null
 
-  if (pathname === '/cal' || pathname === '/events') {
-    const url = request.nextUrl.clone()
-    url.pathname = '/'
-    return NextResponse.redirect(url, 308)
+  const url = request.nextUrl.clone()
+  url.pathname = target.pathname
+  for (const [key, value] of Object.entries(target.searchParams)) {
+    url.searchParams.set(key, value)
   }
-
-  if (pathname === '/leaderboard') {
-    const url = request.nextUrl.clone()
-    url.pathname = '/'
-    url.searchParams.set('tab', 'leaderboard')
-    return NextResponse.redirect(url, 308)
-  }
-
-  const calEvent = /^\/cal\/([^/]+)$/.exec(pathname)
-  if (calEvent && !isCalAssetSegment(calEvent[1])) {
-    const url = request.nextUrl.clone()
-    url.pathname = '/'
-    url.searchParams.set('cal', calEvent[1])
-    return NextResponse.redirect(url, 308)
-  }
-
-  const legacyEvent = /^\/events\/([^/]+)$/.exec(pathname)
-  if (legacyEvent) {
-    const url = request.nextUrl.clone()
-    url.pathname = '/'
-    url.searchParams.set('cal', legacyEvent[1])
-    return NextResponse.redirect(url, 308)
-  }
-
-  const apexCal = /^(\/org\/[^/]+)\/cal$/.exec(pathname)
-  if (apexCal) {
-    const url = request.nextUrl.clone()
-    url.pathname = apexCal[1]
-    return NextResponse.redirect(url, 308)
-  }
-
-  const apexLeaderboard = /^(\/org\/[^/]+)\/leaderboard$/.exec(pathname)
-  if (apexLeaderboard) {
-    const url = request.nextUrl.clone()
-    url.pathname = apexLeaderboard[1]
-    url.searchParams.set('tab', 'leaderboard')
-    return NextResponse.redirect(url, 308)
-  }
-
-  const apexCalEvent = /^(\/org\/[^/]+)\/cal\/([^/]+)$/.exec(pathname)
-  if (apexCalEvent && !isCalAssetSegment(apexCalEvent[2])) {
-    const url = request.nextUrl.clone()
-    url.pathname = apexCalEvent[1]
-    url.searchParams.set('cal', apexCalEvent[2])
-    return NextResponse.redirect(url, 308)
-  }
-
-  const apexEvents = /^(\/org\/[^/]+)\/events$/.exec(pathname)
-  if (apexEvents) {
-    const url = request.nextUrl.clone()
-    url.pathname = apexEvents[1]
-    return NextResponse.redirect(url, 308)
-  }
-
-  const apexLegacyEvent = /^(\/org\/[^/]+)\/events\/([^/]+)$/.exec(pathname)
-  if (apexLegacyEvent) {
-    const url = request.nextUrl.clone()
-    url.pathname = apexLegacyEvent[1]
-    url.searchParams.set('cal', apexLegacyEvent[2])
-    return NextResponse.redirect(url, 308)
-  }
-
-  return null
+  return NextResponse.redirect(url, 308)
 }
 
 function copyCookies(from: NextResponse, to: NextResponse) {
