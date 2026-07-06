@@ -1,4 +1,4 @@
-import { clampGuestCount } from '@/lib/guest-signups'
+import { clampConsoleGuestCount } from '@/lib/console/guest-count'
 import { isValidPhoneDigits, normalizePhoneDigits } from '@/lib/phone'
 
 export type RosterListStatusChoice = 'auto' | 'confirmed' | 'waitlisted'
@@ -50,7 +50,7 @@ export function parseRosterAddForm(
       firstName,
       lastName,
       displayName: displayName || null,
-      guestCount: guestsEnabled ? clampGuestCount(guestCount) : 0,
+      guestCount: guestsEnabled ? clampConsoleGuestCount(guestCount) : 0,
       listStatus: rosterListStatusForRpc(listStatusChoice),
     },
   }

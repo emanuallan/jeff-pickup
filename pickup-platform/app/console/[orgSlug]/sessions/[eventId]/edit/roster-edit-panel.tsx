@@ -8,9 +8,9 @@ import type { SignupWithContact } from '@/lib/signups'
 import { formatPhoneDisplay } from '@/lib/phone'
 import { formatGuestSuffix } from '@/lib/format-guest-suffix'
 import {
-  guestCountOptionLabel,
-  guestCountOptions,
-} from '@/lib/guest-signups'
+  consoleGuestCountOptionLabel,
+  consoleGuestCountOptions,
+} from '@/lib/console/guest-count'
 import {
   ConsoleCard,
   ConsoleSection,
@@ -106,9 +106,9 @@ function RosterRow({
                 }}
                 className="rounded-lg border border-white/10 bg-zinc-950/60 px-2 py-1.5 text-xs text-zinc-100 outline-none focus:border-indigo-500/50 focus:ring-2 focus:ring-indigo-500/25"
               >
-                {guestCountOptions().map((count) => (
+                {consoleGuestCountOptions().map((count) => (
                   <option key={count} value={count}>
-                    {guestCountOptionLabel(count)}
+                    {consoleGuestCountOptionLabel(count)}
                   </option>
                 ))}
               </select>
@@ -342,9 +342,9 @@ export function RosterEditPanel({
             <label className="block">
               <span className={consoleLabel}>Guests</span>
               <select name="guest_count" defaultValue={0} className={`${consoleInput} mt-1`}>
-                {guestCountOptions().map((count) => (
+                {consoleGuestCountOptions().map((count) => (
                   <option key={count} value={count}>
-                    {guestCountOptionLabel(count)}
+                    {consoleGuestCountOptionLabel(count)}
                   </option>
                 ))}
               </select>

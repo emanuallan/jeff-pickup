@@ -9,11 +9,11 @@ import {
 
 describe('guest-signups', () => {
   describe('clampGuestCount', () => {
-    it('clamps to 0–20 range', () => {
+    it('clamps to 0–5 range', () => {
       expect(clampGuestCount(-5)).toBe(0)
       expect(clampGuestCount(0)).toBe(0)
-      expect(clampGuestCount(20)).toBe(20)
-      expect(clampGuestCount(25)).toBe(20)
+      expect(clampGuestCount(5)).toBe(5)
+      expect(clampGuestCount(25)).toBe(5)
     })
 
     it('floors fractional values', () => {

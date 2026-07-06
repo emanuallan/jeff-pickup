@@ -1,5 +1,5 @@
-/** Matches Postgres signups.guest_count check (0–20). */
-export const MAX_GUEST_COUNT = 20
+/** App-side guest cap for join forms and console roster editing. */
+export const MAX_GUEST_COUNT = 5
 
 export function clampGuestCount(count: number): number {
   if (!Number.isFinite(count)) return 0

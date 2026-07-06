@@ -3,7 +3,7 @@
 import { revalidatePath, revalidateTag } from 'next/cache'
 import { getEventByRef } from '@/lib/events'
 import { parseRosterAddForm } from '@/lib/console/parse-roster-add-form'
-import { clampGuestCount } from '@/lib/guest-signups'
+import { clampConsoleGuestCount } from '@/lib/console/guest-count'
 import { orgFeatures } from '@/lib/org-features'
 import { createClient } from '@/lib/supabase/server'
 import { getOrgForMember } from '@/lib/orgs'
@@ -99,7 +99,7 @@ export async function addExistingSessionRosterSignup(
     return { error: 'Session not found.' }
   }
 
-  const guests = orgFeatures(session.org).guest_signups ? clampGuestCount(guestCount) : 0
+  const guests = orgFeatures(session.org).guest_signups ? clampConsoleGuestCount(guestCount) : 0
   const supabase = await createClient()
   const { error } = await supabase.rpc('organizer_add_session_signup_by_participant', {
     p_event_id: session.event.id,
@@ -173,7 +173,7 @@ export async function updateSessionRosterGuestCount(
     return { error: 'Session not found.' }
   }
 
-  const guests = orgFeatures(session.org).guest_signups ? clampGuestCount(guestCount) : 0
+  const guests = orgFeatures(session.org).guest_signups ? clampConsoleGuestCount(guestCount) : 0
   const supabase = await createClient()
   const { error } = await supabase.rpc('organizer_update_session_signup_guests', {
     p_signup_id: signupId,
