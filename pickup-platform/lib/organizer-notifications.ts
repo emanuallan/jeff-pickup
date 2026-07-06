@@ -128,7 +128,7 @@ export function organizerNotificationHref(n: OrganizerNotification): string {
     const query = params.toString()
     return `/console/${n.org_slug}/feedback${query ? `?${query}` : ''}`
   }
-  return `/console/${n.org_slug}/events/${n.payload.event_short_id}`
+  return `/console/${n.org_slug}/sessions/${n.payload.event_short_id}`
 }
 
 export function formatNotificationTime(iso: string): string {

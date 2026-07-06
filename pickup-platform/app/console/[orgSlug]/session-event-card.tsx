@@ -72,10 +72,10 @@ export function SessionEventCard({
           />
         </div>
         <Link
-          href={`/console/${orgSlug}/events/${event.short_id}`}
+          href={`/console/${orgSlug}/sessions/${event.short_id}`}
           className={`${chipAction} shrink-0 text-indigo-300 hover:bg-indigo-500/10 hover:text-indigo-200`}
         >
-          View analytics {arrowRight}
+          View more {arrowRight}
         </Link>
       </div>
     </ConsoleCard>

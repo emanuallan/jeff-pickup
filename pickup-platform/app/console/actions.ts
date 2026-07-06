@@ -389,7 +389,7 @@ export async function updateEvent(
   revalidatePath(`/console/${orgSlug}`)
   revalidatePath(`/console/${orgSlug}/sessions`)
   revalidatePath(`/org/${orgSlug}`)
-  revalidatePath(`/console/${orgSlug}/events/${eventId}`)
+  revalidatePath(`/console/${orgSlug}/sessions/${eventId}`)
   return { ok: true }
 }
 
@@ -451,7 +451,7 @@ export async function updateEventStatus(
 
   revalidatePath(`/console/${orgSlug}`)
   revalidatePath(`/org/${orgSlug}`)
-  revalidatePath(`/console/${orgSlug}/events/${eventId}`)
+  revalidatePath(`/console/${orgSlug}/sessions/${eventId}`)
 
   return { ok: true }
 }
@@ -492,7 +492,7 @@ export async function updateEventAnnouncement(
 
   revalidatePath(`/console/${orgSlug}`)
   revalidatePath(`/org/${orgSlug}`)
-  revalidatePath(`/console/${orgSlug}/events/${eventId}`)
+  revalidatePath(`/console/${orgSlug}/sessions/${eventId}`)
 
   return { ok: true }
 }

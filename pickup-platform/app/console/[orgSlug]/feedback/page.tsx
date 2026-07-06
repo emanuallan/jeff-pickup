@@ -116,7 +116,7 @@ export default async function ConsoleFeedbackPage({ params, searchParams }: Prop
                       </div>
                       {row.event_short_id ? (
                         <Link
-                          href={`/console/${orgSlug}/events/${row.event_short_id}`}
+                          href={`/console/${orgSlug}/sessions/${row.event_short_id}`}
                           className="shrink-0 text-xs font-medium text-indigo-300 hover:text-indigo-200"
                         >
                           Session

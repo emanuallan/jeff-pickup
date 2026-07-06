@@ -69,7 +69,7 @@ export default async function ConsoleEventAnalyticsPage({ params }: Props) {
         useHistoryBack
         actions={
           <a href={publicEventUrl} target="_blank" rel="noreferrer" className={btnOutline}>
-            View public event {arrowNe}
+            View public session {arrowNe}
           </a>
         }
       />
