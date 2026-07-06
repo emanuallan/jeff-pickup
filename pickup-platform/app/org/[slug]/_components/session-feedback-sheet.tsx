@@ -32,7 +32,7 @@ type Props = {
   eventId: string
   payload: ParticipantNotificationPayload
   accent: string
-  onSubmitted?: () => void
+  onSubmitted?: (outcome: 'rated' | 'no_attend') => void
 }
 
 function StarRating({
@@ -116,7 +116,7 @@ export function SessionFeedbackSheet({
       setError(result.error)
       return
     }
-    onSubmitted?.()
+    onSubmitted?.('rated')
     onClose()
   }
 
@@ -129,7 +129,7 @@ export function SessionFeedbackSheet({
       setError(result.error)
       return
     }
-    onSubmitted?.()
+    onSubmitted?.('no_attend')
     onClose()
   }
 

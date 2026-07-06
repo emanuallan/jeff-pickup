@@ -7,6 +7,7 @@ import {
   formatParticipantNotificationCopy,
 } from '@/lib/participant-notifications'
 import { BottomSheet, useMobileSheetLayout } from '@/app/_components/bottom-sheet'
+import { OrganizrToast } from '@/app/_components/organizr-toast'
 import {
   dismissParticipantNotification,
   markParticipantNotificationRead,
@@ -116,6 +117,7 @@ export function ParticipantNotificationBell({
   const [notifications, setNotifications] = useState(initialNotifications)
   const [unreadCount, setUnreadCount] = useState(initialUnreadCount)
   const [activeFeedback, setActiveFeedback] = useState<ParticipantNotification | null>(null)
+  const [thankYouVisible, setThankYouVisible] = useState(false)
   const panelRef = useRef<HTMLDivElement>(null)
   const dismissedIdsRef = useRef<Set<string>>(new Set())
 
@@ -178,14 +180,20 @@ export function ParticipantNotificationBell({
     [orgSlug, syncFromServer],
   )
 
-  const handleFeedbackSubmitted = useCallback(() => {
-    if (!activeFeedback) return
-    setNotifications((prev) => prev.filter((n) => n.id !== activeFeedback.id))
-    setUnreadCount((c) => Math.max(0, c - (activeFeedback.read_at ? 0 : 1)))
-    setActiveFeedback(null)
-  }, [activeFeedback])
+  const handleFeedbackSubmitted = useCallback(
+    (outcome: 'rated' | 'no_attend') => {
+      if (!activeFeedback) return
+      setNotifications((prev) => prev.filter((n) => n.id !== activeFeedback.id))
+      setUnreadCount((c) => Math.max(0, c - (activeFeedback.read_at ? 0 : 1)))
+      setActiveFeedback(null)
+      if (outcome === 'rated') {
+        setThankYouVisible(true)
+      }
+    },
+    [activeFeedback],
+  )
 
-  if (!hasBell && !activeFeedback) {
+  if (!hasBell && !activeFeedback && !thankYouVisible) {
     return null
   }
 
@@ -258,6 +266,15 @@ export function ParticipantNotificationBell({
           payload={activeFeedback.payload}
           accent={accent}
           onSubmitted={handleFeedbackSubmitted}
+        />
+      ) : null}
+
+      {thankYouVisible ? (
+        <OrganizrToast
+          message="Thanks for your feedback!"
+          variant="success"
+          durationMs={4000}
+          onClose={() => setThankYouVisible(false)}
         />
       ) : null}
     </>
