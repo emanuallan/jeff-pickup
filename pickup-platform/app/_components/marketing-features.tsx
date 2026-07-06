@@ -182,9 +182,10 @@ export const FEATURE_GROUPS: MarketingFeatureGroup[] = [
           'Returning players get a one-tap sign-up prompt instead of retyping their info.',
       },
       {
-        icon: '🌤️',
-        title: 'Weather on session pages',
-        description: 'Forecast for the session time and location — no extra setup.',
+        icon: '⭐',
+        title: 'Session feedback',
+        description:
+          'After a session ends, participants can rate their experience. Review averages and comments in the organizer console.',
       },
     ],
   },
@@ -195,9 +196,12 @@ export const PLAYER_NOTE =
 
 function FeatureCard({ icon, title, description }: MarketingFeature) {
   return (
-    <div className="rounded-xl border border-white/10 bg-white/3 p-4">
+    <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4 transition-colors hover:border-white/15 hover:bg-white/[0.05]">
       <div className="flex gap-3">
-        <span className="text-lg leading-none" aria-hidden>
+        <span
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white/5 text-base leading-none"
+          aria-hidden
+        >
           {icon}
         </span>
         <div className="min-w-0">
@@ -211,20 +215,23 @@ function FeatureCard({ icon, title, description }: MarketingFeature) {
 
 export function HomeFeatureHighlights() {
   return (
-    <section className="mt-10" aria-labelledby="home-features-heading">
-      <h2 id="home-features-heading" className="text-sm font-semibold uppercase tracking-wide text-zinc-500">
+    <section className="mt-12" aria-labelledby="home-features-heading">
+      <h2
+        id="home-features-heading"
+        className="text-sm font-semibold uppercase tracking-widest text-zinc-500"
+      >
         Built for organizers
       </h2>
-      <ul className="mt-4 space-y-3">
+      <ul className="mt-4 grid gap-3 sm:grid-cols-2">
         {HOME_FEATURE_HIGHLIGHTS.map((feature) => (
           <li key={feature.title}>
             <FeatureCard {...feature} />
           </li>
         ))}
       </ul>
-      <p className="mt-4 text-center text-sm text-zinc-500">
+      <p className="mt-5 text-sm text-zinc-500">
         <Link href="/features" className="text-indigo-300 transition-colors hover:text-indigo-200">
-          See all features →
+          Explore all features →
         </Link>
       </p>
     </section>

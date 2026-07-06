@@ -8,7 +8,7 @@ import { MarketingPage } from '../_components/marketing-page'
 export const metadata: Metadata = buildMarketingPageMetadata(
   '/features',
   'Features',
-  'Live rosters, recurring schedules, branded pages, waitlists, and an organizer console — built for people who run recurring groups.',
+  'Live rosters, recurring schedules, branded pages, waitlists, session feedback, and an organizer console — built for people who run recurring groups.',
 )
 
 export default function FeaturesPage() {
