@@ -3,7 +3,7 @@ import {
   buildSessionFeedbackSummary,
   formatAverageRating,
   sessionFeedbackCommentRequired,
-  sessionFeedbackCommentVisible,
+  sessionFeedbackCommentsAvailable,
   validateSessionFeedbackInput,
 } from './session-feedback'
 
@@ -39,10 +39,10 @@ describe('session-feedback', () => {
   })
 
   describe('comment visibility helpers', () => {
-    it('shows comments below 5 stars', () => {
-      expect(sessionFeedbackCommentVisible(4)).toBe(true)
-      expect(sessionFeedbackCommentVisible(5)).toBe(false)
-      expect(sessionFeedbackCommentVisible(null)).toBe(false)
+    it('makes comments available once a rating is chosen', () => {
+      expect(sessionFeedbackCommentsAvailable(null)).toBe(false)
+      expect(sessionFeedbackCommentsAvailable(3)).toBe(true)
+      expect(sessionFeedbackCommentsAvailable(5)).toBe(true)
     })
 
     it('requires comments at 2 stars or lower', () => {

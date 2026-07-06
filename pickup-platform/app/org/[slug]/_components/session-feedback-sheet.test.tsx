@@ -52,6 +52,25 @@ describe('SessionFeedbackSheet', () => {
     expect(screen.getByRole('button', { name: 'Submit feedback' })).not.toBeDisabled()
   })
 
+  it('shows optional expanded comments for 5 stars', async () => {
+    const user = userEvent.setup()
+
+    render(
+      <SessionFeedbackSheet
+        open
+        onClose={() => {}}
+        orgSlug="demo"
+        eventId="event-1"
+        payload={payload}
+        accent="#6366f1"
+      />,
+    )
+
+    await user.click(screen.getByRole('radio', { name: '5 stars' }))
+    expect(screen.getByLabelText(/comments \(optional\)/i)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Submit feedback' })).not.toBeDisabled()
+  })
+
   it('calls onSubmitted with rated after a successful submit', async () => {
     const user = userEvent.setup()
     submitSessionFeedbackMock.mockResolvedValue({ ok: true })

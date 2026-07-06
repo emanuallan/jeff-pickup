@@ -50,8 +50,9 @@ export function sessionFeedbackCommentRequired(rating: number): boolean {
   return rating <= 2
 }
 
-export function sessionFeedbackCommentVisible(rating: number | null): boolean {
-  return rating != null && rating < 5
+/** Comments are available once a rating is chosen. */
+export function sessionFeedbackCommentsAvailable(rating: number | null): boolean {
+  return rating != null
 }
 
 export function buildSessionFeedbackSummary(

@@ -5,7 +5,7 @@ import { BottomSheet } from '@/app/_components/bottom-sheet'
 import { hexToRgba } from '@/lib/colors'
 import {
   sessionFeedbackCommentRequired,
-  sessionFeedbackCommentVisible,
+  sessionFeedbackCommentsAvailable,
 } from '@/lib/session-feedback'
 import type { ParticipantNotificationPayload } from '@/lib/participant-notifications'
 import {
@@ -97,7 +97,7 @@ export function SessionFeedbackSheet({
     }
   }, [open])
 
-  const commentVisible = sessionFeedbackCommentVisible(rating)
+  const commentsAvailable = sessionFeedbackCommentsAvailable(rating)
   const commentRequired = rating != null && sessionFeedbackCommentRequired(rating)
   const canSubmit =
     rating != null &&
@@ -160,7 +160,7 @@ export function SessionFeedbackSheet({
         <StarRating value={rating} onChange={setRating} accent={accent} />
       </div>
 
-      {commentVisible ? (
+      {commentsAvailable ? (
         <div className="mt-5">
           <label htmlFor="session-feedback-comment" className="block text-xs font-medium text-zinc-400">
             Comments{commentRequired ? ' (required)' : ' (optional)'}
@@ -171,7 +171,11 @@ export function SessionFeedbackSheet({
             onChange={(e) => setComment(e.target.value)}
             rows={3}
             maxLength={2000}
-            placeholder="Tell us what could be better…"
+            placeholder={
+              rating != null && rating >= 3
+                ? 'Anything you’d like to share?'
+                : 'Tell us what could be better…'
+            }
             className="mt-2 w-full resize-none rounded-xl border border-white/10 bg-zinc-950/60 px-3 py-2.5 text-sm text-zinc-100 placeholder:text-zinc-600 focus:border-indigo-500/40 focus:outline-none"
           />
         </div>
@@ -193,7 +197,7 @@ export function SessionFeedbackSheet({
         {confirmNoAttend ? (
           <div className="space-y-3">
             <p className="text-xs leading-relaxed text-zinc-400">
-              Remove yourself from this session&apos;s roster? This cannot be undone.
+              Please confirm you did not attend this session.
             </p>
             <div className="flex gap-2">
               <button
@@ -210,7 +214,7 @@ export function SessionFeedbackSheet({
                 onClick={() => void handleNoAttend()}
                 className="flex-1 rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs font-medium text-red-300"
               >
-                {loading === 'no_attend' ? 'Removing…' : 'I did not attend'}
+                {loading === 'no_attend' ? 'Confirming…' : 'Confirm'}
               </button>
             </div>
           </div>
