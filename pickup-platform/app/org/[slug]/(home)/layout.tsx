@@ -15,7 +15,6 @@ import {
 } from '@/lib/public-share-text'
 import { OrgHeader } from '../_components/org-header'
 import { LinksButton } from '../links-button'
-import { OrganizerConsoleToolbarLink } from '../_components/organizer-console-toolbar-link'
 import { OrgHomeShell } from './_components/org-home-shell'
 import { OrgHomeBottomNav, OrgHomeDesktopNav } from './_components/org-home-bottom-nav'
 import { OrgHomeShareButton } from './_components/org-home-share-button'
@@ -144,9 +143,6 @@ export default async function OrgHomeLayout({ children, params }: Props) {
                 />
               </Suspense>
               {socialLinks.length > 0 ? <LinksButton links={socialLinks} /> : null}
-              {isOrganizer ? (
-                <OrganizerConsoleToolbarLink slug={slug} label="Back to console" />
-              ) : null}
             </nav>
           </div>
         </div>
