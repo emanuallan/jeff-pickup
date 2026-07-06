@@ -81,6 +81,11 @@ function kindBadge(kind: OrganizerNotification["kind"]): {
 				label: "Waitlist",
 				className: "bg-sky-500/15 text-sky-300 ring-sky-500/30",
 			};
+		case "session_feedback_immediate":
+			return {
+				label: "Feedback",
+				className: "bg-violet-500/15 text-violet-300 ring-violet-500/30",
+			};
 	}
 }
 
@@ -110,7 +115,7 @@ function NotificationPanelContent({
 			<div className="flex items-center justify-between gap-3 border-b border-white/10 px-4 py-3">
 				<div className="min-w-0">
 					<p className="text-sm font-semibold text-zinc-100">Notifications</p>
-					<p className="text-xs text-zinc-500">Roster updates · next 14 days</p>
+					<p className="text-xs text-zinc-500">Roster & session feedback</p>
 				</div>
 				{notifications.length > 0 ? (
 					<div className="flex shrink-0 items-center gap-3">

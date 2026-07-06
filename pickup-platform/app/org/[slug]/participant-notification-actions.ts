@@ -9,6 +9,7 @@ import { validateSessionFeedbackInput } from '@/lib/session-feedback'
 function revalidateOrgPaths(orgSlug: string) {
   revalidatePath(`/org/${orgSlug}`, 'layout')
   revalidatePath(`/org/${orgSlug}`)
+  revalidatePath('/console', 'layout')
 }
 
 async function requireParticipantSession(orgSlug: string) {

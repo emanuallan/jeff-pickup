@@ -4,6 +4,7 @@ export type OrganizerNotificationKind =
   | 'unregister_batch'
   | 'unregister_immediate'
   | 'waitlist_signup_batch'
+  | 'session_feedback_immediate'
 
 export type OrganizerNotificationPayload = {
   count: number
@@ -11,6 +12,8 @@ export type OrganizerNotificationPayload = {
   event_short_id: string
   event_starts_at: string
   event_label: string
+  feedback_outcome?: 'rated' | 'no_attend'
+  rating?: number | null
 }
 
 export type OrganizerNotification = {
@@ -91,12 +94,40 @@ export function formatOrganizerNotificationCopy(n: OrganizerNotification): {
         title: preview ? `${preview} joined the waitlist` : `${count} players joined the waitlist`,
         detail: event_label,
       }
+    case 'session_feedback_immediate': {
+      const outcome = n.payload.feedback_outcome
+      const rating = n.payload.rating
+      if (outcome === 'no_attend') {
+        return {
+          title: preview ? `${preview} didn't attend` : "1 player didn't attend",
+          detail: event_label,
+        }
+      }
+      if (rating != null) {
+        return {
+          title: preview ? `${preview} left ${rating}★ feedback` : `New ${rating}★ feedback`,
+          detail: event_label,
+        }
+      }
+      return {
+        title: preview ? `${preview} left feedback` : 'New session feedback',
+        detail: event_label,
+      }
+    }
     default:
       return { title: 'Roster update', detail: event_label }
   }
 }
 
 export function organizerNotificationHref(n: OrganizerNotification): string {
+  if (n.kind === 'session_feedback_immediate') {
+    const params = new URLSearchParams()
+    if (n.payload.event_short_id) {
+      params.set('event', n.payload.event_short_id)
+    }
+    const query = params.toString()
+    return `/console/${n.org_slug}/feedback${query ? `?${query}` : ''}`
+  }
   return `/console/${n.org_slug}/events/${n.payload.event_short_id}`
 }
 

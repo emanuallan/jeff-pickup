@@ -22,6 +22,16 @@ function parseNotification(row: Record<string, unknown>): OrganizerNotification 
       event_short_id: String(payload.event_short_id ?? ''),
       event_starts_at: String(payload.event_starts_at ?? ''),
       event_label: String(payload.event_label ?? 'Session'),
+      feedback_outcome:
+        payload.feedback_outcome === 'rated' || payload.feedback_outcome === 'no_attend'
+          ? payload.feedback_outcome
+          : undefined,
+      rating:
+        typeof payload.rating === 'number'
+          ? payload.rating
+          : payload.rating != null && payload.rating !== ''
+            ? Number(payload.rating)
+            : undefined,
     },
     created_at: String(row.created_at),
     read_at: row.read_at ? String(row.read_at) : null,
