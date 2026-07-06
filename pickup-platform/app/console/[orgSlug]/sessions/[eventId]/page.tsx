@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { getOrgForMember } from '@/lib/orgs'
 import { getEventByRef, formatEventTime, formatInstantInZone, statusLabel, isEventInProgress, isEventEnded, isEventCancelled } from '@/lib/events'
@@ -69,9 +70,14 @@ export default async function ConsoleEventAnalyticsPage({ params }: Props) {
         backLabel="Back"
         useHistoryBack
         actions={
-          <a href={publicEventUrl} target="_blank" rel="noreferrer" className={btnOutline}>
-            View public session {arrowNe}
-          </a>
+          <>
+            <Link href={`/console/${orgSlug}/sessions/${eventId}/edit`} className={btnOutline}>
+              Edit roster
+            </Link>
+            <a href={publicEventUrl} target="_blank" rel="noreferrer" className={btnOutline}>
+              View public session {arrowNe}
+            </a>
+          </>
         }
       />
       <p className="mt-2 text-xs text-zinc-500">
