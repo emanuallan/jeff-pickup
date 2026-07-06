@@ -70,12 +70,16 @@ export function OrgHomeShell({
       </main>
       {bottomChrome}
       {isOrganizer ? (
-        <div className="pointer-events-none fixed bottom-4 left-4 z-40 hidden pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] md:block">
-          <OrganizerConsoleToolbarLink
-            slug={slug}
-            label="Back to console"
-            className="pointer-events-auto shadow-[0_8px_32px_rgba(0,0,0,0.45)]"
-          />
+        <div className="pointer-events-none fixed inset-x-0 bottom-0 z-40 hidden pb-[max(1.5rem,env(safe-area-inset-bottom))] md:block md:pb-12">
+          <div
+            className={`pointer-events-none mx-auto px-5 sm:px-6 ${ORG_PUBLIC_CONTENT_MAX}`}
+          >
+            <OrganizerConsoleToolbarLink
+              slug={slug}
+              label="Back to console"
+              className="pointer-events-auto shadow-[0_8px_32px_rgba(0,0,0,0.45)]"
+            />
+          </div>
         </div>
       ) : null}
     </>
