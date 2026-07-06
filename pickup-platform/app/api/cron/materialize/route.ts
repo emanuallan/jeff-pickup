@@ -1,4 +1,5 @@
 import { materializeEvents } from '@/lib/materializer'
+import { materializeSessionFeedbackNotifications } from '@/lib/session-feedback-materializer'
 
 /**
  * Vercel Cron hits this daily to materialize events for all orgs.
@@ -16,7 +17,8 @@ export async function GET(request: Request) {
 
   try {
     const count = await materializeEvents()
-    return Response.json({ ok: true, count })
+    const feedbackCount = await materializeSessionFeedbackNotifications()
+    return Response.json({ ok: true, count, feedbackCount })
   } catch (e) {
     const message = e instanceof Error ? e.message : 'Materialization failed'
     return Response.json({ error: message }, { status: 500 })

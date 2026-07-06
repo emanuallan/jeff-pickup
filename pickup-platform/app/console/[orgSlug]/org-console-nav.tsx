@@ -1,6 +1,9 @@
 import Link from 'next/link'
 import { getOrgConsoleNavCounts } from '@/lib/org-console-counts'
 import { isOrgConsoleSetupComplete } from '@/lib/org-setup'
+import { getOrgForMember } from '@/lib/orgs'
+import { orgFeatures } from '@/lib/org-features'
+import { countRecentOrgSessionFeedback } from '@/lib/session-feedback.server'
 import { ConsoleNavGrid, ConsoleNavTile } from '../_components/console-ui'
 import {
   IconSessions,
@@ -10,6 +13,7 @@ import {
   IconBranding,
   IconSettings,
   IconParticipants,
+  IconFeedback,
 } from './console-nav-icons'
 
 function formatCount(n: number, singular: string, plural?: string) {
@@ -78,7 +82,12 @@ type NavSectionProps = {
 
 /** Fetches hub counts off the critical path — badges, setup gating, and get-started banner. */
 export async function OrgConsoleNavSection({ orgId, orgSlug }: NavSectionProps) {
-  const counts = await getOrgConsoleNavCounts(orgId)
+  const [counts, org, recentFeedbackCount] = await Promise.all([
+    getOrgConsoleNavCounts(orgId),
+    getOrgForMember(orgSlug),
+    countRecentOrgSessionFeedback(orgId),
+  ])
+  const features = org ? orgFeatures(org) : null
   const isSetup = isOrgConsoleSetupComplete({
     locationCount: counts.locationCount,
     scheduleCount: counts.scheduleCount,
@@ -154,6 +163,19 @@ export async function OrgConsoleNavSection({ orgId, orgSlug }: NavSectionProps) 
             badge={formatCount(counts.participantCount, 'person', 'people')}
             disabled={!isSetup}
           />
+          {features?.session_feedback ? (
+            <ConsoleNavTile
+              href={`${base}/feedback`}
+              title="Feedback"
+              icon={<IconFeedback />}
+              badge={
+                recentFeedbackCount > 0
+                  ? `${recentFeedbackCount} recent`
+                  : 'No feedback yet'
+              }
+              disabled={!isSetup}
+            />
+          ) : null}
           <ConsoleNavTile
             href={`${base}/settings`}
             title="Settings"

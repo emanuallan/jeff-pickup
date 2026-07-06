@@ -60,7 +60,8 @@ orgs → org_members (owner/admin) → locations → schedules → events → pa
 participant_sessions. Events are materialized from recurring schedules into a rolling 30-day window
 by a security-definer RPC (materialize_events) called via the service-role key. Participants are
 phone-keyed per org with device session tokens (httpOnly cookie). Writes for the public join flow go
-through security-definer RPCs (join_event, leave_event, update_arrival_status). Leaderboards (caps +
+through security-definer RPCs (join_event, leave_event, update_arrival_status). Post-session feedback
+uses participant_notifications + session_feedback (migration 047). Leaderboards (caps +
 weekly streaks) and badges are computed from signups/events.
 
 ## Conventions & gotchas learned the hard way

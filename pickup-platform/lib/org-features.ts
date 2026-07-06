@@ -6,6 +6,8 @@ export type OrgFeatures = {
   public_roster: boolean
   /** When false, participants cannot add guests to their sign-up. */
   guest_signups: boolean
+  /** When false, post-session feedback prompts and console feedback views are hidden. */
+  session_feedback: boolean
 }
 
 export type WaitlistPromotionMode = 'strict_fifo' | 'skip_ahead'
@@ -25,6 +27,7 @@ export const DEFAULT_ORG_FEATURES: OrgFeatures = {
   returning_signup_modal: true,
   public_roster: true,
   guest_signups: true,
+  session_feedback: true,
 }
 
 export const DEFAULT_ORG_WAITLIST_SETTINGS: OrgWaitlistSettings = {
@@ -56,6 +59,7 @@ export function parseOrgSettings(raw: unknown): OrgSettings {
       returning_signup_modal: features?.returning_signup_modal !== false,
       public_roster: features?.public_roster !== false,
       guest_signups: features?.guest_signups !== false,
+      session_feedback: features?.session_feedback !== false,
     },
     waitlist: parseWaitlistSettings(settings?.waitlist),
   }
@@ -107,5 +111,11 @@ export const ORG_FEATURE_DEFINITIONS: OrgFeatureDefinition[] = [
     key: 'guest_signups',
     label: 'Guest sign-ups',
     description: 'Let participants bring guests when they join or update their sign-up.',
+  },
+  {
+    key: 'session_feedback',
+    label: 'Session feedback',
+    description:
+      'Ask participants to rate sessions after they end and show responses in the console.',
   },
 ]

@@ -19,6 +19,8 @@ import { OrganizerConsoleToolbarLink } from '../_components/organizer-console-to
 import { OrgHomeShell } from './_components/org-home-shell'
 import { OrgHomeBottomNav, OrgHomeDesktopNav } from './_components/org-home-bottom-nav'
 import { OrgHomeShareButton } from './_components/org-home-share-button'
+import { ParticipantNotificationBellSlot } from '../_components/participant-notification-bell-slot'
+import { ParticipantFeedbackDeepLinkSlot } from '../_components/participant-feedback-deep-link-slot'
 
 type Props = {
   children: ReactNode
@@ -78,7 +80,7 @@ export default async function OrgHomeLayout({ children, params }: Props) {
     >
       <div className="md:hidden">
         <nav className="flex min-h-9 items-center justify-between gap-3">
-          <div className="flex min-w-0 items-center gap-3">
+          <div className="flex min-w-0 items-center gap-2">
             <Suspense
               fallback={
                 <span
@@ -93,6 +95,9 @@ export default async function OrgHomeLayout({ children, params }: Props) {
                 events={eventShares}
                 defaultEventShortId={defaultEventShortId}
               />
+            </Suspense>
+            <Suspense fallback={null}>
+              <ParticipantNotificationBellSlot slug={slug} accent={accent} />
             </Suspense>
           </div>
           {socialLinks.length > 0 ? <LinksButton links={socialLinks} /> : null}
@@ -120,6 +125,9 @@ export default async function OrgHomeLayout({ children, params }: Props) {
 
           <div className="flex shrink-0 flex-col items-end gap-3 pt-1">
             <nav className="flex items-center gap-2">
+              <Suspense fallback={null}>
+                <ParticipantNotificationBellSlot slug={slug} accent={accent} />
+              </Suspense>
               <Suspense
                 fallback={
                   <span
@@ -146,7 +154,10 @@ export default async function OrgHomeLayout({ children, params }: Props) {
         <OrgHomeDesktopNav items={navItems} accent={accent} basePath={ORG_PUBLIC_NAV_BASE} />
       </div>
 
-      <div className="mt-6 flex-1 md:mt-8">{children}</div>
+      <div className="mt-6 flex-1 md:mt-8">
+        <ParticipantFeedbackDeepLinkSlot slug={slug} accent={accent} />
+        {children}
+      </div>
     </OrgHomeShell>
   )
 }

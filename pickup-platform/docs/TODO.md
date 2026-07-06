@@ -60,6 +60,7 @@ Track deferred work and known simplifications. Prefer shipping simple, refine la
 - [ ] Waitlist
 - [ ] Activate OTP (pick SMS provider)
 - [ ] Reminders
+- [x] Post-session participant feedback + console feedback section (migration `047_session_feedback.sql`)
 - [ ] Custom domains
 - [ ] Billing / subscriptions
 

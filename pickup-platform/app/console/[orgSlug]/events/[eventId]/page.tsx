@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation'
 import { getOrgForMember } from '@/lib/orgs'
-import { getEventByRef, formatEventTime, formatInstantInZone, statusLabel, isEventInProgress } from '@/lib/events'
+import { getEventByRef, formatEventTime, formatInstantInZone, statusLabel, isEventInProgress, isEventEnded } from '@/lib/events'
+import { orgFeatures } from '@/lib/org-features'
 import { getRosterWithContact, splitRosterByStatus } from '@/lib/signups'
 import { formatGuestSuffix } from '@/lib/format-guest-suffix'
 import { buildRosterAnalytics, fetchEventAnalyticsDb } from '@/lib/event-analytics'
@@ -26,6 +27,7 @@ import {
   PageViewsStatCard,
   SignupRateStatCard,
 } from './event-analytics-stat-cards'
+import { EventFeedbackSection } from './event-feedback-section'
 
 type Props = {
   params: Promise<{ orgSlug: string; eventId: string }>
@@ -52,6 +54,7 @@ export default async function ConsoleEventAnalyticsPage({ params }: Props) {
   const analytics = buildRosterAnalytics(roster, event.capacity, dbAnalytics)
   const publicEventUrl = `${orgBaseUrl(orgSlug)}${orgPublicEventHref(event.short_id)}`
   const isLive = isEventInProgress(event) && event.status === 'on'
+  const showFeedback = orgFeatures(org).session_feedback && isEventEnded(event)
   const hasSignupActivity = analytics.uniqueSignups > 0 || analytics.uniqueLeft > 0
   const hasTraffic = analytics.uniqueVisitors > 0 || analytics.uniqueSignups > 0
 
@@ -216,6 +219,10 @@ export default async function ConsoleEventAnalyticsPage({ params }: Props) {
             </details>
           ) : null}
         </ConsoleSection>
+
+        {showFeedback ? (
+          <EventFeedbackSection orgSlug={orgSlug} orgId={org.id} eventId={event.id} />
+        ) : null}
       </div>
     </ConsolePage>
   )

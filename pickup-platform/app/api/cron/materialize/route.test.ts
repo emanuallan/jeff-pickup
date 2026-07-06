@@ -1,17 +1,27 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { GET } from './route'
 import { materializeEvents } from '@/lib/materializer'
+import { materializeSessionFeedbackNotifications } from '@/lib/session-feedback-materializer'
 
 vi.mock('@/lib/materializer', () => ({
   materializeEvents: vi.fn(),
 }))
 
+vi.mock('@/lib/session-feedback-materializer', () => ({
+  materializeSessionFeedbackNotifications: vi.fn(),
+}))
+
 const materializeEventsMock = vi.mocked(materializeEvents)
+const materializeSessionFeedbackNotificationsMock = vi.mocked(
+  materializeSessionFeedbackNotifications,
+)
 
 describe('GET /api/cron/materialize', () => {
   beforeEach(() => {
     vi.stubEnv('CRON_SECRET', 'test-secret')
     materializeEventsMock.mockReset()
+    materializeSessionFeedbackNotificationsMock.mockReset()
+    materializeSessionFeedbackNotificationsMock.mockResolvedValue(0)
   })
 
   afterEach(() => {
@@ -42,8 +52,9 @@ describe('GET /api/cron/materialize', () => {
     )
 
     expect(response.status).toBe(200)
-    await expect(response.json()).resolves.toEqual({ ok: true, count: 12 })
+    await expect(response.json()).resolves.toEqual({ ok: true, count: 12, feedbackCount: 0 })
     expect(materializeEventsMock).toHaveBeenCalledOnce()
+    expect(materializeSessionFeedbackNotificationsMock).toHaveBeenCalledOnce()
   })
 
   it('returns 500 when materialization fails', async () => {

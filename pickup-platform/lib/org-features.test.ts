@@ -24,10 +24,11 @@ describe('org-features', () => {
 
     it('disables features only when explicitly false', () => {
       const settings = parseOrgSettings({
-        features: { public_roster: false, guest_signups: false },
+        features: { public_roster: false, guest_signups: false, session_feedback: false },
       })
       expect(settings.features.public_roster).toBe(false)
       expect(settings.features.guest_signups).toBe(false)
+      expect(settings.features.session_feedback).toBe(false)
       expect(settings.features.leaderboard).toBe(true)
     })
   })

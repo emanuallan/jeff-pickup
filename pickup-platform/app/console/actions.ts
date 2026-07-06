@@ -954,6 +954,7 @@ export async function updateOrgFeatures(orgSlug: string, formData: FormData) {
     returning_signup_modal: formData.get('returning_signup_modal') === 'on',
     public_roster: formData.get('public_roster') === 'on',
     guest_signups: formData.get('guest_signups') === 'on',
+    session_feedback: formData.get('session_feedback') === 'on',
   }
 
   const { error } = await supabase
