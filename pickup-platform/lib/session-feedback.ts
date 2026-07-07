@@ -17,6 +17,7 @@ export type SessionFeedbackRow = {
   participant_display_name: string
   event_starts_at: string
   event_label: string
+  event_location_label: string
   event_short_id: string
 }
 

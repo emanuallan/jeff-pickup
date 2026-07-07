@@ -113,7 +113,12 @@ export default async function ConsoleFeedbackPage({ params, searchParams }: Prop
                             </span>
                           )}
                         </div>
-                        <div className="mt-1 text-xs text-zinc-500">{row.event_label}</div>
+                        <div className="mt-1 text-xs text-zinc-500">
+                          {row.event_label}
+                          {row.event_location_label
+                            ? ` · ${row.event_location_label}`
+                            : null}
+                        </div>
                         {row.comment ? (
                           <p className="mt-2 text-sm leading-relaxed text-zinc-300">{row.comment}</p>
                         ) : null}
@@ -123,7 +128,7 @@ export default async function ConsoleFeedbackPage({ params, searchParams }: Prop
                           href={`/console/${orgSlug}/sessions/${row.event_short_id}`}
                           className="shrink-0 text-xs font-medium text-indigo-300 hover:text-indigo-200"
                         >
-                          Session
+                          View session
                         </Link>
                       ) : null}
                     </div>

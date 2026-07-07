@@ -10,6 +10,7 @@ type FeedbackEventJoin = {
   short_id: string
   title: string | null
   schedules: { title: string } | { title: string }[] | null
+  locations: { label: string } | { label: string }[] | null
 }
 
 type FeedbackQueryRow = {
@@ -40,6 +41,7 @@ function feedbackEventLabel(event: FeedbackEventJoin): string {
 function mapFeedbackRow(row: FeedbackQueryRow): SessionFeedbackRow {
   const event = first(row.events)
   const participant = first(row.participants)
+  const location = event ? first(event.locations) : null
 
   return {
     id: row.id,
@@ -53,6 +55,7 @@ function mapFeedbackRow(row: FeedbackQueryRow): SessionFeedbackRow {
     participant_display_name: participant?.display_name ?? 'Participant',
     event_starts_at: event?.starts_at ?? row.created_at,
     event_label: event ? feedbackEventLabel(event) : 'Session',
+    event_location_label: location?.label ?? '',
     event_short_id: event?.short_id ?? '',
   }
 }
@@ -74,7 +77,8 @@ function feedbackSelect() {
       duration_min,
       short_id,
       title,
-      schedules!events_schedule_id_fkey(title)
+      schedules!events_schedule_id_fkey(title),
+      locations(label)
     )
   `
 }
