@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useTransition, type FormEvent } from 'react'
+import { useCallback, useEffect, useState, useTransition, type FormEvent } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   joinEvent,
@@ -162,6 +162,34 @@ function RecoverSession({
   )
 }
 
+function participantOptOutStorageKey(orgSlug: string) {
+  return `hc-opted-out:${orgSlug}`
+}
+
+function readParticipantOptedOut(orgSlug: string): boolean {
+  try {
+    return sessionStorage.getItem(participantOptOutStorageKey(orgSlug)) === '1'
+  } catch {
+    return false
+  }
+}
+
+function writeParticipantOptedOut(orgSlug: string) {
+  try {
+    sessionStorage.setItem(participantOptOutStorageKey(orgSlug), '1')
+  } catch {
+    // ignore quota / private mode
+  }
+}
+
+function clearParticipantOptedOut(orgSlug: string) {
+  try {
+    sessionStorage.removeItem(participantOptOutStorageKey(orgSlug))
+  } catch {
+    // ignore quota / private mode
+  }
+}
+
 export function JoinSection(props: Props) {
   const router = useRouter()
   const motion = useParticipationMotion()
@@ -199,10 +227,28 @@ export function JoinSection(props: Props) {
   }
 
   useEffect(() => {
+    if (readParticipantOptedOut(props.orgSlug)) {
+      setOptedOutOfReturningSession(true)
+    }
+  }, [props.orgSlug])
+
+  useEffect(() => {
     if (!props.participant) {
       setOptedOutOfReturningSession(false)
+      clearParticipantOptedOut(props.orgSlug)
     }
-  }, [props.participant])
+  }, [props.participant, props.orgSlug])
+
+  const handleNotYou = useCallback(async () => {
+    setOptedOutOfReturningSession(true)
+    writeParticipantOptedOut(props.orgSlug)
+    clearReturningSignupSeen(props.orgSlug, props.eventId)
+    motion?.reopenJoinPanel()
+    await clearParticipantSession(props.orgSlug, props.eventId)
+    startTransition(() => {
+      router.refresh()
+    })
+  }, [motion, props.eventId, props.orgSlug, router, startTransition])
 
   // Signed-up users are handled in the roster (highlighted row + status picker
   // below the attendee list), so the join card collapses for them.
@@ -331,15 +377,7 @@ export function JoinSection(props: Props) {
         <div className="text-right">
           <button
             type="button"
-            onClick={async () => {
-              setOptedOutOfReturningSession(true)
-              clearReturningSignupSeen(props.orgSlug, props.eventId)
-              motion?.reopenJoinPanel()
-              await clearParticipantSession(props.orgSlug, props.eventId)
-              startTransition(() => {
-                router.refresh()
-              })
-            }}
+            onClick={() => void handleNotYou()}
             className="text-xs text-zinc-600 transition-colors hover:text-zinc-500"
           >
             Not you?
@@ -367,6 +405,7 @@ export function JoinSection(props: Props) {
             groupRulesText={props.groupRulesText}
             groupRulesVersion={props.groupRulesVersion}
             needsGroupRulesAcceptance={props.needsGroupRulesAcceptance}
+            onNotYou={() => void handleNotYou()}
           >
             {welcomeBack}
           </ReturningSignupModal>

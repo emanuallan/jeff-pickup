@@ -5,7 +5,9 @@ import type { ReadonlyRequestCookies } from 'next/dist/server/web/spec-extension
 import { SESSION_COOKIE } from '@/lib/participant-session'
 import { getSupabaseCookieOptions, supabaseCookieRootDomain } from '@/lib/supabase/cookie-options'
 
-type WritableCookies = Pick<ResponseCookies, 'set'> | ReadonlyRequestCookies
+type WritableCookies =
+  | Pick<ResponseCookies, 'set' | 'delete'>
+  | ReadonlyRequestCookies
 
 export function getParticipantCookieOptions() {
   return {
@@ -41,6 +43,15 @@ export function expireCookieEverywhere(store: WritableCookies, name: string) {
 }
 
 export function clearParticipantSession(store: WritableCookies) {
+  if ('delete' in store && typeof store.delete === 'function') {
+    store.delete(SESSION_COOKIE)
+    const root = supabaseCookieRootDomain()
+    if (root) {
+      store.delete({ name: SESSION_COOKIE, domain: `.${root}` })
+      store.delete({ name: SESSION_COOKIE, domain: root })
+    }
+  }
+
   expireCookieEverywhere(store, SESSION_COOKIE)
 }
 

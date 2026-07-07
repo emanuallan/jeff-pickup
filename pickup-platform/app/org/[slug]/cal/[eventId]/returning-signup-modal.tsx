@@ -42,6 +42,7 @@ type Props = {
   groupRulesText?: string
   groupRulesVersion?: number
   needsGroupRulesAcceptance?: boolean
+  onNotYou?: () => void | Promise<void>
   children: ReactNode
 }
 
@@ -114,6 +115,7 @@ export function ReturningSignupModal({
   groupRulesText,
   groupRulesVersion,
   needsGroupRulesAcceptance,
+  onNotYou,
   children,
 }: Props) {
   const router = useRouter()
@@ -277,6 +279,23 @@ export function ReturningSignupModal({
             </div>
 
             {error ? <p className="mt-4 text-sm text-red-300">{error}</p> : null}
+
+            {onNotYou ? (
+              <div className="mt-4 text-center">
+                <button
+                  type="button"
+                  disabled={loading !== null}
+                  onClick={() => {
+                    setOpen(false)
+                    setError(null)
+                    void onNotYou()
+                  }}
+                  className="text-xs text-zinc-600 transition-colors hover:text-zinc-500 disabled:opacity-50"
+                >
+                  Not you?
+                </button>
+              </div>
+            ) : null}
           </>
         )}
       </BottomSheet>
