@@ -16,6 +16,11 @@ import { getOrgForMember } from '@/lib/orgs'
 import { isValidSlug, normalizeSlug } from '@/lib/tenancy/reserved-slugs'
 import { MAX_ORG_LINKS, normalizeLinkUrl } from '@/lib/social-links'
 import { orgSettings, orgWaitlistSettings, type OrgFeatures, type OrgWaitlistSettings } from '@/lib/org-features'
+import {
+  buildNextGroupRulesOnSave,
+  orgGroupRules,
+  validateGroupRulesText,
+} from '@/lib/group-rules'
 import { isInteriorOperator } from '@/lib/interior'
 import {
   ORG_LOGO_BUCKET,
@@ -955,6 +960,7 @@ export async function updateOrgFeatures(orgSlug: string, formData: FormData) {
     public_roster: formData.get('public_roster') === 'on',
     guest_signups: formData.get('guest_signups') === 'on',
     session_feedback: formData.get('session_feedback') === 'on',
+    group_rules: formData.get('group_rules') === 'on',
   }
 
   const { error } = await supabase
@@ -1000,6 +1006,58 @@ export async function updateOrgWaitlistSettings(orgSlug: string, formData: FormD
 
   revalidatePath(`/console/${orgSlug}`)
   revalidatePath(`/console/${orgSlug}/settings`)
+  return { ok: true }
+}
+
+export async function updateGroupRulesText(orgSlug: string, formData: FormData) {
+  const org = await requireOrgAdmin(orgSlug)
+  const supabase = await createClient()
+
+  const text = String(formData.get('rules_text') ?? '')
+  const validationError = validateGroupRulesText(text)
+  if (validationError) {
+    return { error: validationError }
+  }
+
+  const current = orgSettings(org)
+  const currentRules = orgGroupRules(current)
+  const nextRules = buildNextGroupRulesOnSave(currentRules, text)
+
+  const { error } = await supabase
+    .from('orgs')
+    .update({
+      settings: {
+        ...current,
+        group_rules: nextRules,
+      },
+    })
+    .eq('id', org.id)
+
+  if (error) {
+    return { error: error.message }
+  }
+
+  revalidatePath(`/console/${orgSlug}`)
+  revalidatePath(`/console/${orgSlug}/settings`)
+  revalidatePath(`/org/${orgSlug}`)
+  return { ok: true }
+}
+
+export async function refreshGroupRules(orgSlug: string) {
+  const org = await requireOrgAdmin(orgSlug)
+  const supabase = await createClient()
+
+  const { error } = await supabase.rpc('organizer_refresh_group_rules', {
+    p_org_id: org.id,
+  })
+
+  if (error) {
+    return { error: error.message }
+  }
+
+  revalidatePath(`/console/${orgSlug}`)
+  revalidatePath(`/console/${orgSlug}/settings`)
+  revalidatePath(`/org/${orgSlug}`)
   return { ok: true }
 }
 

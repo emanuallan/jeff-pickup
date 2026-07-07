@@ -6,7 +6,10 @@ import { MaterializeButton } from '../materialize-button'
 import { DeleteOrgSection } from '../delete-org-section'
 import { FeatureTogglesForm } from '../feature-toggles-form'
 import { WaitlistSettingsForm } from '../waitlist-settings-form'
+import { GroupRulesSection } from '../group-rules-section'
 import { orgFeatures, orgWaitlistSettings } from '@/lib/org-features'
+import { orgGroupRules } from '@/lib/group-rules'
+import { getGroupRulesAgreementSummary } from '@/lib/group-rules.server'
 import { isInteriorOperator } from '@/lib/interior'
 import { InteriorAddOwnerSection } from '../interior-add-owner-section'
 import { InteriorSetTimezoneSection } from '../interior-set-timezone-section'
@@ -48,6 +51,12 @@ export default async function OrgSettingsPage({ params }: Props) {
     : { data: null }
   const currentOrgTimezone = primarySchedule?.timezone ?? null
   const rootDomain = getRootDomain()
+  const features = orgFeatures(org)
+  const rules = orgGroupRules(org.settings)
+  const agreementSummary =
+    features.group_rules && rules && rules.version > 0
+      ? await getGroupRulesAgreementSummary(org.id, rules.version)
+      : null
 
   return (
     <ConsolePage width="max-w-2xl">
@@ -71,6 +80,18 @@ export default async function OrgSettingsPage({ params }: Props) {
           description="When a session hits capacity, extra sign-ups go on a waitlist. Choose how spots are filled when someone leaves."
         >
           <WaitlistSettingsForm orgSlug={orgSlug} waitlist={orgWaitlistSettings(org)} />
+        </ConsoleSection>
+
+        <ConsoleSection
+          title="Group rules"
+          description="Set rules participants must accept before signing up. Re-acceptance is only prompted when you request it."
+        >
+          <GroupRulesSection
+            orgSlug={orgSlug}
+            enabled={features.group_rules}
+            rules={rules}
+            summary={agreementSummary}
+          />
         </ConsoleSection>
 
         <ConsoleSection

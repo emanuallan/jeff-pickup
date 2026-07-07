@@ -106,6 +106,9 @@ export async function joinEvent(
   })
 
   if (error) {
+    if (error.message === 'GROUP_RULES_REQUIRED') {
+      return { error: 'Please accept the group rules before signing up.' }
+    }
     return { error: error.message }
   }
 
@@ -214,6 +217,9 @@ export async function quickJoinEvent(
   })
 
   if (error) {
+    if (error.message === 'GROUP_RULES_REQUIRED') {
+      return { error: 'Please accept the group rules before signing up.' }
+    }
     return { error: error.message }
   }
 

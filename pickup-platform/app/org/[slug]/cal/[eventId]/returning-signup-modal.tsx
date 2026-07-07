@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState, useTransition, type ReactNode } from 'react'
 import { useRouter } from 'next/navigation'
 import { quickJoinEvent } from './actions'
+import { GroupRulesSheet } from './group-rules-sheet'
 import { accentOnDark, hexToRgba } from '@/lib/colors'
 import { BottomSheet } from '@/app/_components/bottom-sheet'
 import { useParticipationMotion } from './participation-motion'
@@ -37,6 +38,10 @@ type Props = {
   eventWhen: string
   locationLabel: string
   locationMapsUrl: string | null
+  groupRulesEnabled?: boolean
+  groupRulesText?: string
+  groupRulesVersion?: number
+  needsGroupRulesAcceptance?: boolean
   children: ReactNode
 }
 
@@ -105,6 +110,10 @@ export function ReturningSignupModal({
   eventWhen,
   locationLabel,
   locationMapsUrl,
+  groupRulesEnabled,
+  groupRulesText,
+  groupRulesVersion,
+  needsGroupRulesAcceptance,
   children,
 }: Props) {
   const router = useRouter()
@@ -113,6 +122,16 @@ export function ReturningSignupModal({
   const [open, setOpen] = useState<boolean | null>(null)
   const [loading, setLoading] = useState<'confirmed' | 'maybe' | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [rulesSheetOpen, setRulesSheetOpen] = useState(false)
+  const [rulesAcceptedLocally, setRulesAcceptedLocally] = useState(false)
+  const [pendingStatus, setPendingStatus] = useState<'confirmed' | 'maybe' | null>(null)
+
+  const requiresGroupRules =
+    groupRulesEnabled === true &&
+    needsGroupRulesAcceptance === true &&
+    !rulesAcceptedLocally &&
+    !!groupRulesText &&
+    (groupRulesVersion ?? 0) > 0
 
   const markSeen = useCallback(() => {
     markReturningSignupSeen(orgSlug, eventId)
@@ -139,29 +158,40 @@ export function ReturningSignupModal({
 
   async function handleJoin(status: 'confirmed' | 'maybe') {
     if (!motion?.runSignupCelebration) return
-    markSeen()
-    setLoading(status)
-    setError(null)
 
-    const result = await motion.runSignupCelebration(
-      async () => {
-        const r = await quickJoinEvent(orgSlug, eventId, 0, status)
-        if (!r.error) {
-          startTransition(() => {
-            router.refresh()
-          })
-        }
-        return r
-      },
-      accent,
-      { placement: 'sheet' },
-    )
-    setLoading(null)
-    if (result.error) {
-      setError(result.error)
+    const runJoin = async () => {
+      markSeen()
+      setLoading(status)
+      setError(null)
+
+      const result = await motion.runSignupCelebration(
+        async () => {
+          const r = await quickJoinEvent(orgSlug, eventId, 0, status)
+          if (!r.error) {
+            startTransition(() => {
+              router.refresh()
+            })
+          }
+          return r
+        },
+        accent,
+        { placement: 'sheet' },
+      )
+      setLoading(null)
+      if (result.error) {
+        setError(result.error)
+        return
+      }
+      setOpen(false)
+    }
+
+    if (requiresGroupRules) {
+      setPendingStatus(status)
+      setRulesSheetOpen(true)
       return
     }
-    setOpen(false)
+
+    await runJoin()
   }
 
   const sheetCelebrating =
@@ -257,6 +287,28 @@ export function ReturningSignupModal({
           {error ? <p className="mt-3 text-sm text-red-300">{error}</p> : null}
         </>
       ) : null}
+
+      <GroupRulesSheet
+        open={rulesSheetOpen}
+        onClose={() => {
+          setRulesSheetOpen(false)
+          setPendingStatus(null)
+        }}
+        orgSlug={orgSlug}
+        rulesText={groupRulesText ?? ''}
+        rulesVersion={groupRulesVersion ?? 0}
+        accent={accent}
+        accentText={accentText}
+        onAccepted={async () => {
+          setRulesAcceptedLocally(true)
+          setRulesSheetOpen(false)
+          const status = pendingStatus
+          setPendingStatus(null)
+          if (status) {
+            await handleJoin(status)
+          }
+        }}
+      />
     </>
   )
 }

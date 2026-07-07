@@ -1,3 +1,6 @@
+import type { OrgGroupRules } from './group-rules'
+import { parseOrgGroupRules } from './group-rules'
+
 export type OrgFeatures = {
   user_badges: boolean
   leaderboard: boolean
@@ -8,6 +11,8 @@ export type OrgFeatures = {
   guest_signups: boolean
   /** When false, post-session feedback prompts and console feedback views are hidden. */
   session_feedback: boolean
+  /** When true, participants must accept group rules before signing up. */
+  group_rules: boolean
 }
 
 export type WaitlistPromotionMode = 'strict_fifo' | 'skip_ahead'
@@ -19,6 +24,7 @@ export type OrgWaitlistSettings = {
 export type OrgSettings = {
   features: OrgFeatures
   waitlist?: OrgWaitlistSettings
+  group_rules?: OrgGroupRules | null
 }
 
 export const DEFAULT_ORG_FEATURES: OrgFeatures = {
@@ -28,6 +34,7 @@ export const DEFAULT_ORG_FEATURES: OrgFeatures = {
   public_roster: true,
   guest_signups: true,
   session_feedback: true,
+  group_rules: false,
 }
 
 export const DEFAULT_ORG_WAITLIST_SETTINGS: OrgWaitlistSettings = {
@@ -60,8 +67,11 @@ export function parseOrgSettings(raw: unknown): OrgSettings {
       public_roster: features?.public_roster !== false,
       guest_signups: features?.guest_signups !== false,
       session_feedback: features?.session_feedback !== false,
+      // Opt-in: only feature that defaults off (missing key = false). Others use opt-out (!== false).
+      group_rules: features?.group_rules === true,
     },
     waitlist: parseWaitlistSettings(settings?.waitlist),
+    group_rules: parseOrgGroupRules(settings?.group_rules),
   }
 }
 
@@ -118,5 +128,11 @@ export const ORG_FEATURE_DEFINITIONS: OrgFeatureDefinition[] = [
     label: 'Session feedback',
     description:
       'Ask participants to rate sessions after they end and show responses in the console.',
+  },
+  {
+    key: 'group_rules',
+    label: 'Group rules',
+    description:
+      'Require participants to accept your group rules before they can sign up for sessions.',
   },
 ]

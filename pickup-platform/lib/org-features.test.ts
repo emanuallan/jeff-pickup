@@ -9,11 +9,13 @@ import {
 
 describe('org-features', () => {
   describe('parseOrgSettings opt-out semantics', () => {
-    it('defaults all features to true when settings missing', () => {
+    it('defaults most features to true when settings missing; group_rules stays off', () => {
       expect(parseOrgSettings(null)).toEqual({
         features: DEFAULT_ORG_FEATURES,
         waitlist: { promotion_mode: 'strict_fifo' },
+        group_rules: null,
       })
+      expect(parseOrgSettings(null).features.group_rules).toBe(false)
     })
 
     it('keeps features true when undefined in stored settings', () => {
@@ -30,6 +32,14 @@ describe('org-features', () => {
       expect(settings.features.guest_signups).toBe(false)
       expect(settings.features.session_feedback).toBe(false)
       expect(settings.features.leaderboard).toBe(true)
+      expect(settings.features.group_rules).toBe(false)
+    })
+
+    it('enables group_rules only when explicitly true', () => {
+      const settings = parseOrgSettings({
+        features: { group_rules: true },
+      })
+      expect(settings.features.group_rules).toBe(true)
     })
   })
 

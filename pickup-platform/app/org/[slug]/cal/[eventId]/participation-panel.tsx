@@ -36,6 +36,10 @@ type JoinProps = {
   locationMapsUrl: string | null
   returningSignupModalEnabled: boolean
   guestsEnabled?: boolean
+  groupRulesEnabled?: boolean
+  groupRulesText?: string
+  groupRulesVersion?: number
+  needsGroupRulesAcceptance?: boolean
 }
 
 type Props = JoinProps & {
@@ -253,6 +257,10 @@ export function ParticipationPanel(props: Props) {
       locationMapsUrl: rest.locationMapsUrl,
       returningSignupModalEnabled: rest.returningSignupModalEnabled,
       guestsEnabled: rest.guestsEnabled,
+      groupRulesEnabled: rest.groupRulesEnabled,
+      groupRulesText: rest.groupRulesText,
+      groupRulesVersion: rest.groupRulesVersion,
+      needsGroupRulesAcceptance: rest.needsGroupRulesAcceptance,
     }),
     [
       rest.orgSlug,
@@ -272,6 +280,10 @@ export function ParticipationPanel(props: Props) {
       rest.locationMapsUrl,
       rest.returningSignupModalEnabled,
       rest.guestsEnabled,
+      rest.groupRulesEnabled,
+      rest.groupRulesText,
+      rest.groupRulesVersion,
+      rest.needsGroupRulesAcceptance,
     ],
   )
 

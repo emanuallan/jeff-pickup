@@ -12,6 +12,7 @@ import { arrowRight } from '@/lib/text-arrows'
 import { PhoneInput } from '@/app/_components/phone-input'
 import type { Participant, MySignup } from '@/lib/participant'
 import { ReturningSignupModal, clearReturningSignupSeen } from './returning-signup-modal'
+import { GroupRulesSheet } from './group-rules-sheet'
 import { useParticipationMotion } from './participation-motion'
 import { GuestCountSelect } from './guest-count-select'
 import { clampGuestCount } from '@/lib/guest-signups'
@@ -36,6 +37,10 @@ type Props = {
   locationMapsUrl: string | null
   returningSignupModalEnabled: boolean
   guestsEnabled?: boolean
+  groupRulesEnabled?: boolean
+  groupRulesText?: string
+  groupRulesVersion?: number
+  needsGroupRulesAcceptance?: boolean
 }
 
 const inputClass =
@@ -165,6 +170,33 @@ export function JoinSection(props: Props) {
   const [loading, setLoading] = useState(false)
   const [guestCount, setGuestCount] = useState(0)
   const [optedOutOfReturningSession, setOptedOutOfReturningSession] = useState(false)
+  const [rulesSheetOpen, setRulesSheetOpen] = useState(false)
+  const [rulesPhone, setRulesPhone] = useState<string | null>(null)
+  const [rulesAcceptedLocally, setRulesAcceptedLocally] = useState(false)
+  const [pendingJoin, setPendingJoin] = useState<(() => Promise<void>) | null>(null)
+
+  const requiresGroupRules =
+    props.groupRulesEnabled === true &&
+    props.needsGroupRulesAcceptance === true &&
+    !rulesAcceptedLocally &&
+    !!props.groupRulesText &&
+    (props.groupRulesVersion ?? 0) > 0
+
+  function openRulesGate(phone: string | null, join: () => Promise<void>) {
+    setRulesPhone(phone)
+    setPendingJoin(() => join)
+    setRulesSheetOpen(true)
+  }
+
+  async function completeRulesAcceptance() {
+    setRulesAcceptedLocally(true)
+    setRulesSheetOpen(false)
+    const join = pendingJoin
+    setPendingJoin(null)
+    if (join) {
+      await join()
+    }
+  }
 
   useEffect(() => {
     if (!props.participant) {
@@ -184,29 +216,41 @@ export function JoinSection(props: Props) {
   async function handleNewUserJoin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     if (!motion?.runSignupCelebration) return
-    setLoading(true)
-    setError(null)
-    const formData = new FormData(event.currentTarget)
-    const rawGuests = Number.parseInt(String(formData.get('guest_count') ?? '0'), 10)
-    const guests = guestsEnabled ? clampGuestCount(rawGuests) : 0
-    const result = await motion.runSignupCelebration(
-      async () => {
-        const r = await joinEvent(props.orgSlug, props.eventId, formData)
-        if (!r.error) {
-          startTransition(() => {
-            router.refresh()
-          })
-        }
-        return r
-      },
-      props.accent,
-      { guestCount: guests },
-    )
-    setLoading(false)
-    if (result.error) {
-      setError(result.error)
+
+    const form = event.currentTarget
+    const formData = new FormData(form)
+    const phone = String(formData.get('phone') ?? '')
+
+    const runJoin = async () => {
+      setLoading(true)
+      setError(null)
+      const rawGuests = Number.parseInt(String(formData.get('guest_count') ?? '0'), 10)
+      const guests = guestsEnabled ? clampGuestCount(rawGuests) : 0
+      const result = await motion.runSignupCelebration(
+        async () => {
+          const r = await joinEvent(props.orgSlug, props.eventId, formData)
+          if (!r.error) {
+            startTransition(() => {
+              router.refresh()
+            })
+          }
+          return r
+        },
+        props.accent,
+        { guestCount: guests },
+      )
+      setLoading(false)
+      if (result.error) {
+        setError(result.error)
+      }
+    }
+
+    if (requiresGroupRules) {
+      openRulesGate(phone, runJoin)
       return
     }
+
+    await runJoin()
   }
 
   if (props.participant && !optedOutOfReturningSession) {
@@ -241,30 +285,39 @@ export function JoinSection(props: Props) {
           disabled={loading}
           onClick={async () => {
             if (!motion?.runSignupCelebration) return
-            setLoading(true)
-            setError(null)
-            const result = await motion.runSignupCelebration(
-              async () => {
-                const r = await quickJoinEvent(
-                  props.orgSlug,
-                  props.eventId,
-                  guestCount,
-                )
-                if (!r.error) {
-                  startTransition(() => {
-                    router.refresh()
-                  })
-                }
-                return r
-              },
-              props.accent,
-              { guestCount },
-            )
-            setLoading(false)
-            if (result.error) {
-              setError(result.error)
+
+            const runQuickJoin = async () => {
+              setLoading(true)
+              setError(null)
+              const result = await motion.runSignupCelebration(
+                async () => {
+                  const r = await quickJoinEvent(
+                    props.orgSlug,
+                    props.eventId,
+                    guestCount,
+                  )
+                  if (!r.error) {
+                    startTransition(() => {
+                      router.refresh()
+                    })
+                  }
+                  return r
+                },
+                props.accent,
+                { guestCount },
+              )
+              setLoading(false)
+              if (result.error) {
+                setError(result.error)
+              }
+            }
+
+            if (requiresGroupRules) {
+              openRulesGate(null, runQuickJoin)
               return
             }
+
+            await runQuickJoin()
           }}
           className="w-full rounded-xl px-4 py-3.5 text-sm font-semibold shadow-lg transition-opacity hover:opacity-90 disabled:opacity-50"
           style={{
@@ -298,27 +351,66 @@ export function JoinSection(props: Props) {
 
     if (props.returningSignupModalEnabled) {
       return (
-        <ReturningSignupModal
-          orgSlug={props.orgSlug}
-          orgId={props.orgId}
-          eventId={props.eventId}
-          accent={props.accent}
-          accentText={props.accentText}
-          firstName={props.participant.first_name}
-          eventTitle={props.eventTitle}
-          eventWhen={props.eventWhen}
-          locationLabel={props.locationLabel}
-          locationMapsUrl={props.locationMapsUrl}
-        >
-          {welcomeBack}
-        </ReturningSignupModal>
+        <>
+          <ReturningSignupModal
+            orgSlug={props.orgSlug}
+            orgId={props.orgId}
+            eventId={props.eventId}
+            accent={props.accent}
+            accentText={props.accentText}
+            firstName={props.participant.first_name}
+            eventTitle={props.eventTitle}
+            eventWhen={props.eventWhen}
+            locationLabel={props.locationLabel}
+            locationMapsUrl={props.locationMapsUrl}
+            groupRulesEnabled={props.groupRulesEnabled}
+            groupRulesText={props.groupRulesText}
+            groupRulesVersion={props.groupRulesVersion}
+            needsGroupRulesAcceptance={props.needsGroupRulesAcceptance}
+          >
+            {welcomeBack}
+          </ReturningSignupModal>
+          <GroupRulesSheet
+            open={rulesSheetOpen}
+            onClose={() => {
+              setRulesSheetOpen(false)
+              setPendingJoin(null)
+            }}
+            orgSlug={props.orgSlug}
+            rulesText={props.groupRulesText ?? ''}
+            rulesVersion={props.groupRulesVersion ?? 0}
+            phone={rulesPhone}
+            accent={props.accent}
+            accentText={props.accentText}
+            onAccepted={() => void completeRulesAcceptance()}
+          />
+        </>
       )
     }
 
-    return welcomeBack
+    return (
+      <>
+        {welcomeBack}
+        <GroupRulesSheet
+          open={rulesSheetOpen}
+          onClose={() => {
+            setRulesSheetOpen(false)
+            setPendingJoin(null)
+          }}
+          orgSlug={props.orgSlug}
+          rulesText={props.groupRulesText ?? ''}
+          rulesVersion={props.groupRulesVersion ?? 0}
+          phone={rulesPhone}
+          accent={props.accent}
+          accentText={props.accentText}
+          onAccepted={() => void completeRulesAcceptance()}
+        />
+      </>
+    )
   }
 
   return (
+    <>
     <div className="space-y-4">
       <form
         onSubmit={(event) => void handleNewUserJoin(event)}
@@ -403,5 +495,21 @@ export function JoinSection(props: Props) {
         }}
       />
     </div>
+
+    <GroupRulesSheet
+      open={rulesSheetOpen}
+      onClose={() => {
+        setRulesSheetOpen(false)
+        setPendingJoin(null)
+      }}
+      orgSlug={props.orgSlug}
+      rulesText={props.groupRulesText ?? ''}
+      rulesVersion={props.groupRulesVersion ?? 0}
+      phone={rulesPhone}
+      accent={props.accent}
+      accentText={props.accentText}
+      onAccepted={() => void completeRulesAcceptance()}
+    />
+    </>
   )
 }

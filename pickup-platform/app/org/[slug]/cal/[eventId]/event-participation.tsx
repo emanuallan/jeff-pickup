@@ -8,6 +8,8 @@ import { getSessionInfo } from '@/lib/participant'
 import { CancelledCallout, isEventCancelled, eventName } from '../../_components/event-ui'
 import { formatEventWhenLine } from '@/lib/events'
 import { orgFeatures } from '@/lib/org-features'
+import { groupRulesActive, orgGroupRules } from '@/lib/group-rules'
+import { getGroupRulesStatusForJoin } from '@/lib/group-rules.server'
 import {
   getParticipantEngagementStats,
   isLeaderboardUnlocked,
@@ -31,11 +33,21 @@ export async function EventParticipation({ slug, eventId, org, event }: Props) {
   const accentText = readableTextColor(accent)
   const waitlistEnabled = event.capacity != null
   const features = orgFeatures(org)
+  const groupRules = orgGroupRules(org.settings)
+  const groupRulesEnabled = groupRulesActive(features.group_rules, groupRules)
 
-  const [{ participant, mySignup }, roster, waitlist] = await Promise.all([
+  const [{ participant, mySignup }, roster, waitlist, groupRulesStatus] = await Promise.all([
     getSessionToken().then((token) => getSessionInfo(token, org.id, event.id)),
     isCancelled ? Promise.resolve([]) : getPublicRoster(event.id),
     isCancelled || !waitlistEnabled ? Promise.resolve([]) : getPublicWaitlist(event.id),
+    getSessionToken().then((token) =>
+      groupRulesEnabled
+        ? getGroupRulesStatusForJoin(org.id, { sessionToken: token })
+        : Promise.resolve({
+            active: false,
+            needs_acceptance: false,
+          } as Awaited<ReturnType<typeof getGroupRulesStatusForJoin>>),
+    ),
   ])
 
   const headcount = rosterHeadcount(roster)
@@ -79,6 +91,10 @@ export async function EventParticipation({ slug, eventId, org, event }: Props) {
       returningSignupModalEnabled={features.returning_signup_modal}
       publicRosterEnabled={features.public_roster}
       guestsEnabled={features.guest_signups}
+      groupRulesEnabled={groupRulesEnabled}
+      groupRulesText={groupRulesStatus.rules_text ?? groupRules?.text ?? ''}
+      groupRulesVersion={groupRulesStatus.rules_version ?? groupRules?.version ?? 0}
+      needsGroupRulesAcceptance={groupRulesStatus.needs_acceptance === true}
       roster={roster}
       waitlist={waitlist}
       headcount={headcount}
