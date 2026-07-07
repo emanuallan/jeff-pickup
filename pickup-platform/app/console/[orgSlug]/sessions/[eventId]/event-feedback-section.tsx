@@ -37,7 +37,7 @@ export async function EventFeedbackSection({ orgSlug, orgId, eventId }: Props) {
           href={`/console/${orgSlug}/feedback?event=${rows[0]?.event_short_id ?? ''}`}
           className="text-xs font-medium text-indigo-300 hover:text-indigo-200"
         >
-          View all feedback
+          View more
         </Link>
       }
     >

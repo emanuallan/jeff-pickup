@@ -51,8 +51,12 @@ export default async function ConsoleFeedbackPage({ params, searchParams }: Prop
       <ConsoleHeader
         title="Session feedback"
         description="Ratings and comments from participants after sessions end."
-        backHref={`/console/${orgSlug}`}
-        backLabel="Console"
+        backHref={
+          eventRef
+            ? `/console/${orgSlug}/sessions/${eventRef}`
+            : `/console/${orgSlug}`
+        }
+        backLabel={eventRef ? 'Session' : 'Console'}
       />
 
       <div className="mt-8 grid gap-3 sm:grid-cols-3">
