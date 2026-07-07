@@ -11,7 +11,7 @@ import {
 import { arrowRight } from '@/lib/text-arrows'
 import { PhoneInput } from '@/app/_components/phone-input'
 import type { Participant, MySignup } from '@/lib/participant'
-import { ReturningSignupModal, clearReturningSignupSeen } from './returning-signup-modal'
+import { ReturningSignupModal, clearReturningSignupSeen, markReturningSignupPromptSeen } from './returning-signup-modal'
 import { GroupRulesSheet } from './group-rules-sheet'
 import { getGroupRulesJoinStatus } from './group-rules-actions'
 import { useParticipationMotion } from './participation-motion'
@@ -264,6 +264,7 @@ export function JoinSection(props: Props) {
         async () => {
           const r = await joinEvent(props.orgSlug, props.eventId, formData)
           if (!r.error) {
+            markReturningSignupPromptSeen(props.orgSlug, props.eventId)
             startTransition(() => {
               router.refresh()
             })
@@ -339,6 +340,7 @@ export function JoinSection(props: Props) {
                     guestCount,
                   )
                   if (!r.error) {
+                    markReturningSignupPromptSeen(props.orgSlug, props.eventId)
                     startTransition(() => {
                       router.refresh()
                     })

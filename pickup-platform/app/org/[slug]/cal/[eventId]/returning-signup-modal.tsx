@@ -90,6 +90,11 @@ function markReturningSignupSeen(orgSlug: string, eventId: string) {
   }
 }
 
+/** Persist that this user joined this session so the quick-signup sheet stays hidden on return visits. */
+export function markReturningSignupPromptSeen(orgSlug: string, eventId: string) {
+  markReturningSignupSeen(orgSlug, eventId)
+}
+
 export function clearReturningSignupSeen(orgSlug: string, eventId: string) {
   try {
     localStorage.removeItem(returningSignupStorageKey(orgSlug, eventId))
