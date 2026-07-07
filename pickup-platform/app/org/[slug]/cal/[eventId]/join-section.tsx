@@ -13,6 +13,7 @@ import { PhoneInput } from '@/app/_components/phone-input'
 import type { Participant, MySignup } from '@/lib/participant'
 import { ReturningSignupModal, clearReturningSignupSeen } from './returning-signup-modal'
 import { GroupRulesSheet } from './group-rules-sheet'
+import { getGroupRulesJoinStatus } from './group-rules-actions'
 import { useParticipationMotion } from './participation-motion'
 import { GuestCountSelect } from './guest-count-select'
 import { clampGuestCount } from '@/lib/guest-signups'
@@ -207,6 +208,7 @@ export function JoinSection(props: Props) {
 
   const handleNotYou = useCallback(async () => {
     setOptedOutOfReturningSession(true)
+    setRulesAcceptedLocally(false)
     setError(null)
     clearReturningSignupSeen(props.orgSlug, props.eventId)
     motion?.reopenJoinPanel()
@@ -232,6 +234,18 @@ export function JoinSection(props: Props) {
 
   const joiningWaitlist = props.isFull && props.waitlistEnabled
   const guestsEnabled = props.guestsEnabled !== false
+  const isNewUserJoinPath = !props.participant || optedOutOfReturningSession
+
+  async function phoneNeedsGroupRulesAcceptance(phone: string): Promise<boolean> {
+    if (!props.groupRulesEnabled || !props.groupRulesText || (props.groupRulesVersion ?? 0) <= 0) {
+      return false
+    }
+    if (rulesAcceptedLocally) {
+      return false
+    }
+    const status = await getGroupRulesJoinStatus(props.orgSlug, phone)
+    return status.needs_acceptance === true
+  }
 
   async function handleNewUserJoin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -261,11 +275,19 @@ export function JoinSection(props: Props) {
       )
       setLoading(false)
       if (result.error) {
+        if (
+          isNewUserJoinPath &&
+          result.error.includes('group rules') &&
+          !rulesSheetOpen
+        ) {
+          openRulesGate(phone, runJoin)
+          return
+        }
         setError(result.error)
       }
     }
 
-    if (requiresGroupRules) {
+    if (isNewUserJoinPath && (await phoneNeedsGroupRulesAcceptance(phone))) {
       openRulesGate(phone, runJoin)
       return
     }
