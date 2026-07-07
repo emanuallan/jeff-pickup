@@ -952,6 +952,7 @@ export async function updateOrgLinks(orgSlug: string, formData: FormData) {
 export async function updateOrgFeatures(orgSlug: string, formData: FormData) {
   const org = await requireOrgAdmin(orgSlug)
   const supabase = await createClient()
+  const current = orgSettings(org)
 
   const features: OrgFeatures = {
     user_badges: formData.get('user_badges') === 'on',
@@ -960,13 +961,38 @@ export async function updateOrgFeatures(orgSlug: string, formData: FormData) {
     public_roster: formData.get('public_roster') === 'on',
     guest_signups: formData.get('guest_signups') === 'on',
     session_feedback: formData.get('session_feedback') === 'on',
-    group_rules: formData.get('group_rules') === 'on',
+    group_rules: current.features.group_rules,
   }
 
   const { error } = await supabase
     .from('orgs')
     .update({
-      settings: { ...orgSettings(org), features },
+      settings: { ...current, features },
+    })
+    .eq('id', org.id)
+
+  if (error) {
+    return { error: error.message }
+  }
+
+  revalidatePath(`/console/${orgSlug}`)
+  revalidatePath(`/console/${orgSlug}/settings`)
+  revalidatePath(`/org/${orgSlug}`)
+  return { ok: true }
+}
+
+export async function updateGroupRulesFeature(orgSlug: string, enabled: boolean) {
+  const org = await requireOrgAdmin(orgSlug)
+  const supabase = await createClient()
+  const settings = orgSettings(org)
+
+  const { error } = await supabase
+    .from('orgs')
+    .update({
+      settings: {
+        ...settings,
+        features: { ...settings.features, group_rules: enabled },
+      },
     })
     .eq('id', org.id)
 

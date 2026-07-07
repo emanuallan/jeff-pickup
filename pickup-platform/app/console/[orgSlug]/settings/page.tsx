@@ -84,7 +84,7 @@ export default async function OrgSettingsPage({ params }: Props) {
 
         <ConsoleSection
           title="Group rules"
-          description="Set rules participants must accept before signing up. Re-acceptance is only prompted when you request it."
+          description="Require participants to accept your agreement before they can sign up."
         >
           <GroupRulesSection
             orgSlug={orgSlug}
