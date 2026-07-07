@@ -8,6 +8,7 @@ import {
   type CSSProperties,
   type ReactNode,
 } from 'react'
+import { lockBodyScroll } from '@/lib/body-scroll-lock'
 
 const DISMISS_THRESHOLD = 72
 const SHEET_EASING = 'cubic-bezier(0.32, 0.72, 0, 1)'
@@ -170,16 +171,16 @@ export function BottomSheet({
   useEffect(() => {
     if (!present) return
 
+    const unlockScroll = lockBodyScroll()
+
     function onKeyDown(event: KeyboardEvent) {
       if (event.key === 'Escape') requestClose()
     }
 
     document.addEventListener('keydown', onKeyDown)
-    const prev = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
     return () => {
       document.removeEventListener('keydown', onKeyDown)
-      document.body.style.overflow = prev
+      unlockScroll()
     }
   }, [present, requestClose])
 

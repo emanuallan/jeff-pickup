@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
+import { lockBodyScroll } from '@/lib/body-scroll-lock'
 import { SignupKickAnimation } from './signup-kick-animation'
 import { LeaveWalkAnimation } from './leave-walk-animation'
 
@@ -31,11 +32,7 @@ export function ParticipationCelebrationModal({
 
   useEffect(() => {
     if (!open) return
-    const prev = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    return () => {
-      document.body.style.overflow = prev
-    }
+    return lockBodyScroll()
   }, [open])
 
   if (!open || !mounted) {
