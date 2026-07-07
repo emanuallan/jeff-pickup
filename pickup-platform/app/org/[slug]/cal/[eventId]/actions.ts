@@ -5,7 +5,7 @@ import { getPublicOrgBySlug } from '@/lib/public-data'
 import { canUpdateArrivalStatus, getEventByRef, isEventCancelled } from '@/lib/events'
 import type { EventWithLocation } from '@/lib/events'
 import { createClient } from '@/lib/supabase/server'
-import { setSessionToken, getSessionToken, clearSessionToken } from '@/lib/participant-session'
+import { setSessionToken, getSessionToken } from '@/lib/participant-session'
 import type { ArrivalStatus } from '@/lib/arrival-status'
 import { normalizePhoneDigits, isValidPhoneDigits } from '@/lib/phone'
 import { validateDemoParticipantNames } from '@/lib/participant-name-moderation'
@@ -121,11 +121,11 @@ export async function joinEvent(
   return {}
 }
 
+/** Revalidate public event data after the device session cookie was cleared client-side. */
 export async function clearParticipantSession(
   orgSlug: string,
   eventId: string,
 ): Promise<{ error?: string }> {
-  await clearSessionToken()
   await revalidatePublicEventByRef(orgSlug, eventId)
   return {}
 }

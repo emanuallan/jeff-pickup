@@ -16,6 +16,7 @@ import { GroupRulesSheet } from './group-rules-sheet'
 import { useParticipationMotion } from './participation-motion'
 import { GuestCountSelect } from './guest-count-select'
 import { clampGuestCount } from '@/lib/guest-signups'
+import { clearParticipantDeviceSession } from '@/lib/participant-session-client'
 
 export type { Participant, MySignup }
 
@@ -162,34 +163,6 @@ function RecoverSession({
   )
 }
 
-function participantOptOutStorageKey(orgSlug: string) {
-  return `hc-opted-out:${orgSlug}`
-}
-
-function readParticipantOptedOut(orgSlug: string): boolean {
-  try {
-    return sessionStorage.getItem(participantOptOutStorageKey(orgSlug)) === '1'
-  } catch {
-    return false
-  }
-}
-
-function writeParticipantOptedOut(orgSlug: string) {
-  try {
-    sessionStorage.setItem(participantOptOutStorageKey(orgSlug), '1')
-  } catch {
-    // ignore quota / private mode
-  }
-}
-
-function clearParticipantOptedOut(orgSlug: string) {
-  try {
-    sessionStorage.removeItem(participantOptOutStorageKey(orgSlug))
-  } catch {
-    // ignore quota / private mode
-  }
-}
-
 export function JoinSection(props: Props) {
   const router = useRouter()
   const motion = useParticipationMotion()
@@ -227,23 +200,24 @@ export function JoinSection(props: Props) {
   }
 
   useEffect(() => {
-    if (readParticipantOptedOut(props.orgSlug)) {
-      setOptedOutOfReturningSession(true)
-    }
-  }, [props.orgSlug])
-
-  useEffect(() => {
     if (!props.participant) {
       setOptedOutOfReturningSession(false)
-      clearParticipantOptedOut(props.orgSlug)
     }
-  }, [props.participant, props.orgSlug])
+  }, [props.participant])
 
   const handleNotYou = useCallback(async () => {
     setOptedOutOfReturningSession(true)
-    writeParticipantOptedOut(props.orgSlug)
+    setError(null)
     clearReturningSignupSeen(props.orgSlug, props.eventId)
     motion?.reopenJoinPanel()
+
+    const cleared = await clearParticipantDeviceSession()
+    if ('error' in cleared) {
+      setOptedOutOfReturningSession(false)
+      setError(cleared.error)
+      return
+    }
+
     await clearParticipantSession(props.orgSlug, props.eventId)
     startTransition(() => {
       router.refresh()

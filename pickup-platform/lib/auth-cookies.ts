@@ -42,17 +42,36 @@ export function expireCookieEverywhere(store: WritableCookies, name: string) {
   }
 }
 
+/** Clear hc_session using the same attributes as setSessionToken (host-scoped by default). */
 export function clearParticipantSession(store: WritableCookies) {
+  const expired = {
+    ...getParticipantCookieOptions(),
+    maxAge: 0,
+    expires: new Date(0),
+  }
+
+  store.set(SESSION_COOKIE, '', expired)
+
+  const root = supabaseCookieRootDomain()
+  if (root) {
+    store.set(SESSION_COOKIE, '', { ...expired, domain: `.${root}` })
+    store.set(SESSION_COOKIE, '', { ...expired, domain: root })
+  }
+
   if ('delete' in store && typeof store.delete === 'function') {
     store.delete(SESSION_COOKIE)
-    const root = supabaseCookieRootDomain()
     if (root) {
       store.delete({ name: SESSION_COOKIE, domain: `.${root}` })
       store.delete({ name: SESSION_COOKIE, domain: root })
     }
   }
+}
 
-  expireCookieEverywhere(store, SESSION_COOKIE)
+/** Clear participant session on the incoming request store and the outgoing response. */
+export async function applyParticipantSessionClear(response: NextResponse) {
+  const cookieStore = await cookies()
+  clearParticipantSession(cookieStore)
+  clearParticipantSession(response.cookies)
 }
 
 function collectSupabaseAuthCookieNames(
@@ -95,7 +114,5 @@ export async function clearAuthCookiesForSignOut(
 
 /** Organizer sign-in should not reuse an anonymous participant session on this host. */
 export async function clearParticipantSessionForSignIn(response: NextResponse) {
-  const cookieStore = await cookies()
-  clearParticipantSession(cookieStore)
-  clearParticipantSession(response.cookies)
+  await applyParticipantSessionClear(response)
 }
