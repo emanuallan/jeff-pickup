@@ -50,20 +50,14 @@ export function clearParticipantSession(store: WritableCookies) {
     expires: new Date(0),
   }
 
+  // Expire with matching attributes only — bare delete() emits Set-Cookie without
+  // HttpOnly/SameSite/Secure, which browsers ignore for secure host-scoped cookies.
   store.set(SESSION_COOKIE, '', expired)
 
   const root = supabaseCookieRootDomain()
   if (root) {
     store.set(SESSION_COOKIE, '', { ...expired, domain: `.${root}` })
     store.set(SESSION_COOKIE, '', { ...expired, domain: root })
-  }
-
-  if ('delete' in store && typeof store.delete === 'function') {
-    store.delete(SESSION_COOKIE)
-    if (root) {
-      store.delete({ name: SESSION_COOKIE, domain: `.${root}` })
-      store.delete({ name: SESSION_COOKIE, domain: root })
-    }
   }
 }
 

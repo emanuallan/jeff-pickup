@@ -5,8 +5,7 @@ import { clearParticipantSession, getParticipantCookieOptions } from './auth-coo
 describe('auth-cookies participant session', () => {
   it('expires hc_session with the same attributes used when setting it', () => {
     const set = vi.fn()
-    const del = vi.fn()
-    const store = { set, delete: del }
+    const store = { set }
 
     clearParticipantSession(store)
 
@@ -17,6 +16,6 @@ describe('auth-cookies participant session', () => {
     }
 
     expect(set).toHaveBeenCalledWith(SESSION_COOKIE, '', expectedExpired)
-    expect(del).toHaveBeenCalledWith(SESSION_COOKIE)
+    expect(set).toHaveBeenCalledTimes(1)
   })
 })
