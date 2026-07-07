@@ -3,17 +3,17 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { JoinSection } from './join-section'
-import { clearParticipantSession } from './actions'
+import { clearParticipantSession, recoverSession } from './actions'
 import { clearParticipantDeviceSession } from '@/lib/participant-session-client'
 
-const refreshMock = vi.fn()
+const reloadMock = vi.fn()
 const reopenJoinPanelMock = vi.fn()
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({
     push: vi.fn(),
     replace: vi.fn(),
-    refresh: refreshMock,
+    refresh: vi.fn(),
     back: vi.fn(),
     forward: vi.fn(),
     prefetch: vi.fn(),
@@ -40,6 +40,7 @@ vi.mock('./participation-motion', () => ({
 
 const clearParticipantSessionMock = vi.mocked(clearParticipantSession)
 const clearParticipantDeviceSessionMock = vi.mocked(clearParticipantDeviceSession)
+const recoverSessionMock = vi.mocked(recoverSession)
 
 const participant = {
   first_name: 'Jeff',
@@ -74,13 +75,17 @@ function renderJoinSection(overrides: Partial<ComponentProps<typeof JoinSection>
 
 describe('JoinSection "Not you?" flow', () => {
   beforeEach(() => {
-    refreshMock.mockReset()
+    reloadMock.mockReset()
     reopenJoinPanelMock.mockReset()
     clearParticipantSessionMock.mockReset()
     clearParticipantDeviceSessionMock.mockReset()
     clearParticipantDeviceSessionMock.mockResolvedValue({ ok: true })
     clearParticipantSessionMock.mockResolvedValue({})
     localStorage.clear()
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      value: { ...window.location, reload: reloadMock },
+    })
     vi.stubGlobal(
       'matchMedia',
       vi.fn().mockImplementation(() => ({
@@ -116,7 +121,7 @@ describe('JoinSection "Not you?" flow', () => {
     })
     expect(clearParticipantSessionMock).toHaveBeenCalledWith('demo', 'event-1')
     expect(reopenJoinPanelMock).toHaveBeenCalledOnce()
-    expect(refreshMock).toHaveBeenCalledOnce()
+    expect(reloadMock).toHaveBeenCalledOnce()
     expect(localStorage.getItem('returning-signup-seen:demo:event-1')).toBeNull()
     expect(screen.getByRole('heading', { name: /save your spot/i })).toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: /welcome back/i })).not.toBeInTheDocument()
@@ -136,7 +141,7 @@ describe('JoinSection "Not you?" flow', () => {
       expect(screen.getByText(/could not clear your session/i)).toBeInTheDocument()
     })
     expect(clearParticipantSessionMock).not.toHaveBeenCalled()
-    expect(refreshMock).not.toHaveBeenCalled()
+    expect(reloadMock).not.toHaveBeenCalled()
     expect(screen.getByRole('heading', { name: /welcome back, jeff p\./i })).toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: /save your spot/i })).not.toBeInTheDocument()
   })
@@ -159,7 +164,50 @@ describe('JoinSection "Not you?" flow', () => {
       expect(clearParticipantDeviceSessionMock).toHaveBeenCalledOnce()
     })
     expect(clearParticipantSessionMock).toHaveBeenCalledWith('demo', 'event-1')
-    expect(refreshMock).toHaveBeenCalledOnce()
+    expect(reloadMock).toHaveBeenCalledOnce()
     expect(screen.getByRole('heading', { name: /save your spot/i })).toBeInTheDocument()
   }, 10_000)
+})
+
+describe('JoinSection recover session flow', () => {
+  beforeEach(() => {
+    reloadMock.mockReset()
+    recoverSessionMock.mockReset()
+    recoverSessionMock.mockResolvedValue({})
+    localStorage.clear()
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      value: { ...window.location, reload: reloadMock },
+    })
+    vi.stubGlobal(
+      'matchMedia',
+      vi.fn().mockImplementation(() => ({
+        matches: true,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+      })),
+    )
+  })
+
+  afterEach(() => {
+    cleanup()
+  })
+
+  it('reloads the page after recovering a session by phone', async () => {
+    const user = userEvent.setup()
+
+    renderJoinSection({ participant: null })
+
+    await user.click(
+      screen.getByRole('button', { name: /already signed up on another device/i }),
+    )
+    const recoverPhone = screen.getAllByLabelText(/phone number/i)[1]!
+    await user.type(recoverPhone, '5551234567')
+    await user.click(screen.getByRole('button', { name: /^continue$/i }))
+
+    await waitFor(() => {
+      expect(recoverSessionMock).toHaveBeenCalledWith('demo', 'event-1', '5551234567')
+    })
+    expect(reloadMock).toHaveBeenCalledOnce()
+  })
 })

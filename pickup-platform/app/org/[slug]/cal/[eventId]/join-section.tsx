@@ -88,8 +88,6 @@ function RecoverSession({
   accent: string
   onRecovered: () => void
 }) {
-  const router = useRouter()
-  const [, startTransition] = useTransition()
   const [open, setOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
@@ -108,9 +106,7 @@ function RecoverSession({
     setOpen(false)
     setPhoneDigits('')
     onRecovered()
-    startTransition(() => {
-      router.refresh()
-    })
+    window.location.reload()
   }
 
   if (!open) {
@@ -221,10 +217,8 @@ export function JoinSection(props: Props) {
     }
 
     await clearParticipantSession(props.orgSlug, props.eventId)
-    startTransition(() => {
-      router.refresh()
-    })
-  }, [motion, props.eventId, props.orgSlug, router, startTransition])
+    window.location.reload()
+  }, [motion, props.eventId, props.orgSlug])
 
   // Signed-up users are handled in the roster (highlighted row + status picker
   // below the attendee list), so the join card collapses for them.
