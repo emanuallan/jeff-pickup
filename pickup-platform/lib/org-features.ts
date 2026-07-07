@@ -93,7 +93,8 @@ export const ORG_FEATURE_DEFINITIONS: OrgFeatureDefinition[] = [
   {
     key: 'leaderboard',
     label: 'Leaderboard',
-    description: 'Show the caps and streak leaderboard on public pages.',
+    description:
+      'Show the caps and streak leaderboard on public pages. The leaderboard only becomes visible after 3 completed sessions.',
   },
   {
     key: 'returning_signup_modal',
