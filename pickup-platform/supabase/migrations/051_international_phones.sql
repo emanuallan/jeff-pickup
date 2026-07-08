@@ -8,7 +8,7 @@ update public.participants
 set phone = '1' || phone
 where length(phone) = 10;
 
-update public.group_rules_acceptances
+update public.participant_group_agreements
 set phone = '1' || phone
 where length(phone) = 10;
 
