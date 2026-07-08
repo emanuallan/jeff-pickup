@@ -32,7 +32,7 @@ const defaultNationalClass =
   'min-w-0 flex-1 rounded-r-xl border border-zinc-700 bg-zinc-900 px-3 py-2.5 text-base outline-none sm:text-sm'
 
 const defaultSelectClass =
-  'min-w-[4.75rem] shrink-0 rounded-l-xl border border-r-0 border-zinc-700 bg-zinc-900 px-1.5 py-2.5 text-sm text-zinc-300 outline-none sm:text-sm'
+  'min-w-[4.75rem] h-full shrink-0 rounded-l-xl border border-r-0 border-zinc-700 bg-zinc-900 px-1.5 py-2.5 text-base leading-normal text-zinc-300 outline-none sm:text-sm'
 
 /** Split a single input class string into wrapper + select + national field classes. */
 export function splitPhoneFieldClasses(baseClass?: string) {
@@ -46,7 +46,7 @@ export function splitPhoneFieldClasses(baseClass?: string) {
       ? 'focus:border-zinc-700'
       : ''
 
-  const wrapper = ['flex w-full', baseClass.includes('mt-1') ? 'mt-1' : '']
+  const wrapper = ['flex w-full items-stretch', baseClass.includes('mt-1') ? 'mt-1' : '']
     .filter(Boolean)
     .join(' ')
 
@@ -66,7 +66,10 @@ export function splitPhoneFieldClasses(baseClass?: string) {
     .replace(/\brounded-r-lg\b/g, 'rounded-l-lg')
     .replace(/\bpx-3\b/g, 'px-2')
   if (!/\bshrink-0\b/.test(select)) {
-    select = `min-w-[4.75rem] shrink-0 ${select}`
+    select = `min-w-[4.75rem] h-full shrink-0 ${select}`
+  }
+  if (!/\bleading-normal\b/.test(select)) {
+    select = `leading-normal ${select}`
   }
   if (!/\bborder-r-0\b/.test(select)) {
     select = select.replace(/\bborder\b/, 'border border-r-0')
@@ -145,7 +148,7 @@ export function PhoneInput({ className, selectClassName, style, value, onChange 
   return (
     <div className={wrapper}>
       <div
-        className="relative shrink-0"
+        className="relative shrink-0 self-stretch"
         style={selectWidthPx ? { width: selectWidthPx } : undefined}
       >
         <span
@@ -159,7 +162,7 @@ export function PhoneInput({ className, selectClassName, style, value, onChange 
           onChange={(e) => updateCountry(e.target.value as PhoneCountry)}
           autoComplete="tel-country-code"
           aria-label="Country code"
-          className={`${resolvedSelectClass} w-full`}
+          className={`${resolvedSelectClass} h-full w-full`}
           style={style}
         >
           <option value="US">
