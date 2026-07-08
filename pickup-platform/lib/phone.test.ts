@@ -3,6 +3,7 @@ import {
   DEFAULT_PHONE_COUNTRY,
   PHONE_COUNTRIES,
   PHONE_COUNTRY_GROUPS,
+  applyNationalInputChange,
   dialCodeForCountry,
   formatNationalInput,
   formatPhoneDisplay,
@@ -113,6 +114,21 @@ describe('phone', () => {
   describe('formatNationalInput', () => {
     it('formats US national digits while typing', () => {
       expect(formatNationalInput('US', '202555')).toBe('(202) 555')
+    })
+  })
+
+  describe('applyNationalInputChange', () => {
+    it('removes a digit when backspace deletes only formatting', () => {
+      expect(applyNationalInputChange('US', '202', '(202', 5)).toBe('20')
+    })
+
+    it('removes digits when the edited value contains fewer digits', () => {
+      expect(applyNationalInputChange('US', '202', '(02)', 2)).toBe('02')
+      expect(applyNationalInputChange('US', '202', '(2)', 2)).toBe('2')
+    })
+
+    it('still removes trailing digits on a normal backspace', () => {
+      expect(applyNationalInputChange('US', '2025', '(202) ', 7)).toBe('202')
     })
   })
 

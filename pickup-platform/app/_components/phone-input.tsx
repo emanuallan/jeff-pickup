@@ -1,11 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useRef, useState, type KeyboardEvent } from 'react'
 import {
   DEFAULT_PHONE_COUNTRY,
   PHONE_COUNTRIES,
   PHONE_COUNTRY_GROUPS,
-  dialCodeForCountry,
+  applyNationalInputChange,
   formatNationalInput,
   maxNationalDigits,
   normalizePhoneInput,
@@ -78,6 +78,7 @@ export function splitPhoneFieldClasses(baseClass?: string) {
 export function PhoneInput({ className, selectClassName, style, value, onChange }: Props) {
   const [internalCountry, setInternalCountry] = useState<PhoneCountry>(DEFAULT_PHONE_COUNTRY)
   const [internalNational, setInternalNational] = useState('')
+  const editSelectionRef = useRef<number | null>(null)
   const isControlled = value !== undefined
 
   const parsedControlled = isControlled ? parseStoredPhone(value) : null
@@ -102,12 +103,20 @@ export function PhoneInput({ className, selectClassName, style, value, onChange 
   }
 
   function updateNational(nextValue: string) {
-    const nextNational = parseNationalInput(country, nextValue)
+    const selectionStart = editSelectionRef.current ?? undefined
+    editSelectionRef.current = null
+    const nextNational = applyNationalInputChange(country, national, nextValue, selectionStart)
     const nextE164 = normalizePhoneInput(country, nextNational)
     if (!isControlled) {
       setInternalNational(nextNational)
     }
     onChange?.(nextE164)
+  }
+
+  function rememberEditSelection(event: KeyboardEvent<HTMLInputElement>) {
+    if (event.key === 'Backspace' || event.key === 'Delete') {
+      editSelectionRef.current = event.currentTarget.selectionStart
+    }
   }
 
   return (
@@ -140,6 +149,7 @@ export function PhoneInput({ className, selectClassName, style, value, onChange 
         required
         maxLength={maxNationalDigits(country) + 8}
         value={formatNationalInput(country, national)}
+        onKeyDown={rememberEditSelection}
         onChange={(e) => updateNational(e.target.value)}
         className={nationalClass}
         style={style}

@@ -112,6 +112,37 @@ export function formatNationalInput(country: PhoneCountry, nationalDigits: strin
   return new AsYouType(country).input(nationalDigits)
 }
 
+/**
+ * Derive national digits after an edit to a formatted phone field.
+ * When backspace removes only formatting (e.g. ")" from "(202)"), stripDigits
+ * leaves the digit count unchanged — remove the digit before the cursor instead.
+ */
+export function applyNationalInputChange(
+  country: PhoneCountry,
+  previousNational: string,
+  nextFormattedValue: string,
+  selectionStart?: number,
+): string {
+  const nextDigits = parseNationalInput(country, nextFormattedValue)
+  if (nextDigits.length < previousNational.length) {
+    return nextDigits
+  }
+
+  if (nextDigits.length === previousNational.length && previousNational.length > 0) {
+    const previousFormatted = formatNationalInput(country, previousNational)
+    if (nextFormattedValue.length < previousFormatted.length) {
+      if (selectionStart !== undefined) {
+        const digitsBeforeCursor = stripDigits(previousFormatted.slice(0, selectionStart)).length
+        const deleteIndex = Math.max(0, digitsBeforeCursor - 1)
+        return previousNational.slice(0, deleteIndex) + previousNational.slice(deleteIndex + 1)
+      }
+      return previousNational.slice(0, -1)
+    }
+  }
+
+  return nextDigits
+}
+
 export function nationalDigitsOnly(value: string): string {
   return stripDigits(value)
 }
