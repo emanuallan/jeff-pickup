@@ -121,6 +121,9 @@ export function ParticipationMotionProvider({
       setCelebrationPlacement(placement)
       setKickGuestCount(signupKickGuestFigures(options?.guestCount ?? 0))
       setKickActive(true)
+      // Start collapsing the join panel immediately so the UI is "ready"
+      // by the time the celebration animation finishes.
+      setJoinClosing(true)
 
       const [result] = await Promise.all([action(), waitForSignupKick()])
 
@@ -129,6 +132,7 @@ export function ParticipationMotionProvider({
       setCelebrationPlacement(null)
 
       if (result.error) {
+        setJoinClosing(false)
         return result
       }
 
@@ -136,7 +140,6 @@ export function ParticipationMotionProvider({
       if (options?.scrollToRoster !== false) {
         setPendingRosterScroll(true)
       }
-      setJoinClosing(true)
       return {}
     },
     [],
@@ -149,6 +152,7 @@ export function ParticipationMotionProvider({
       setLeaveGuestCount(signupKickGuestFigures(options?.guestCount ?? 0))
       setLeaveActive(true)
       setControlsClosing(true)
+      const controlsTimer = window.setTimeout(() => setControlsClosing(false), CONTROLS_CLOSE_MS)
 
       const [result] = await Promise.all([action(), waitForLeaveWalk()])
 
@@ -157,12 +161,12 @@ export function ParticipationMotionProvider({
       setCelebrationPlacement(null)
 
       if (result.error) {
+        window.clearTimeout(controlsTimer)
         setControlsClosing(false)
         return result
       }
 
       setPendingJoinScroll(true)
-      window.setTimeout(() => setControlsClosing(false), CONTROLS_CLOSE_MS)
       return {}
     },
     [],
