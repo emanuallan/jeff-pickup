@@ -7,6 +7,7 @@ import {
   dialCodeForCountry,
   formatNationalInput,
   formatPhoneDisplay,
+  formatCountrySelectLabel,
   isValidPhoneDigits,
   maxNationalDigits,
   nationalDigitsOnly,
@@ -179,6 +180,13 @@ describe('phone', () => {
     it('returns calling code with plus', () => {
       expect(dialCodeForCountry('US')).toBe('+1')
       expect(dialCodeForCountry('GB')).toBe('+44')
+    })
+  })
+
+  describe('formatCountrySelectLabel', () => {
+    it('includes the flag and dial code', () => {
+      expect(formatCountrySelectLabel('US')).toMatch(/\+1$/)
+      expect(formatCountrySelectLabel('EC')).toMatch(/\+593$/)
     })
   })
 })

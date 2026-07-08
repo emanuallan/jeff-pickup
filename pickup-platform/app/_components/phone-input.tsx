@@ -1,11 +1,12 @@
 'use client'
 
-import { useRef, useState, type KeyboardEvent } from 'react'
+import { useLayoutEffect, useRef, useState, type KeyboardEvent } from 'react'
 import {
   DEFAULT_PHONE_COUNTRY,
   PHONE_COUNTRIES,
   PHONE_COUNTRY_GROUPS,
   applyNationalInputChange,
+  formatCountrySelectLabel,
   formatNationalInput,
   maxNationalDigits,
   normalizePhoneInput,
@@ -24,11 +25,14 @@ type Props = {
   onChange?: (e164: string) => void
 }
 
+/** Extra pixels for the native select dropdown affordance. */
+const SELECT_ARROW_PADDING_PX = 22
+
 const defaultNationalClass =
   'min-w-0 flex-1 rounded-r-xl border border-zinc-700 bg-zinc-900 px-3 py-2.5 text-base outline-none sm:text-sm'
 
 const defaultSelectClass =
-  'max-w-[4.75rem] shrink-0 rounded-l-xl border border-r-0 border-zinc-700 bg-zinc-900 px-1.5 py-2.5 text-sm text-zinc-300 outline-none sm:text-sm'
+  'min-w-[4.75rem] shrink-0 rounded-l-xl border border-r-0 border-zinc-700 bg-zinc-900 px-1.5 py-2.5 text-sm text-zinc-300 outline-none sm:text-sm'
 
 /** Split a single input class string into wrapper + select + national field classes. */
 export function splitPhoneFieldClasses(baseClass?: string) {
@@ -62,7 +66,7 @@ export function splitPhoneFieldClasses(baseClass?: string) {
     .replace(/\brounded-r-lg\b/g, 'rounded-l-lg')
     .replace(/\bpx-3\b/g, 'px-2')
   if (!/\bshrink-0\b/.test(select)) {
-    select = `max-w-[4.75rem] shrink-0 ${select}`
+    select = `min-w-[4.75rem] shrink-0 ${select}`
   }
   if (!/\bborder-r-0\b/.test(select)) {
     select = select.replace(/\bborder\b/, 'border border-r-0')
@@ -79,6 +83,9 @@ export function PhoneInput({ className, selectClassName, style, value, onChange 
   const [internalCountry, setInternalCountry] = useState<PhoneCountry>(DEFAULT_PHONE_COUNTRY)
   const [internalNational, setInternalNational] = useState('')
   const editSelectionRef = useRef<number | null>(null)
+  const selectRef = useRef<HTMLSelectElement>(null)
+  const measureRef = useRef<HTMLSpanElement>(null)
+  const [selectWidthPx, setSelectWidthPx] = useState<number | null>(null)
   const isControlled = value !== undefined
 
   const parsedControlled = isControlled ? parseStoredPhone(value) : null
@@ -87,6 +94,22 @@ export function PhoneInput({ className, selectClassName, style, value, onChange 
 
   const e164 = normalizePhoneInput(country, national)
   const { wrapper, national: nationalClass, select: selectClass } = splitPhoneFieldClasses(className)
+  const resolvedSelectClass = selectClassName ?? selectClass
+
+  useLayoutEffect(() => {
+    const select = selectRef.current
+    const measure = measureRef.current
+    if (!select || !measure) return
+
+    measure.textContent = formatCountrySelectLabel(country)
+    const computed = window.getComputedStyle(select)
+    measure.style.font = computed.font
+    measure.style.letterSpacing = computed.letterSpacing
+    measure.style.paddingLeft = computed.paddingLeft
+    measure.style.paddingRight = computed.paddingRight
+
+    setSelectWidthPx(measure.offsetWidth + SELECT_ARROW_PADDING_PX)
+  }, [country, resolvedSelectClass])
 
   function updateCountry(nextCountry: PhoneCountry) {
     const clampedNational = parseNationalInput(nextCountry, national)
@@ -121,27 +144,38 @@ export function PhoneInput({ className, selectClassName, style, value, onChange 
 
   return (
     <div className={wrapper}>
-      <select
-        value={country}
-        onChange={(e) => updateCountry(e.target.value as PhoneCountry)}
-        autoComplete="tel-country-code"
-        aria-label="Country code"
-        className={selectClassName ?? selectClass}
-        style={style}
+      <div
+        className="relative shrink-0"
+        style={selectWidthPx ? { width: selectWidthPx } : undefined}
       >
-        <option value="US">
-          {PHONE_COUNTRIES[0]!.flag} +{PHONE_COUNTRIES[0]!.dialCode}
-        </option>
-        {PHONE_COUNTRY_GROUPS.map((group) => (
-          <optgroup key={group.label} label={group.label}>
-            {group.countries.map((entry: PhoneCountryOption) => (
-              <option key={entry.code} value={entry.code}>
-                {entry.flag} +{entry.dialCode}
-              </option>
-            ))}
-          </optgroup>
-        ))}
-      </select>
+        <span
+          ref={measureRef}
+          aria-hidden
+          className="pointer-events-none absolute left-0 top-0 -z-10 whitespace-pre opacity-0"
+        />
+        <select
+          ref={selectRef}
+          value={country}
+          onChange={(e) => updateCountry(e.target.value as PhoneCountry)}
+          autoComplete="tel-country-code"
+          aria-label="Country code"
+          className={`${resolvedSelectClass} w-full`}
+          style={style}
+        >
+          <option value="US">
+            {formatCountrySelectLabel('US')}
+          </option>
+          {PHONE_COUNTRY_GROUPS.map((group) => (
+            <optgroup key={group.label} label={group.label}>
+              {group.countries.map((entry: PhoneCountryOption) => (
+                <option key={entry.code} value={entry.code}>
+                  {formatCountrySelectLabel(entry.code)}
+                </option>
+              ))}
+            </optgroup>
+          ))}
+        </select>
+      </div>
       <input
         type="tel"
         inputMode="tel"

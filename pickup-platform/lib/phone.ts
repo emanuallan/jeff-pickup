@@ -172,3 +172,9 @@ export function parseStoredPhone(e164: string): { country: PhoneCountry; nationa
 export function dialCodeForCountry(country: PhoneCountry): string {
   return `+${getCountryCallingCode(country)}`
 }
+
+/** Label shown in the country-code select (flag + dial code). */
+export function formatCountrySelectLabel(country: PhoneCountry): string {
+  const entry = PHONE_COUNTRIES.find((c) => c.code === country) ?? PHONE_COUNTRIES[0]!
+  return `${entry.flag} +${entry.dialCode}`
+}
