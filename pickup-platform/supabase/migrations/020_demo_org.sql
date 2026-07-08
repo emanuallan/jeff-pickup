@@ -253,20 +253,20 @@ begin
 
   insert into public.participants (id, org_id, phone, first_name, last_name, display_name)
   values
-    (p_marcus, v_org_id, '5550100101', 'Marcus', 'Webb', 'Marcus'),
-    (p_diego, v_org_id, '5550100102', 'Diego', 'Silva', 'Diego'),
-    (p_jen, v_org_id, '5550100103', 'Jen', 'Park', 'Jen'),
-    (p_tyler, v_org_id, '5550100104', 'Tyler', 'Brooks', 'Tyler'),
-    (p_sofia, v_org_id, '5550100105', 'Sofia', 'Reyes', 'Sofia'),
-    (p_chris, v_org_id, '5550100106', 'Chris', 'OBrien', 'Chris'),
-    (p_amir, v_org_id, '5550100107', 'Amir', 'Hassan', 'Amir'),
-    (p_elena, v_org_id, '5550100108', 'Elena', 'Voss', 'Elena'),
-    (p_jordan, v_org_id, '5550100109', 'Jordan', 'Kim', 'JK'),
-    (p_pat, v_org_id, '5550100110', 'Pat', 'Nolan', 'Pat'),
-    (p_maya, v_org_id, '5550100111', 'Maya', 'Chen', 'Maya'),
-    (p_leo, v_org_id, '5550100112', 'Leo', 'Santos', 'Leo'),
-    (p_rachel, v_org_id, '5550100113', 'Rachel', 'Green', 'Rach'),
-    (p_ben, v_org_id, '5550100114', 'Ben', 'Carter', 'Ben');
+    (p_marcus, v_org_id, '12025550101', 'Marcus', 'Webb', 'Marcus'),
+    (p_diego, v_org_id, '12025550102', 'Diego', 'Silva', 'Diego'),
+    (p_jen, v_org_id, '12025550103', 'Jen', 'Park', 'Jen'),
+    (p_tyler, v_org_id, '12025550104', 'Tyler', 'Brooks', 'Tyler'),
+    (p_sofia, v_org_id, '12025550105', 'Sofia', 'Reyes', 'Sofia'),
+    (p_chris, v_org_id, '12025550106', 'Chris', 'OBrien', 'Chris'),
+    (p_amir, v_org_id, '12025550107', 'Amir', 'Hassan', 'Amir'),
+    (p_elena, v_org_id, '12025550108', 'Elena', 'Voss', 'Elena'),
+    (p_jordan, v_org_id, '12025550109', 'Jordan', 'Kim', 'JK'),
+    (p_pat, v_org_id, '12025550110', 'Pat', 'Nolan', 'Pat'),
+    (p_maya, v_org_id, '12025550111', 'Maya', 'Chen', 'Maya'),
+    (p_leo, v_org_id, '12025550112', 'Leo', 'Santos', 'Leo'),
+    (p_rachel, v_org_id, '12025550113', 'Rachel', 'Green', 'Rach'),
+    (p_ben, v_org_id, '12025550114', 'Ben', 'Carter', 'Ben');
 
   -- Live session roster (varied arrival statuses + guests)
   insert into public.signups (org_id, event_id, participant_id, guest_count, arrival_status)

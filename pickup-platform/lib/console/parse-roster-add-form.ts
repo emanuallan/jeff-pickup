@@ -41,7 +41,7 @@ export function parseRosterAddForm(
   }
 
   if (!isValidPhoneDigits(phone)) {
-    return { error: 'Enter a valid 10-digit phone number.' }
+    return { error: 'Enter a valid phone number.' }
   }
 
   return {

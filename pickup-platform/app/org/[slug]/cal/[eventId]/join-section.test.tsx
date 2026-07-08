@@ -45,7 +45,7 @@ const participant = {
   first_name: 'Jeff',
   last_name: 'Pickup',
   display_name: 'Jeff P.',
-  phone: '5551234567',
+  phone: '12025550101',
 }
 
 function renderJoinSection(overrides: Partial<ComponentProps<typeof JoinSection>> = {}) {

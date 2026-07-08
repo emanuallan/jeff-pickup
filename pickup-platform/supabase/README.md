@@ -40,8 +40,9 @@ In the Supabase **SQL Editor**, run in order:
 13. `supabase/migrations/041_org_logo_storage.sql` (after all prior migrations through 040)
 14. `supabase/migrations/042_org_logo_storage_select.sql`
 15. `supabase/migrations/043_refresh_demo_org.sql` (demo seed — safe to re-run anytime)
+16. `supabase/migrations/051_international_phones.sql` (E.164 phone storage + US backfill)
 
-Run migrations 013–040 in order as well if this is a fresh project — see `supabase/migrations/` for the full sequence.
+Run migrations 013–050 in order as well if this is a fresh project — see `supabase/migrations/` for the full sequence.
 
 ## 3. Auth settings
 

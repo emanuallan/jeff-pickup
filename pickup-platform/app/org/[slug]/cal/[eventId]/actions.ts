@@ -73,7 +73,7 @@ export async function joinEvent(
   const guestCount = Number.parseInt(String(formData.get('guest_count') ?? '0'), 10)
 
   if (!isValidPhoneDigits(phone)) {
-    return { error: 'Enter a valid 10-digit phone number.' }
+    return { error: 'Enter a valid phone number.' }
   }
 
   const nameError = validateDemoParticipantNames(orgSlug, {
@@ -142,7 +142,7 @@ export async function recoverSession(
 
   const digits = normalizePhoneDigits(phone)
   if (!isValidPhoneDigits(digits)) {
-    return { error: 'Enter a valid 10-digit phone number.' }
+    return { error: 'Enter a valid phone number.' }
   }
 
   const supabase = await createClient()

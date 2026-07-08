@@ -40,7 +40,7 @@ function revalidateSessionRoster(
 function rpcErrorMessage(error: { message: string }): string {
   const message = error.message
   if (message.includes('Invalid phone number')) {
-    return 'Enter a valid 10-digit phone number.'
+    return 'Enter a valid phone number.'
   }
   if (message.includes('First and last name are required')) {
     return 'First and last name are required.'

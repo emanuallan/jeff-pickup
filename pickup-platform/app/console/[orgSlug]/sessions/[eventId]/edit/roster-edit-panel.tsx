@@ -333,9 +333,7 @@ export function RosterEditPanel({
 
           <label className="block">
             <span className={consoleLabel}>Phone</span>
-            <div className="mt-1">
-              <PhoneInput className={consoleInput} />
-            </div>
+            <PhoneInput className={`${consoleInput} mt-1`} />
           </label>
 
           {guestsEnabled ? (

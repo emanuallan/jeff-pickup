@@ -13,7 +13,7 @@ vi.mock('@/lib/participants', () => ({
 }))
 
 vi.mock('@/lib/participants-csv', () => ({
-  participantsToCsv: () => 'display_name,phone\nAlex,5551234567',
+  participantsToCsv: () => 'display_name,phone\nAlex,12025550101',
 }))
 
 describe('GET /api/console/[orgSlug]/participants', () => {
