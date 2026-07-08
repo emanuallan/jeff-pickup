@@ -117,20 +117,21 @@ export function ParticipationMotionProvider({
   const runSignupCelebration = useCallback(
     async (action: ParticipationAction, accent: string, options?: SignupCelebrationOptions) => {
       const placement = options?.placement ?? 'modal'
+      const result = await action()
+      if (result.error) {
+        return result
+      }
+
       setCelebrationAccent(accent)
       setCelebrationPlacement(placement)
       setKickGuestCount(signupKickGuestFigures(options?.guestCount ?? 0))
       setKickActive(true)
 
-      const [result] = await Promise.all([action(), waitForSignupKick()])
+      await waitForSignupKick()
 
       setKickActive(false)
       setKickGuestCount(0)
       setCelebrationPlacement(null)
-
-      if (result.error) {
-        return result
-      }
 
       await fireConfetti(accent)
       if (options?.scrollToRoster !== false) {

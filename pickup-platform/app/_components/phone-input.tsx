@@ -10,6 +10,7 @@ import {
   formatNationalInput,
   maxNationalDigits,
   normalizePhoneInput,
+  parseNationalFieldInput,
   parseNationalInput,
   parseStoredPhone,
   type PhoneCountryOption,
@@ -126,10 +127,20 @@ export function PhoneInput({ className, selectClassName, style, value, onChange 
   function updateNational(nextValue: string) {
     const selectionStart = editSelectionRef.current ?? undefined
     editSelectionRef.current = null
-    const nextNational = applyNationalInputChange(country, national, nextValue, selectionStart)
-    const nextE164 = normalizePhoneInput(country, nextNational)
+    const international = parseNationalFieldInput(country, nextValue)
+    const digitCount = nextValue.replace(/\D/g, '').length
+    const usedInternational =
+      international.country !== country || digitCount > maxNationalDigits(country)
+    const parsed = usedInternational
+      ? international
+      : {
+          country,
+          national: applyNationalInputChange(country, national, nextValue, selectionStart),
+        }
+    const nextE164 = normalizePhoneInput(parsed.country, parsed.national)
     if (!isControlled) {
-      setInternalNational(nextNational)
+      setInternalCountry(parsed.country)
+      setInternalNational(parsed.national)
     }
     onChange?.(nextE164)
   }

@@ -14,6 +14,7 @@ import {
   normalizePhoneDigits,
   normalizePhoneInput,
   parseNationalInput,
+  parseNationalFieldInput,
   parseStoredPhone,
   phoneCountryForSelect,
 } from './phone'
@@ -159,6 +160,20 @@ describe('phone', () => {
       expect(maxNationalDigits('US')).toBe(10)
     })
 
+    it('strips a leading NANP country code from the national field', () => {
+      expect(parseNationalInput('US', '+1 202 555 0101')).toBe('2025550101')
+      expect(parseNationalInput('US', '12025550101')).toBe('2025550101')
+    })
+
+    it('does not strip a leading 1 from a 10-digit US area code', () => {
+      expect(parseNationalInput('US', '1234567890')).toBe('1234567890')
+    })
+
+    it('strips a leading country code for international selectors', () => {
+      expect(parseNationalInput('GB', '+44 7911 123456')).toBe('7911123456')
+      expect(parseNationalInput('EC', '593991234567')).toBe('991234567')
+    })
+
     it('caps international numbers by E.164 length', () => {
       expect(maxNationalDigits('GB')).toBe(13)
       expect(parseNationalInput('GB', '79111234567890123')).toBe('7911123456789')
@@ -187,6 +202,29 @@ describe('phone', () => {
     it('includes the flag and dial code', () => {
       expect(formatCountrySelectLabel('US')).toMatch(/\+1$/)
       expect(formatCountrySelectLabel('EC')).toMatch(/\+593$/)
+    })
+  })
+
+  describe('parseNationalFieldInput', () => {
+    it('switches country when a different international number is entered', () => {
+      expect(parseNationalFieldInput('US', '447911123456')).toEqual({
+        country: 'GB',
+        national: '7911123456',
+      })
+    })
+
+    it('keeps the selected country for a normal national entry', () => {
+      expect(parseNationalFieldInput('US', '2025550101')).toEqual({
+        country: 'US',
+        national: '2025550101',
+      })
+    })
+
+    it('strips a leading +1 when US is already selected', () => {
+      expect(parseNationalFieldInput('US', '12025550101')).toEqual({
+        country: 'US',
+        national: '2025550101',
+      })
     })
   })
 })

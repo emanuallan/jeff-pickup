@@ -8,6 +8,7 @@ import { clearParticipantDeviceSession } from '@/lib/participant-session-client'
 
 const refreshMock = vi.fn()
 const reopenJoinPanelMock = vi.fn()
+const runSignupCelebrationMock = vi.fn()
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({
@@ -34,7 +35,7 @@ vi.mock('@/lib/participant-session-client', () => ({
 vi.mock('./participation-motion', () => ({
   useParticipationMotion: () => ({
     reopenJoinPanel: reopenJoinPanelMock,
-    runSignupCelebration: vi.fn(),
+    runSignupCelebration: runSignupCelebrationMock,
   }),
 }))
 
@@ -185,6 +186,10 @@ describe('JoinSection recover session', () => {
     )
   })
 
+  afterEach(() => {
+    cleanup()
+  })
+
   it('submits the hidden phone digits from PhoneInput', async () => {
     const user = userEvent.setup()
     recoverSessionMock.mockResolvedValue({})
@@ -203,5 +208,37 @@ describe('JoinSection recover session', () => {
       expect(recoverSessionMock).toHaveBeenCalledOnce()
     })
     expect(recoverSessionMock.mock.calls[0]?.[2]).toBe('12025550101')
+  })
+})
+
+describe('JoinSection new user signup', () => {
+  beforeEach(() => {
+    runSignupCelebrationMock.mockReset()
+    vi.stubGlobal(
+      'matchMedia',
+      vi.fn().mockImplementation(() => ({
+        matches: true,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+      })),
+    )
+  })
+
+  afterEach(() => {
+    cleanup()
+  })
+
+  it('validates phone before starting signup celebration', async () => {
+    const user = userEvent.setup()
+
+    renderJoinSection({ participant: null })
+
+    await user.type(screen.getByRole('textbox', { name: /first name/i }), 'Jeff')
+    await user.type(screen.getByRole('textbox', { name: /last name/i }), 'Pickup')
+    await user.type(screen.getByRole('textbox', { name: /phone number/i }), '123')
+    await user.click(screen.getByRole('button', { name: /count me in/i }))
+
+    expect(screen.getByText(/enter a valid phone number/i)).toBeInTheDocument()
+    expect(runSignupCelebrationMock).not.toHaveBeenCalled()
   })
 })

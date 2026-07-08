@@ -18,6 +18,7 @@ import { useParticipationMotion } from './participation-motion'
 import { GuestCountSelect } from './guest-count-select'
 import { clampGuestCount } from '@/lib/guest-signups'
 import { clearParticipantDeviceSession } from '@/lib/participant-session-client'
+import { isValidPhoneDigits } from '@/lib/phone'
 
 export type { Participant, MySignup }
 
@@ -251,6 +252,11 @@ export function JoinSection(props: Props) {
     const form = event.currentTarget
     const formData = new FormData(form)
     const phone = String(formData.get('phone') ?? '')
+
+    if (!isValidPhoneDigits(phone)) {
+      setError('Enter a valid phone number.')
+      return
+    }
 
     const runJoin = async () => {
       setLoading(true)

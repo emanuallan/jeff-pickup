@@ -38,18 +38,117 @@ export function parseNationalInput(country: PhoneCountry, value: string): string
   if (!digits) {
     return ''
   }
-  return digits.slice(0, maxNationalDigits(country))
+  return stripLeadingCallingCode(country, digits).slice(0, maxNationalDigits(country))
+}
+
+/** Remove a leading country calling code when the user typed it in the national field. */
+function stripLeadingCallingCode(country: PhoneCountry, digits: string): string {
+  const callingCode = getCountryCallingCode(country)
+  if (!digits.startsWith(callingCode)) {
+    return digits
+  }
+
+  const national = digits.slice(callingCode.length)
+  if (!national) {
+    return digits
+  }
+
+  const maxNational = maxNationalDigits(country)
+
+  // NANP: only strip a leading 1 when all 11 digits are present (1 + 10-digit national).
+  if (callingCode === '1') {
+    return digits.length === 11 && national.length === 10 ? national : digits
+  }
+
+  if (national.length <= maxNational) {
+    return national
+  }
+
+  return digits
+}
+
+/**
+ * Resolve national digits from the phone field, switching country when the user
+ * pastes or types a full international number (e.g. +44… while US is selected).
+ */
+export function parseNationalFieldInput(
+  country: PhoneCountry,
+  value: string,
+): { country: PhoneCountry; national: string } {
+  const digits = stripDigits(value)
+  if (!digits) {
+    return { country, national: '' }
+  }
+
+  const nationalDigits = stripLeadingCallingCode(country, digits)
+  const callingCode = getCountryCallingCode(country)
+  const looksInternational =
+    digits.length > maxNationalDigits(country) ||
+    (digits.startsWith(callingCode) && nationalDigits !== digits)
+
+  if (looksInternational) {
+    try {
+      const parsed = parsePhoneNumberWithError(`+${digits}`)
+      if (parsed.nationalNumber) {
+        const parsedCountry = phoneCountryFromParsed(parsed)
+        return {
+          country: parsedCountry,
+          national: parsed.nationalNumber.slice(0, maxNationalDigits(parsedCountry)),
+        }
+      }
+    } catch {
+      // fall through to selected-country parsing
+    }
+  }
+
+  return {
+    country,
+    national: nationalDigits.slice(0, maxNationalDigits(country)),
+  }
+}
+
+/**
+ * Territories that share a dial code with a country in the dropdown.
+ * libphonenumber may return these instead of the parent country (e.g. GG for +44 mobiles).
+ */
+const TERRITORY_ALIASES: Partial<Record<string, PhoneCountry>> = {
+  CA: 'US',
+  GG: 'GB',
+  IM: 'GB',
+  JE: 'GB',
 }
 
 /** Map countries not listed in the dropdown to the closest selector entry. */
 export function phoneCountryForSelect(country: PhoneCountry): PhoneCountry {
-  if (country === 'CA') {
-    return 'US'
+  const alias = TERRITORY_ALIASES[country]
+  if (alias) {
+    return alias
   }
   if (PHONE_COUNTRY_CODES.has(country)) {
     return country
   }
   return DEFAULT_PHONE_COUNTRY
+}
+
+function phoneCountryForCallingCode(callingCode: string): PhoneCountry | null {
+  const match = PHONE_COUNTRIES.find((entry) => entry.dialCode === callingCode)
+  return match?.code ?? null
+}
+
+function phoneCountryFromParsed(parsed: {
+  country?: string
+  countryCallingCode: string
+}): PhoneCountry {
+  if (parsed.country) {
+    const alias = TERRITORY_ALIASES[parsed.country]
+    if (alias) {
+      return alias
+    }
+    if (PHONE_COUNTRY_CODES.has(parsed.country as PhoneCountry)) {
+      return parsed.country as PhoneCountry
+    }
+  }
+  return phoneCountryForCallingCode(parsed.countryCallingCode) ?? DEFAULT_PHONE_COUNTRY
 }
 
 /** Combine country calling code with national digits → E.164 without '+'. */
@@ -156,7 +255,7 @@ export function parseStoredPhone(e164: string): { country: PhoneCountry; nationa
 
   try {
     const parsed = parsePhoneNumberWithError(`+${normalized}`)
-    const country = phoneCountryForSelect((parsed.country ?? DEFAULT_PHONE_COUNTRY) as PhoneCountry)
+    const country = phoneCountryFromParsed(parsed)
     return {
       country,
       national: parsed.nationalNumber,
