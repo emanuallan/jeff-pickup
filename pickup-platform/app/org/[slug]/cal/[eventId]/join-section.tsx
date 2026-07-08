@@ -93,12 +93,13 @@ function RecoverSession({
   const [open, setOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
-  const [phoneDigits, setPhoneDigits] = useState('')
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setLoading(true)
     setError(null)
+    const formData = new FormData(event.currentTarget)
+    const phoneDigits = String(formData.get('phone') ?? '')
     const result = await recoverSession(orgSlug, eventId, phoneDigits)
     if (result.error) {
       setLoading(false)
@@ -106,7 +107,6 @@ function RecoverSession({
       return
     }
     setOpen(false)
-    setPhoneDigits('')
     onRecovered()
     startTransition(() => {
       router.refresh()
@@ -134,8 +134,6 @@ function RecoverSession({
         <label className="block min-w-0 flex-1">
           <span className="text-xs text-zinc-600">Phone</span>
           <PhoneInput
-            value={phoneDigits}
-            onChange={setPhoneDigits}
             className={recoverInputClass}
             style={{ '--tw-ring-color': accent } as React.CSSProperties}
           />
@@ -154,7 +152,6 @@ function RecoverSession({
         onClick={() => {
           setOpen(false)
           setError(null)
-          setPhoneDigits('')
         }}
         className="mt-2 text-xs text-zinc-700 transition-colors hover:text-zinc-600"
       >

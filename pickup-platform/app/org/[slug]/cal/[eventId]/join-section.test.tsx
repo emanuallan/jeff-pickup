@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { JoinSection } from './join-section'
-import { clearParticipantSession } from './actions'
+import { clearParticipantSession, recoverSession } from './actions'
 import { clearParticipantDeviceSession } from '@/lib/participant-session-client'
 
 const refreshMock = vi.fn()
@@ -39,6 +39,7 @@ vi.mock('./participation-motion', () => ({
 }))
 
 const clearParticipantSessionMock = vi.mocked(clearParticipantSession)
+const recoverSessionMock = vi.mocked(recoverSession)
 const clearParticipantDeviceSessionMock = vi.mocked(clearParticipantDeviceSession)
 
 const participant = {
@@ -77,6 +78,7 @@ describe('JoinSection "Not you?" flow', () => {
     refreshMock.mockReset()
     reopenJoinPanelMock.mockReset()
     clearParticipantSessionMock.mockReset()
+    recoverSessionMock.mockReset()
     clearParticipantDeviceSessionMock.mockReset()
     clearParticipantDeviceSessionMock.mockResolvedValue({ ok: true })
     clearParticipantSessionMock.mockResolvedValue({})
@@ -162,4 +164,44 @@ describe('JoinSection "Not you?" flow', () => {
     expect(refreshMock).toHaveBeenCalledOnce()
     expect(screen.getByRole('heading', { name: /save your spot/i })).toBeInTheDocument()
   }, 10_000)
+})
+
+describe('JoinSection recover session', () => {
+  beforeEach(() => {
+    refreshMock.mockReset()
+    reopenJoinPanelMock.mockReset()
+    clearParticipantSessionMock.mockReset()
+    recoverSessionMock.mockReset()
+    clearParticipantDeviceSessionMock.mockReset()
+    clearParticipantDeviceSessionMock.mockResolvedValue({ ok: true })
+    localStorage.clear()
+    vi.stubGlobal(
+      'matchMedia',
+      vi.fn().mockImplementation(() => ({
+        matches: true,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+      })),
+    )
+  })
+
+  it('submits the hidden phone digits from PhoneInput', async () => {
+    const user = userEvent.setup()
+    recoverSessionMock.mockResolvedValue({})
+
+    renderJoinSection({ participant: null })
+
+    await user.click(
+      screen.getByRole('button', { name: /already signed up on another device\?/i }),
+    )
+
+    const phoneFields = screen.getAllByRole('textbox', { name: /phone number/i })
+    await user.type(phoneFields[phoneFields.length - 1]!, '2025550101')
+    await user.click(screen.getByRole('button', { name: /continue/i }))
+
+    await waitFor(() => {
+      expect(recoverSessionMock).toHaveBeenCalledOnce()
+    })
+    expect(recoverSessionMock.mock.calls[0]?.[2]).toBe('12025550101')
+  })
 })
