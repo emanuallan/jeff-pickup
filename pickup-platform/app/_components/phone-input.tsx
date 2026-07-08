@@ -29,15 +29,19 @@ type Props = {
 const SELECT_ARROW_PADDING_PX = 22
 
 const defaultNationalClass =
-  'min-w-0 flex-1 rounded-r-xl border border-zinc-700 bg-zinc-900 px-3 py-2.5 text-base outline-none sm:text-sm'
+  'min-w-0 flex-1 rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2.5 text-base outline-none sm:text-sm'
 
 const defaultSelectClass =
-  'min-w-[4.75rem] h-full shrink-0 rounded-l-xl border border-r-0 border-zinc-700 bg-zinc-900 px-1.5 py-2.5 text-base leading-normal text-zinc-300 outline-none sm:text-sm'
+  'min-w-[4.75rem] h-full shrink-0 rounded-xl border border-zinc-700 bg-zinc-900 px-1.5 py-2.5 text-base leading-normal text-zinc-300 outline-none sm:text-sm'
 
 /** Split a single input class string into wrapper + select + national field classes. */
 export function splitPhoneFieldClasses(baseClass?: string) {
   if (!baseClass) {
-    return { wrapper: 'w-full', national: defaultNationalClass, select: defaultSelectClass }
+    return {
+      wrapper: 'flex w-full items-stretch gap-1.5',
+      national: defaultNationalClass,
+      select: defaultSelectClass,
+    }
   }
 
   const selectFocusBorder = baseClass.includes('border-white/10')
@@ -46,7 +50,7 @@ export function splitPhoneFieldClasses(baseClass?: string) {
       ? 'focus:border-zinc-700'
       : ''
 
-  const wrapper = ['flex w-full items-stretch', baseClass.includes('mt-1') ? 'mt-1' : '']
+  const wrapper = ['flex w-full items-stretch gap-1.5', baseClass.includes('mt-1') ? 'mt-1' : '']
     .filter(Boolean)
     .join(' ')
 
@@ -54,25 +58,16 @@ export function splitPhoneFieldClasses(baseClass?: string) {
     .replace(/\bmt-1\b/g, '')
     .replace(/\bw-full\b/g, '')
     .trim()
-  national = national
-    .replace(/\brounded-xl\b/g, 'rounded-r-xl')
-    .replace(/\brounded-lg\b/g, 'rounded-r-lg')
   if (!/\bflex-1\b/.test(national)) {
     national = `min-w-0 flex-1 ${national}`
   }
 
-  let select = national
-    .replace(/\brounded-r-xl\b/g, 'rounded-l-xl')
-    .replace(/\brounded-r-lg\b/g, 'rounded-l-lg')
-    .replace(/\bpx-3\b/g, 'px-2')
+  let select = national.replace(/\bpx-3\b/g, 'px-2')
   if (!/\bshrink-0\b/.test(select)) {
     select = `min-w-[4.75rem] h-full shrink-0 ${select}`
   }
   if (!/\bleading-normal\b/.test(select)) {
     select = `leading-normal ${select}`
-  }
-  if (!/\bborder-r-0\b/.test(select)) {
-    select = select.replace(/\bborder\b/, 'border border-r-0')
   }
 
   // Prevent the select from drawing its own ring/border on focus; let the input's
