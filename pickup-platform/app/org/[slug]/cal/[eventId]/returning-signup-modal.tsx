@@ -174,11 +174,6 @@ export function ReturningSignupModal({
       const result = await motion.runSignupCelebration(
         async () => {
           const r = await quickJoinEvent(orgSlug, eventId, 0, status)
-          if (!r.error) {
-            startTransition(() => {
-              router.refresh()
-            })
-          }
           return r
         },
         accent,
@@ -189,6 +184,11 @@ export function ReturningSignupModal({
         setError(result.error)
         return
       }
+      // Important: refresh after the celebration finishes so the in-sheet animation
+      // doesn't get unmounted mid-kick.
+      startTransition(() => {
+        router.refresh()
+      })
       setOpen(false)
     }
 
