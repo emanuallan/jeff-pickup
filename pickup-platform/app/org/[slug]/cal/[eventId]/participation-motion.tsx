@@ -121,13 +121,9 @@ export function ParticipationMotionProvider({
       setCelebrationPlacement(placement)
       setKickGuestCount(signupKickGuestFigures(options?.guestCount ?? 0))
       setKickActive(true)
-      // Collapse the join panel during modal celebrations so the page is ready
-      // when the overlay finishes. Skip for sheet placement — the quick-signup
-      // bottom sheet lives inside the join panel and would unmount mid-kick.
-      const collapseJoinPanel = placement !== 'sheet'
-      if (collapseJoinPanel) {
-        setJoinClosing(true)
-      }
+      // Start collapsing the join panel immediately so the UI is "ready"
+      // by the time the celebration animation finishes.
+      setJoinClosing(true)
 
       const [result] = await Promise.all([action(), waitForSignupKick()])
 
@@ -136,9 +132,7 @@ export function ParticipationMotionProvider({
       setCelebrationPlacement(null)
 
       if (result.error) {
-        if (collapseJoinPanel) {
-          setJoinClosing(false)
-        }
+        setJoinClosing(false)
         return result
       }
 
