@@ -172,24 +172,19 @@ export function ReturningSignupModal({
       setError(null)
 
       const result = await motion.runSignupCelebration(
-        async () => {
-          const r = await quickJoinEvent(orgSlug, eventId, 0, status)
-          if (!r.error) {
-            startTransition(() => {
-              router.refresh()
-            })
-          }
-          return r
-        },
+        () => quickJoinEvent(orgSlug, eventId, 0, status),
         accent,
         { placement: 'sheet' },
       )
       setLoading(null)
-      if (result.error) {
-        setError(result.error)
+      if (!result.error) {
+        startTransition(() => {
+          router.refresh()
+        })
+        setOpen(false)
         return
       }
-      setOpen(false)
+      setError(result.error)
     }
 
     if (requiresGroupRules) {

@@ -264,29 +264,24 @@ export function JoinSection(props: Props) {
       const rawGuests = Number.parseInt(String(formData.get('guest_count') ?? '0'), 10)
       const guests = guestsEnabled ? clampGuestCount(rawGuests) : 0
       const result = await motion.runSignupCelebration(
-        async () => {
-          const r = await joinEvent(props.orgSlug, props.eventId, formData)
-          if (!r.error) {
-            markReturningSignupPromptSeen(props.orgSlug, props.eventId)
-            startTransition(() => {
-              router.refresh()
-            })
-          }
-          return r
-        },
+        () => joinEvent(props.orgSlug, props.eventId, formData),
         props.accent,
         { guestCount: guests },
       )
       setLoading(false)
-      if (result.error) {
-        if (
-          isNewUserJoinPath &&
-          result.error.includes('group rules') &&
-          !rulesSheetOpen
-        ) {
-          openRulesGate(phone, runJoin)
-          return
-        }
+      if (!result.error) {
+        markReturningSignupPromptSeen(props.orgSlug, props.eventId)
+        startTransition(() => {
+          router.refresh()
+        })
+      } else if (
+        isNewUserJoinPath &&
+        result.error.includes('group rules') &&
+        !rulesSheetOpen
+      ) {
+        openRulesGate(phone, runJoin)
+        return
+      } else {
         setError(result.error)
       }
     }
@@ -336,25 +331,17 @@ export function JoinSection(props: Props) {
               setLoading(true)
               setError(null)
               const result = await motion.runSignupCelebration(
-                async () => {
-                  const r = await quickJoinEvent(
-                    props.orgSlug,
-                    props.eventId,
-                    guestCount,
-                  )
-                  if (!r.error) {
-                    markReturningSignupPromptSeen(props.orgSlug, props.eventId)
-                    startTransition(() => {
-                      router.refresh()
-                    })
-                  }
-                  return r
-                },
+                () => quickJoinEvent(props.orgSlug, props.eventId, guestCount),
                 props.accent,
                 { guestCount },
               )
               setLoading(false)
-              if (result.error) {
+              if (!result.error) {
+                markReturningSignupPromptSeen(props.orgSlug, props.eventId)
+                startTransition(() => {
+                  router.refresh()
+                })
+              } else {
                 setError(result.error)
               }
             }

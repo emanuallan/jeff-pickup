@@ -107,9 +107,15 @@ function ParticipationPanelBody({
   }, [])
   const statusSheetHandler =
     showControls && !isWaitlisted ? openStatusSheet : undefined
-  const showConfirmation = Boolean(mySignup && !isCancelled && !isEnded && !joinClosing)
+  const showConfirmation = Boolean(mySignup && !isCancelled && !isEnded)
   const showRoster = publicRosterEnabled && !isCancelled
   const showJoinPanel = (showJoin || joinClosing) && !(controlsClosing && !mySignup)
+
+  useEffect(() => {
+    if (mySignup && joinClosing) {
+      motion?.reopenJoinPanel()
+    }
+  }, [mySignup, joinClosing, motion])
 
   useEffect(() => {
     if (!mySignup || !canUpdateStatus) {
