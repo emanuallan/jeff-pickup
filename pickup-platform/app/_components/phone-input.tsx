@@ -5,13 +5,12 @@ import {
   DEFAULT_PHONE_COUNTRY,
   PHONE_COUNTRIES,
   PHONE_COUNTRY_GROUPS,
-  applyNationalInputChange,
+  editPhoneCountryField,
+  editPhoneNationalField,
   formatCountrySelectLabel,
-  formatNationalInput,
+  formatNationalDisplay,
   maxNationalDigits,
   normalizePhoneInput,
-  parseNationalFieldInput,
-  parseNationalInput,
   parseStoredPhone,
   type PhoneCountryOption,
   type PhoneCountry,
@@ -71,8 +70,6 @@ export function splitPhoneFieldClasses(baseClass?: string) {
     select = `leading-normal ${select}`
   }
 
-  // Prevent the select from drawing its own ring/border on focus; let the input's
-  // focus styling carry the visual emphasis.
   select = `${select} focus:ring-0 focus:ring-offset-0 ${selectFocusBorder}`.trim()
 
   return { wrapper, national, select }
@@ -111,36 +108,25 @@ export function PhoneInput({ className, selectClassName, style, value, onChange 
   }, [country, resolvedSelectClass])
 
   function updateCountry(nextCountry: PhoneCountry) {
-    const clampedNational = parseNationalInput(nextCountry, national)
-    const nextE164 = normalizePhoneInput(nextCountry, clampedNational)
+    const next = editPhoneCountryField(nextCountry, national)
+    const nextE164 = normalizePhoneInput(next.country, next.national)
     if (isControlled) {
       onChange?.(nextE164)
       return
     }
-    setInternalCountry(nextCountry)
-    if (clampedNational !== national) {
-      setInternalNational(clampedNational)
-    }
+    setInternalCountry(next.country)
+    setInternalNational(next.national)
     onChange?.(nextE164)
   }
 
   function updateNational(nextValue: string) {
     const selectionStart = editSelectionRef.current ?? undefined
     editSelectionRef.current = null
-    const international = parseNationalFieldInput(country, nextValue)
-    const digitCount = nextValue.replace(/\D/g, '').length
-    const usedInternational =
-      international.country !== country || digitCount > maxNationalDigits(country)
-    const parsed = usedInternational
-      ? international
-      : {
-          country,
-          national: applyNationalInputChange(country, national, nextValue, selectionStart),
-        }
-    const nextE164 = normalizePhoneInput(parsed.country, parsed.national)
+    const next = editPhoneNationalField({ country, national }, nextValue, { selectionStart })
+    const nextE164 = normalizePhoneInput(next.country, next.national)
     if (!isControlled) {
-      setInternalCountry(parsed.country)
-      setInternalNational(parsed.national)
+      setInternalCountry(next.country)
+      setInternalNational(next.national)
     }
     onChange?.(nextE164)
   }
@@ -178,7 +164,7 @@ export function PhoneInput({ className, selectClassName, style, value, onChange 
             <optgroup key={group.label} label={group.label}>
               {group.countries.map((entry: PhoneCountryOption) => (
                 <option key={entry.code} value={entry.code}>
-                  {formatCountrySelectLabel(entry.code)}
+                  {formatCountrySelectLabel(entry.code as PhoneCountry)}
                 </option>
               ))}
             </optgroup>
@@ -191,7 +177,7 @@ export function PhoneInput({ className, selectClassName, style, value, onChange 
         autoComplete="tel-national"
         required
         maxLength={maxNationalDigits(country) + 8}
-        value={formatNationalInput(country, national)}
+        value={formatNationalDisplay(country, national)}
         onKeyDown={rememberEditSelection}
         onChange={(e) => updateNational(e.target.value)}
         className={nationalClass}

@@ -97,15 +97,24 @@ describe('phone', () => {
       expect(isValidPhoneDigits('123')).toBe(false)
       expect(isValidPhoneDigits('555123456')).toBe(false)
     })
+
+    it('rejects US numbers with invalid area or exchange codes', () => {
+      expect(isValidPhoneDigits('1015550101')).toBe(false)
+      expect(isValidPhoneDigits('2020550101')).toBe(false)
+    })
+
+    it('rejects unknown international prefixes', () => {
+      expect(isValidPhoneDigits('9991234567890')).toBe(false)
+    })
   })
 
   describe('formatPhoneDisplay', () => {
     it('formats stored US numbers internationally', () => {
-      expect(formatPhoneDisplay(US_TEST_E164)).toBe('+1 202 555 0101')
+      expect(formatPhoneDisplay(US_TEST_E164)).toBe('+1 (202) 555-0101')
     })
 
     it('formats stored UK numbers internationally', () => {
-      expect(formatPhoneDisplay(UK_TEST_E164)).toBe('+44 7911 123456')
+      expect(formatPhoneDisplay(UK_TEST_E164)).toBe('+44 7911123456')
     })
 
     it('returns empty string for empty input', () => {
@@ -116,6 +125,10 @@ describe('phone', () => {
   describe('formatNationalInput', () => {
     it('formats US national digits while typing', () => {
       expect(formatNationalInput('US', '202555')).toBe('(202) 555')
+    })
+
+    it('keeps international national digits unformatted', () => {
+      expect(formatNationalInput('GB', '7911123456')).toBe('7911123456')
     })
   })
 
@@ -160,13 +173,14 @@ describe('phone', () => {
       expect(maxNationalDigits('US')).toBe(10)
     })
 
-    it('strips a leading NANP country code from the national field', () => {
+    it('strips a mistaken leading 1 immediately for NANP', () => {
       expect(parseNationalInput('US', '+1 202 555 0101')).toBe('2025550101')
       expect(parseNationalInput('US', '12025550101')).toBe('2025550101')
+      expect(parseNationalInput('US', '1')).toBe('')
     })
 
-    it('does not strip a leading 1 from a 10-digit US area code', () => {
-      expect(parseNationalInput('US', '1234567890')).toBe('1234567890')
+    it('rejects invalid US numbers that start with 1 in the area code', () => {
+      expect(parseNationalInput('US', '1234567890')).toBe('234567890')
     })
 
     it('strips a leading country code for international selectors', () => {
@@ -206,10 +220,14 @@ describe('phone', () => {
   })
 
   describe('parseNationalFieldInput', () => {
-    it('switches country when a different international number is entered', () => {
+    it('never auto-switches country away from US', () => {
       expect(parseNationalFieldInput('US', '447911123456')).toEqual({
-        country: 'GB',
-        national: '7911123456',
+        country: 'US',
+        national: '4479111234',
+      })
+      expect(parseNationalFieldInput('US', '593991234567')).toEqual({
+        country: 'US',
+        national: '5939912345',
       })
     })
 
