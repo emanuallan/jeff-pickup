@@ -2,11 +2,72 @@ import { getStripe } from '@/lib/stripe'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { rootBaseUrl } from '@/lib/site-url'
 
+type OrgStripeAccountSnapshot = {
+  org_id: string
+  stripe_account_id: string
+  charges_enabled: boolean
+  payouts_enabled: boolean
+  details_submitted: boolean
+}
+
+async function upsertOrgStripeAccount(snapshot: OrgStripeAccountSnapshot) {
+  const admin = createAdminClient()
+  const { error } = await admin.rpc('upsert_org_stripe_account', {
+    p_org_id: snapshot.org_id,
+    p_stripe_account_id: snapshot.stripe_account_id,
+    p_charges_enabled: snapshot.charges_enabled,
+    p_payouts_enabled: snapshot.payouts_enabled,
+    p_details_submitted: snapshot.details_submitted,
+  })
+
+  if (error) {
+    throw new Error(`upsert_org_stripe_account failed: ${error.message}`)
+  }
+}
+
+export async function findStripeAccountIdForOrg(orgId: string): Promise<string | null> {
+  const admin = createAdminClient()
+  const { data, error } = await admin
+    .from('org_stripe_accounts')
+    .select('stripe_account_id')
+    .eq('org_id', orgId)
+    .maybeSingle()
+
+  if (error) {
+    throw new Error(`org_stripe_accounts lookup failed: ${error.message}`)
+  }
+
+  if (data?.stripe_account_id) {
+    return data.stripe_account_id
+  }
+
+  const stripe = getStripe()
+  let startingAfter: string | undefined
+
+  do {
+    const page = await stripe.accounts.list({
+      limit: 100,
+      ...(startingAfter ? { starting_after: startingAfter } : {}),
+    })
+
+    const match = page.data.find((account) => account.metadata?.org_id === orgId)
+    if (match) {
+      return match.id
+    }
+
+    startingAfter =
+      page.has_more && page.data.length > 0 ? page.data[page.data.length - 1]?.id : undefined
+  } while (startingAfter)
+
+  return null
+}
+
 export async function createConnectExpressAccount(orgId: string, orgName: string, orgSlug: string) {
   const stripe = getStripe()
 
   const account = await stripe.accounts.create({
     type: 'express',
+    country: 'US',
     capabilities: {
       card_payments: { requested: true },
       transfers: { requested: true },
@@ -21,13 +82,12 @@ export async function createConnectExpressAccount(orgId: string, orgName: string
     },
   })
 
-  const admin = createAdminClient()
-  await admin.rpc('upsert_org_stripe_account', {
-    p_org_id: orgId,
-    p_stripe_account_id: account.id,
-    p_charges_enabled: account.charges_enabled ?? false,
-    p_payouts_enabled: account.payouts_enabled ?? false,
-    p_details_submitted: account.details_submitted ?? false,
+  await upsertOrgStripeAccount({
+    org_id: orgId,
+    stripe_account_id: account.id,
+    charges_enabled: account.charges_enabled ?? false,
+    payouts_enabled: account.payouts_enabled ?? false,
+    details_submitted: account.details_submitted ?? false,
   })
 
   return account
@@ -57,16 +117,25 @@ export async function syncConnectAccountStatus(stripeAccountId: string) {
 
   if (!orgId) return account
 
-  const admin = createAdminClient()
-  await admin.rpc('upsert_org_stripe_account', {
-    p_org_id: orgId,
-    p_stripe_account_id: account.id,
-    p_charges_enabled: account.charges_enabled ?? false,
-    p_payouts_enabled: account.payouts_enabled ?? false,
-    p_details_submitted: account.details_submitted ?? false,
+  await upsertOrgStripeAccount({
+    org_id: orgId,
+    stripe_account_id: account.id,
+    charges_enabled: account.charges_enabled ?? false,
+    payouts_enabled: account.payouts_enabled ?? false,
+    details_submitted: account.details_submitted ?? false,
   })
 
   return account
+}
+
+/** Sync a connected account after onboarding — finds Stripe account even if DB row is missing. */
+export async function syncConnectAccountForOrg(orgId: string) {
+  const stripeAccountId = await findStripeAccountIdForOrg(orgId)
+  if (!stripeAccountId) {
+    return null
+  }
+
+  return syncConnectAccountStatus(stripeAccountId)
 }
 
 export async function createTierStripeProductAndPrice(input: {

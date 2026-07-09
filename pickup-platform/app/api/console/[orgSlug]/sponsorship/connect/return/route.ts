@@ -1,13 +1,19 @@
+import { revalidatePath } from 'next/cache'
 import { NextResponse } from 'next/server'
 import { getAuthUser } from '@/lib/auth'
 import { isInteriorOperator } from '@/lib/interior'
 import { getOrgForMember } from '@/lib/orgs'
-import { syncConnectAccountStatus } from '@/lib/stripe-connect'
-import { getOrgStripeAccount } from '@/lib/sponsorship.server'
+import { syncConnectAccountForOrg } from '@/lib/stripe-connect'
+import { classifyStripeConnectFailure } from '@/lib/stripe-connect-errors'
 import { consoleOrgUrl } from '@/lib/site-url'
 
 type Props = {
   params: Promise<{ orgSlug: string }>
+}
+
+function returnRedirect(orgSlug: string, query: Record<string, string>) {
+  const params = new URLSearchParams(query)
+  return NextResponse.redirect(`${consoleOrgUrl(orgSlug)}/sponsorship?${params.toString()}`)
 }
 
 export async function GET(_request: Request, { params }: Props) {
@@ -15,13 +21,30 @@ export async function GET(_request: Request, { params }: Props) {
   const [org, user] = await Promise.all([getOrgForMember(orgSlug), getAuthUser()])
 
   if (!org || !isInteriorOperator(user?.id)) {
-    return new Response('Unauthorized', { status: 401 })
+    return returnRedirect(orgSlug, { connect_error: 'unauthorized' })
   }
 
-  const stripeAccount = await getOrgStripeAccount(org.id)
-  if (stripeAccount) {
-    await syncConnectAccountStatus(stripeAccount.stripe_account_id)
-  }
+  try {
+    const account = await syncConnectAccountForOrg(org.id)
 
-  return NextResponse.redirect(`${consoleOrgUrl(orgSlug)}/sponsorship?connected=1`)
+    revalidatePath(`/console/${orgSlug}/sponsorship`)
+
+    if (!account) {
+      return returnRedirect(orgSlug, { connect_error: 'stripe_account_not_found' })
+    }
+
+    if (account.charges_enabled) {
+      return returnRedirect(orgSlug, { connected: '1' })
+    }
+
+    if (account.details_submitted) {
+      return returnRedirect(orgSlug, { connected: '1', connect_pending: '1' })
+    }
+
+    return returnRedirect(orgSlug, { connect_error: 'stripe_onboarding_incomplete' })
+  } catch (error) {
+    const failure = classifyStripeConnectFailure(error)
+    console.error('Stripe Connect return sync failed', failure.logMessage, error)
+    return returnRedirect(orgSlug, { connect_error: failure.code })
+  }
 }

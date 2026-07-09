@@ -5,10 +5,12 @@ import { getOrgForMember } from '@/lib/orgs'
 import {
   createConnectAccountLink,
   createConnectExpressAccount,
+  findStripeAccountIdForOrg,
   syncConnectAccountStatus,
 } from '@/lib/stripe-connect'
 import { getOrgStripeAccount } from '@/lib/sponsorship.server'
 import { isStripeConfigured } from '@/lib/stripe'
+import { classifyStripeConnectFailure } from '@/lib/stripe-connect-errors'
 import { consoleOrgUrl } from '@/lib/site-url'
 
 type Props = {
@@ -36,25 +38,20 @@ export async function GET(_request: Request, { params }: Props) {
 
   try {
     let stripeAccount = await getOrgStripeAccount(org.id)
+    let stripeAccountId = stripeAccount?.stripe_account_id ?? (await findStripeAccountIdForOrg(org.id))
 
-    if (!stripeAccount) {
+    if (!stripeAccountId) {
       const account = await createConnectExpressAccount(org.id, org.name, org.slug)
-      stripeAccount = {
-        org_id: org.id,
-        stripe_account_id: account.id,
-        charges_enabled: account.charges_enabled ?? false,
-        payouts_enabled: account.payouts_enabled ?? false,
-        details_submitted: account.details_submitted ?? false,
-      }
+      stripeAccountId = account.id
     } else {
-      await syncConnectAccountStatus(stripeAccount.stripe_account_id)
+      await syncConnectAccountStatus(stripeAccountId)
     }
 
     const refreshPath = `/api/console/${orgSlug}/sponsorship/connect`
     const returnPath = `/api/console/${orgSlug}/sponsorship/connect/return`
 
     const link = await createConnectAccountLink(
-      stripeAccount.stripe_account_id,
+      stripeAccountId,
       orgSlug,
       refreshPath,
       returnPath,
@@ -62,7 +59,8 @@ export async function GET(_request: Request, { params }: Props) {
 
     return NextResponse.redirect(link.url)
   } catch (error) {
-    console.error('Stripe Connect onboarding failed', error)
-    return connectErrorRedirect(orgSlug, 'stripe_error')
+    const failure = classifyStripeConnectFailure(error)
+    console.error('Stripe Connect onboarding failed', failure.logMessage, error)
+    return connectErrorRedirect(orgSlug, failure.code)
   }
 }

@@ -11,29 +11,18 @@ import {
 } from '@/lib/sponsorship.server'
 import { orgSponsorshipUrl } from '@/lib/site-url'
 import { isStripeConfigured } from '@/lib/stripe'
+import { getStripeConnectErrorDisplay } from '@/lib/stripe-connect-errors'
 import { ConsoleHeader, ConsolePage, ConsoleSection } from '../../_components/console-ui'
 import { btnPrimary } from '../../_components/console-ui'
 import { SponsorshipFeatureToggle } from './sponsorship-feature-toggle'
 import { SponsorshipIntroForm } from './sponsorship-intro-form'
 import { SponsorshipTiersSection } from './sponsorship-tiers-section'
 import { SponsorshipRequestsSection } from './sponsorship-requests-section'
+import { SponsorshipConnectError, SponsorshipConnectSuccess } from './sponsorship-connect-error'
 
 type Props = {
   params: Promise<{ orgSlug: string }>
   searchParams: Promise<{ connected?: string; connect_error?: string }>
-}
-
-function connectErrorMessage(code: string | undefined): string | null {
-  switch (code) {
-    case 'stripe_not_configured':
-      return 'Stripe is not configured on this environment. Add STRIPE_SECRET_KEY and STRIPE_WEBHOOK_SECRET in Vercel, then redeploy.'
-    case 'unauthorized':
-      return 'Could not start Stripe Connect. Sign in again and retry from the sponsorship console.'
-    case 'stripe_error':
-      return 'Stripe Connect failed to start. Check server logs and your Stripe keys, then try again.'
-    default:
-      return null
-  }
 }
 
 export default async function SponsorshipConsolePage({ params, searchParams }: Props) {
@@ -71,7 +60,9 @@ export default async function SponsorshipConsolePage({ params, searchParams }: P
   const sponsorshipSettings = orgSponsorshipSettings(org)
   const stripeReady = Boolean(stripeAccount?.charges_enabled)
   const connectPath = `/api/console/${orgSlug}/sponsorship/connect`
-  const connectErrorMessageText = connectErrorMessage(connectError)
+  const connectErrorDisplay = getStripeConnectErrorDisplay(connectError)
+  const showConnectSuccess = connected === '1' && !connectError
+  const showConnectPending = showConnectSuccess && !stripeReady
 
   const pending = sponsorships.filter((row) => row.status === 'pending_approval')
   const active = sponsorships.filter((row) => row.status === 'approved' || row.status === 'hidden')
@@ -94,32 +85,38 @@ export default async function SponsorshipConsolePage({ params, searchParams }: P
           title="Stripe Connect"
           description="Connect Stripe to receive sponsor payouts. Organizr keeps a 5% platform fee."
         >
-          {connectErrorMessageText ? (
-            <p className="mb-3 text-sm text-amber-300">{connectErrorMessageText}</p>
+          {connectErrorDisplay ? <SponsorshipConnectError error={connectErrorDisplay} /> : null}
+          {showConnectSuccess ? (
+            <SponsorshipConnectSuccess pending={showConnectPending && !stripeReady} />
           ) : null}
           {!isStripeConfigured() ? (
             <p className="text-sm text-amber-300">
               Stripe is not configured on this environment yet.
             </p>
           ) : stripeReady ? (
-            <p className="text-sm text-emerald-300">
-              Stripe is connected and ready to accept sponsors.
-              {connected ? ' Onboarding completed.' : null}
-            </p>
+            !showConnectSuccess ? (
+              <p className="text-sm text-emerald-300">
+                Stripe is connected and ready to accept sponsors.
+              </p>
+            ) : null
           ) : stripeAccount ? (
             <div className="space-y-3">
-              <p className="text-sm text-amber-300">
-                Finish Stripe onboarding to enable sponsor checkout.
-              </p>
+              {!showConnectSuccess ? (
+                <p className="text-sm text-amber-300">
+                  Finish Stripe onboarding to enable sponsor checkout.
+                </p>
+              ) : null}
               <a href={connectPath} className={btnPrimary}>
                 Continue Stripe setup
               </a>
             </div>
           ) : (
             <div className="space-y-3">
-              <p className="text-sm text-zinc-400">
-                Connect a Stripe account before creating tiers or accepting sponsors.
-              </p>
+              {!showConnectSuccess ? (
+                <p className="text-sm text-zinc-400">
+                  Connect a Stripe account before creating tiers or accepting sponsors.
+                </p>
+              ) : null}
               <a href={connectPath} className={btnPrimary}>
                 Connect Stripe
               </a>

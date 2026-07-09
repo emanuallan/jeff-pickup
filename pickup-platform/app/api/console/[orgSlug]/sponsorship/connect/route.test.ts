@@ -13,6 +13,7 @@ vi.mock('@/lib/auth', () => ({
 vi.mock('@/lib/stripe-connect', () => ({
   createConnectExpressAccount: vi.fn(),
   createConnectAccountLink: vi.fn(),
+  findStripeAccountIdForOrg: vi.fn(),
   syncConnectAccountStatus: vi.fn(),
 }))
 
@@ -26,7 +27,7 @@ vi.mock('@/lib/stripe', () => ({
 
 import { getOrgForMember } from '@/lib/orgs'
 import { getAuthUser } from '@/lib/auth'
-import { createConnectAccountLink, createConnectExpressAccount } from '@/lib/stripe-connect'
+import { createConnectAccountLink, createConnectExpressAccount, findStripeAccountIdForOrg } from '@/lib/stripe-connect'
 import { getOrgStripeAccount } from '@/lib/sponsorship.server'
 import { isStripeConfigured } from '@/lib/stripe'
 
@@ -36,7 +37,7 @@ describe('GET /api/console/[orgSlug]/sponsorship/connect', () => {
     vi.mocked(getAuthUser).mockReset()
     vi.mocked(getOrgStripeAccount).mockReset()
     vi.mocked(createConnectExpressAccount).mockReset()
-    vi.mocked(createConnectAccountLink).mockReset()
+    vi.mocked(findStripeAccountIdForOrg).mockReset()
     vi.mocked(isStripeConfigured).mockReturnValue(true)
   })
 
@@ -83,6 +84,7 @@ describe('GET /api/console/[orgSlug]/sponsorship/connect', () => {
     } as never)
     vi.mocked(getAuthUser).mockResolvedValue({ id: INTERIOR_OPERATOR_USER_ID } as never)
     vi.mocked(getOrgStripeAccount).mockResolvedValue(null)
+    vi.mocked(findStripeAccountIdForOrg).mockResolvedValue(null)
     vi.mocked(createConnectExpressAccount).mockResolvedValue({
       id: 'acct_123',
       charges_enabled: false,
