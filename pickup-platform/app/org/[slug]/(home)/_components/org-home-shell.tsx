@@ -7,6 +7,7 @@ import { OrgPublicBackdrop } from '../../_components/org-public-backdrop'
 import { OrgPublicSiteFooter } from '../../_components/org-public-site-footer'
 import { OrgDemoSiteFooter } from '../../_components/org-demo-site-footer'
 import { OrganizerConsoleToolbarLink } from '../../_components/organizer-console-toolbar-link'
+import type { PublicSponsor } from '@/lib/sponsorship'
 
 /** Bottom padding when tab bar + slim footer strip are shown. */
 export const ORG_HOME_BOTTOM_CHROME_PADDING =
@@ -32,6 +33,8 @@ export function OrgHomeShell({
   slug,
   accent,
   showDesktopSiteFooter = true,
+  sponsors = [],
+  showSponsorshipCta = false,
 }: {
   children: ReactNode
   bottomChrome: ReactNode
@@ -41,6 +44,8 @@ export function OrgHomeShell({
   accent: string
   /** When false, skip the inline site footer (demo and organizer use their own chrome). */
   showDesktopSiteFooter?: boolean
+  sponsors?: PublicSponsor[]
+  showSponsorshipCta?: boolean
 }) {
   const bottomPadding = footerOnly
     ? isOrganizer
@@ -59,7 +64,11 @@ export function OrgHomeShell({
         {children}
         {showDesktopSiteFooter ? (
           <div className="hidden md:block">
-            <OrgPublicSiteFooter slug={slug} />
+            <OrgPublicSiteFooter
+              slug={slug}
+              sponsors={sponsors}
+              showSponsorshipCta={showSponsorshipCta}
+            />
           </div>
         ) : null}
         {slug === 'demo' ? (

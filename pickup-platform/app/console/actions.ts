@@ -962,6 +962,7 @@ export async function updateOrgFeatures(orgSlug: string, formData: FormData) {
     guest_signups: formData.get('guest_signups') === 'on',
     session_feedback: formData.get('session_feedback') === 'on',
     group_rules: current.features.group_rules,
+    group_sponsorships: current.features.group_sponsorships,
   }
 
   const { error } = await supabase

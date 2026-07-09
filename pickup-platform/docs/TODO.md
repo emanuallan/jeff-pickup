@@ -63,6 +63,7 @@ Track deferred work and known simplifications. Prefer shipping simple, refine la
 - [x] Post-session participant feedback + console feedback section (migration `047_session_feedback.sql`)
 - [ ] Custom domains
 - [ ] Billing / subscriptions
+- [ ] **Group sponsorships** (migration `052_group_sponsorships.sql`) — Stripe Connect + sponsor logos; run migration and configure Stripe env vars before enabling in prod
 
 ## Known simplifications (intentional)
 

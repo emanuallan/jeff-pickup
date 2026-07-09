@@ -62,7 +62,9 @@ export function FeatureTogglesForm({ orgSlug, features }: Props) {
 
   return (
     <form action={handleSubmit} className="space-y-3">
-      {ORG_FEATURE_DEFINITIONS.filter((feature) => feature.key !== 'group_rules').map((feature) => (
+      {ORG_FEATURE_DEFINITIONS.filter(
+        (feature) => feature.key !== 'group_rules' && feature.key !== 'group_sponsorships',
+      ).map((feature) => (
         <FeatureToggle
           key={feature.key}
           name={feature.key}

@@ -1,5 +1,7 @@
 import type { OrgGroupRules } from './group-rules'
 import { parseOrgGroupRules } from './group-rules'
+import type { OrgSponsorshipSettings } from './sponsorship'
+import { parseOrgSponsorshipSettings } from './sponsorship'
 
 export type OrgFeatures = {
   user_badges: boolean
@@ -13,6 +15,8 @@ export type OrgFeatures = {
   session_feedback: boolean
   /** When true, participants must accept group rules before signing up. */
   group_rules: boolean
+  /** When true, public sponsorship page and sponsor footer are available. */
+  group_sponsorships: boolean
 }
 
 export type WaitlistPromotionMode = 'strict_fifo' | 'skip_ahead'
@@ -25,6 +29,7 @@ export type OrgSettings = {
   features: OrgFeatures
   waitlist?: OrgWaitlistSettings
   group_rules?: OrgGroupRules | null
+  sponsorships?: OrgSponsorshipSettings | null
 }
 
 export const DEFAULT_ORG_FEATURES: OrgFeatures = {
@@ -35,6 +40,7 @@ export const DEFAULT_ORG_FEATURES: OrgFeatures = {
   guest_signups: true,
   session_feedback: true,
   group_rules: false,
+  group_sponsorships: false,
 }
 
 export const DEFAULT_ORG_WAITLIST_SETTINGS: OrgWaitlistSettings = {
@@ -69,9 +75,11 @@ export function parseOrgSettings(raw: unknown): OrgSettings {
       session_feedback: features?.session_feedback !== false,
       // Opt-in: only feature that defaults off (missing key = false). Others use opt-out (!== false).
       group_rules: features?.group_rules === true,
+      group_sponsorships: features?.group_sponsorships === true,
     },
     waitlist: parseWaitlistSettings(settings?.waitlist),
     group_rules: parseOrgGroupRules(settings?.group_rules),
+    sponsorships: parseOrgSponsorshipSettings(settings?.sponsorships),
   }
 }
 
@@ -82,6 +90,10 @@ export function orgSettings(org: { settings?: OrgSettings | null }): OrgSettings
 
 export function orgFeatures(org: { settings?: OrgSettings | null }): OrgFeatures {
   return orgSettings(org).features
+}
+
+export function orgSponsorshipSettings(org: { settings?: OrgSettings | null }) {
+  return orgSettings(org).sponsorships
 }
 
 export function orgWaitlistSettings(org: { settings?: OrgSettings | null }): OrgWaitlistSettings {
@@ -134,5 +146,11 @@ export const ORG_FEATURE_DEFINITIONS: OrgFeatureDefinition[] = [
     label: 'Group rules',
     description:
       'Require participants to accept your group rules before they can sign up for sessions.',
+  },
+  {
+    key: 'group_sponsorships',
+    label: 'Group sponsorships',
+    description:
+      'Let visitors sponsor your group with monthly contributions. Sponsors appear as logos on your public pages after you approve them.',
   },
 ]

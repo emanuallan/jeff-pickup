@@ -14,6 +14,7 @@ describe('org-features', () => {
         features: DEFAULT_ORG_FEATURES,
         waitlist: { promotion_mode: 'strict_fifo' },
         group_rules: null,
+        sponsorships: null,
       })
       expect(parseOrgSettings(null).features.group_rules).toBe(false)
     })

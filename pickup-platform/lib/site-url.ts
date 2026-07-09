@@ -12,6 +12,10 @@ export function orgEventsUrl(slug: string): string {
   return orgBaseUrl(slug)
 }
 
+export function orgSponsorshipUrl(slug: string): string {
+  return `${orgBaseUrl(slug)}/sponsorship`
+}
+
 export function rootBaseUrl(): string {
   const root = process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? 'organizr.co'
   if (process.env.NODE_ENV === 'development') {

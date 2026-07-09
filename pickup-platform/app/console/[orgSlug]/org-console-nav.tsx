@@ -2,8 +2,11 @@ import Link from 'next/link'
 import { getOrgConsoleNavCounts } from '@/lib/org-console-counts'
 import { isOrgConsoleSetupComplete } from '@/lib/org-setup'
 import { getOrgForMember } from '@/lib/orgs'
+import { createClient } from '@/lib/supabase/server'
+import { isInteriorOperator } from '@/lib/interior'
 import { orgFeatures } from '@/lib/org-features'
 import { countRecentOrgSessionFeedback } from '@/lib/session-feedback.server'
+import { countPendingSponsorships } from '@/lib/sponsorship.server'
 import { ConsoleNavGrid, ConsoleNavTile } from '../_components/console-ui'
 import {
   IconSessions,
@@ -82,12 +85,25 @@ type NavSectionProps = {
 
 /** Fetches hub counts off the critical path — badges, setup gating, and get-started banner. */
 export async function OrgConsoleNavSection({ orgId, orgSlug }: NavSectionProps) {
-  const [counts, org, recentFeedbackCount] = await Promise.all([
-    getOrgConsoleNavCounts(orgId),
-    getOrgForMember(orgSlug),
-    countRecentOrgSessionFeedback(orgId),
-  ])
+  const supabase = await createClient()
+  const [counts, org, recentFeedbackCount, pendingSponsorships, { data: { user } }] =
+    await Promise.all([
+      getOrgConsoleNavCounts(orgId),
+      getOrgForMember(orgSlug),
+      countRecentOrgSessionFeedback(orgId),
+      countPendingSponsorships(orgId),
+      supabase.auth.getUser(),
+    ])
+  const { data: membership } = user
+    ? await supabase
+        .from('org_members')
+        .select('role')
+        .eq('org_id', orgId)
+        .eq('user_id', user.id)
+        .maybeSingle()
+    : { data: null }
   const features = org ? orgFeatures(org) : null
+  const showInteriorTools = isInteriorOperator(user?.id) && membership?.role === 'owner'
   const isSetup = isOrgConsoleSetupComplete({
     locationCount: counts.locationCount,
     scheduleCount: counts.scheduleCount,
@@ -156,6 +172,21 @@ export async function OrgConsoleNavSection({ orgId, orgSlug }: NavSectionProps) 
             icon={<IconBranding />}
             disabled={!isSetup}
           />
+          {showInteriorTools ? (
+            <ConsoleNavTile
+              href={`${base}/sponsorship`}
+              title="Sponsorships"
+              icon={<IconBranding />}
+              badge={
+                pendingSponsorships > 0
+                  ? `${pendingSponsorships} pending`
+                  : features?.group_sponsorships
+                    ? 'Enabled'
+                    : 'Set up'
+              }
+              disabled={!isSetup}
+            />
+          ) : null}
           <ConsoleNavTile
             href={`${base}/participants`}
             title="Participants"

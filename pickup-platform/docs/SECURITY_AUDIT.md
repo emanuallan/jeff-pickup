@@ -4,7 +4,7 @@ Practical security review of the Organizr Next.js app (`pickup-platform/`). This
 
 ## Executive summary
 
-**No critical IDOR or missing console-auth bugs were found** in route handlers. Organizer access is enforced server-side via `getOrgForMember` + Supabase RLS; public participant writes use SECURITY DEFINER RPCs with session-token checks; service role usage is narrow (materializer, logo storage, org delete).
+**No critical IDOR or missing console-auth bugs were found** in route handlers. Organizer access is enforced server-side via `getOrgForMember` + Supabase RLS; public participant writes use SECURITY DEFINER RPCs with session-token checks; service role usage is narrow (materializer, logo storage, org delete, sponsor logo upload, Stripe webhook writes).
 
 Main residual risks are **intentional alpha UX tradeoffs** (phone-only session recovery), **operational gaps** (rate limits, cron secret hygiene), and dependency advisories in Next.js’s PostCSS transitive dependency.
 
@@ -74,8 +74,15 @@ None identified in application-layer authorization for console/PII data access.
 | `lib/console/location-ownership.test.ts` | Location org ownership helper |
 | `lib/org-logo.test.ts` | PNG/JPEG/WebP magic bytes |
 | `app/api/console/[orgSlug]/participants/route.test.ts` | 401 vs 200 auth smoke test |
+| `lib/sponsorship.test.ts` | Sponsorship validators and lifecycle helpers |
+| `lib/sponsor-logo.test.ts` | Sponsor logo storage path helpers |
+| `lib/console/parse-sponsorship-tier-form.test.ts` | Tier form parsing |
+| `app/api/sponsorship/checkout/route.test.ts` | Checkout validation and session creation |
+| `app/api/webhooks/stripe/route.test.ts` | Webhook signature + checkout handler |
+| `app/api/console/[orgSlug]/sponsorship/connect/route.test.ts` | Connect route auth |
+| `app/org/[slug]/_components/org-sponsor-footer.test.tsx` | Public sponsor logo strip |
 
-**Total:** 144 tests passing after this pass.
+**Total:** 283 tests passing after sponsorships pass.
 
 ---
 

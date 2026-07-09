@@ -108,6 +108,7 @@ describe('public-share-image', () => {
       const event = makeEventWithLocation({
         short_id: 'evt-a',
         title: 'Sunday Scrimmage',
+        starts_at: '2026-07-12T14:00:00.000Z',
       })
 
       getPublicOrgAndEventMock.mockResolvedValue({ org: demoOrg, event })

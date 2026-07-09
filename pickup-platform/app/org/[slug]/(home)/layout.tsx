@@ -4,6 +4,9 @@ import { notFound } from 'next/navigation'
 import { getPublicOrgBySlug, getPublicUpcomingEventsForOrg } from '@/lib/public-data'
 import { pickFeaturedUpcomingEvent } from '@/lib/events'
 import { getOrgForMember } from '@/lib/orgs'
+import { orgFeatures, orgSponsorshipSettings } from '@/lib/org-features'
+import { isSponsorshipsActiveLocally } from '@/lib/sponsorship'
+import { getOrgStripeAccount, getPublicSponsors, getSponsorshipTiersForOrg } from '@/lib/sponsorship.server'
 import { ORG_PUBLIC_NAV_BASE } from '@/lib/org-public-nav'
 import { isLeaderboardUnlocked } from '@/lib/engagement'
 import { resolveOrgPublicNavItems } from '@/lib/org-public-nav.server'
@@ -34,10 +37,13 @@ export default async function OrgHomeLayout({ children, params }: Props) {
     notFound()
   }
 
-  const [events, membership, leaderboardUnlocked] = await Promise.all([
+  const [events, membership, leaderboardUnlocked, sponsors, stripeAccount, tiers] = await Promise.all([
     getPublicUpcomingEventsForOrg(org.id, 20, true),
     getOrgForMember(slug),
     isLeaderboardUnlocked(org.id),
+    orgFeatures(org).group_sponsorships ? getPublicSponsors(org.id) : Promise.resolve([]),
+    orgFeatures(org).group_sponsorships ? getOrgStripeAccount(org.id) : Promise.resolve(null),
+    orgFeatures(org).group_sponsorships ? getSponsorshipTiersForOrg(org.id) : Promise.resolve([]),
   ])
   const featured = pickFeaturedUpcomingEvent(events)
   const accent = org.branding.accent_color
@@ -55,8 +61,15 @@ export default async function OrgHomeLayout({ children, params }: Props) {
   }))
   const defaultEventShortId = featured?.short_id ?? events[0]?.short_id ?? null
   const isOrganizer = !!membership
+  const sponsorshipSettings = orgSponsorshipSettings(org)
+  const showSponsorshipCta = isSponsorshipsActiveLocally({
+    featureEnabled: orgFeatures(org).group_sponsorships,
+    introText: sponsorshipSettings?.intro_text,
+    hasActiveTier: tiers.some((tier) => tier.status === 'active' && tier.stripe_price_id),
+    chargesEnabled: stripeAccount?.charges_enabled ?? false,
+  })
 
-  const showDesktopSiteFooter = !isOrganizer && slug !== 'demo'
+  const showDesktopSiteFooter = slug !== 'demo'
 
   return (
     <OrgHomeShell
@@ -65,6 +78,8 @@ export default async function OrgHomeLayout({ children, params }: Props) {
       footerOnly={navItems.length <= 1}
       isOrganizer={isOrganizer}
       showDesktopSiteFooter={showDesktopSiteFooter}
+      sponsors={sponsors}
+      showSponsorshipCta={showSponsorshipCta}
       bottomChrome={
         <Suspense fallback={null}>
           <OrgHomeBottomNav
@@ -73,6 +88,8 @@ export default async function OrgHomeLayout({ children, params }: Props) {
             basePath={ORG_PUBLIC_NAV_BASE}
             slug={slug}
             isOrganizer={isOrganizer}
+            sponsors={sponsors}
+            showSponsorshipCta={showSponsorshipCta}
           />
         </Suspense>
       }

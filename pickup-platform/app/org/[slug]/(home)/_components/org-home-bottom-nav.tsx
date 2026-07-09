@@ -14,6 +14,8 @@ import { accentOnDark } from '@/lib/colors'
 import { ORG_PUBLIC_CONTENT_MAX } from '@/lib/org-public-layout'
 import { OrganizrLogo } from '@/app/_components/organizr-logo'
 import { OrganizerConsoleFooterLink } from '../../_components/organizer-console-footer-link'
+import { OrgSponsorFooter } from '../../_components/org-sponsor-footer'
+import type { PublicSponsor } from '@/lib/sponsorship'
 import { IconLeaderboard, IconMatchday } from './org-home-nav-icons'
 
 function rootBaseUrl(): string {
@@ -30,6 +32,8 @@ type Props = {
   basePath: string
   slug: string
   isOrganizer?: boolean
+  sponsors?: PublicSponsor[]
+  showSponsorshipCta?: boolean
 }
 
 type Indicator = {
@@ -196,7 +200,15 @@ function useOrgHomeNavState({ items, basePath }: Pick<Props, 'items' | 'basePath
 }
 
 /** Fixed bottom chrome — mobile only. */
-export function OrgHomeBottomNav({ items, accent, basePath, slug, isOrganizer = false }: Props) {
+export function OrgHomeBottomNav({
+  items,
+  accent,
+  basePath,
+  slug,
+  isOrganizer = false,
+  sponsors = [],
+  showSponsorshipCta = false,
+}: Props) {
   const { navItems, activeKey } = useOrgHomeNavState({ items, basePath })
   const { navRef, linkRefs, indicator } = useOrgHomeNavIndicator(activeKey, navItems)
 
@@ -238,21 +250,29 @@ export function OrgHomeBottomNav({ items, accent, basePath, slug, isOrganizer = 
         </footer>
       ) : (
         <footer
-          className={`mx-auto flex max-w-lg items-center justify-between gap-2 px-5 py-1.5 pb-[max(0.25rem,env(safe-area-inset-bottom))] text-[10px] leading-none text-zinc-600 ${
+          className={`mx-auto max-w-lg px-5 py-1.5 pb-[max(0.25rem,env(safe-area-inset-bottom))] text-[10px] leading-none text-zinc-600 ${
             showTabs ? 'border-t border-white/10' : 'border-t border-zinc-800/80'
           }`}
         >
-          <p className="truncate font-medium tracking-wide">
-            {slug}.{getRootDomain()}
-          </p>
-          <a
-            href={rootBaseUrl()}
-            title="Create your own group on Organizr"
-            className="inline-flex shrink-0 items-center gap-1 text-zinc-500 transition-colors hover:text-zinc-400"
-          >
-            <span>Powered by</span>
-            <OrganizrLogo size={12} showWordmark wordmarkClassName="font-medium text-zinc-500" />
-          </a>
+          <OrgSponsorFooter
+            slug={slug}
+            sponsors={sponsors}
+            showCta={showSponsorshipCta}
+            compact
+          />
+          <div className="mt-1.5 flex items-center justify-between gap-2">
+            <p className="truncate font-medium tracking-wide">
+              {slug}.{getRootDomain()}
+            </p>
+            <a
+              href={rootBaseUrl()}
+              title="Create your own group on Organizr"
+              className="inline-flex shrink-0 items-center gap-1 text-zinc-500 transition-colors hover:text-zinc-400"
+            >
+              <span>Powered by</span>
+              <OrganizrLogo size={12} showWordmark wordmarkClassName="font-medium text-zinc-500" />
+            </a>
+          </div>
         </footer>
       )}
     </div>
