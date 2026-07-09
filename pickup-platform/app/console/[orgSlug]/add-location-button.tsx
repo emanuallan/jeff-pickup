@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { AddLocationForm } from './add-location-form'
+import { LocationForm } from './location-form'
 import { btnAccent } from '../_components/console-ui'
 import { BottomSheet } from '@/app/_components/bottom-sheet'
 
@@ -31,7 +31,10 @@ export function AddLocationButton({
           Where your sessions happen — in person or online.
         </p>
         <div className="mt-5">
-          <AddLocationForm addLocation={addLocation} onSuccess={() => setOpen(false)} />
+          <LocationForm
+            saveLocation={(formData) => addLocation(formData)}
+            onSuccess={() => setOpen(false)}
+          />
         </div>
       </BottomSheet>
     </>

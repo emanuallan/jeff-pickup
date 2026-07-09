@@ -1,12 +1,10 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { hexToRgba } from '@/lib/colors'
 import { showHeadcountChipOnCard } from '@/lib/headcount-display'
 
 const POLL_MS = 20_000
-const REFRESH_COOLDOWN_MS = 30_000
 
 type Props = {
   orgSlug: string
@@ -32,11 +30,9 @@ export function LiveHeadcountPill({
   ended = false,
   cancelled = false,
 }: Props) {
-  const router = useRouter()
   const [headcount, setHeadcount] = useState(initialHeadcount)
   const [pulse, setPulse] = useState(false)
   const prevHeadcount = useRef(initialHeadcount)
-  const lastRefreshAt = useRef(0)
   const pulseTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
@@ -70,12 +66,6 @@ export function LiveHeadcountPill({
 
           prevHeadcount.current = next
           setHeadcount(next)
-
-          const now = Date.now()
-          if (now - lastRefreshAt.current >= REFRESH_COOLDOWN_MS) {
-            lastRefreshAt.current = now
-            router.refresh()
-          }
         }
       } catch {
         // Best-effort polling — ignore transient network errors.
@@ -98,7 +88,7 @@ export function LiveHeadcountPill({
       document.removeEventListener('visibilitychange', onVisibilityChange)
       if (pulseTimer.current) clearTimeout(pulseTimer.current)
     }
-  }, [active, orgSlug, eventRef, router])
+  }, [active, orgSlug, eventRef])
 
   if (!showHeadcountChipOnCard(headcount, { cancelled })) {
     return null

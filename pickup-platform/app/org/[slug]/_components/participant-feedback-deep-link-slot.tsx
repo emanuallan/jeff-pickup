@@ -11,13 +11,8 @@ type Props = {
 }
 
 async function ParticipantFeedbackDeepLinkInner({ slug, accent }: Props) {
-  const org = await getPublicOrgBySlug(slug)
-  if (!org || !orgFeatures(org).session_feedback) {
-    return null
-  }
-
-  const token = await getSessionToken()
-  if (!token) {
+  const [org, token] = await Promise.all([getPublicOrgBySlug(slug), getSessionToken()])
+  if (!org || !orgFeatures(org).session_feedback || !token) {
     return null
   }
 

@@ -1,5 +1,3 @@
-'use client'
-
 import {
   DetailList,
   DetailRow,

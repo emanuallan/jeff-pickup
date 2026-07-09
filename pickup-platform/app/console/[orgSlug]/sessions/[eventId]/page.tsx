@@ -1,3 +1,4 @@
+import { Suspense } from 'react'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { getOrgForMember } from '@/lib/orgs'
@@ -228,7 +229,13 @@ export default async function ConsoleEventAnalyticsPage({ params }: Props) {
         </ConsoleSection>
 
         {showFeedback ? (
-          <EventFeedbackSection orgSlug={orgSlug} orgId={org.id} eventId={event.id} />
+          <Suspense
+            fallback={
+              <div className="h-32 animate-pulse rounded-xl border border-zinc-800 bg-zinc-900/40" />
+            }
+          >
+            <EventFeedbackSection orgSlug={orgSlug} orgId={org.id} eventId={event.id} />
+          </Suspense>
         ) : null}
       </div>
     </ConsolePage>

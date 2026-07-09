@@ -1,9 +1,22 @@
 'use client'
 
 import { useCallback, useRef } from 'react'
-import { QRCodeCanvas } from 'qrcode.react'
+import dynamic from 'next/dynamic'
 import { btnOutline } from '../_components/console-ui'
 import { useConsoleToast } from '../_components/console-toast'
+
+const QRCodeCanvas = dynamic(
+  () => import('qrcode.react').then((mod) => mod.QRCodeCanvas),
+  {
+    ssr: false,
+    loading: () => (
+      <div
+        className="h-[200px] w-[200px] animate-pulse rounded-lg bg-zinc-800/80"
+        aria-hidden
+      />
+    ),
+  },
+)
 
 function escapeHtml(text: string): string {
   return text

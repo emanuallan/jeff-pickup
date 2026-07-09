@@ -1,5 +1,3 @@
-'use client'
-
 import { BottomSheet } from '@/app/_components/bottom-sheet'
 import { hexToRgba } from '@/lib/colors'
 import type { ArrivalStatus } from '@/lib/arrival-status'

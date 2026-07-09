@@ -1,3 +1,4 @@
+import { cache } from 'react'
 import { createClient } from '@/lib/supabase/server'
 
 export type Location = {
@@ -13,7 +14,7 @@ export type Location = {
   is_active: boolean
 }
 
-export async function getLocationsForOrg(orgId: string): Promise<Location[]> {
+export const getLocationsForOrg = cache(async (orgId: string): Promise<Location[]> => {
   const supabase = await createClient()
 
   const { data, error } = await supabase
@@ -27,4 +28,4 @@ export async function getLocationsForOrg(orgId: string): Promise<Location[]> {
   }
 
   return data as Location[]
-}
+})

@@ -109,14 +109,9 @@ export async function getUserOrgs(): Promise<Org[]> {
 }
 
 export const getOrgForMember = cache(async (slug: string): Promise<Org | null> => {
-  const user = await getAuthUser()
+  const [user, org] = await Promise.all([getAuthUser(), getOrgBySlug(slug)])
 
-  if (!user) {
-    return null
-  }
-
-  const org = await getOrgBySlug(slug)
-  if (!org) {
+  if (!user || !org) {
     return null
   }
 

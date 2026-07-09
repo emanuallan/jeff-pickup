@@ -1,4 +1,4 @@
-import { getCountryCallingCode, type CountryCode } from 'libphonenumber-js'
+import { getCountryCallingCode, type CountryCode } from 'libphonenumber-js/min'
 
 import type { PhoneCountry, PhoneCountryGroup, PhoneCountryOption } from './phone.types'
 

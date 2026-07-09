@@ -36,18 +36,18 @@ export async function EventParticipation({ slug, eventId, org, event }: Props) {
   const groupRules = orgGroupRules(org.settings)
   const groupRulesEnabled = groupRulesActive(features.group_rules, groupRules)
 
+  const sessionToken = await getSessionToken()
+
   const [{ participant, mySignup }, roster, waitlist, groupRulesStatus] = await Promise.all([
-    getSessionToken().then((token) => getSessionInfo(token, org.id, event.id)),
+    getSessionInfo(sessionToken, org.id, event.id),
     isCancelled ? Promise.resolve([]) : getPublicRoster(event.id),
     isCancelled || !waitlistEnabled ? Promise.resolve([]) : getPublicWaitlist(event.id),
-    getSessionToken().then((token) =>
-      groupRulesEnabled
-        ? getGroupRulesStatusForJoin(org.id, { sessionToken: token })
-        : Promise.resolve({
-            active: false,
-            needs_acceptance: false,
-          } as Awaited<ReturnType<typeof getGroupRulesStatusForJoin>>),
-    ),
+    groupRulesEnabled
+      ? getGroupRulesStatusForJoin(org.id, { sessionToken })
+      : Promise.resolve({
+          active: false,
+          needs_acceptance: false,
+        } as Awaited<ReturnType<typeof getGroupRulesStatusForJoin>>),
   ])
 
   const headcount = rosterHeadcount(roster)

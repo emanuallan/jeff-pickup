@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import { redirect } from 'next/navigation'
 import { getAuthUser } from '@/lib/auth'
 import { getUserOrgs } from '@/lib/orgs'
@@ -52,10 +53,12 @@ export default async function ConsolePage_() {
                 <div className="flex min-w-0 flex-col overflow-hidden rounded-xl border border-white/10 bg-zinc-900/50 p-4 transition-colors hover:border-indigo-500/40">
                   <div className="flex min-w-0 items-start gap-3">
                     {org.branding.logo_url ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
+                      <Image
                         src={org.branding.logo_url}
                         alt=""
+                        width={44}
+                        height={44}
+                        sizes="44px"
                         className="h-11 w-11 shrink-0 rounded-xl object-cover"
                       />
                     ) : (

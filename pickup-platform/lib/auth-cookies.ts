@@ -5,9 +5,12 @@ import type { ReadonlyRequestCookies } from 'next/dist/server/web/spec-extension
 import { SESSION_COOKIE } from '@/lib/participant-session'
 import { getSupabaseCookieOptions, supabaseCookieRootDomain } from '@/lib/supabase/cookie-options'
 
-type WritableCookies =
-  | Pick<ResponseCookies, 'set' | 'delete'>
-  | ReadonlyRequestCookies
+type CookieStoreWriter = {
+  set: ResponseCookies['set']
+  delete?: ResponseCookies['delete']
+}
+
+type WritableCookies = CookieStoreWriter | ReadonlyRequestCookies
 
 export function getParticipantCookieOptions() {
   return {

@@ -1,3 +1,4 @@
+import { cache } from 'react'
 import { cookies } from 'next/headers'
 import {
   clearParticipantSession,
@@ -6,10 +7,10 @@ import {
 
 export const SESSION_COOKIE = 'hc_session'
 
-export async function getSessionToken(): Promise<string | null> {
+export const getSessionToken = cache(async (): Promise<string | null> => {
   const store = await cookies()
   return store.get(SESSION_COOKIE)?.value ?? null
-}
+})
 
 export async function setSessionToken(token: string) {
   const store = await cookies()

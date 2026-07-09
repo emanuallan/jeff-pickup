@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import type { Location } from '@/lib/locations'
-import { OneOffEventForm } from './one-off-event-form'
+import { SessionForm } from './session-form'
 import { btnAccent } from '../_components/console-ui'
 import { BottomSheet } from '@/app/_components/bottom-sheet'
 
@@ -33,13 +33,14 @@ export function AddOneOffButton({
           A single session outside your recurring schedule.
         </p>
         <div className="mt-5">
-          <OneOffEventForm
+          <SessionForm
             locations={locations}
-            createOneOff={createOneOff}
+            onSubmit={createOneOff}
             onSuccess={() => {
               setOpen(false)
               router.refresh()
             }}
+            useBrowserTimezone
           />
         </div>
       </BottomSheet>

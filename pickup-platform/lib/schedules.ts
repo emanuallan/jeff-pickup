@@ -1,3 +1,4 @@
+import { cache } from 'react'
 import { createClient } from '@/lib/supabase/server'
 
 export type Schedule = {
@@ -73,7 +74,7 @@ export function isStructuralScheduleChange(
   return false
 }
 
-export async function getSchedulesForOrg(orgId: string): Promise<Schedule[]> {
+export const getSchedulesForOrg = cache(async (orgId: string): Promise<Schedule[]> => {
   const supabase = await createClient()
 
   const { data, error } = await supabase
@@ -87,7 +88,7 @@ export async function getSchedulesForOrg(orgId: string): Promise<Schedule[]> {
   }
 
   return data as Schedule[]
-}
+})
 
 export type ScheduleDeleteImpact = {
   upcomingEventCount: number

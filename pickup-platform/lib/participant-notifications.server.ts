@@ -1,3 +1,4 @@
+import { cache } from 'react'
 import { createClient } from '@/lib/supabase/server'
 import type {
   ParticipantNotification,
@@ -23,33 +24,35 @@ function parseNotification(row: Record<string, unknown>): ParticipantNotificatio
   }
 }
 
-export async function getParticipantNotificationInbox(
-  sessionToken: string,
-  orgId: string,
-  limit = 30,
-): Promise<{ notifications: ParticipantNotification[]; unreadCount: number }> {
-  const supabase = await createClient()
-  const { data, error } = await supabase.rpc('get_participant_notification_inbox', {
-    p_session_token: sessionToken,
-    p_org_id: orgId,
-    p_limit: limit,
-  })
+export const getParticipantNotificationInbox = cache(
+  async (
+    sessionToken: string,
+    orgId: string,
+    limit = 30,
+  ): Promise<{ notifications: ParticipantNotification[]; unreadCount: number }> => {
+    const supabase = await createClient()
+    const { data, error } = await supabase.rpc('get_participant_notification_inbox', {
+      p_session_token: sessionToken,
+      p_org_id: orgId,
+      p_limit: limit,
+    })
 
-  if (error || !data || typeof data !== 'object') {
-    return { notifications: [], unreadCount: 0 }
-  }
+    if (error || !data || typeof data !== 'object') {
+      return { notifications: [], unreadCount: 0 }
+    }
 
-  const payload = data as {
-    unread_count?: unknown
-    notifications?: unknown
-  }
+    const payload = data as {
+      unread_count?: unknown
+      notifications?: unknown
+    }
 
-  const rows = Array.isArray(payload.notifications)
-    ? (payload.notifications as Record<string, unknown>[])
-    : []
+    const rows = Array.isArray(payload.notifications)
+      ? (payload.notifications as Record<string, unknown>[])
+      : []
 
-  return {
-    notifications: rows.map(parseNotification),
-    unreadCount: Number(payload.unread_count ?? 0),
-  }
-}
+    return {
+      notifications: rows.map(parseNotification),
+      unreadCount: Number(payload.unread_count ?? 0),
+    }
+  },
+)
