@@ -28,6 +28,7 @@ import { getOrgForMember } from '@/lib/orgs'
 import { getAuthUser } from '@/lib/auth'
 import { createConnectAccountLink, createConnectExpressAccount } from '@/lib/stripe-connect'
 import { getOrgStripeAccount } from '@/lib/sponsorship.server'
+import { isStripeConfigured } from '@/lib/stripe'
 
 describe('GET /api/console/[orgSlug]/sponsorship/connect', () => {
   beforeEach(() => {
@@ -36,24 +37,42 @@ describe('GET /api/console/[orgSlug]/sponsorship/connect', () => {
     vi.mocked(getOrgStripeAccount).mockReset()
     vi.mocked(createConnectExpressAccount).mockReset()
     vi.mocked(createConnectAccountLink).mockReset()
+    vi.mocked(isStripeConfigured).mockReturnValue(true)
   })
 
-  it('returns 401 without membership', async () => {
+  it('redirects to console when Stripe is not configured', async () => {
+    vi.mocked(isStripeConfigured).mockReturnValue(false)
+    const response = await GET(new Request('http://localhost'), {
+      params: Promise.resolve({ orgSlug: 'demo' }),
+    })
+    expect(response.status).toBe(307)
+    expect(response.headers.get('location')).toBe(
+      'https://organizr.co/console/demo/sponsorship?connect_error=stripe_not_configured',
+    )
+  })
+
+  it('redirects to console without membership', async () => {
     vi.mocked(getOrgForMember).mockResolvedValue(null)
     vi.mocked(getAuthUser).mockResolvedValue({ id: INTERIOR_OPERATOR_USER_ID } as never)
     const response = await GET(new Request('http://localhost'), {
       params: Promise.resolve({ orgSlug: 'demo' }),
     })
-    expect(response.status).toBe(401)
+    expect(response.status).toBe(307)
+    expect(response.headers.get('location')).toBe(
+      'https://organizr.co/console/demo/sponsorship?connect_error=unauthorized',
+    )
   })
 
-  it('returns 401 for non-interior operators', async () => {
+  it('redirects to console for non-interior operators', async () => {
     vi.mocked(getOrgForMember).mockResolvedValue({ id: 'org-1', slug: 'demo', name: 'Demo' } as never)
     vi.mocked(getAuthUser).mockResolvedValue({ id: 'other-user' } as never)
     const response = await GET(new Request('http://localhost'), {
       params: Promise.resolve({ orgSlug: 'demo' }),
     })
-    expect(response.status).toBe(401)
+    expect(response.status).toBe(307)
+    expect(response.headers.get('location')).toBe(
+      'https://organizr.co/console/demo/sponsorship?connect_error=unauthorized',
+    )
   })
 
   it('redirects interior operators to Stripe onboarding', async () => {

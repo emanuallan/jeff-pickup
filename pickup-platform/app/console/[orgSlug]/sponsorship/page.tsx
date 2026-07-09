@@ -20,12 +20,25 @@ import { SponsorshipRequestsSection } from './sponsorship-requests-section'
 
 type Props = {
   params: Promise<{ orgSlug: string }>
-  searchParams: Promise<{ connected?: string }>
+  searchParams: Promise<{ connected?: string; connect_error?: string }>
+}
+
+function connectErrorMessage(code: string | undefined): string | null {
+  switch (code) {
+    case 'stripe_not_configured':
+      return 'Stripe is not configured on this environment. Add STRIPE_SECRET_KEY and STRIPE_WEBHOOK_SECRET in Vercel, then redeploy.'
+    case 'unauthorized':
+      return 'Could not start Stripe Connect. Sign in again and retry from the sponsorship console.'
+    case 'stripe_error':
+      return 'Stripe Connect failed to start. Check server logs and your Stripe keys, then try again.'
+    default:
+      return null
+  }
 }
 
 export default async function SponsorshipConsolePage({ params, searchParams }: Props) {
   const { orgSlug } = await params
-  const { connected } = await searchParams
+  const { connected, connect_error: connectError } = await searchParams
   const org = await getOrgForMember(orgSlug)
 
   if (!org) {
@@ -58,6 +71,7 @@ export default async function SponsorshipConsolePage({ params, searchParams }: P
   const sponsorshipSettings = orgSponsorshipSettings(org)
   const stripeReady = Boolean(stripeAccount?.charges_enabled)
   const connectPath = `/api/console/${orgSlug}/sponsorship/connect`
+  const connectErrorMessageText = connectErrorMessage(connectError)
 
   const pending = sponsorships.filter((row) => row.status === 'pending_approval')
   const active = sponsorships.filter((row) => row.status === 'approved' || row.status === 'hidden')
@@ -80,6 +94,9 @@ export default async function SponsorshipConsolePage({ params, searchParams }: P
           title="Stripe Connect"
           description="Connect Stripe to receive sponsor payouts. Organizr keeps a 5% platform fee."
         >
+          {connectErrorMessageText ? (
+            <p className="mb-3 text-sm text-amber-300">{connectErrorMessageText}</p>
+          ) : null}
           {!isStripeConfigured() ? (
             <p className="text-sm text-amber-300">
               Stripe is not configured on this environment yet.
@@ -94,18 +111,18 @@ export default async function SponsorshipConsolePage({ params, searchParams }: P
               <p className="text-sm text-amber-300">
                 Finish Stripe onboarding to enable sponsor checkout.
               </p>
-              <Link href={connectPath} className={btnPrimary}>
+              <a href={connectPath} className={btnPrimary}>
                 Continue Stripe setup
-              </Link>
+              </a>
             </div>
           ) : (
             <div className="space-y-3">
               <p className="text-sm text-zinc-400">
                 Connect a Stripe account before creating tiers or accepting sponsors.
               </p>
-              <Link href={connectPath} className={btnPrimary}>
+              <a href={connectPath} className={btnPrimary}>
                 Connect Stripe
-              </Link>
+              </a>
             </div>
           )}
         </ConsoleSection>
