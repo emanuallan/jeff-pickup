@@ -3,30 +3,28 @@ import Link from 'next/link'
 import type { PublicSponsor } from '@/lib/sponsorship'
 import { orgSponsorshipUrl } from '@/lib/site-url'
 import { safeExternalHref } from '@/lib/social-links'
-import { arrowRight } from '@/lib/text-arrows'
 
 type Props = {
   slug: string
   sponsors: PublicSponsor[]
   showCta: boolean
+  compact?: boolean
 }
 
-function SponsorLogo({ sponsor }: { sponsor: PublicSponsor }) {
+function SponsorLogo({ sponsor, compact }: { sponsor: PublicSponsor; compact?: boolean }) {
+  const heightClass = compact ? 'h-8' : 'h-8 md:h-10'
   const image = (
     <Image
       src={sponsor.logo_url}
       alt={sponsor.sponsor_name}
       width={160}
       height={40}
-      className="h-8 w-auto max-w-[128px] object-contain md:h-9 md:max-w-[160px]"
+      className={`${heightClass} w-auto max-w-[120px] object-contain opacity-70 transition-opacity hover:opacity-100 md:max-w-[160px]`}
       unoptimized
     />
   )
 
   const href = sponsor.sponsor_url ? safeExternalHref(sponsor.sponsor_url) : null
-  const shellClassName =
-    'inline-flex h-14 min-w-[5.5rem] items-center justify-center rounded-2xl border border-zinc-800/80 bg-zinc-950/60 px-4 py-2 transition-colors hover:border-zinc-700 hover:bg-zinc-900/80'
-
   if (href) {
     return (
       <a
@@ -34,65 +32,41 @@ function SponsorLogo({ sponsor }: { sponsor: PublicSponsor }) {
         target="_blank"
         rel="noopener noreferrer"
         title={sponsor.sponsor_name}
-        className={shellClassName}
+        className="inline-flex shrink-0 items-center"
       >
         {image}
       </a>
     )
   }
 
-  return <span className={shellClassName}>{image}</span>
+  return <span className="inline-flex shrink-0 items-center">{image}</span>
 }
 
-export function OrgSponsorFooter({ slug, sponsors, showCta }: Props) {
+export function OrgSponsorFooter({ slug, sponsors, showCta, compact = false }: Props) {
   if (!showCta && sponsors.length === 0) {
     return null
   }
 
-  const hasSponsors = sponsors.length > 0
-
   return (
-    <section className="overflow-hidden rounded-3xl border border-zinc-800 bg-zinc-900/50">
-      {hasSponsors ? (
-        <div className="px-5 py-5 md:px-6 md:py-6">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-400">
-            Thank you to our sponsors
-          </h2>
-          <div className="mt-4 flex flex-wrap items-center justify-center gap-3 sm:justify-start">
-            {sponsors.map((sponsor) => (
-              <SponsorLogo key={sponsor.id} sponsor={sponsor} />
-            ))}
-          </div>
+    <div className={compact ? 'space-y-2' : 'mt-10 space-y-4 border-t border-zinc-800/70 pt-6'}>
+      {sponsors.length > 0 ? (
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
+          {sponsors.map((sponsor) => (
+            <SponsorLogo key={sponsor.id} sponsor={sponsor} compact={compact} />
+          ))}
         </div>
       ) : null}
 
       {showCta ? (
-        <div
-          className={
-            hasSponsors
-              ? 'border-t border-zinc-800/80 bg-zinc-950/35 px-5 py-4 md:px-6'
-              : 'px-5 py-5 md:px-6'
-          }
-        >
+        <p className={compact ? 'text-[10px] text-zinc-500' : 'text-sm text-zinc-500'}>
           <Link
             href={orgSponsorshipUrl(slug)}
-            className="group flex items-center justify-between gap-4 rounded-2xl border border-zinc-800 bg-zinc-950/50 px-4 py-3.5 transition-colors hover:border-zinc-700 hover:bg-zinc-900/80"
+            className="font-medium text-zinc-400 underline decoration-zinc-600 underline-offset-2 transition-colors hover:text-zinc-200"
           >
-            <span>
-              <span className="block text-sm font-medium text-zinc-100">Want to sponsor us?</span>
-              <span className="mt-0.5 block text-xs text-zinc-500">
-                Support the group and get your logo featured here.
-              </span>
-            </span>
-            <span
-              aria-hidden
-              className="shrink-0 text-sm text-zinc-500 transition-transform group-hover:translate-x-0.5"
-            >
-              {arrowRight}
-            </span>
+            Want to sponsor us?
           </Link>
-        </div>
+        </p>
       ) : null}
-    </section>
+    </div>
   )
 }
