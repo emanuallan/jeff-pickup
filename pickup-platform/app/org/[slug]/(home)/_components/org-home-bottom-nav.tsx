@@ -11,6 +11,7 @@ import {
 } from '@/lib/org-public-nav'
 import { accentOnDark } from '@/lib/colors'
 import { ORG_PUBLIC_CONTENT_MAX } from '@/lib/org-public-layout'
+import { OrgPublicPoweredByStrip } from '../../_components/org-public-powered-by-strip'
 import { OrganizerConsoleFooterLink } from '../../_components/organizer-console-footer-link'
 import { IconLeaderboard, IconMatchday } from './org-home-nav-icons'
 
@@ -240,7 +241,15 @@ export function OrgHomeBottomNav({
             href={rootBaseUrl()}
           />
         </footer>
-      ) : null}
+      ) : (
+        <footer
+          className={`mx-auto max-w-lg px-5 py-1.5 pb-[max(0.25rem,env(safe-area-inset-bottom))] ${
+            showTabs ? 'border-t border-white/10' : 'border-t border-zinc-800/80'
+          }`}
+        >
+          <OrgPublicPoweredByStrip slug={slug} compact />
+        </footer>
+      )}
     </div>
   )
 }

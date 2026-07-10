@@ -17,8 +17,9 @@ export const ORG_HOME_BOTTOM_CHROME_PADDING =
 export const ORG_HOME_ORGANIZER_BOTTOM_CHROME_PADDING =
   'pb-[calc(8rem+env(safe-area-inset-bottom))]'
 
-/** Bottom padding when there is no sticky mobile chrome. */
-export const ORG_HOME_FOOTER_ONLY_PADDING = 'pb-[calc(1.5rem+env(safe-area-inset-bottom))]'
+/** Bottom padding when only the powered-by strip is shown (single tab). */
+export const ORG_HOME_FOOTER_ONLY_PADDING =
+  'pb-[calc(3.5rem+env(safe-area-inset-bottom))]'
 
 /** Bottom padding when only the organizer console footer is shown. */
 export const ORG_HOME_ORGANIZER_FOOTER_ONLY_PADDING =

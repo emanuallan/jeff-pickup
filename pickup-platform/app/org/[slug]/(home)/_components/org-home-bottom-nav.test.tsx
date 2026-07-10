@@ -29,7 +29,21 @@ describe('OrgHomeBottomNav', () => {
     )
 
     expect(screen.queryByText('Thank you to our sponsors')).not.toBeInTheDocument()
-    expect(screen.queryByRole('link', { name: 'Want to sponsor us?' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /want to sponsor us/i })).not.toBeInTheDocument()
     expect(screen.getByRole('link', { name: /back to console/i })).toBeInTheDocument()
+  })
+
+  it('shows the powered-by strip for regular visitors', () => {
+    render(
+      <OrgHomeBottomNav
+        items={navItems}
+        accent="#2563eb"
+        basePath="/"
+        slug="jeff"
+      />,
+    )
+
+    expect(screen.getByText('jeff.organizr.co')).toBeInTheDocument()
+    expect(screen.getByTitle('Create your own group on Organizr')).toBeInTheDocument()
   })
 })

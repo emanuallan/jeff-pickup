@@ -1,7 +1,5 @@
-import { getRootDomain } from '@/lib/tenancy/parse-host'
-import { OrganizrLogo } from '@/app/_components/organizr-logo'
-import { rootBaseUrl } from '@/lib/og-metadata'
 import type { PublicSponsor } from '@/lib/sponsorship'
+import { OrgPublicPoweredByStrip } from './org-public-powered-by-strip'
 import { OrgSponsorFooter } from './org-sponsor-footer'
 
 /** Inline site footer at the bottom of public org pages. */
@@ -14,21 +12,15 @@ export function OrgPublicSiteFooter({
   sponsors?: PublicSponsor[]
   showSponsorshipCta?: boolean
 }) {
+  const showSponsorSection = showSponsorshipCta || sponsors.length > 0
+
   return (
-    <footer className="mt-8 space-y-5">
-      <OrgSponsorFooter slug={slug} sponsors={sponsors} showCta={showSponsorshipCta} />
-      <div className="flex flex-col items-center gap-2 px-1 text-center text-[11px] leading-relaxed text-zinc-600 sm:flex-row sm:justify-between sm:text-left">
-        <p className="truncate font-medium tracking-wide">
-          {slug}.{getRootDomain()}
-        </p>
-        <a
-          href={rootBaseUrl()}
-          title="Create your own group on Organizr"
-          className="inline-flex shrink-0 items-center gap-1.5 text-zinc-500 transition-colors hover:text-zinc-400"
-        >
-          <span>Powered by</span>
-          <OrganizrLogo size={14} showWordmark wordmarkClassName="font-medium text-zinc-500" />
-        </a>
+    <footer className={showSponsorSection ? 'mt-8 space-y-5' : 'mt-8'}>
+      {showSponsorSection ? (
+        <OrgSponsorFooter slug={slug} sponsors={sponsors} showCta={showSponsorshipCta} />
+      ) : null}
+      <div className="hidden px-1 md:block">
+        <OrgPublicPoweredByStrip slug={slug} />
       </div>
     </footer>
   )
