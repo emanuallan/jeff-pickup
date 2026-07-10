@@ -15,9 +15,9 @@ export function OrgPublicSiteFooter({
   showSponsorshipCta?: boolean
 }) {
   return (
-    <footer className="mt-16">
+    <footer className="mt-8 space-y-5">
       <OrgSponsorFooter slug={slug} sponsors={sponsors} showCta={showSponsorshipCta} />
-      <div className="mt-6 flex items-center justify-between gap-4 border-t border-zinc-800/70 pt-6 text-xs text-zinc-600">
+      <div className="flex flex-col items-center gap-2 px-1 text-center text-[11px] leading-relaxed text-zinc-600 sm:flex-row sm:justify-between sm:text-left">
         <p className="truncate font-medium tracking-wide">
           {slug}.{getRootDomain()}
         </p>
