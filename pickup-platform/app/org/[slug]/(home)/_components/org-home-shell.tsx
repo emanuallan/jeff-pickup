@@ -15,11 +15,10 @@ export const ORG_HOME_BOTTOM_CHROME_PADDING =
 
 /** Bottom padding when tab bar + organizer console footer are shown. */
 export const ORG_HOME_ORGANIZER_BOTTOM_CHROME_PADDING =
-  'pb-[calc(9rem+env(safe-area-inset-bottom))]'
+  'pb-[calc(8rem+env(safe-area-inset-bottom))]'
 
-/** Bottom padding when only the footer strip is shown (single tab). */
-export const ORG_HOME_FOOTER_ONLY_PADDING =
-  'pb-[calc(3.5rem+env(safe-area-inset-bottom))]'
+/** Bottom padding when there is no sticky mobile chrome. */
+export const ORG_HOME_FOOTER_ONLY_PADDING = 'pb-[calc(1.5rem+env(safe-area-inset-bottom))]'
 
 /** Bottom padding when only the organizer console footer is shown. */
 export const ORG_HOME_ORGANIZER_FOOTER_ONLY_PADDING =
@@ -32,7 +31,7 @@ export function OrgHomeShell({
   isOrganizer = false,
   slug,
   accent,
-  showDesktopSiteFooter = true,
+  showSiteFooter = true,
   sponsors = [],
   showSponsorshipCta = false,
 }: {
@@ -42,8 +41,8 @@ export function OrgHomeShell({
   isOrganizer?: boolean
   slug: string
   accent: string
-  /** When false, skip the inline site footer (demo and organizer use their own chrome). */
-  showDesktopSiteFooter?: boolean
+  /** When false, skip the inline site footer (demo org). */
+  showSiteFooter?: boolean
   sponsors?: PublicSponsor[]
   showSponsorshipCta?: boolean
 }) {
@@ -62,14 +61,12 @@ export function OrgHomeShell({
         className={`mx-auto flex min-h-dvh flex-col px-5 pt-6 sm:px-6 sm:pt-8 ${ORG_PUBLIC_CONTENT_MAX} ${bottomPadding} ${ORG_PUBLIC_DESKTOP_SHELL_PADDING}`}
       >
         {children}
-        {showDesktopSiteFooter ? (
-          <div className="hidden md:block">
-            <OrgPublicSiteFooter
-              slug={slug}
-              sponsors={sponsors}
-              showSponsorshipCta={showSponsorshipCta}
-            />
-          </div>
+        {showSiteFooter ? (
+          <OrgPublicSiteFooter
+            slug={slug}
+            sponsors={sponsors}
+            showSponsorshipCta={showSponsorshipCta}
+          />
         ) : null}
         {slug === 'demo' ? (
           <div className="hidden md:block">

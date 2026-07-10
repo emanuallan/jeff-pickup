@@ -4,7 +4,7 @@ import { rootBaseUrl } from '@/lib/og-metadata'
 import type { PublicSponsor } from '@/lib/sponsorship'
 import { OrgSponsorFooter } from './org-sponsor-footer'
 
-/** Inline site footer for desktop — mirrors the slim strip on mobile bottom chrome. */
+/** Inline site footer at the bottom of public org pages. */
 export function OrgPublicSiteFooter({
   slug,
   sponsors = [],

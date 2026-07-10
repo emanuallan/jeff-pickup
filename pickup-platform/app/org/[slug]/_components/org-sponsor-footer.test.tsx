@@ -19,6 +19,7 @@ describe('OrgSponsorFooter', () => {
       />,
     )
 
+    expect(screen.getByText('Thank you to our sponsors')).toBeInTheDocument()
     expect(screen.getByAltText('Acme')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Want to sponsor us?' })).toHaveAttribute(
       'href',

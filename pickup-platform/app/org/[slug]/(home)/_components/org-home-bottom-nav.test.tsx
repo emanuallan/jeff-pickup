@@ -12,12 +12,12 @@ const navItems = [
   { key: 'leaderboard' as const, label: 'Leaderboard', href: '/?tab=leaderboard' },
 ]
 
-describe('OrgHomeBottomNav sponsorship CTA', () => {
+describe('OrgHomeBottomNav', () => {
   afterEach(() => {
     cleanup()
   })
 
-  it('shows the sponsor CTA for organizers on mobile chrome', () => {
+  it('keeps sponsor content out of the sticky mobile chrome', () => {
     render(
       <OrgHomeBottomNav
         items={navItems}
@@ -25,11 +25,11 @@ describe('OrgHomeBottomNav sponsorship CTA', () => {
         basePath="/"
         slug="jeff"
         isOrganizer
-        showSponsorshipCta
       />,
     )
 
-    expect(screen.getByRole('link', { name: 'Want to sponsor us?' })).toBeInTheDocument()
+    expect(screen.queryByText('Thank you to our sponsors')).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Want to sponsor us?' })).not.toBeInTheDocument()
     expect(screen.getByRole('link', { name: /back to console/i })).toBeInTheDocument()
   })
 })
