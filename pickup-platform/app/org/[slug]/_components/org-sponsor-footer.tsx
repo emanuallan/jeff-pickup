@@ -59,7 +59,7 @@ function SponsorLogo({ sponsor, accent }: { sponsor: PublicSponsor; accent: stri
 }
 
 /** Inline sponsor recognition block at the bottom of public org pages. */
-export function OrgSponsorSection({ slug, orgName, accent, sponsors, showCta }: Props) {
+export function OrgSponsorSection({ slug, orgName, accent, sponsors, showCta = true }: Props) {
   if (!showCta && sponsors.length === 0) {
     return null
   }
@@ -70,7 +70,7 @@ export function OrgSponsorSection({ slug, orgName, accent, sponsors, showCta }: 
   return (
     <section
       aria-labelledby="org-sponsor-section-title"
-      className="relative mt-8 overflow-hidden rounded-3xl border border-zinc-800"
+      className="relative overflow-hidden rounded-3xl border border-zinc-800"
       style={{
         background: `linear-gradient(155deg, ${hexToRgba(accent, 0.16)} 0%, rgba(24, 24, 27, 0.94) 46%, rgb(9, 9, 11) 100%)`,
         boxShadow: `inset 0 1px 0 0 ${hexToRgba(accent, 0.24)}`,

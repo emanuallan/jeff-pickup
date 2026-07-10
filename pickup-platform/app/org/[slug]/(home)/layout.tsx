@@ -4,9 +4,8 @@ import { notFound } from 'next/navigation'
 import { getPublicOrgBySlug, getPublicUpcomingEventsForOrg } from '@/lib/public-data'
 import { pickFeaturedUpcomingEvent } from '@/lib/events'
 import { getOrgForMember } from '@/lib/orgs'
-import { orgFeatures, orgSponsorshipSettings } from '@/lib/org-features'
-import { isSponsorshipsActiveLocally } from '@/lib/sponsorship'
-import { getOrgStripeAccount, getPublicSponsors, getSponsorshipTiersForOrg } from '@/lib/sponsorship.server'
+import { orgFeatures } from '@/lib/org-features'
+import { getPublicSponsors } from '@/lib/sponsorship.server'
 import { ORG_PUBLIC_NAV_BASE } from '@/lib/org-public-nav'
 import { isLeaderboardUnlocked } from '@/lib/engagement'
 import { resolveOrgPublicNavItems } from '@/lib/org-public-nav.server'
@@ -37,13 +36,11 @@ export default async function OrgHomeLayout({ children, params }: Props) {
     notFound()
   }
 
-  const [events, membership, leaderboardUnlocked, sponsors, stripeAccount, tiers] = await Promise.all([
+  const [events, membership, leaderboardUnlocked, sponsors] = await Promise.all([
     getPublicUpcomingEventsForOrg(org.id, 20, true),
     getOrgForMember(slug),
     isLeaderboardUnlocked(org.id),
     orgFeatures(org).group_sponsorships ? getPublicSponsors(org.id) : Promise.resolve([]),
-    orgFeatures(org).group_sponsorships ? getOrgStripeAccount(org.id) : Promise.resolve(null),
-    orgFeatures(org).group_sponsorships ? getSponsorshipTiersForOrg(org.id) : Promise.resolve([]),
   ])
   const featured = pickFeaturedUpcomingEvent(events)
   const accent = org.branding.accent_color
@@ -61,13 +58,7 @@ export default async function OrgHomeLayout({ children, params }: Props) {
   }))
   const defaultEventShortId = featured?.short_id ?? events[0]?.short_id ?? null
   const isOrganizer = !!membership
-  const sponsorshipSettings = orgSponsorshipSettings(org)
-  const showSponsorshipCta = isSponsorshipsActiveLocally({
-    featureEnabled: orgFeatures(org).group_sponsorships,
-    introText: sponsorshipSettings?.intro_text,
-    hasActiveTier: tiers.some((tier) => tier.status === 'active' && tier.stripe_price_id),
-    chargesEnabled: stripeAccount?.charges_enabled ?? false,
-  })
+  const showSponsorshipCta = orgFeatures(org).group_sponsorships
 
   const showSiteFooter = slug !== 'demo'
 
@@ -166,7 +157,7 @@ export default async function OrgHomeLayout({ children, params }: Props) {
         <OrgHomeDesktopNav items={navItems} accent={accent} basePath={ORG_PUBLIC_NAV_BASE} />
       </div>
 
-      <div className="mt-6 flex-1 md:mt-8">
+      <div className="mt-6 md:mt-8">
         <ParticipantFeedbackDeepLinkSlot slug={slug} accent={accent} />
         {children}
       </div>

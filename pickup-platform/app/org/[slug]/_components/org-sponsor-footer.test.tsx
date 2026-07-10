@@ -47,7 +47,28 @@ describe('OrgSponsorSection', () => {
     expect(screen.getByRole('link', { name: /want to sponsor us/i })).toBeInTheDocument()
   })
 
-  it('hides when empty and CTA off', () => {
+  it('always shows the sponsor CTA when the section is visible', () => {
+    render(
+      <OrgSponsorSection
+        {...baseProps}
+        sponsors={[
+          {
+            id: '1',
+            sponsor_name: 'Acme',
+            logo_url: 'https://example.com/logo.png',
+            sponsor_url: null,
+          },
+        ]}
+      />,
+    )
+
+    expect(screen.getByRole('link', { name: /want to sponsor us/i })).toHaveAttribute(
+      'href',
+      expect.stringContaining('/sponsorship'),
+    )
+  })
+
+  it('hides when there is nothing to show', () => {
     const { container } = render(
       <OrgSponsorSection {...baseProps} sponsors={[]} showCta={false} />,
     )

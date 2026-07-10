@@ -27,18 +27,18 @@ export function OrgPublicSiteFooter({
   const poweredByVisibility = showPoweredByOnMobile ? '' : 'hidden md:block'
 
   return (
-    <footer className={showSponsorSection || showPoweredBy ? 'mt-8 space-y-6' : undefined}>
+    <footer className={showSponsorSection || showPoweredBy ? 'mt-5 space-y-5' : undefined}>
       {showSponsorSection ? (
         <OrgSponsorSection
           slug={slug}
           orgName={orgName}
           accent={accent}
           sponsors={sponsors}
-          showCta={showSponsorshipCta}
+          showCta
         />
       ) : null}
       {showPoweredBy ? (
-        <div className={`border-t border-zinc-800/70 pt-6 ${poweredByVisibility}`}>
+        <div className={`border-t border-zinc-800/70 pt-5 ${poweredByVisibility}`}>
           <OrgPublicPoweredByStrip slug={slug} />
         </div>
       ) : null}
