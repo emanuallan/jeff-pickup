@@ -9,7 +9,6 @@ import {
   validateSponsorName,
   validateSponsorUrl,
 } from '@/lib/sponsorship'
-import { getOrgStripeAccount } from '@/lib/sponsorship.server'
 import { orgFeatures } from '@/lib/org-features'
 
 export async function POST(request: Request) {
@@ -48,18 +47,24 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Sponsorships are not available.' }, { status: 404 })
   }
 
-  const stripeAccount = await getOrgStripeAccount(org.id)
+  const admin = createAdminClient()
+  const [{ data: stripeAccount }, { data: tier, error: tierError }] = await Promise.all([
+    admin
+      .from('org_stripe_accounts')
+      .select('stripe_account_id, charges_enabled')
+      .eq('org_id', org.id)
+      .maybeSingle(),
+    admin
+      .from('sponsorship_tiers')
+      .select('id, stripe_price_id, price_cents, currency, status')
+      .eq('id', tierId)
+      .eq('org_id', org.id)
+      .maybeSingle(),
+  ])
+
   if (!stripeAccount?.charges_enabled) {
     return NextResponse.json({ error: 'Sponsorships are not available yet.' }, { status: 400 })
   }
-
-  const admin = createAdminClient()
-  const { data: tier, error: tierError } = await admin
-    .from('sponsorship_tiers')
-    .select('id, stripe_price_id, price_cents, currency, status')
-    .eq('id', tierId)
-    .eq('org_id', org.id)
-    .maybeSingle()
 
   if (tierError || !tier || tier.status !== 'active' || !tier.stripe_price_id) {
     return NextResponse.json({ error: 'Tier not found.' }, { status: 404 })

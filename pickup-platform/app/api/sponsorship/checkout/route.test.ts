@@ -5,9 +5,7 @@ vi.mock('@/lib/public-data', () => ({
   getPublicOrgBySlug: vi.fn(),
 }))
 
-vi.mock('@/lib/sponsorship.server', () => ({
-  getOrgStripeAccount: vi.fn(),
-}))
+vi.mock('@/lib/sponsorship.server', () => ({}))
 
 vi.mock('@/lib/supabase/admin', () => ({
   createAdminClient: vi.fn(),
@@ -19,14 +17,53 @@ vi.mock('@/lib/stripe', () => ({
 }))
 
 import { getPublicOrgBySlug } from '@/lib/public-data'
-import { getOrgStripeAccount } from '@/lib/sponsorship.server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getStripe } from '@/lib/stripe'
+
+function mockAdminClient({
+  stripeAccount = { stripe_account_id: 'acct_1', charges_enabled: true },
+  tier = {
+    id: 'tier-1',
+    stripe_price_id: 'price_1',
+    price_cents: 2500,
+    currency: 'usd',
+    status: 'active',
+  },
+}: {
+  stripeAccount?: { stripe_account_id: string; charges_enabled: boolean } | null
+  tier?: Record<string, unknown> | null
+} = {}) {
+  vi.mocked(createAdminClient).mockReturnValue({
+    from: (table: string) => ({
+      select: () => ({
+        eq: (column: string, value: string) => {
+          if (table === 'org_stripe_accounts') {
+            return {
+              maybeSingle: vi.fn().mockResolvedValue({ data: stripeAccount, error: null }),
+            }
+          }
+          if (table === 'sponsorship_tiers' && column === 'id') {
+            return {
+              eq: () => ({
+                maybeSingle: vi.fn().mockResolvedValue({ data: tier, error: null }),
+              }),
+            }
+          }
+          return {
+            eq: () => ({
+              maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+            }),
+          }
+        },
+      }),
+    }),
+  } as never)
+}
 
 describe('POST /api/sponsorship/checkout', () => {
   beforeEach(() => {
     vi.mocked(getPublicOrgBySlug).mockReset()
-    vi.mocked(getOrgStripeAccount).mockReset()
+    vi.mocked(createAdminClient).mockReset()
     process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://example.supabase.co'
   })
 
@@ -36,10 +73,7 @@ describe('POST /api/sponsorship/checkout', () => {
       slug: 'demo',
       settings: { features: { group_sponsorships: true } },
     } as never)
-    vi.mocked(getOrgStripeAccount).mockResolvedValue({
-      stripe_account_id: 'acct_1',
-      charges_enabled: true,
-    } as never)
+    mockAdminClient()
 
     const response = await POST(
       new Request('http://localhost', {
@@ -62,30 +96,7 @@ describe('POST /api/sponsorship/checkout', () => {
       slug: 'demo',
       settings: { features: { group_sponsorships: true } },
     } as never)
-    vi.mocked(getOrgStripeAccount).mockResolvedValue({
-      stripe_account_id: 'acct_1',
-      charges_enabled: true,
-    } as never)
-    vi.mocked(createAdminClient).mockReturnValue({
-      from: () => ({
-        select: () => ({
-          eq: () => ({
-            eq: () => ({
-              maybeSingle: vi.fn().mockResolvedValue({
-                data: {
-                  id: 'tier-1',
-                  stripe_price_id: 'price_1',
-                  price_cents: 2500,
-                  currency: 'usd',
-                  status: 'active',
-                },
-                error: null,
-              }),
-            }),
-          }),
-        }),
-      }),
-    } as never)
+    mockAdminClient()
     vi.mocked(getStripe).mockReturnValue({
       checkout: {
         sessions: {
