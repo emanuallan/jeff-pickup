@@ -63,7 +63,7 @@ export function OrgSponsorFooter({ slug, sponsors, showCta, compact = false }: P
             href={orgSponsorshipUrl(slug)}
             className="font-medium text-zinc-400 underline decoration-zinc-600 underline-offset-2 transition-colors hover:text-zinc-200"
           >
-            Want to sponsor?
+            Want to sponsor us?
           </Link>
         </p>
       ) : null}

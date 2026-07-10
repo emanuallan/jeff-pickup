@@ -199,6 +199,10 @@ function useOrgHomeNavState({ items, basePath }: Pick<Props, 'items' | 'basePath
   return { navItems, activeKey, pathname, tab }
 }
 
+function showMobileSponsorChrome(showSponsorshipCta: boolean, sponsors: PublicSponsor[]) {
+  return showSponsorshipCta || sponsors.length > 0
+}
+
 /** Fixed bottom chrome — mobile only. */
 export function OrgHomeBottomNav({
   items,
@@ -237,6 +241,16 @@ export function OrgHomeBottomNav({
       {isOrganizer ? (
         <footer className="relative border-t border-indigo-500/30 bg-zinc-950/95 shadow-[0_-8px_32px_rgba(0,0,0,0.45)]">
           <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-indigo-400/40 to-transparent" />
+          {showMobileSponsorChrome(showSponsorshipCta, sponsors) ? (
+            <div className="mx-auto max-w-lg border-b border-white/10 px-5 py-1.5">
+              <OrgSponsorFooter
+                slug={slug}
+                sponsors={sponsors}
+                showCta={showSponsorshipCta}
+                compact
+              />
+            </div>
+          ) : null}
           <OrganizerConsoleFooterLink slug={slug} label="Back to console" />
         </footer>
       ) : slug === 'demo' ? (

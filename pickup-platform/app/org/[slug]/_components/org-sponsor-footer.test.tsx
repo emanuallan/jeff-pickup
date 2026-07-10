@@ -20,7 +20,7 @@ describe('OrgSponsorFooter', () => {
     )
 
     expect(screen.getByAltText('Acme')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Want to sponsor?' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Want to sponsor us?' })).toHaveAttribute(
       'href',
       expect.stringContaining('/sponsorship'),
     )
