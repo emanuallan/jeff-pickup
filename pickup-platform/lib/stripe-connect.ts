@@ -34,7 +34,11 @@ export async function findStripeAccountIdForOrg(orgId: string): Promise<string |
     .maybeSingle()
 
   if (error) {
-    throw new Error(`org_stripe_accounts lookup failed: ${error.message}`)
+    const lookupError = new Error(`org_stripe_accounts lookup failed: ${error.message}`) as Error & {
+      code?: string
+    }
+    lookupError.code = error.code
+    throw lookupError
   }
 
   if (data?.stripe_account_id) {

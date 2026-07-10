@@ -76,9 +76,9 @@ const CONNECT_ERROR_DISPLAY: Record<StripeConnectErrorCode, StripeConnectErrorDi
   },
   database_permission: {
     code: 'database_permission',
-    title: 'Could not save Stripe account',
+    title: 'Could not access sponsorship data',
     message:
-      'The database blocked saving the connected account. Run migration 053_sponsorship_service_role_grants.sql in Supabase, then try Connect again.',
+      'The database blocked reading or saving the connected account. Run sponsorship migrations 053 and 054 in Supabase, then try Connect again.',
   },
   supabase_admin_missing: {
     code: 'supabase_admin_missing',
@@ -144,7 +144,13 @@ export function classifyStripeConnectFailure(error: unknown): ConnectFailure {
     return { code: 'supabase_admin_missing', logMessage: message }
   }
 
-  if (lowerMessage.includes('upsert_org_stripe_account failed')) {
+  if (
+    lowerMessage.includes('upsert_org_stripe_account failed') ||
+    lowerMessage.includes('org_stripe_accounts lookup failed')
+  ) {
+    if (lowerMessage.includes('does not exist')) {
+      return { code: 'migration_required', logMessage: message }
+    }
     return { code: 'database_permission', logMessage: message }
   }
 
@@ -153,7 +159,16 @@ export function classifyStripeConnectFailure(error: unknown): ConnectFailure {
     return { code: 'database_permission', logMessage: message }
   }
 
-  if (pgCode === '42P01' || lowerMessage.includes('org_stripe_accounts')) {
+  if (pgCode === '42P01') {
+    return { code: 'migration_required', logMessage: message }
+  }
+
+  if (
+    lowerMessage.includes('does not exist') &&
+    (lowerMessage.includes('org_stripe_accounts') ||
+      lowerMessage.includes('sponsorship_tiers') ||
+      lowerMessage.includes('sponsorships'))
+  ) {
     return { code: 'migration_required', logMessage: message }
   }
 
