@@ -1,6 +1,6 @@
 import { getRootDomain } from '@/lib/tenancy/parse-host'
 import { OrganizrLogo } from '@/app/_components/organizr-logo'
-import { rootBaseUrl } from '@/lib/og-metadata'
+import { rootBaseUrl } from '@/lib/site-url'
 
 type Props = {
   slug: string
