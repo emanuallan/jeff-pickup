@@ -1,42 +1,19 @@
 import { NextResponse } from 'next/server'
 import type Stripe from 'stripe'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { upsertSponsorshipFromCheckoutSession } from '@/lib/sponsorship-checkout'
 import { getStripe, stripeWebhookSecret } from '@/lib/stripe'
 
 export const runtime = 'nodejs'
 
 async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
-  const metadata = session.metadata ?? {}
-  const orgId = metadata.org_id
-  const tierId = metadata.tier_id
-  const sponsorName = metadata.sponsor_name
-  const logoUrl = metadata.logo_url
-
-  if (!orgId || !tierId || !sponsorName || !logoUrl || !session.subscription) {
-    return
+  const result = await upsertSponsorshipFromCheckoutSession(session)
+  if (!result.ok) {
+    console.warn('checkout.session.completed missing sponsorship metadata', {
+      sessionId: session.id,
+      reason: result.reason,
+    })
   }
-
-  const admin = createAdminClient()
-  const subscriptionId =
-    typeof session.subscription === 'string' ? session.subscription : session.subscription.id
-
-  await admin.rpc('upsert_sponsorship_from_checkout', {
-    p_org_id: orgId,
-    p_tier_id: tierId,
-    p_sponsor_name: sponsorName,
-    p_logo_url: logoUrl,
-    p_sponsor_url: metadata.sponsor_url ?? null,
-    p_sponsor_message: metadata.sponsor_message ?? null,
-    p_contact_email: session.customer_details?.email ?? session.customer_email ?? '',
-    p_stripe_customer_id:
-      typeof session.customer === 'string' ? session.customer : session.customer?.id ?? null,
-    p_stripe_subscription_id: subscriptionId,
-    p_stripe_checkout_session_id: session.id,
-    p_monthly_amount_cents: Number(metadata.monthly_amount_cents ?? 0),
-    p_currency: metadata.currency ?? 'usd',
-    p_platform_fee_percent: Number(metadata.platform_fee_percent ?? 5),
-    p_subscription_status: 'active',
-  })
 }
 
 async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
@@ -51,11 +28,15 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
     sponsorshipStatus = null
   }
 
-  await admin.rpc('update_sponsorship_subscription_status', {
+  const { error } = await admin.rpc('update_sponsorship_subscription_status', {
     p_stripe_subscription_id: subscription.id,
     p_subscription_status: subscription.status,
     p_sponsorship_status: sponsorshipStatus,
   })
+
+  if (error) {
+    throw new Error(`update_sponsorship_subscription_status failed: ${error.message}`)
+  }
 }
 
 async function handleAccountUpdated(account: Stripe.Account) {
@@ -63,13 +44,17 @@ async function handleAccountUpdated(account: Stripe.Account) {
   if (!orgId) return
 
   const admin = createAdminClient()
-  await admin.rpc('upsert_org_stripe_account', {
+  const { error } = await admin.rpc('upsert_org_stripe_account', {
     p_org_id: orgId,
     p_stripe_account_id: account.id,
     p_charges_enabled: account.charges_enabled ?? false,
     p_payouts_enabled: account.payouts_enabled ?? false,
     p_details_submitted: account.details_submitted ?? false,
   })
+
+  if (error) {
+    throw new Error(`upsert_org_stripe_account failed: ${error.message}`)
+  }
 }
 
 function subscriptionIdFromInvoice(invoice: Stripe.Invoice): string | null {
