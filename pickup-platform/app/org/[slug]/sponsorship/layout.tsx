@@ -35,8 +35,11 @@ export default async function SponsorshipLayout({ children, params }: Props) {
         <div className="mt-8">{children}</div>
         <OrgPublicSiteFooter
           slug={slug}
+          orgName={org.name}
+          accent={org.branding.accent_color}
           sponsors={sponsors}
           showSponsorshipCta={page?.active ?? false}
+          showPoweredByOnMobile
         />
       </main>
     </>

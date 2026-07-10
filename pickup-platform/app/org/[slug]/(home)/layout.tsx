@@ -69,15 +69,16 @@ export default async function OrgHomeLayout({ children, params }: Props) {
     chargesEnabled: stripeAccount?.charges_enabled ?? false,
   })
 
-  const showDesktopSiteFooter = slug !== 'demo'
+  const showSiteFooter = slug !== 'demo'
 
   return (
     <OrgHomeShell
       slug={slug}
+      orgName={org.name}
       accent={accent}
       footerOnly={navItems.length <= 1}
       isOrganizer={isOrganizer}
-      showDesktopSiteFooter={showDesktopSiteFooter}
+      showSiteFooter={showSiteFooter}
       sponsors={sponsors}
       showSponsorshipCta={showSponsorshipCta}
       bottomChrome={
@@ -88,8 +89,6 @@ export default async function OrgHomeLayout({ children, params }: Props) {
             basePath={ORG_PUBLIC_NAV_BASE}
             slug={slug}
             isOrganizer={isOrganizer}
-            sponsors={sponsors}
-            showSponsorshipCta={showSponsorshipCta}
           />
         </Suspense>
       }

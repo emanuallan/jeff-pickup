@@ -1,12 +1,22 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest'
-import { render, screen } from '@testing-library/react'
-import { OrgSponsorFooter } from './org-sponsor-footer'
+import { afterEach, describe, expect, it } from 'vitest'
+import { cleanup, render, screen } from '@testing-library/react'
+import { OrgSponsorSection } from './org-sponsor-footer'
 
-describe('OrgSponsorFooter', () => {
-  it('renders sponsor logos and CTA', () => {
+const baseProps = {
+  slug: 'demo',
+  orgName: 'Demo FC',
+  accent: '#2563eb',
+}
+
+describe('OrgSponsorSection', () => {
+  afterEach(() => {
+    cleanup()
+  })
+
+  it('renders a branded thank-you section with sponsor logos and CTA', () => {
     render(
-      <OrgSponsorFooter
-        slug="demo"
+      <OrgSponsorSection
+        {...baseProps}
         sponsors={[
           {
             id: '1',
@@ -19,16 +29,27 @@ describe('OrgSponsorFooter', () => {
       />,
     )
 
+    expect(
+      screen.getByRole('heading', { name: /thank you for supporting demo fc/i }),
+    ).toBeInTheDocument()
+    expect(screen.getByText('Community sponsors')).toBeInTheDocument()
     expect(screen.getByAltText('Acme')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Want to sponsor us?' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: /want to sponsor us/i })).toHaveAttribute(
       'href',
       expect.stringContaining('/sponsorship'),
     )
   })
 
+  it('renders a sponsor CTA card when there are no logos yet', () => {
+    render(<OrgSponsorSection {...baseProps} sponsors={[]} showCta />)
+
+    expect(screen.getByRole('heading', { name: /become a demo fc sponsor/i })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /want to sponsor us/i })).toBeInTheDocument()
+  })
+
   it('hides when empty and CTA off', () => {
     const { container } = render(
-      <OrgSponsorFooter slug="demo" sponsors={[]} showCta={false} />,
+      <OrgSponsorSection {...baseProps} sponsors={[]} showCta={false} />,
     )
     expect(container).toBeEmptyDOMElement()
   })
