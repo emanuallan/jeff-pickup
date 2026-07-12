@@ -194,4 +194,33 @@ describe('SessionDebriefSheet', () => {
     })
     expect(await screen.findByText('Rate this session')).toBeInTheDocument()
   })
+
+  it('hides skip feedback when MVP and stats are disabled', async () => {
+    getSessionDebriefStateMock.mockResolvedValue({
+      ok: true,
+      state: {
+        ...openMvpState,
+        mvp_voting_enabled: false,
+        player_stats_enabled: false,
+        mvp_step_complete: true,
+        stats_step_complete: true,
+        initial_step: 'feedback',
+        steps: ['feedback'],
+      },
+    })
+
+    render(
+      <SessionDebriefSheet
+        open
+        onClose={() => {}}
+        orgSlug="demo"
+        eventId="event-1"
+        payload={payload}
+        accent="#6366f1"
+      />,
+    )
+
+    expect(await screen.findByText('Rate this session')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Skip feedback' })).not.toBeInTheDocument()
+  })
 })

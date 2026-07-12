@@ -438,14 +438,16 @@ export function SessionDebriefSheet({
                   onClose()
                 }}
               />
-              <button
-                type="button"
-                disabled={loading || busy}
-                onClick={() => void handleFeedbackSkip()}
-                className="w-full text-center text-xs text-zinc-500 underline-offset-2 hover:text-zinc-300 hover:underline"
-              >
-                Skip feedback
-              </button>
+              {shouldShowDebriefStepIndicator(state) ? (
+                <button
+                  type="button"
+                  disabled={loading || busy}
+                  onClick={() => void handleFeedbackSkip()}
+                  className="w-full text-center text-xs text-zinc-500 underline-offset-2 hover:text-zinc-300 hover:underline"
+                >
+                  Skip feedback
+                </button>
+              ) : null}
             </div>
           ) : null}
 
