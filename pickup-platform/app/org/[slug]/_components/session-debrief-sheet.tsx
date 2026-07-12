@@ -68,8 +68,7 @@ function SessionMvpVoteStep({
     return (
       <div className="space-y-4">
         <p className="text-sm leading-relaxed text-zinc-400">
-          MVP voting is only available for 6 hours after the session ends. You can still share your
-          stats and feedback.
+          MVP voting is only available for 6 hours after the session ends.
         </p>
         <button
           type="button"
