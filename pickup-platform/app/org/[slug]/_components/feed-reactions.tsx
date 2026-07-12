@@ -16,6 +16,19 @@ type Props = {
   accent: string
 }
 
+function PlusIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4" aria-hidden>
+      <path
+        d="M12 5v14M5 12h14"
+        stroke="currentColor"
+        strokeWidth="1.75"
+        strokeLinecap="round"
+      />
+    </svg>
+  )
+}
+
 export function FeedReactions({ orgSlug, item, initialReactions, canReact, accent }: Props) {
   const [reactions, setReactions] = useState(initialReactions)
   const [pickerOpen, setPickerOpen] = useState(false)
@@ -48,7 +61,7 @@ export function FeedReactions({ orgSlug, item, initialReactions, canReact, accen
   }
 
   return (
-    <div className="mt-4 border-t border-zinc-800/80 pt-3">
+    <div className="border-t border-white/5 bg-zinc-950/30 px-4 py-3">
       <div className="flex flex-wrap items-center gap-1.5">
         {activeReactions.map((reaction) => {
           const selected = reaction.reacted_by_me
@@ -57,7 +70,7 @@ export function FeedReactions({ orgSlug, item, initialReactions, canReact, accen
             return (
               <span
                 key={reaction.emoji}
-                className="inline-flex items-center gap-1 rounded-full border border-zinc-800 bg-zinc-950/50 px-2.5 py-1 text-sm"
+                className="inline-flex items-center gap-1.5 rounded-full border border-zinc-800/80 bg-zinc-900/60 px-2.5 py-1 text-sm"
               >
                 <span aria-hidden>{reaction.emoji}</span>
                 <span className="text-xs font-medium tabular-nums text-zinc-400">{reaction.count}</span>
@@ -71,10 +84,10 @@ export function FeedReactions({ orgSlug, item, initialReactions, canReact, accen
               type="button"
               disabled={pending}
               onClick={() => handleToggle(reaction.emoji)}
-              className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-sm transition disabled:opacity-60 ${
+              className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-sm transition disabled:opacity-60 ${
                 selected
-                  ? 'border-zinc-600 bg-zinc-800/80'
-                  : 'border-zinc-800 bg-zinc-950/50 hover:border-zinc-700 hover:bg-zinc-900'
+                  ? 'border-zinc-600 bg-zinc-800/90'
+                  : 'border-zinc-800/80 bg-zinc-900/60 hover:border-zinc-700 hover:bg-zinc-900'
               }`}
               aria-pressed={selected}
               aria-label={`${selected ? 'Remove' : 'Add'} ${reaction.emoji} reaction`}
@@ -90,17 +103,22 @@ export function FeedReactions({ orgSlug, item, initialReactions, canReact, accen
             type="button"
             disabled={pending}
             onClick={() => setPickerOpen((open) => !open)}
-            className="inline-flex items-center rounded-full border border-dashed border-zinc-700 px-2.5 py-1 text-xs font-medium text-zinc-400 transition hover:border-zinc-600 hover:text-zinc-200 disabled:opacity-60"
+            className={`inline-flex h-8 w-8 items-center justify-center rounded-full border text-zinc-400 transition disabled:opacity-60 ${
+              pickerOpen
+                ? 'border-zinc-600 bg-zinc-800/80 text-zinc-200'
+                : 'border-zinc-700 bg-transparent hover:border-zinc-600 hover:bg-zinc-900/80 hover:text-zinc-200'
+            }`}
             aria-expanded={pickerOpen}
+            aria-label={pickerOpen ? 'Close reaction picker' : 'Add reaction'}
           >
-            React
+            <PlusIcon />
           </button>
         ) : null}
       </div>
 
       {canReact && pickerOpen ? (
         <div
-          className="mt-2 flex gap-1 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          className="mt-2.5 flex gap-1 overflow-x-auto pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           role="toolbar"
           aria-label="Choose a reaction"
         >
@@ -116,9 +134,7 @@ export function FeedReactions({ orgSlug, item, initialReactions, canReact, accen
                 disabled={pending}
                 onClick={() => handleToggle(emoji)}
                 className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-lg transition disabled:opacity-60 ${
-                  selected
-                    ? 'ring-2 ring-offset-1 ring-offset-zinc-900'
-                    : 'hover:bg-zinc-800/80'
+                  selected ? 'bg-zinc-800/90' : 'hover:bg-zinc-800/70'
                 }`}
                 style={selected ? { boxShadow: `0 0 0 2px ${accent}` } : undefined}
                 aria-label={`React with ${emoji}`}

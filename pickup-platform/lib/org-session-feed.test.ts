@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import type { OrgSettings } from '@/lib/org-features'
 import {
+  formatFeedItemDate,
   formatMvpFeedHeadline,
   formatPlayerStatsFeedHeadline,
+  formatPlayerStatsInline,
   isOrgSessionFeedEnabled,
   parseOrgSessionFeed,
   parseOrgSessionFeedItem,
@@ -181,6 +183,19 @@ describe('parseOrgSessionFeed', () => {
 
     expect(items).toHaveLength(1)
     expect(items[0]?.kind).toBe('player_stats')
+  })
+})
+
+describe('formatPlayerStatsInline', () => {
+  it('formats goals and assists compactly', () => {
+    expect(formatPlayerStatsInline(4, 2)).toBe('4G · 2A')
+    expect(formatPlayerStatsInline(0, 0)).toBeNull()
+  })
+})
+
+describe('formatFeedItemDate', () => {
+  it('returns a short weekday date', () => {
+    expect(formatFeedItemDate('2026-07-12T18:00:00.000Z')).toMatch(/Jul/)
   })
 })
 

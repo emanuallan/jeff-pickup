@@ -1,13 +1,15 @@
+import Link from 'next/link'
 import type {
   OrgSessionFeedItem,
   OrgSessionFeedMvpItem,
   OrgSessionFeedPlayerStatsItem,
 } from '@/lib/org-session-feed'
 import {
+  formatFeedItemDate,
   formatMvpFeedHeadline,
-  formatPlayerStatsFeedHeadline,
 } from '@/lib/org-session-feed'
 import { formatNotificationTime } from '@/lib/participant-notifications'
+import { orgPublicEventHref } from '@/lib/org-public-nav'
 import { readableTextColor } from '@/lib/colors'
 import { FeedReactions } from './feed-reactions'
 
@@ -31,6 +33,48 @@ function FeedKindBadge({ kind }: { kind: OrgSessionFeedItem['kind'] }) {
     <span className="inline-flex rounded-md bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-200 ring-1 ring-inset ring-emerald-500/20">
       Stats
     </span>
+  )
+}
+
+function FeedSessionLink({
+  item,
+  accent,
+  className = 'mt-2',
+}: {
+  item: OrgSessionFeedItem
+  accent: string
+  className?: string
+}) {
+  const dateLabel = formatFeedItemDate(item.occurred_at)
+
+  return (
+    <p className={`text-xs leading-relaxed text-zinc-500 ${className}`}>
+      <Link
+        href={orgPublicEventHref(item.event_short_id)}
+        className="font-medium underline-offset-2 transition hover:underline"
+        style={{ color: accent }}
+      >
+        {item.event_label}
+      </Link>
+      <span className="text-zinc-600"> ({dateLabel})</span>
+    </p>
+  )
+}
+
+function FeedSessionMeta({
+  item,
+  accent,
+}: {
+  item: OrgSessionFeedItem
+  accent: string
+}) {
+  const when = formatNotificationTime(item.occurred_at)
+
+  return (
+    <div className="mt-1.5">
+      <FeedSessionLink item={item} accent={accent} />
+      <p className="mt-0.5 text-xs text-zinc-600">{when}</p>
+    </div>
   )
 }
 
@@ -89,25 +133,35 @@ function FeedCard({
   orgSlug: string
   canReact: boolean
 }) {
-  const when = formatNotificationTime(item.occurred_at)
-  const headline =
-    item.kind === 'mvp'
-      ? formatMvpFeedHeadline(item)
-      : formatPlayerStatsFeedHeadline(item)
+  if (item.kind === 'player_stats') {
+    return <PlayerStatsFeedCard item={item} accent={accent} orgSlug={orgSlug} canReact={canReact} />
+  }
+
+  return <MvpFeedCard item={item} accent={accent} orgSlug={orgSlug} canReact={canReact} />
+}
+
+function MvpFeedCard({
+  item,
+  accent,
+  orgSlug,
+  canReact,
+}: {
+  item: OrgSessionFeedMvpItem
+  accent: string
+  orgSlug: string
+  canReact: boolean
+}) {
+  const headline = formatMvpFeedHeadline(item)
 
   return (
-    <article className="rounded-3xl border border-zinc-800 bg-zinc-900/40 p-4">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <FeedKindBadge kind={item.kind} />
-          <h3 className="mt-2 text-base font-semibold leading-snug text-zinc-100">{headline}</h3>
-          <p className="mt-1 text-xs text-zinc-500">
-            {item.event_label} · {when}
-          </p>
-        </div>
-      </div>
+    <article className="overflow-hidden rounded-3xl border border-zinc-800/90 bg-gradient-to-b from-zinc-900/70 to-zinc-950/50">
+      <div className="px-4 py-4">
+        <FeedKindBadge kind="mvp" />
+        <h3 className="mt-2.5 text-base font-semibold leading-snug tracking-tight text-zinc-50">
+          {headline}
+        </h3>
+        <FeedSessionMeta item={item} accent={accent} />
 
-      {item.kind === 'mvp' ? (
         <div className="mt-4">
           <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-500">
             Vote breakdown
@@ -115,9 +169,7 @@ function FeedCard({
           </p>
           <MvpNomineeList item={item} accent={accent} />
         </div>
-      ) : (
-        <PlayerStatsDetail item={item} />
-      )}
+      </div>
 
       <FeedReactions
         orgSlug={orgSlug}
@@ -130,18 +182,98 @@ function FeedCard({
   )
 }
 
-function PlayerStatsDetail({ item }: { item: OrgSessionFeedPlayerStatsItem }) {
+function PlayerStatsScorecard({
+  goals,
+  assists,
+  accent,
+}: {
+  goals: number
+  assists: number
+  accent: string
+}) {
   return (
-    <div className="mt-4 flex items-center gap-3">
-      <div className="rounded-2xl border border-zinc-800 bg-zinc-950/60 px-4 py-3 text-center">
-        <p className="text-[10px] font-semibold uppercase tracking-wide text-zinc-500">Goals</p>
-        <p className="mt-1 text-2xl font-bold tabular-nums text-zinc-100">{item.goals}</p>
+    <div
+      className="flex shrink-0 overflow-hidden rounded-2xl border border-zinc-800/90 bg-zinc-950/80"
+      style={{ boxShadow: `inset 0 1px 0 0 rgba(255,255,255,0.04), 0 0 0 1px ${accent}28` }}
+      aria-label={`${goals} goals, ${assists} assists`}
+    >
+      <div className="flex min-w-[3.5rem] flex-col items-center px-3.5 py-2">
+        <span className="text-[9px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
+          Goals
+        </span>
+        <span
+          className="mt-1 text-xl font-bold tabular-nums leading-none"
+          style={{ color: goals > 0 ? accent : '#52525b' }}
+        >
+          {goals}
+        </span>
       </div>
-      <div className="rounded-2xl border border-zinc-800 bg-zinc-950/60 px-4 py-3 text-center">
-        <p className="text-[10px] font-semibold uppercase tracking-wide text-zinc-500">Assists</p>
-        <p className="mt-1 text-2xl font-bold tabular-nums text-zinc-100">{item.assists}</p>
+
+      <div className="my-2 w-px self-stretch bg-zinc-800/90" aria-hidden />
+
+      <div className="flex min-w-[3.5rem] flex-col items-center px-3.5 py-2">
+        <span className="text-[9px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
+          Assists
+        </span>
+        <span
+          className="mt-1 text-xl font-bold tabular-nums leading-none"
+          style={{ color: assists > 0 ? accent : '#52525b' }}
+        >
+          {assists}
+        </span>
       </div>
     </div>
+  )
+}
+
+function PlayerStatsFeedCard({
+  item,
+  accent,
+  orgSlug,
+  canReact,
+}: {
+  item: OrgSessionFeedPlayerStatsItem
+  accent: string
+  orgSlug: string
+  canReact: boolean
+}) {
+  const when = formatNotificationTime(item.occurred_at)
+  const hasStats = item.goals > 0 || item.assists > 0
+
+  return (
+    <article className="overflow-hidden rounded-3xl border border-zinc-800/90 bg-gradient-to-b from-zinc-900/70 to-zinc-950/50">
+      <div className="px-4 py-4">
+        <div className="flex items-center justify-between gap-3">
+          <FeedKindBadge kind="player_stats" />
+          <time className="shrink-0 text-xs text-zinc-500" dateTime={item.occurred_at}>
+            {when}
+          </time>
+        </div>
+
+        <div className="mt-3 flex items-start justify-between gap-4">
+          <div className="min-w-0 flex-1">
+            <p className="text-lg font-semibold tracking-tight text-zinc-50">{item.display_name}</p>
+            <FeedSessionLink item={item} accent={accent} className="mt-1" />
+          </div>
+
+          {hasStats ? (
+            <PlayerStatsScorecard goals={item.goals} assists={item.assists} accent={accent} />
+          ) : null}
+        </div>
+
+        {!hasStats ? (
+          <p className="mt-2 text-sm text-zinc-500">No goals or assists recorded.</p>
+        ) : null}
+      </div>
+
+      <FeedReactions
+        orgSlug={orgSlug}
+        item={item}
+        initialReactions={item.reactions}
+        canReact={canReact}
+        accent={accent}
+      />
+    </article>
   )
 }
 

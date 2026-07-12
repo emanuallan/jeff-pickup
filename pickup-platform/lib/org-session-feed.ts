@@ -210,6 +210,22 @@ export function formatPlayerStatsFeedHeadline(item: OrgSessionFeedPlayerStatsIte
   return `${item.display_name} — ${parts.join(', ')}`
 }
 
+/** Short calendar label for feed metadata, e.g. "Sun, Jul 12". */
+export function formatFeedItemDate(iso: string): string {
+  return new Date(iso).toLocaleDateString(undefined, {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+  })
+}
+
+export function formatPlayerStatsInline(goals: number, assists: number): string | null {
+  const parts: string[] = []
+  if (goals > 0) parts.push(`${goals}G`)
+  if (assists > 0) parts.push(`${assists}A`)
+  return parts.length > 0 ? parts.join(' · ') : null
+}
+
 export function feedItemReactionTarget(item: OrgSessionFeedItem): {
   feedKind: OrgSessionFeedItem['kind']
   eventId: string
