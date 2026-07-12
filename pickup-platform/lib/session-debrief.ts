@@ -132,6 +132,17 @@ export function previousDebriefStep(
   return steps[index - 1] ?? null
 }
 
+export function isFirstDebriefStep(
+  steps: readonly SessionDebriefStep[],
+  step: SessionDebriefStep,
+): boolean {
+  return steps[0] === step
+}
+
+export function shouldShowDebriefStepIndicator(state: SessionDebriefState): boolean {
+  return state.mvp_voting_enabled || state.player_stats_enabled
+}
+
 export function isMvpWizardStepPending(state: SessionDebriefState): boolean {
   return state.mvp_voting_enabled && !state.mvp_vote_cast && !state.mvp_skipped
 }

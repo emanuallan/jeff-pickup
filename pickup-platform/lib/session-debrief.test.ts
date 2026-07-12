@@ -3,9 +3,11 @@ import {
   debriefStepCount,
   debriefStepIndex,
   isMvpWizardStepPending,
+  isFirstDebriefStep,
   nextDebriefStep,
   parseSessionDebriefState,
   resolveInitialDebriefStep,
+  shouldShowDebriefStepIndicator,
   validateSessionPlayerStatsInput,
   type SessionDebriefState,
   type SessionDebriefStep,
@@ -67,6 +69,13 @@ describe('session-debrief', () => {
       expect(nextDebriefStep(steps, 'feedback')).toBeNull()
     })
 
+    it('identifies the first debrief step', () => {
+      const steps: SessionDebriefStep[] = ['mvp', 'stats', 'feedback']
+      expect(isFirstDebriefStep(steps, 'mvp')).toBe(true)
+      expect(isFirstDebriefStep(steps, 'stats')).toBe(false)
+      expect(isFirstDebriefStep(['feedback'], 'feedback')).toBe(true)
+    })
+
     it('resumes at the first incomplete step', () => {
       expect(
         resolveInitialDebriefStep({
@@ -86,6 +95,33 @@ describe('session-debrief', () => {
           mvp_skipped: true,
         }),
       ).toBe('feedback')
+    })
+
+    it('shows step indicator when MVP or stats are enabled', () => {
+      expect(
+        shouldShowDebriefStepIndicator({
+          ...baseState,
+          mvp_voting_enabled: true,
+          player_stats_enabled: false,
+        }),
+      ).toBe(true)
+
+      expect(
+        shouldShowDebriefStepIndicator({
+          ...baseState,
+          mvp_voting_enabled: false,
+          player_stats_enabled: true,
+        }),
+      ).toBe(true)
+
+      expect(
+        shouldShowDebriefStepIndicator({
+          ...baseState,
+          mvp_voting_enabled: false,
+          player_stats_enabled: false,
+          steps: ['feedback'],
+        }),
+      ).toBe(false)
     })
 
     it('still shows MVP when voting closed but not yet acknowledged', () => {

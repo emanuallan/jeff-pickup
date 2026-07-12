@@ -12,6 +12,8 @@ import {
   nextDebriefStep,
   previousDebriefStep,
   resolveInitialDebriefStep,
+  shouldShowDebriefStepIndicator,
+  isFirstDebriefStep,
 } from '@/lib/session-debrief'
 import {
   getSessionDebriefState,
@@ -374,7 +376,7 @@ export function SessionDebriefSheet({
             mvpVotingOpen: currentStep === 'mvp' ? state?.mvp_voting_open : undefined,
           })}
         </h2>
-        {state ? (
+        {state && shouldShowDebriefStepIndicator(state) ? (
           <span className="shrink-0 text-xs font-medium text-zinc-500">
             Step {stepNumber} of {totalSteps}
           </span>
@@ -429,6 +431,7 @@ export function SessionDebriefSheet({
                 eventId={eventId}
                 accent={accent}
                 disabled={loading}
+                showNoAttendOption={isFirstDebriefStep(state.steps, currentStep)}
                 onBusyChange={setBusy}
                 onComplete={(outcome) => {
                   onCompleted?.(outcome)

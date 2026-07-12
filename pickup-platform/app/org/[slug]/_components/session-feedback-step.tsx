@@ -49,6 +49,7 @@ type Props = {
   eventId: string
   accent: string
   disabled?: boolean
+  showNoAttendOption?: boolean
   onComplete: (outcome: 'rated' | 'no_attend' | 'skipped') => void
   onBusyChange?: (busy: boolean) => void
 }
@@ -58,6 +59,7 @@ export function SessionFeedbackStep({
   eventId,
   accent,
   disabled = false,
+  showNoAttendOption = true,
   onComplete,
   onBusyChange,
 }: Props) {
@@ -144,42 +146,44 @@ export function SessionFeedbackStep({
         {loading === 'submit' ? 'Submitting…' : 'Submit feedback'}
       </button>
 
-      <div className="mt-4 border-t border-white/5 pt-4">
-        {confirmNoAttend ? (
-          <div className="space-y-3">
-            <p className="text-xs leading-relaxed text-zinc-400">
-              Please confirm you did not attend this session.
-            </p>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                disabled={loading !== null || disabled}
-                onClick={() => setConfirmNoAttend(false)}
-                className="flex-1 rounded-xl border border-white/10 px-3 py-2 text-xs font-medium text-zinc-300"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                disabled={loading !== null || disabled}
-                onClick={() => void handleNoAttend()}
-                className="flex-1 rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs font-medium text-red-300"
-              >
-                {loading === 'no_attend' ? 'Confirming…' : 'Confirm'}
-              </button>
+      {showNoAttendOption ? (
+        <div className="mt-4 border-t border-white/5 pt-4">
+          {confirmNoAttend ? (
+            <div className="space-y-3">
+              <p className="text-xs leading-relaxed text-zinc-400">
+                Please confirm you did not attend this session.
+              </p>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  disabled={loading !== null || disabled}
+                  onClick={() => setConfirmNoAttend(false)}
+                  className="flex-1 rounded-xl border border-white/10 px-3 py-2 text-xs font-medium text-zinc-300"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  disabled={loading !== null || disabled}
+                  onClick={() => void handleNoAttend()}
+                  className="flex-1 rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs font-medium text-red-300"
+                >
+                  {loading === 'no_attend' ? 'Confirming…' : 'Confirm'}
+                </button>
+              </div>
             </div>
-          </div>
-        ) : (
-          <button
-            type="button"
-            disabled={loading !== null || disabled}
-            onClick={() => setConfirmNoAttend(true)}
-            className="w-full text-center text-xs text-zinc-500 underline-offset-2 hover:text-zinc-300 hover:underline"
-          >
-            I did not attend
-          </button>
-        )}
-      </div>
+          ) : (
+            <button
+              type="button"
+              disabled={loading !== null || disabled}
+              onClick={() => setConfirmNoAttend(true)}
+              className="w-full text-center text-xs text-zinc-500 underline-offset-2 hover:text-zinc-300 hover:underline"
+            >
+              I did not attend
+            </button>
+          )}
+        </div>
+      ) : null}
     </div>
   )
 }

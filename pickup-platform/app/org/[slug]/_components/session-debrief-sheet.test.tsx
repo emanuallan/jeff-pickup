@@ -159,6 +159,7 @@ describe('SessionDebriefSheet', () => {
       expect(submitSessionMvpVoteMock).toHaveBeenCalledWith('demo', 'event-1', 'p2')
     })
     expect(await screen.findByText('Rate this session')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'I did not attend' })).not.toBeInTheDocument()
   })
 
   it('skips MVP voting when requested', async () => {
