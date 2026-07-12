@@ -1,6 +1,6 @@
 export const ORG_PUBLIC_NAV_BASE = '/'
 
-export type OrgPublicTab = 'sessions' | 'leaderboard'
+export type OrgPublicTab = 'sessions' | 'leaderboard' | 'feed'
 
 export type OrgPublicNavKey = OrgPublicTab
 
@@ -67,6 +67,9 @@ export function orgHomeCanonicalPath(options: {
   if (options.tab === 'leaderboard') {
     params.set('tab', 'leaderboard')
   }
+  if (options.tab === 'feed') {
+    params.set('tab', 'feed')
+  }
   if (options.cal) {
     params.set('cal', options.cal)
   }
@@ -95,6 +98,10 @@ export function orgPublicNavActiveKey(
 
   if (tab === 'leaderboard') {
     return 'leaderboard'
+  }
+
+  if (tab === 'feed') {
+    return 'feed'
   }
 
   return ORG_PUBLIC_DEFAULT_TAB

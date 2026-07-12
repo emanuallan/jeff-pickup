@@ -13,7 +13,7 @@ import { accentOnDark } from '@/lib/colors'
 import { ORG_PUBLIC_CONTENT_MAX } from '@/lib/org-public-layout'
 import { OrgPublicPoweredByStrip } from '../../_components/org-public-powered-by-strip'
 import { OrganizerConsoleFooterLink } from '../../_components/organizer-console-footer-link'
-import { IconLeaderboard, IconMatchday } from './org-home-nav-icons'
+import { IconFeed, IconLeaderboard, IconMatchday } from './org-home-nav-icons'
 
 function rootBaseUrl(): string {
   const root = process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? 'organizr.co'
@@ -49,6 +49,7 @@ type NavTabsProps = {
 
 function NavIcon({ itemKey }: { itemKey: OrgPublicNavItem['key'] }) {
   if (itemKey === 'leaderboard') return <IconLeaderboard />
+  if (itemKey === 'feed') return <IconFeed />
   return <IconMatchday />
 }
 

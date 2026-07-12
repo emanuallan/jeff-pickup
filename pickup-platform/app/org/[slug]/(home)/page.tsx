@@ -15,6 +15,8 @@ import { buildEventJsonLd } from '@/lib/seo'
 import { JsonLd } from '@/app/_components/json-ld'
 import { MatchdayPanel } from './_components/matchday-panel'
 import { LeaderboardPanelSection } from './_components/leaderboard-panel-section'
+import { FeedPanelSection } from './_components/feed-panel-section'
+import { isOrgSessionFeedEnabled } from '@/lib/org-session-feed'
 
 type Props = {
   params: Promise<{ slug: string }>
@@ -89,7 +91,9 @@ export default async function OrgHomePage({ params, searchParams }: Props) {
 
   const eventRef = resolveCalEventId(cal, ev)
   if (ev && !cal) {
-    redirect(orgPublicTabHref('/', tab === 'leaderboard' ? 'leaderboard' : 'sessions', eventRef))
+    const legacyTab =
+      tab === 'leaderboard' ? 'leaderboard' : tab === 'feed' ? 'feed' : 'sessions'
+    redirect(orgPublicTabHref('/', legacyTab, eventRef))
   }
 
   if (tab === 'leaderboard') {
@@ -103,6 +107,14 @@ export default async function OrgHomePage({ params, searchParams }: Props) {
     }
 
     return <LeaderboardPanelSection org={org} />
+  }
+
+  if (tab === 'feed') {
+    if (!isOrgSessionFeedEnabled(org)) {
+      notFound()
+    }
+
+    return <FeedPanelSection org={org} />
   }
 
   const events = await getPublicUpcomingEventsForOrg(org.id, 20, true)

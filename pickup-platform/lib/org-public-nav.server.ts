@@ -1,5 +1,6 @@
 import type { Org } from '@/lib/orgs'
 import { orgFeatures } from '@/lib/org-features'
+import { isOrgSessionFeedEnabled } from '@/lib/org-session-feed'
 import {
   orgPublicTabHref,
   ORG_PUBLIC_DEFAULT_TAB,
@@ -30,6 +31,11 @@ export const ORG_PUBLIC_NAV_DEFINITIONS: OrgPublicNavDefinition[] = [
     label: 'Leaderboard',
     isVisible: ({ org, leaderboardUnlocked }) =>
       orgFeatures(org).leaderboard && leaderboardUnlocked === true,
+  },
+  {
+    key: 'feed',
+    label: 'Feed',
+    isVisible: ({ org }) => isOrgSessionFeedEnabled(org),
   },
 ]
 

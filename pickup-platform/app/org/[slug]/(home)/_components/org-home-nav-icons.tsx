@@ -26,3 +26,17 @@ export function IconLeaderboard() {
     </svg>
   )
 }
+
+export function IconFeed() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className="h-6 w-6" aria-hidden>
+      <path
+        d="M4 7.5h16M4 12h10M4 16.5h14"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+      />
+      <circle cx="19" cy="12" r="1.5" fill="currentColor" />
+    </svg>
+  )
+}
