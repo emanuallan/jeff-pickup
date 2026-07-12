@@ -13,7 +13,7 @@ export type OrgFeatures = {
   guest_signups: boolean
   /** When false, post-session feedback prompts and console feedback views are hidden. */
   session_feedback: boolean
-  /** When false, MVP voting is hidden from the post-session debrief wizard. */
+  /** When true, participants can vote for session MVP in the post-session debrief wizard. */
   session_mvp_voting: boolean
   /** When true, participants can self-report goals and assists after a session. */
   session_player_stats: boolean
@@ -43,7 +43,7 @@ export const DEFAULT_ORG_FEATURES: OrgFeatures = {
   public_roster: true,
   guest_signups: true,
   session_feedback: true,
-  session_mvp_voting: true,
+  session_mvp_voting: false,
   session_player_stats: false,
   group_rules: false,
   group_sponsorships: false,
@@ -79,9 +79,9 @@ export function parseOrgSettings(raw: unknown): OrgSettings {
       public_roster: features?.public_roster !== false,
       guest_signups: features?.guest_signups !== false,
       session_feedback: features?.session_feedback !== false,
-      session_mvp_voting: features?.session_mvp_voting !== false,
+      session_mvp_voting: features?.session_mvp_voting === true,
       session_player_stats: features?.session_player_stats === true,
-      // Opt-in: only feature that defaults off (missing key = false). Others use opt-out (!== false).
+      // Opt-in: missing key = false. Others use opt-out (!== false).
       group_rules: features?.group_rules === true,
       group_sponsorships: features?.group_sponsorships === true,
     },

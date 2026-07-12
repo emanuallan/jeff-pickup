@@ -9,7 +9,7 @@ import {
 
 describe('org-features', () => {
   describe('parseOrgSettings opt-out semantics', () => {
-    it('defaults most features to true when settings missing; group_rules stays off', () => {
+    it('defaults most features to true when settings missing; opt-in features stay off', () => {
       expect(parseOrgSettings(null)).toEqual({
         features: DEFAULT_ORG_FEATURES,
         waitlist: { promotion_mode: 'strict_fifo' },
@@ -17,6 +17,8 @@ describe('org-features', () => {
         sponsorships: null,
       })
       expect(parseOrgSettings(null).features.group_rules).toBe(false)
+      expect(parseOrgSettings(null).features.session_mvp_voting).toBe(false)
+      expect(parseOrgSettings(null).features.session_player_stats).toBe(false)
     })
 
     it('keeps features true when undefined in stored settings', () => {
@@ -36,11 +38,13 @@ describe('org-features', () => {
       expect(settings.features.group_rules).toBe(false)
     })
 
-    it('enables group_rules only when explicitly true', () => {
+    it('enables opt-in features only when explicitly true', () => {
       const settings = parseOrgSettings({
-        features: { group_rules: true },
+        features: { group_rules: true, session_mvp_voting: true, session_player_stats: true },
       })
       expect(settings.features.group_rules).toBe(true)
+      expect(settings.features.session_mvp_voting).toBe(true)
+      expect(settings.features.session_player_stats).toBe(true)
     })
   })
 
