@@ -154,7 +154,7 @@ function MvpFeedCard({
   const headline = formatMvpFeedHeadline(item)
 
   return (
-    <article className="overflow-hidden rounded-3xl border border-zinc-800/90 bg-gradient-to-b from-zinc-900/70 to-zinc-950/50">
+    <article className="overflow-hidden rounded-3xl border border-zinc-800 bg-linear-to-b from-zinc-900 to-zinc-950">
       <div className="px-4 py-4">
         <FeedKindBadge kind="mvp" />
         <h3 className="mt-2.5 text-base font-semibold leading-snug tracking-tight text-zinc-50">
@@ -239,7 +239,7 @@ function PlayerStatsFeedCard({
   const hasStats = item.goals > 0 || item.assists > 0
 
   return (
-    <article className="overflow-hidden rounded-3xl border border-zinc-800/90 bg-gradient-to-b from-zinc-900/70 to-zinc-950/50">
+    <article className="overflow-hidden rounded-3xl border border-zinc-800 bg-linear-to-b from-zinc-900 to-zinc-950">
       <div className="px-4 pb-3 pt-4">
         <div className="flex items-center justify-between gap-3">
           <FeedKindBadge kind="player_stats" />
@@ -288,18 +288,15 @@ export function OrgSessionFeedList({ items, accent, orgSlug, canReact }: Props) 
 
   return (
     <div className="space-y-4">
-      <p className="text-sm text-zinc-500">Recent session highlights from your group.</p>
-      <div className="space-y-4">
-        {items.map((item) => (
-          <FeedCard
-            key={`${item.kind}-${item.event_id}-${item.kind === 'player_stats' ? item.participant_id : 'mvp'}-${item.occurred_at}`}
-            item={item}
-            accent={accent}
-            orgSlug={orgSlug}
-            canReact={canReact}
-          />
-        ))}
-      </div>
+      {items.map((item) => (
+        <FeedCard
+          key={`${item.kind}-${item.event_id}-${item.kind === 'player_stats' ? item.participant_id : 'mvp'}-${item.occurred_at}`}
+          item={item}
+          accent={accent}
+          orgSlug={orgSlug}
+          canReact={canReact}
+        />
+      ))}
     </div>
   )
 }
