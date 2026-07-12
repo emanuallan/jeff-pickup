@@ -6,7 +6,15 @@ import {
   isOrgSessionFeedEnabled,
   parseOrgSessionFeed,
   parseOrgSessionFeedItem,
+  shouldIncludeMvpFeedItem,
 } from './org-session-feed'
+
+describe('shouldIncludeMvpFeedItem', () => {
+  it('excludes zero-vote MVP finalizations', () => {
+    expect(shouldIncludeMvpFeedItem(0)).toBe(false)
+    expect(shouldIncludeMvpFeedItem(1)).toBe(true)
+  })
+})
 
 describe('isOrgSessionFeedEnabled', () => {
   it('is off when session feedback is disabled', () => {

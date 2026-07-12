@@ -38,6 +38,11 @@ export type OrgSessionFeedPlayerStatsItem = {
 
 export type OrgSessionFeedItem = OrgSessionFeedMvpItem | OrgSessionFeedPlayerStatsItem
 
+/** MVP cards only appear when at least one vote was cast (skip cron backfill noise). */
+export function shouldIncludeMvpFeedItem(totalVotes: number): boolean {
+  return totalVotes > 0
+}
+
 export function isOrgSessionFeedEnabled(org: { settings?: OrgSettings | null }): boolean {
   const features = orgFeatures(org)
   return (
