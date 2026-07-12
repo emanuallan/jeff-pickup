@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   debriefStepCount,
   debriefStepIndex,
+  isMvpWizardStepPending,
   nextDebriefStep,
   parseSessionDebriefState,
   resolveInitialDebriefStep,
@@ -71,6 +72,7 @@ describe('session-debrief', () => {
         resolveInitialDebriefStep({
           ...baseState,
           mvp_step_complete: true,
+          mvp_skipped: true,
           stats_step_complete: false,
         }),
       ).toBe('stats')
@@ -81,8 +83,29 @@ describe('session-debrief', () => {
           mvp_step_complete: true,
           stats_step_complete: true,
           feedback_step_complete: false,
+          mvp_skipped: true,
         }),
       ).toBe('feedback')
+    })
+
+    it('still shows MVP when voting closed but not yet acknowledged', () => {
+      expect(
+        isMvpWizardStepPending({
+          ...baseState,
+          mvp_voting_open: false,
+          mvp_step_complete: true,
+        }),
+      ).toBe(true)
+
+      expect(
+        resolveInitialDebriefStep({
+          ...baseState,
+          mvp_voting_open: false,
+          mvp_step_complete: true,
+          player_stats_enabled: false,
+          steps: ['mvp', 'feedback'],
+        }),
+      ).toBe('mvp')
     })
   })
 

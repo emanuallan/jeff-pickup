@@ -301,10 +301,6 @@ export function SessionDebriefSheet({
 
   async function handleMvpSkip() {
     if (!state) return
-    if (!state.mvp_voting_open) {
-      goToNextStep('mvp', state)
-      return
-    }
     setLoading(true)
     setError(null)
     const result = await skipSessionDebriefStep(orgSlug, eventId, 'mvp')
@@ -374,7 +370,9 @@ export function SessionDebriefSheet({
     >
       <div className="flex items-center justify-between gap-3">
         <h2 id="session-debrief-title" className="text-lg font-semibold tracking-tight text-zinc-50">
-          {debriefStepTitle(currentStep)}
+          {debriefStepTitle(currentStep, {
+            mvpVotingOpen: currentStep === 'mvp' ? state?.mvp_voting_open : undefined,
+          })}
         </h2>
         {state ? (
           <span className="shrink-0 text-xs font-medium text-zinc-500">

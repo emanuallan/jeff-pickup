@@ -81,7 +81,49 @@ describe('SessionDebriefSheet', () => {
     expect(
       await screen.findByText(/mvp voting is only available for 6 hours/i),
     ).toBeInTheDocument()
+    expect(screen.getByText('Step 1 of 2')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Continue' })).toBeInTheDocument()
+  })
+
+  it('records MVP acknowledgment when voting is closed and Continue is pressed', async () => {
+    const user = userEvent.setup()
+    getSessionDebriefStateMock
+      .mockResolvedValueOnce({
+        ok: true,
+        state: {
+          ...openMvpState,
+          mvp_voting_open: false,
+          mvp_step_complete: true,
+        },
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        state: {
+          ...openMvpState,
+          mvp_voting_open: false,
+          mvp_step_complete: true,
+          mvp_skipped: true,
+        },
+      })
+    skipSessionDebriefStepMock.mockResolvedValue({ ok: true })
+
+    render(
+      <SessionDebriefSheet
+        open
+        onClose={() => {}}
+        orgSlug="demo"
+        eventId="event-1"
+        payload={payload}
+        accent="#6366f1"
+      />,
+    )
+
+    await user.click(await screen.findByRole('button', { name: 'Continue' }))
+
+    await waitFor(() => {
+      expect(skipSessionDebriefStepMock).toHaveBeenCalledWith('demo', 'event-1', 'mvp')
+    })
+    expect(await screen.findByText('Rate this session')).toBeInTheDocument()
   })
 
   it('submits an MVP vote and advances to feedback', async () => {

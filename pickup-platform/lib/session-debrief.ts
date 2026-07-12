@@ -132,11 +132,15 @@ export function previousDebriefStep(
   return steps[index - 1] ?? null
 }
 
+export function isMvpWizardStepPending(state: SessionDebriefState): boolean {
+  return state.mvp_voting_enabled && !state.mvp_vote_cast && !state.mvp_skipped
+}
+
 export function resolveInitialDebriefStep(state: SessionDebriefState): SessionDebriefStep {
   if (state.steps.length === 0) return 'feedback'
 
   for (const step of state.steps) {
-    if (step === 'mvp' && !state.mvp_step_complete) return 'mvp'
+    if (step === 'mvp' && isMvpWizardStepPending(state)) return 'mvp'
     if (step === 'stats' && !state.stats_step_complete) return 'stats'
     if (step === 'feedback' && !state.feedback_step_complete) return 'feedback'
   }
@@ -159,10 +163,13 @@ export function validateSessionPlayerStatsInput(
   return { ok: true }
 }
 
-export function debriefStepTitle(step: SessionDebriefStep): string {
+export function debriefStepTitle(
+  step: SessionDebriefStep,
+  options?: { mvpVotingOpen?: boolean },
+): string {
   switch (step) {
     case 'mvp':
-      return 'Vote for session MVP'
+      return options?.mvpVotingOpen === false ? 'Session MVP' : 'Vote for session MVP'
     case 'stats':
       return 'Your goals and assists'
     case 'feedback':
