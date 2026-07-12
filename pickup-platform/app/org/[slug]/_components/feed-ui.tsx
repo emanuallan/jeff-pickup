@@ -5,6 +5,7 @@ import type {
 } from '@/lib/org-session-feed'
 import {
   formatMvpFeedHeadline,
+  formatPlayerStatsFeedHeadline,
 } from '@/lib/org-session-feed'
 import { formatNotificationTime } from '@/lib/participant-notifications'
 import { readableTextColor } from '@/lib/colors'
@@ -81,75 +82,52 @@ function FeedCard({
   item: OrgSessionFeedItem
   accent: string
 }) {
-  if (item.kind === 'player_stats') {
-    return <PlayerStatsCard item={item} />
-  }
-
-  return <MvpFeedCard item={item} accent={accent} />
-}
-
-function MvpFeedCard({ item, accent }: { item: OrgSessionFeedMvpItem; accent: string }) {
   const when = formatNotificationTime(item.occurred_at)
-  const headline = formatMvpFeedHeadline(item)
+  const headline =
+    item.kind === 'mvp'
+      ? formatMvpFeedHeadline(item)
+      : formatPlayerStatsFeedHeadline(item)
 
   return (
     <article className="rounded-3xl border border-zinc-800 bg-zinc-900/40 p-4">
-      <FeedKindBadge kind="mvp" />
-      <h3 className="mt-2 text-base font-semibold leading-snug text-zinc-100">{headline}</h3>
-      <p className="mt-1 text-xs text-zinc-500">
-        {item.event_label} · {when}
-      </p>
-
-      <div className="mt-4">
-        <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-500">
-          Vote breakdown
-          {item.total_votes > 0 ? ` · ${item.total_votes} total` : ''}
-        </p>
-        <MvpNomineeList item={item} accent={accent} />
-      </div>
-    </article>
-  )
-}
-
-function PlayerStatsCard({ item }: { item: OrgSessionFeedPlayerStatsItem }) {
-  const when = formatNotificationTime(item.occurred_at)
-  const statLine = formatPlayerStatsInline(item.goals, item.assists)
-
-  return (
-    <article className="rounded-3xl border border-zinc-800 bg-zinc-900/40 px-4 py-3.5">
-      <div className="flex items-start gap-3">
-        <div className="min-w-0 flex-1">
-          <FeedKindBadge kind="player_stats" />
-          <h3 className="mt-2 text-base font-semibold leading-snug text-zinc-100">
-            {item.display_name}
-          </h3>
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <FeedKindBadge kind={item.kind} />
+          <h3 className="mt-2 text-base font-semibold leading-snug text-zinc-100">{headline}</h3>
           <p className="mt-1 text-xs text-zinc-500">
             {item.event_label} · {when}
           </p>
         </div>
-
-        {statLine ? (
-          <p
-            className="shrink-0 rounded-xl bg-emerald-500/10 px-3 py-2 text-sm font-semibold tabular-nums text-emerald-100 ring-1 ring-inset ring-emerald-500/20"
-            aria-label={`${item.goals} goals, ${item.assists} assists`}
-          >
-            {statLine}
-          </p>
-        ) : null}
       </div>
 
-      {!statLine ? (
-        <p className="mt-2.5 text-sm text-zinc-500">No goals or assists this session.</p>
-      ) : null}
+      {item.kind === 'mvp' ? (
+        <div className="mt-4">
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-500">
+            Vote breakdown
+            {item.total_votes > 0 ? ` · ${item.total_votes} total` : ''}
+          </p>
+          <MvpNomineeList item={item} accent={accent} />
+        </div>
+      ) : (
+        <PlayerStatsDetail item={item} />
+      )}
     </article>
   )
 }
 
-function formatPlayerStatsInline(goals: number, assists: number): string | null {
-  const parts: string[] = []
-  if (goals > 0) parts.push(`${goals}G`)
-  if (assists > 0) parts.push(`${assists}A`)
-  return parts.length > 0 ? parts.join(' · ') : null
+function PlayerStatsDetail({ item }: { item: OrgSessionFeedPlayerStatsItem }) {
+  return (
+    <div className="mt-4 flex items-center gap-3">
+      <div className="rounded-2xl border border-zinc-800 bg-zinc-950/60 px-4 py-3 text-center">
+        <p className="text-[10px] font-semibold uppercase tracking-wide text-zinc-500">Goals</p>
+        <p className="mt-1 text-2xl font-bold tabular-nums text-zinc-100">{item.goals}</p>
+      </div>
+      <div className="rounded-2xl border border-zinc-800 bg-zinc-950/60 px-4 py-3 text-center">
+        <p className="text-[10px] font-semibold uppercase tracking-wide text-zinc-500">Assists</p>
+        <p className="mt-1 text-2xl font-bold tabular-nums text-zinc-100">{item.assists}</p>
+      </div>
+    </div>
+  )
 }
 
 export function OrgSessionFeedList({ items, accent }: Props) {
