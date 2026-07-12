@@ -48,13 +48,13 @@ function FeedSessionLink({
   const dateLabel = formatFeedItemDate(item.occurred_at)
 
   return (
-    <p className={`text-xs leading-relaxed text-zinc-500 ${className}`}>
+    <p className={`min-w-0 text-xs leading-relaxed text-zinc-500 ${className}`}>
       <Link
         href={orgPublicEventHref(item.event_short_id)}
         className="font-medium underline-offset-2 transition hover:underline"
         style={{ color: accent }}
       >
-        {item.event_label}
+        <span className="line-clamp-2">{item.event_label}</span>
       </Link>
       <span className="text-zinc-600"> ({dateLabel})</span>
     </p>
@@ -182,7 +182,7 @@ function MvpFeedCard({
   )
 }
 
-function PlayerStatsScorecard({
+function PlayerStatsScoreBar({
   goals,
   assists,
   accent,
@@ -193,30 +193,28 @@ function PlayerStatsScorecard({
 }) {
   return (
     <div
-      className="flex shrink-0 overflow-hidden rounded-2xl border border-zinc-800/90 bg-zinc-950/80"
-      style={{ boxShadow: `inset 0 1px 0 0 rgba(255,255,255,0.04), 0 0 0 1px ${accent}28` }}
+      className="grid grid-cols-2 overflow-hidden rounded-2xl border border-zinc-800/90 bg-zinc-950/70"
+      style={{ boxShadow: `inset 0 1px 0 0 rgba(255,255,255,0.04), 0 0 0 1px ${accent}24` }}
       aria-label={`${goals} goals, ${assists} assists`}
     >
-      <div className="flex min-w-[3.5rem] flex-col items-center px-3.5 py-2">
+      <div className="flex flex-col items-center border-r border-zinc-800/90 px-4 py-3">
         <span className="text-[9px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
           Goals
         </span>
         <span
-          className="mt-1 text-xl font-bold tabular-nums leading-none"
+          className="mt-1 text-2xl font-bold tabular-nums leading-none"
           style={{ color: goals > 0 ? accent : '#52525b' }}
         >
           {goals}
         </span>
       </div>
 
-      <div className="my-2 w-px self-stretch bg-zinc-800/90" aria-hidden />
-
-      <div className="flex min-w-[3.5rem] flex-col items-center px-3.5 py-2">
+      <div className="flex flex-col items-center px-4 py-3">
         <span className="text-[9px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
           Assists
         </span>
         <span
-          className="mt-1 text-xl font-bold tabular-nums leading-none"
+          className="mt-1 text-2xl font-bold tabular-nums leading-none"
           style={{ color: assists > 0 ? accent : '#52525b' }}
         >
           {assists}
@@ -242,7 +240,7 @@ function PlayerStatsFeedCard({
 
   return (
     <article className="overflow-hidden rounded-3xl border border-zinc-800/90 bg-gradient-to-b from-zinc-900/70 to-zinc-950/50">
-      <div className="px-4 py-4">
+      <div className="px-4 pb-3 pt-4">
         <div className="flex items-center justify-between gap-3">
           <FeedKindBadge kind="player_stats" />
           <time className="shrink-0 text-xs text-zinc-500" dateTime={item.occurred_at}>
@@ -250,21 +248,20 @@ function PlayerStatsFeedCard({
           </time>
         </div>
 
-        <div className="mt-3 flex items-start justify-between gap-4">
-          <div className="min-w-0 flex-1">
-            <p className="text-lg font-semibold tracking-tight text-zinc-50">{item.display_name}</p>
-            <FeedSessionLink item={item} accent={accent} className="mt-1" />
-          </div>
-
-          {hasStats ? (
-            <PlayerStatsScorecard goals={item.goals} assists={item.assists} accent={accent} />
+        <div className="mt-3">
+          <p className="text-lg font-semibold tracking-tight text-zinc-50">{item.display_name}</p>
+          <FeedSessionLink item={item} accent={accent} className="mt-1" />
+          {!hasStats ? (
+            <p className="mt-2 text-sm text-zinc-500">No goals or assists recorded.</p>
           ) : null}
         </div>
-
-        {!hasStats ? (
-          <p className="mt-2 text-sm text-zinc-500">No goals or assists recorded.</p>
-        ) : null}
       </div>
+
+      {hasStats ? (
+        <div className="px-4 pb-4">
+          <PlayerStatsScoreBar goals={item.goals} assists={item.assists} accent={accent} />
+        </div>
+      ) : null}
 
       <FeedReactions
         orgSlug={orgSlug}
