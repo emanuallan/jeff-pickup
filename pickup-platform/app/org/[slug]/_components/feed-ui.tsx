@@ -40,10 +40,12 @@ function FeedSessionLink({
   item,
   accent,
   className = 'mt-2',
+  showDate = true,
 }: {
   item: OrgSessionFeedItem
   accent: string
   className?: string
+  showDate?: boolean
 }) {
   const dateLabel = formatFeedItemDate(item.occurred_at)
 
@@ -56,7 +58,7 @@ function FeedSessionLink({
       >
         <span className="line-clamp-2">{item.event_label}</span>
       </Link>
-      <span className="text-zinc-600"> ({dateLabel})</span>
+      {showDate ? <span className="text-zinc-600"> ({dateLabel})</span> : null}
     </p>
   )
 }
@@ -250,7 +252,7 @@ function PlayerStatsFeedCard({
 
         <div className="mt-3">
           <p className="text-lg font-semibold tracking-tight text-zinc-50">{item.display_name}</p>
-          <FeedSessionLink item={item} accent={accent} className="mt-1" />
+          <FeedSessionLink item={item} accent={accent} className="mt-1" showDate={false} />
           {!hasStats ? (
             <p className="mt-2 text-sm text-zinc-500">No goals or assists recorded.</p>
           ) : null}
