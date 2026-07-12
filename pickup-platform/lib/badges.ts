@@ -28,7 +28,17 @@ export function rosterBadges(args: {
   capsLeaderUnlocked?: boolean
   /** Hide "New" on the org's inaugural session — everyone would qualify. */
   newBadgeUnlocked?: boolean
-}): { milestone: number | null; isNew: boolean; streak: number; isCapsLeader: boolean } {
+  /** Active session MVP badge from a recent finalized vote. */
+  isSessionMvp?: boolean
+  sessionMvpEventLabel?: string | null
+}): {
+  milestone: number | null
+  isNew: boolean
+  streak: number
+  isCapsLeader: boolean
+  isSessionMvp: boolean
+  sessionMvpEventLabel: string | null
+} {
   const caps = args.stats?.caps ?? 0
   const totalSessions = args.stats?.total_sessions ?? 0
   const streak = args.stats?.current_streak_weeks ?? 0
@@ -41,6 +51,8 @@ export function rosterBadges(args: {
     streak: hasActiveStreak(streak) ? streak : 0,
     isCapsLeader:
       capsLeaderUnlocked && caps > 0 && caps === args.topCapsOnRoster,
+    isSessionMvp: args.isSessionMvp === true,
+    sessionMvpEventLabel: args.sessionMvpEventLabel ?? null,
   }
 }
 
@@ -49,7 +61,11 @@ export type RosterBadgeInfo = ReturnType<typeof rosterBadges>
 export function buildRosterBadgeMap(
   roster: Array<{ participant_id: string }>,
   engagementStats: Map<string, EngagementStats>,
-  options?: { capsLeaderUnlocked?: boolean; newBadgeUnlocked?: boolean },
+  options?: {
+    capsLeaderUnlocked?: boolean
+    newBadgeUnlocked?: boolean
+    sessionMvpBadges?: Map<string, { event_label: string }>
+  },
 ): Record<string, RosterBadgeInfo> {
   const topCapsOnRoster = Math.max(
     0,
@@ -59,6 +75,7 @@ export function buildRosterBadgeMap(
   return Object.fromEntries(
     roster.map((e) => {
       const stats = engagementStats.get(e.participant_id)
+      const mvpBadge = options?.sessionMvpBadges?.get(e.participant_id)
       return [
         e.participant_id,
         rosterBadges({
@@ -66,6 +83,8 @@ export function buildRosterBadgeMap(
           topCapsOnRoster,
           capsLeaderUnlocked: options?.capsLeaderUnlocked,
           newBadgeUnlocked: options?.newBadgeUnlocked,
+          isSessionMvp: mvpBadge != null,
+          sessionMvpEventLabel: mvpBadge?.event_label ?? null,
         }),
       ]
     }),

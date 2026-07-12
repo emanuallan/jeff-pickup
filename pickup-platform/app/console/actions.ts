@@ -961,6 +961,8 @@ export async function updateOrgFeatures(orgSlug: string, formData: FormData) {
     public_roster: formData.get('public_roster') === 'on',
     guest_signups: formData.get('guest_signups') === 'on',
     session_feedback: formData.get('session_feedback') === 'on',
+    session_mvp_voting: formData.get('session_mvp_voting') === 'on',
+    session_player_stats: formData.get('session_player_stats') === 'on',
     group_rules: current.features.group_rules,
     group_sponsorships: current.features.group_sponsorships,
   }

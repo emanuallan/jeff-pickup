@@ -23,7 +23,7 @@ export function formatParticipantNotificationCopy(n: ParticipantNotification): {
 } {
   const { event_label, location_label } = n.payload
   return {
-    title: `How was ${event_label}?`,
+    title: `Wrap up ${event_label}`,
     detail: location_label,
   }
 }

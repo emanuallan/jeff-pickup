@@ -12,7 +12,7 @@ import {
   dismissParticipantNotification,
   markParticipantNotificationRead,
 } from '../participant-notification-actions'
-import { SessionFeedbackSheet } from './session-feedback-sheet'
+import { SessionDebriefSheet } from './session-debrief-sheet'
 
 type Props = {
   orgSlug: string
@@ -74,7 +74,7 @@ function NotificationPanelContent({
                 >
                   <div className="min-w-0 flex-1">
                     <span className="inline-flex rounded-md bg-indigo-500/10 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-indigo-300 ring-1 ring-inset ring-indigo-500/20">
-                      Feedback
+                      Debrief
                     </span>
                     <p className="mt-1.5 text-sm leading-snug text-zinc-100">{title}</p>
                     <p className="mt-0.5 truncate text-xs text-zinc-400">{subtitle}</p>
@@ -180,8 +180,8 @@ export function ParticipantNotificationBell({
     [orgSlug, syncFromServer],
   )
 
-  const handleFeedbackSubmitted = useCallback(
-    (outcome: 'rated' | 'no_attend') => {
+  const handleDebriefCompleted = useCallback(
+    (outcome: 'rated' | 'no_attend' | 'skipped' | 'done') => {
       if (!activeFeedback) return
       setNotifications((prev) => prev.filter((n) => n.id !== activeFeedback.id))
       setUnreadCount((c) => Math.max(0, c - (activeFeedback.read_at ? 0 : 1)))
@@ -258,20 +258,20 @@ export function ParticipantNotificationBell({
       </div>
 
       {activeFeedback ? (
-        <SessionFeedbackSheet
+        <SessionDebriefSheet
           open
           onClose={() => setActiveFeedback(null)}
           orgSlug={orgSlug}
           eventId={activeFeedback.event_id}
           payload={activeFeedback.payload}
           accent={accent}
-          onSubmitted={handleFeedbackSubmitted}
+          onCompleted={handleDebriefCompleted}
         />
       ) : null}
 
       {thankYouVisible ? (
         <OrganizrToast
-          message="Thanks for your feedback!"
+          message="Thanks for wrapping up the session!"
           variant="success"
           durationMs={4000}
           onClose={() => setThankYouVisible(false)}

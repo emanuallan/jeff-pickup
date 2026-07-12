@@ -89,6 +89,18 @@ function RosterBadges({ badges }: { badges: RosterBadgeInfo | undefined }) {
 
   return (
     <span className="inline-flex shrink-0 flex-wrap items-center justify-end gap-1">
+      {badges.isSessionMvp ? (
+        <TooltipBadge
+          tip={
+            badges.sessionMvpEventLabel
+              ? `Session MVP · ${badges.sessionMvpEventLabel}`
+              : 'Session MVP'
+          }
+          className="inline-flex items-center rounded bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-amber-200 ring-1 ring-inset ring-amber-400/20"
+        >
+          MVP
+        </TooltipBadge>
+      ) : null}
       {badges.isCapsLeader ? (
         <TooltipBadge tip="Most caps on this roster" className="inline-flex items-center">
           🏅

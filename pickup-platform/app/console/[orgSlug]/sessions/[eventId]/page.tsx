@@ -30,6 +30,7 @@ import {
   SignupRateStatCard,
 } from './event-analytics-stat-cards'
 import { EventFeedbackSection } from './event-feedback-section'
+import { EventDebriefSection, shouldShowEventDebriefSection } from './event-debrief-section'
 
 type Props = {
   params: Promise<{ orgSlug: string; eventId: string }>
@@ -58,6 +59,8 @@ export default async function ConsoleEventAnalyticsPage({ params }: Props) {
   const isLive = isEventInProgress(event) && event.status === 'on'
   const showFeedback =
     orgFeatures(org).session_feedback && isEventEnded(event) && !isEventCancelled(event.status)
+  const showDebrief =
+    shouldShowEventDebriefSection(org, isEventEnded(event)) && !isEventCancelled(event.status)
   const hasSignupActivity = analytics.uniqueSignups > 0 || analytics.uniqueLeft > 0
   const hasTraffic = analytics.uniqueVisitors > 0 || analytics.uniqueSignups > 0
 
@@ -227,6 +230,16 @@ export default async function ConsoleEventAnalyticsPage({ params }: Props) {
             </details>
           ) : null}
         </ConsoleSection>
+
+        {showDebrief ? (
+          <Suspense
+            fallback={
+              <div className="h-32 animate-pulse rounded-xl border border-zinc-800 bg-zinc-900/40" />
+            }
+          >
+            <EventDebriefSection orgId={org.id} eventId={event.id} />
+          </Suspense>
+        ) : null}
 
         {showFeedback ? (
           <Suspense

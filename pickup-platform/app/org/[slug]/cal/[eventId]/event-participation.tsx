@@ -16,6 +16,7 @@ import {
   isOrgInauguralSession,
 } from '@/lib/engagement'
 import { buildRosterBadgeMap, type RosterBadgeInfo } from '@/lib/badges'
+import { getActiveSessionMvpBadges } from '@/lib/session-debrief.server'
 import { ParticipationPanel } from './participation-panel'
 
 type Props = {
@@ -60,14 +61,22 @@ export async function EventParticipation({ slug, eventId, org, event }: Props) {
   let badgesByParticipantId: Record<string, RosterBadgeInfo> = {}
   if (!isCancelled && features.user_badges) {
     const participantIds = roster.map((e) => e.participant_id)
-    const [engagementStats, leaderboardUnlocked, isInauguralSession] = await Promise.all([
+    const [engagementStats, leaderboardUnlocked, isInauguralSession, sessionMvpBadges] =
+      await Promise.all([
       getParticipantEngagementStats(org.id, participantIds),
       isLeaderboardUnlocked(org.id),
       isOrgInauguralSession(org.id, event.id),
+      getActiveSessionMvpBadges(org.id),
     ])
     badgesByParticipantId = buildRosterBadgeMap(roster, engagementStats, {
       capsLeaderUnlocked: leaderboardUnlocked,
       newBadgeUnlocked: !isInauguralSession,
+      sessionMvpBadges: new Map(
+        [...sessionMvpBadges.entries()].map(([participantId, info]) => [
+          participantId,
+          { event_label: info.event_label },
+        ]),
+      ),
     })
   }
 

@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import type { ParticipantNotification } from '@/lib/participant-notifications'
 import { OrganizrToast } from '@/app/_components/organizr-toast'
-import { SessionFeedbackSheet } from './session-feedback-sheet'
+import { SessionDebriefSheet } from './session-debrief-sheet'
 
 type Props = {
   orgSlug: string
@@ -44,14 +44,14 @@ export function ParticipantFeedbackDeepLink({ orgSlug, accent, notifications }: 
   return (
     <>
       {active ? (
-        <SessionFeedbackSheet
+        <SessionDebriefSheet
           open
           onClose={closeSheet}
           orgSlug={orgSlug}
           eventId={active.event_id}
           payload={active.payload}
           accent={accent}
-          onSubmitted={(outcome) => {
+          onCompleted={(outcome) => {
             closeSheet()
             if (outcome === 'rated') {
               setThankYouVisible(true)
@@ -61,7 +61,7 @@ export function ParticipantFeedbackDeepLink({ orgSlug, accent, notifications }: 
       ) : null}
       {thankYouVisible ? (
         <OrganizrToast
-          message="Thanks for your feedback!"
+          message="Thanks for wrapping up the session!"
           variant="success"
           durationMs={4000}
           onClose={() => setThankYouVisible(false)}
