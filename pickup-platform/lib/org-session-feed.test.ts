@@ -102,6 +102,7 @@ describe('parseOrgSessionFeedItem', () => {
           is_winner: false,
         },
       ],
+      reactions: [],
     })
 
     expect(item).toEqual({
@@ -132,6 +133,7 @@ describe('parseOrgSessionFeedItem', () => {
           is_winner: false,
         },
       ],
+      reactions: [],
     })
   })
 
@@ -146,6 +148,7 @@ describe('parseOrgSessionFeedItem', () => {
       display_name: 'Jordan',
       goals: 2,
       assists: 1,
+      reactions: [{ emoji: '🔥', count: 2, reacted_by_me: true }],
     })
 
     expect(item).toMatchObject({
@@ -153,6 +156,7 @@ describe('parseOrgSessionFeedItem', () => {
       display_name: 'Jordan',
       goals: 2,
       assists: 1,
+      reactions: [{ emoji: '🔥', count: 2, reacted_by_me: true }],
     })
   })
 })
@@ -171,6 +175,7 @@ describe('parseOrgSessionFeed', () => {
         display_name: 'Jordan',
         goals: 1,
         assists: 0,
+        reactions: [],
       },
     ])
 
@@ -188,6 +193,7 @@ describe('formatMvpFeedHeadline', () => {
     event_label: 'Saturday pickup',
     total_votes: 0,
     nominees: [],
+    reactions: [],
   }
 
   it('handles no winners', () => {
@@ -232,6 +238,7 @@ describe('formatPlayerStatsFeedHeadline', () => {
     display_name: 'Alex',
     goals: 0,
     assists: 0,
+    reactions: [],
   }
 
   it('formats goals and assists', () => {

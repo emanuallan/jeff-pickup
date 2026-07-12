@@ -9,10 +9,13 @@ import {
 } from '@/lib/org-session-feed'
 import { formatNotificationTime } from '@/lib/participant-notifications'
 import { readableTextColor } from '@/lib/colors'
+import { FeedReactions } from './feed-reactions'
 
 type Props = {
   items: OrgSessionFeedItem[]
   accent: string
+  orgSlug: string
+  canReact: boolean
 }
 
 function FeedKindBadge({ kind }: { kind: OrgSessionFeedItem['kind'] }) {
@@ -78,9 +81,13 @@ function MvpNomineeList({ item, accent }: { item: OrgSessionFeedMvpItem; accent:
 function FeedCard({
   item,
   accent,
+  orgSlug,
+  canReact,
 }: {
   item: OrgSessionFeedItem
   accent: string
+  orgSlug: string
+  canReact: boolean
 }) {
   const when = formatNotificationTime(item.occurred_at)
   const headline =
@@ -111,6 +118,14 @@ function FeedCard({
       ) : (
         <PlayerStatsDetail item={item} />
       )}
+
+      <FeedReactions
+        orgSlug={orgSlug}
+        item={item}
+        initialReactions={item.reactions}
+        canReact={canReact}
+        accent={accent}
+      />
     </article>
   )
 }
@@ -130,7 +145,7 @@ function PlayerStatsDetail({ item }: { item: OrgSessionFeedPlayerStatsItem }) {
   )
 }
 
-export function OrgSessionFeedList({ items, accent }: Props) {
+export function OrgSessionFeedList({ items, accent, orgSlug, canReact }: Props) {
   if (items.length === 0) {
     return (
       <section className="rounded-3xl border border-dashed border-zinc-800 bg-zinc-900/30 px-6 py-12 text-center">
@@ -151,6 +166,8 @@ export function OrgSessionFeedList({ items, accent }: Props) {
             key={`${item.kind}-${item.event_id}-${item.kind === 'player_stats' ? item.participant_id : 'mvp'}-${item.occurred_at}`}
             item={item}
             accent={accent}
+            orgSlug={orgSlug}
+            canReact={canReact}
           />
         ))}
       </div>

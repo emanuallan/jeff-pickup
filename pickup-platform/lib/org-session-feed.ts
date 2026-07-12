@@ -1,5 +1,11 @@
 import { orgFeatures, type OrgSettings } from '@/lib/org-features'
 
+export type OrgSessionFeedReaction = {
+  emoji: string
+  count: number
+  reacted_by_me: boolean
+}
+
 export type OrgSessionFeedMvpNominee = {
   participant_id: string
   display_name: string
@@ -22,6 +28,7 @@ export type OrgSessionFeedMvpItem = {
   total_votes: number
   winners: OrgSessionFeedMvpWinner[]
   nominees: OrgSessionFeedMvpNominee[]
+  reactions: OrgSessionFeedReaction[]
 }
 
 export type OrgSessionFeedPlayerStatsItem = {
@@ -34,6 +41,7 @@ export type OrgSessionFeedPlayerStatsItem = {
   display_name: string
   goals: number
   assists: number
+  reactions: OrgSessionFeedReaction[]
 }
 
 export type OrgSessionFeedItem = OrgSessionFeedMvpItem | OrgSessionFeedPlayerStatsItem
@@ -49,6 +57,26 @@ export function isOrgSessionFeedEnabled(org: { settings?: OrgSettings | null }):
     features.session_feedback &&
     (features.session_mvp_voting || features.session_player_stats)
   )
+}
+
+function parseFeedReactions(raw: unknown): OrgSessionFeedReaction[] {
+  if (!Array.isArray(raw)) return []
+
+  return raw
+    .map((entry) => {
+      if (!entry || typeof entry !== 'object') return null
+      const row = entry as Record<string, unknown>
+      if (typeof row.emoji !== 'string') return null
+      const count = Number(row.count)
+      if (!Number.isFinite(count)) return null
+
+      return {
+        emoji: row.emoji,
+        count,
+        reacted_by_me: row.reacted_by_me === true,
+      }
+    })
+    .filter((entry): entry is OrgSessionFeedReaction => entry != null)
 }
 
 function parseMvpNominees(raw: unknown): OrgSessionFeedMvpNominee[] {
@@ -114,6 +142,7 @@ export function parseOrgSessionFeedItem(raw: unknown): OrgSessionFeedItem | null
       total_votes: totalVotes,
       winners: parseMvpWinners(value.winners),
       nominees: parseMvpNominees(value.nominees),
+      reactions: parseFeedReactions(value.reactions),
     }
   }
 
@@ -133,6 +162,7 @@ export function parseOrgSessionFeedItem(raw: unknown): OrgSessionFeedItem | null
       display_name: typeof value.display_name === 'string' ? value.display_name : 'Player',
       goals,
       assists,
+      reactions: parseFeedReactions(value.reactions),
     }
   }
 
@@ -178,4 +208,22 @@ export function formatPlayerStatsFeedHeadline(item: OrgSessionFeedPlayerStatsIte
   }
 
   return `${item.display_name} — ${parts.join(', ')}`
+}
+
+export function feedItemReactionTarget(item: OrgSessionFeedItem): {
+  feedKind: OrgSessionFeedItem['kind']
+  eventId: string
+  subjectParticipantId: string | null
+} {
+  return {
+    feedKind: item.kind,
+    eventId: item.event_id,
+    subjectParticipantId: item.kind === 'player_stats' ? item.participant_id : null,
+  }
+}
+
+export function parseFeedReactionToggleResult(raw: unknown): OrgSessionFeedReaction[] | null {
+  if (!raw || typeof raw !== 'object') return null
+  const value = raw as Record<string, unknown>
+  return parseFeedReactions(value.reactions)
 }

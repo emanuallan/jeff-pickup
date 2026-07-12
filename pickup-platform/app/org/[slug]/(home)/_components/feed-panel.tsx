@@ -5,8 +5,16 @@ import { OrgSessionFeedList } from '../../_components/feed-ui'
 type Props = {
   org: Org
   items: OrgSessionFeedItem[]
+  canReact: boolean
 }
 
-export function FeedPanel({ org, items }: Props) {
-  return <OrgSessionFeedList items={items} accent={org.branding.accent_color} />
+export function FeedPanel({ org, items, canReact }: Props) {
+  return (
+    <OrgSessionFeedList
+      items={items}
+      accent={org.branding.accent_color}
+      orgSlug={org.slug}
+      canReact={canReact}
+    />
+  )
 }
