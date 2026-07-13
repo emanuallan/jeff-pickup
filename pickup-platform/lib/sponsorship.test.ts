@@ -4,6 +4,8 @@ import {
   canDeclineSponsorship,
   isSponsorshipsActiveLocally,
   parsePublicSponsors,
+  sponsorRefundAmountCents,
+  sponsorshipRefundPolicyText,
   validateSponsorLogoUrl,
   validateSponsorName,
   validateTierPriceCents,
@@ -47,6 +49,17 @@ describe('sponsorship lifecycle helpers', () => {
         chargesEnabled: true,
       }),
     ).toBe(false)
+  })
+
+  it('refunds the sponsor payment minus the platform fee', () => {
+    expect(sponsorRefundAmountCents(2500, 125)).toBe(2375)
+    expect(sponsorRefundAmountCents(1000, 1000)).toBe(0)
+  })
+
+  it('describes the non-refundable platform fee policy', () => {
+    expect(sponsorshipRefundPolicyText('Demo FC', 5)).toContain(
+      "Organizr's 5% platform fee, which is non-refundable",
+    )
   })
 
   it('checks approval transitions', () => {

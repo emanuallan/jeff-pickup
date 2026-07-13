@@ -12,9 +12,9 @@ import {
 } from '@/lib/console/parse-sponsorship-tier-form'
 import { validateSponsorshipIntroText } from '@/lib/sponsorship'
 import {
-  cancelStripeSubscription,
   createTierStripeProductAndPrice,
   deactivateTierStripePrice,
+  refundAndCancelSponsorshipSubscription,
 } from '@/lib/stripe-connect'
 import { getOrgStripeAccount } from '@/lib/sponsorship.server'
 
@@ -303,28 +303,43 @@ export async function declineSponsorship(
     const org = await requireInteriorSponsorshipAccess(orgSlug)
     const supabase = await createClient()
 
-    const { data, error } = await supabase.rpc('organizer_decline_sponsorship', {
+    const { data: row, error: rowError } = await supabase
+      .from('sponsorships')
+      .select('stripe_subscription_id, stripe_checkout_session_id')
+      .eq('id', sponsorshipId)
+      .eq('org_id', org.id)
+      .maybeSingle()
+
+    if (rowError || !row) {
+      return { error: 'Sponsorship not found.' }
+    }
+
+    if (row.stripe_subscription_id) {
+      const stripeAccount = await getOrgStripeAccount(org.id)
+      if (!stripeAccount) {
+        return { error: 'Stripe is not connected for this group.' }
+      }
+
+      try {
+        await refundAndCancelSponsorshipSubscription({
+          subscriptionId: row.stripe_subscription_id,
+          stripeAccountId: stripeAccount.stripe_account_id,
+          checkoutSessionId: row.stripe_checkout_session_id,
+        })
+      } catch {
+        return {
+          error:
+            'Could not refund the sponsor payment. Try again, or issue a refund manually in Stripe.',
+        }
+      }
+    }
+
+    const { error } = await supabase.rpc('organizer_decline_sponsorship', {
       p_sponsorship_id: sponsorshipId,
       p_reason: reason ?? null,
     })
 
     if (error) return { error: error.message }
-
-    const stripeSubscriptionId =
-      data && typeof data === 'object' && 'stripe_subscription_id' in data
-        ? String((data as { stripe_subscription_id?: string }).stripe_subscription_id ?? '')
-        : ''
-
-    if (stripeSubscriptionId) {
-      const stripeAccount = await getOrgStripeAccount(org.id)
-      if (stripeAccount) {
-        try {
-          await cancelStripeSubscription(stripeSubscriptionId, stripeAccount.stripe_account_id)
-        } catch {
-          // Subscription may already be canceled.
-        }
-      }
-    }
 
     revalidateSponsorshipPaths(orgSlug)
     return { ok: true as const }

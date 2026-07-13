@@ -166,6 +166,25 @@ export function isSponsorshipsActiveLocally(input: {
   )
 }
 
+/** Sponsor refund on decline: full charge minus the non-refundable platform fee. */
+export function sponsorRefundAmountCents(
+  chargeAmountCents: number,
+  applicationFeeCents: number,
+): number {
+  return Math.max(chargeAmountCents - applicationFeeCents, 0)
+}
+
+export function formatPlatformFeePercent(platformFeePercent: number): string {
+  return Number.isInteger(platformFeePercent)
+    ? String(platformFeePercent)
+    : platformFeePercent.toFixed(1).replace(/\.0$/, '')
+}
+
+export function sponsorshipRefundPolicyText(orgName: string, platformFeePercent: number): string {
+  const feeLabel = formatPlatformFeePercent(platformFeePercent)
+  return `Requests are reviewed before your logo goes live. If ${orgName} declines your request, your sponsorship payment is refunded except for Organizr's ${feeLabel}% platform fee, which is non-refundable.`
+}
+
 export function formatTierPrice(priceCents: number, currency = 'usd'): string {
   return new Intl.NumberFormat('en-US', {
     style: 'currency',

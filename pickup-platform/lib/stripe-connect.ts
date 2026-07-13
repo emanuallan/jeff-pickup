@@ -1,4 +1,6 @@
+import type Stripe from 'stripe'
 import { getStripe } from '@/lib/stripe'
+import { sponsorRefundAmountCents } from '@/lib/sponsorship'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { rootBaseUrl } from '@/lib/site-url'
 
@@ -185,6 +187,191 @@ export async function createTierStripeProductAndPrice(input: {
 export async function deactivateTierStripePrice(stripeAccountId: string, priceId: string) {
   const stripe = getStripe()
   await stripe.prices.update(priceId, { active: false }, { stripeAccount: stripeAccountId })
+}
+
+type ConnectRequestOptions = { stripeAccount: string }
+
+function paymentIntentIdFromInvoice(invoice: Stripe.Invoice): string | null {
+  const paymentIntent = (
+    invoice as Stripe.Invoice & { payment_intent?: string | Stripe.PaymentIntent | null }
+  ).payment_intent
+
+  if (typeof paymentIntent === 'string') {
+    return paymentIntent
+  }
+
+  if (paymentIntent && typeof paymentIntent === 'object' && 'id' in paymentIntent) {
+    return paymentIntent.id
+  }
+
+  return null
+}
+
+async function resolveSponsorshipPaymentIntent(
+  subscriptionId: string,
+  checkoutSessionId: string | null | undefined,
+  connectOpts: ConnectRequestOptions,
+): Promise<string | null> {
+  const stripe = getStripe()
+
+  const subscription = await stripe.subscriptions.retrieve(
+    subscriptionId,
+    { expand: ['latest_invoice'] },
+    connectOpts,
+  )
+
+  const latestInvoice = subscription.latest_invoice
+  if (latestInvoice && typeof latestInvoice !== 'string') {
+    if (latestInvoice.status === 'paid') {
+      const paymentIntentId = paymentIntentIdFromInvoice(latestInvoice)
+      if (paymentIntentId) {
+        return paymentIntentId
+      }
+    }
+  }
+
+  const paidInvoices = await stripe.invoices.list(
+    { subscription: subscriptionId, status: 'paid', limit: 1 },
+    connectOpts,
+  )
+  const paidInvoice = paidInvoices.data[0]
+  if (paidInvoice) {
+    const paymentIntentId = paymentIntentIdFromInvoice(paidInvoice)
+    if (paymentIntentId) {
+      return paymentIntentId
+    }
+  }
+
+  if (checkoutSessionId) {
+    const session = await stripe.checkout.sessions.retrieve(
+      checkoutSessionId,
+      { expand: ['payment_intent', 'invoice'] },
+      connectOpts,
+    )
+
+    const sessionPaymentIntent = session.payment_intent
+    if (typeof sessionPaymentIntent === 'string') {
+      return sessionPaymentIntent
+    }
+    if (sessionPaymentIntent && typeof sessionPaymentIntent === 'object' && 'id' in sessionPaymentIntent) {
+      return sessionPaymentIntent.id
+    }
+
+    const sessionInvoice = session.invoice
+    if (sessionInvoice && typeof sessionInvoice !== 'string') {
+      return paymentIntentIdFromInvoice(sessionInvoice)
+    }
+  }
+
+  return null
+}
+
+function isStripeAlreadyRefunded(error: unknown): boolean {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'code' in error &&
+    (error as { code?: string }).code === 'charge_already_refunded'
+  )
+}
+
+function isStripeMissingResource(error: unknown): boolean {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'code' in error &&
+    (error as { code?: string }).code === 'resource_missing'
+  )
+}
+
+export type RefundAndCancelSponsorshipResult = {
+  refunded: boolean
+  canceled: boolean
+}
+
+async function resolveSponsorshipRefund(
+  subscriptionId: string,
+  checkoutSessionId: string | null | undefined,
+  connectOpts: ConnectRequestOptions,
+): Promise<{ paymentIntentId: string; refundAmountCents: number } | null> {
+  const stripe = getStripe()
+  const paymentIntentId = await resolveSponsorshipPaymentIntent(
+    subscriptionId,
+    checkoutSessionId,
+    connectOpts,
+  )
+
+  if (!paymentIntentId) {
+    return null
+  }
+
+  const paymentIntent = await stripe.paymentIntents.retrieve(
+    paymentIntentId,
+    { expand: ['latest_charge'] },
+    connectOpts,
+  )
+
+  const latestCharge = paymentIntent.latest_charge
+  const applicationFeeCents =
+    latestCharge && typeof latestCharge !== 'string'
+      ? latestCharge.application_fee_amount ?? 0
+      : 0
+
+  const refundAmountCents = sponsorRefundAmountCents(paymentIntent.amount, applicationFeeCents)
+  if (refundAmountCents <= 0) {
+    return null
+  }
+
+  return { paymentIntentId, refundAmountCents }
+}
+
+/** Refund the sponsor payment minus the platform fee, then cancel the subscription. */
+export async function refundAndCancelSponsorshipSubscription(input: {
+  subscriptionId: string
+  stripeAccountId: string
+  checkoutSessionId?: string | null
+}): Promise<RefundAndCancelSponsorshipResult> {
+  const stripe = getStripe()
+  const connectOpts: ConnectRequestOptions = { stripeAccount: input.stripeAccountId }
+
+  const refundTarget = await resolveSponsorshipRefund(
+    input.subscriptionId,
+    input.checkoutSessionId,
+    connectOpts,
+  )
+
+  let refunded = false
+  if (refundTarget) {
+    try {
+      await stripe.refunds.create(
+        {
+          payment_intent: refundTarget.paymentIntentId,
+          amount: refundTarget.refundAmountCents,
+          refund_application_fee: false,
+        },
+        connectOpts,
+      )
+      refunded = true
+    } catch (error) {
+      if (!isStripeAlreadyRefunded(error)) {
+        throw error
+      }
+      refunded = true
+    }
+  }
+
+  let canceled = false
+  try {
+    await stripe.subscriptions.cancel(input.subscriptionId, {}, connectOpts)
+    canceled = true
+  } catch (error) {
+    if (!isStripeMissingResource(error)) {
+      throw error
+    }
+    canceled = true
+  }
+
+  return { refunded, canceled }
 }
 
 export async function cancelStripeSubscription(subscriptionId: string, stripeAccountId: string) {

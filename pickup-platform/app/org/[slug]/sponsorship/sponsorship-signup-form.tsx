@@ -2,16 +2,17 @@
 
 import { useMemo, useState } from 'react'
 import Image from 'next/image'
-import type { PublicSponsorshipTier } from '@/lib/sponsorship'
+import { sponsorshipRefundPolicyText, type PublicSponsorshipTier } from '@/lib/sponsorship'
 import { MAX_ORG_LOGO_BYTES, ORG_LOGO_MIME_TYPES } from '@/lib/org-logo'
 
 type Props = {
   slug: string
   orgName: string
   tiers: PublicSponsorshipTier[]
+  platformFeePercent: number
 }
 
-export function SponsorshipSignupForm({ slug, orgName, tiers }: Props) {
+export function SponsorshipSignupForm({ slug, orgName, tiers, platformFeePercent }: Props) {
   const [selectedTierId, setSelectedTierId] = useState<string | null>(
     tiers.length === 1 ? tiers[0]?.id ?? null : null,
   )
@@ -198,6 +199,10 @@ export function SponsorshipSignupForm({ slug, orgName, tiers }: Props) {
         </div>
 
         {error ? <p className="text-sm text-red-300">{error}</p> : null}
+
+        <p className="text-xs leading-relaxed text-zinc-500">
+          {sponsorshipRefundPolicyText(orgName, platformFeePercent)}
+        </p>
 
         <button
           type="button"

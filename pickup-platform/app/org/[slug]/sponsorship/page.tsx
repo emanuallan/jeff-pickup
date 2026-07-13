@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { getPublicOrgBySlug } from '@/lib/public-data'
 import { getPublicSponsorshipPage } from '@/lib/sponsorship.server'
+import { getPlatformFeePercent } from '@/lib/stripe'
 import { SponsorshipSignupForm } from './sponsorship-signup-form'
 
 type Props = {
@@ -31,7 +32,12 @@ export default async function SponsorshipPage({ params }: Props) {
       <section>
         <h2 className="text-lg font-semibold text-zinc-100">Choose a tier</h2>
         <div className="mt-4">
-          <SponsorshipSignupForm slug={slug} orgName={org.name} tiers={page.tiers} />
+          <SponsorshipSignupForm
+            slug={slug}
+            orgName={org.name}
+            tiers={page.tiers}
+            platformFeePercent={getPlatformFeePercent()}
+          />
         </div>
       </section>
 

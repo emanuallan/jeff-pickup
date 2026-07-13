@@ -38,7 +38,7 @@ export function SponsorshipRequestsSection({
       toast.error(result.error)
       return
     }
-    toast.success('Sponsor declined.')
+    toast.success('Sponsor declined and payment refunded.')
   }
 
   async function handleHidden(id: string, hidden: boolean) {
