@@ -69,8 +69,8 @@ export function FeedReactions({
   }
 
   const shellClass = compact
-    ? `border-t border-white/[0.04] px-3 ${pickerOpen ? 'pt-1.5 pb-2' : 'py-1.5'}`
-    : `border-t border-white/5 bg-zinc-950/30 px-4 ${pickerOpen ? 'pt-3 pb-3' : 'py-3'}`
+    ? 'border-t border-white/[0.04] px-3 py-1.5'
+    : 'border-t border-white/5 bg-zinc-950/30 px-4 py-3'
   const reactionClass = compact
     ? 'inline-flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-xs'
     : 'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-sm'
@@ -142,7 +142,7 @@ export function FeedReactions({
 
       {canReact && pickerOpen ? (
         <div
-          className={`flex overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${pickerGapClass}`}
+          className={`flex overflow-x-auto pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${pickerGapClass}`}
           role="toolbar"
           aria-label="Choose a reaction"
         >
