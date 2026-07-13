@@ -14,6 +14,7 @@ type Props = {
   initialReactions: OrgSessionFeedReaction[]
   canReact: boolean
   accent: string
+  compact?: boolean
 }
 
 function PlusIcon() {
@@ -29,7 +30,14 @@ function PlusIcon() {
   )
 }
 
-export function FeedReactions({ orgSlug, item, initialReactions, canReact, accent }: Props) {
+export function FeedReactions({
+  orgSlug,
+  item,
+  initialReactions,
+  canReact,
+  accent,
+  compact = false,
+}: Props) {
   const [reactions, setReactions] = useState(initialReactions)
   const [pickerOpen, setPickerOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -60,9 +68,19 @@ export function FeedReactions({ orgSlug, item, initialReactions, canReact, accen
     return null
   }
 
+  const shellClass = compact
+    ? 'border-t border-white/[0.04] px-3 py-1.5'
+    : 'border-t border-white/5 bg-zinc-950/30 px-4 py-3'
+  const reactionClass = compact
+    ? 'inline-flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-xs'
+    : 'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-sm'
+  const addButtonClass = compact ? 'h-6 w-6' : 'h-8 w-8'
+  const pickerEmojiClass = compact ? 'h-7 w-7 text-base' : 'h-9 w-9 text-lg'
+  const pickerGapClass = compact ? 'mt-1.5 gap-0.5' : 'mt-2.5 gap-1'
+
   return (
-    <div className="border-t border-white/5 bg-zinc-950/30 px-4 py-3">
-      <div className="flex flex-wrap items-center gap-1.5">
+    <div className={shellClass}>
+      <div className="flex flex-wrap items-center gap-1">
         {activeReactions.map((reaction) => {
           const selected = reaction.reacted_by_me
 
@@ -70,10 +88,12 @@ export function FeedReactions({ orgSlug, item, initialReactions, canReact, accen
             return (
               <span
                 key={reaction.emoji}
-                className="inline-flex items-center gap-1.5 rounded-full border border-zinc-800/80 bg-zinc-900/60 px-2.5 py-1 text-sm"
+                className={`${reactionClass} border-zinc-800/80 bg-zinc-900/50`}
               >
                 <span aria-hidden>{reaction.emoji}</span>
-                <span className="text-xs font-medium tabular-nums text-zinc-400">{reaction.count}</span>
+                <span className="text-[10px] font-medium tabular-nums text-zinc-400">
+                  {reaction.count}
+                </span>
               </span>
             )
           }
@@ -84,16 +104,20 @@ export function FeedReactions({ orgSlug, item, initialReactions, canReact, accen
               type="button"
               disabled={pending}
               onClick={() => handleToggle(reaction.emoji)}
-              className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-sm transition disabled:opacity-60 ${
+              className={`${reactionClass} transition disabled:opacity-60 ${
                 selected
                   ? 'border-zinc-600 bg-zinc-800/90'
-                  : 'border-zinc-800/80 bg-zinc-900/60 hover:border-zinc-700 hover:bg-zinc-900'
+                  : 'border-zinc-800/80 bg-zinc-900/50 hover:border-zinc-700 hover:bg-zinc-900'
               }`}
               aria-pressed={selected}
               aria-label={`${selected ? 'Remove' : 'Add'} ${reaction.emoji} reaction`}
             >
               <span aria-hidden>{reaction.emoji}</span>
-              <span className="text-xs font-medium tabular-nums text-zinc-300">{reaction.count}</span>
+              <span
+                className={`font-medium tabular-nums ${compact ? 'text-[10px] text-zinc-300' : 'text-xs text-zinc-300'}`}
+              >
+                {reaction.count}
+              </span>
             </button>
           )
         })}
@@ -103,10 +127,10 @@ export function FeedReactions({ orgSlug, item, initialReactions, canReact, accen
             type="button"
             disabled={pending}
             onClick={() => setPickerOpen((open) => !open)}
-            className={`inline-flex h-8 w-8 items-center justify-center rounded-full border text-zinc-400 transition disabled:opacity-60 ${
+            className={`inline-flex ${addButtonClass} items-center justify-center rounded-full border text-zinc-500 transition disabled:opacity-60 ${
               pickerOpen
                 ? 'border-zinc-600 bg-zinc-800/80 text-zinc-200'
-                : 'border-zinc-700 bg-transparent hover:border-zinc-600 hover:bg-zinc-900/80 hover:text-zinc-200'
+                : 'border-zinc-800/80 bg-transparent hover:border-zinc-700 hover:bg-zinc-900/80 hover:text-zinc-300'
             }`}
             aria-expanded={pickerOpen}
             aria-label={pickerOpen ? 'Close reaction picker' : 'Add reaction'}
@@ -118,7 +142,7 @@ export function FeedReactions({ orgSlug, item, initialReactions, canReact, accen
 
       {canReact && pickerOpen ? (
         <div
-          className="mt-2.5 flex gap-1 overflow-x-auto pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          className={`flex overflow-x-auto pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${pickerGapClass}`}
           role="toolbar"
           aria-label="Choose a reaction"
         >
@@ -133,7 +157,7 @@ export function FeedReactions({ orgSlug, item, initialReactions, canReact, accen
                 type="button"
                 disabled={pending}
                 onClick={() => handleToggle(emoji)}
-                className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-lg transition disabled:opacity-60 ${
+                className={`flex shrink-0 items-center justify-center rounded-full transition disabled:opacity-60 ${pickerEmojiClass} ${
                   selected ? 'bg-zinc-800/90' : 'hover:bg-zinc-800/70'
                 }`}
                 style={selected ? { boxShadow: `0 0 0 2px ${accent}` } : undefined}
@@ -147,7 +171,7 @@ export function FeedReactions({ orgSlug, item, initialReactions, canReact, accen
         </div>
       ) : null}
 
-      {error ? <p className="mt-2 text-xs text-red-400">{error}</p> : null}
+      {error ? <p className={`text-xs text-red-400 ${compact ? 'mt-1' : 'mt-2'}`}>{error}</p> : null}
     </div>
   )
 }
