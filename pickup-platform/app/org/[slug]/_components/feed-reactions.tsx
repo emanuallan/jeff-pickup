@@ -69,8 +69,8 @@ export function FeedReactions({
   }
 
   const shellClass = compact
-    ? 'border-t border-white/[0.04] px-3 py-1.5'
-    : 'border-t border-white/5 bg-zinc-950/30 px-4 py-3'
+    ? `border-t border-white/[0.04] px-3 py-1.5 ${pickerOpen ? 'relative z-10' : ''}`
+    : `border-t border-white/5 bg-zinc-950/30 px-4 py-3 ${pickerOpen ? 'relative z-10' : ''}`
   const reactionClass = compact
     ? 'inline-flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-xs'
     : 'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-sm'
@@ -142,7 +142,7 @@ export function FeedReactions({
 
       {canReact && pickerOpen ? (
         <div
-          className={`flex overflow-x-auto pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${pickerGapClass}`}
+          className={`flex items-center overflow-x-auto py-1.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${pickerGapClass}`}
           role="toolbar"
           aria-label="Choose a reaction"
         >
@@ -160,7 +160,7 @@ export function FeedReactions({
                 className={`flex shrink-0 items-center justify-center rounded-full transition disabled:opacity-60 ${pickerEmojiClass} ${
                   selected ? 'bg-zinc-800/90' : 'hover:bg-zinc-800/70'
                 }`}
-                style={selected ? { boxShadow: `0 0 0 2px ${accent}` } : undefined}
+                style={selected ? { boxShadow: `inset 0 0 0 2px ${accent}` } : undefined}
                 aria-label={`React with ${emoji}`}
                 aria-pressed={selected}
               >
