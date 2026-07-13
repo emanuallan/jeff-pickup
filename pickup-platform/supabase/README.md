@@ -39,8 +39,9 @@ In the Supabase **SQL Editor**, run in order:
 12. `supabase/migrations/012_normalize_phone_us10.sql`
 13. `supabase/migrations/041_org_logo_storage.sql` (after all prior migrations through 040)
 14. `supabase/migrations/042_org_logo_storage_select.sql`
-15. `supabase/migrations/043_refresh_demo_org.sql` (demo seed — safe to re-run anytime)
+15. `supabase/migrations/043_refresh_demo_org.sql` (demo seed — superseded by 063)
 16. `supabase/migrations/051_international_phones.sql` (E.164 phone storage + US backfill)
+17. `supabase/migrations/063_refresh_demo_org.sql` (demo seed — safe to re-run anytime; current through 062)
 
 Run migrations 013–050 in order as well if this is a fresh project — see `supabase/migrations/` for the full sequence.
 
@@ -76,8 +77,8 @@ Visit `http://jeffsoccer.localhost:3000` locally.
 
 ### Demo org (`demo.organizr.co`)
 
-Re-run [`migrations/043_refresh_demo_org.sql`](migrations/043_refresh_demo_org.sql) in the SQL Editor
-anytime you want fresh relative dates and roster data (seed is current through migration 046). It **only** deletes and recreates the org with
+Re-run [`migrations/063_refresh_demo_org.sql`](migrations/063_refresh_demo_org.sql) in the SQL Editor
+anytime you want fresh relative dates and roster data (seed is current through migration 062). It **only** deletes and recreates the org with
 `slug = 'demo'` (cascades all child rows). Grants console owner access to `emanuallan@gmail.com`
 (`23f1a201-aafe-4fd6-826d-3f753f092d33`) when that auth user exists.
 
