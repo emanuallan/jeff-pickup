@@ -19,7 +19,7 @@ type Props = {
 }
 
 const cardClass =
-  'overflow-hidden rounded-xl border border-zinc-800/80 bg-zinc-900/40'
+  'rounded-xl border border-zinc-800/80 bg-zinc-900/40'
 
 function FeedKindBadge({ kind }: { kind: OrgSessionFeedItem['kind'] }) {
   if (kind === 'mvp') {
