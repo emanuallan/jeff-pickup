@@ -5,12 +5,10 @@ import type {
   OrgSessionFeedPlayerStatsItem,
 } from '@/lib/org-session-feed'
 import {
-  formatFeedItemDate,
   formatMvpFeedHeadline,
 } from '@/lib/org-session-feed'
 import { formatNotificationTime } from '@/lib/participant-notifications'
 import { orgPublicEventHref } from '@/lib/org-public-nav'
-import { readableTextColor } from '@/lib/colors'
 import { FeedReactions } from './feed-reactions'
 
 type Props = {
@@ -54,8 +52,6 @@ function FeedEventLink({
   accent: string
   className?: string
 }) {
-  const dateLabel = formatFeedItemDate(item.occurred_at)
-
   return (
     <Link
       href={orgPublicEventHref(item.event_short_id)}
@@ -63,50 +59,25 @@ function FeedEventLink({
       style={{ color: accent }}
     >
       {item.event_label}
-      <span className="text-zinc-600"> · {dateLabel}</span>
     </Link>
   )
 }
 
-function MvpVoteRow({ item, accent }: { item: OrgSessionFeedMvpItem; accent: string }) {
-  if (item.nominees.length === 0) {
-    return (
-      <p className="text-xs text-zinc-500">
-        {item.total_votes === 0 ? 'No votes cast.' : 'Vote breakdown unavailable.'}
-      </p>
-    )
+function MvpRunnersUpRow({ nominees }: { nominees: OrgSessionFeedMvpItem['nominees'] }) {
+  if (nominees.length === 0) {
+    return null
   }
 
-  const accentFg = readableTextColor(accent)
-
   return (
-    <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs">
-      {item.nominees.map((nominee, index) => (
-        <span key={nominee.participant_id} className="inline-flex items-center gap-1">
-          {index > 0 ? <span className="text-zinc-700" aria-hidden>·</span> : null}
-          {nominee.is_winner ? (
-            <span
-              className="inline-flex shrink-0 rounded px-1 py-px text-[8px] font-bold uppercase tracking-wide"
-              style={{ backgroundColor: accent, color: accentFg }}
-            >
-              MVP
-            </span>
-          ) : null}
-          <span
-            className={`truncate ${nominee.is_winner ? 'font-medium text-zinc-100' : 'text-zinc-400'}`}
-            style={nominee.is_winner ? { color: accent } : undefined}
-          >
-            {nominee.display_name}
-          </span>
-          <span className="shrink-0 tabular-nums text-zinc-500">{nominee.vote_count}</span>
+    <p className="text-xs text-zinc-500">
+      {nominees.map((nominee, index) => (
+        <span key={nominee.participant_id}>
+          {index > 0 ? <span className="text-zinc-700" aria-hidden> · </span> : null}
+          {nominee.display_name}
+          <span className="tabular-nums text-zinc-600"> {nominee.vote_count}</span>
         </span>
       ))}
-      {item.total_votes > 0 ? (
-        <span className="text-zinc-600">
-          ({item.total_votes} vote{item.total_votes === 1 ? '' : 's'})
-        </span>
-      ) : null}
-    </div>
+    </p>
   )
 }
 
@@ -141,6 +112,7 @@ function MvpFeedCard({
 }) {
   const headline = formatMvpFeedHeadline(item)
   const when = formatNotificationTime(item.occurred_at)
+  const runnersUp = item.nominees.filter((nominee) => !nominee.is_winner)
 
   return (
     <article className={cardClass}>
@@ -155,9 +127,11 @@ function MvpFeedCard({
               </time>
             </div>
             <FeedEventLink item={item} accent={accent} className="mt-0.5 block" />
-            <div className="mt-1.5">
-              <MvpVoteRow item={item} accent={accent} />
-            </div>
+            {runnersUp.length > 0 ? (
+              <div className="mt-1">
+                <MvpRunnersUpRow nominees={runnersUp} />
+              </div>
+            ) : null}
           </div>
         </div>
       </div>
