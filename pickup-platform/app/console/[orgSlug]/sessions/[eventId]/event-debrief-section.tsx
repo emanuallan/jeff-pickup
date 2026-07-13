@@ -1,4 +1,5 @@
 import { orgFeatures, type OrgSettings } from '@/lib/org-features'
+import { MVP_VOTING_WINDOW_HOURS } from '@/lib/session-debrief'
 import {
   getEventSessionMvpAwards,
   getEventSessionPlayerStats,
@@ -49,7 +50,8 @@ export async function EventDebriefSection({ orgId, eventId }: Props) {
         </div>
       ) : (
         <p className="text-sm text-zinc-500">
-          MVP voting is still open or will finalize within 6 hours of session end.
+          MVP voting is still open or will finalize within {MVP_VOTING_WINDOW_HOURS} hours of
+          session end.
         </p>
       )}
 

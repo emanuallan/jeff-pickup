@@ -44,7 +44,7 @@ export type SessionPlayerStatsRow = {
   assists: number
 }
 
-export const MVP_VOTING_WINDOW_HOURS = 6
+export const MVP_VOTING_WINDOW_HOURS = 12
 
 export function parseSessionDebriefState(raw: unknown): SessionDebriefState | null {
   if (!raw || typeof raw !== 'object') return null

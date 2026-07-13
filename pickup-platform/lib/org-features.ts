@@ -1,4 +1,5 @@
 import type { OrgGroupRules } from './group-rules'
+import { MVP_VOTING_WINDOW_HOURS } from './session-debrief'
 import { parseOrgGroupRules } from './group-rules'
 import type { OrgSponsorshipSettings } from './sponsorship'
 import { parseOrgSponsorshipSettings } from './sponsorship'
@@ -153,7 +154,7 @@ export const ORG_FEATURE_DEFINITIONS: OrgFeatureDefinition[] = [
     key: 'session_mvp_voting',
     label: 'Session MVP voting',
     description:
-      'Let participants vote for a session MVP in the post-session debrief. Voting closes 6 hours after the session ends.',
+      `Let participants vote for a session MVP in the post-session debrief. Voting closes ${MVP_VOTING_WINDOW_HOURS} hours after the session ends.`,
   },
   {
     key: 'session_player_stats',

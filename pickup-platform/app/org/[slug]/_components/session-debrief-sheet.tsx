@@ -9,6 +9,7 @@ import {
   debriefStepCount,
   debriefStepIndex,
   debriefStepTitle,
+  MVP_VOTING_WINDOW_HOURS,
   nextDebriefStep,
   previousDebriefStep,
   resolveInitialDebriefStep,
@@ -68,7 +69,8 @@ function SessionMvpVoteStep({
     return (
       <div className="space-y-4">
         <p className="text-sm leading-relaxed text-zinc-400">
-          MVP voting is only available for 6 hours after the session ends.
+          MVP voting is only available for {MVP_VOTING_WINDOW_HOURS} hours after the session
+          ends.
         </p>
         <button
           type="button"

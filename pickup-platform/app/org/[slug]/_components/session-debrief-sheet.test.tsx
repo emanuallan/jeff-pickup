@@ -79,7 +79,7 @@ describe('SessionDebriefSheet', () => {
     )
 
     expect(
-      await screen.findByText(/mvp voting is only available for 6 hours/i),
+      await screen.findByText(/mvp voting is only available for 12 hours/i),
     ).toBeInTheDocument()
     expect(screen.getByText('Step 1 of 2')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Continue' })).toBeInTheDocument()
