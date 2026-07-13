@@ -63,17 +63,28 @@ function FeedEventLink({
   )
 }
 
-function MvpRunnersUpRow({ nominees }: { nominees: OrgSessionFeedMvpItem['nominees'] }) {
+function MvpVoteBreakdown({
+  nominees,
+  accent,
+}: {
+  nominees: OrgSessionFeedMvpItem['nominees']
+  accent: string
+}) {
   if (nominees.length === 0) {
-    return null
+    return <p className="text-xs text-zinc-500">No votes cast.</p>
   }
 
   return (
-    <p className="text-xs text-zinc-500">
+    <p className="text-xs leading-relaxed text-zinc-500">
       {nominees.map((nominee, index) => (
         <span key={nominee.participant_id}>
           {index > 0 ? <span className="text-zinc-700" aria-hidden> · </span> : null}
-          {nominee.display_name}
+          <span
+            className={nominee.is_winner ? 'font-medium' : undefined}
+            style={nominee.is_winner ? { color: accent } : undefined}
+          >
+            {nominee.display_name}
+          </span>
           <span className="tabular-nums text-zinc-600"> {nominee.vote_count}</span>
         </span>
       ))}
@@ -112,7 +123,6 @@ function MvpFeedCard({
 }) {
   const headline = formatMvpFeedHeadline(item)
   const when = formatNotificationTime(item.occurred_at)
-  const runnersUp = item.nominees.filter((nominee) => !nominee.is_winner)
 
   return (
     <article className={cardClass}>
@@ -127,11 +137,13 @@ function MvpFeedCard({
               </time>
             </div>
             <FeedEventLink item={item} accent={accent} className="mt-0.5 block" />
-            {runnersUp.length > 0 ? (
-              <div className="mt-1">
-                <MvpRunnersUpRow nominees={runnersUp} />
-              </div>
-            ) : null}
+            <div className="mt-1.5">
+              <p className="mb-0.5 text-[10px] font-semibold uppercase tracking-wide text-zinc-600">
+                Vote breakdown
+                {item.total_votes > 0 ? ` · ${item.total_votes} total` : ''}
+              </p>
+              <MvpVoteBreakdown nominees={item.nominees} accent={accent} />
+            </div>
           </div>
         </div>
       </div>
