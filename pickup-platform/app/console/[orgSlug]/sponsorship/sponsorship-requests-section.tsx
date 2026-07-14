@@ -39,6 +39,15 @@ export function SponsorshipRequestsSection({
   const toast = useConsoleToast()
   const router = useRouter()
   const [busy, setBusy] = useState<BusyAction | null>(null)
+  const [pendingRows, setPendingRows] = useState(pending)
+  const [activeRows, setActiveRows] = useState(active)
+  const [historyRows, setHistoryRows] = useState(history)
+
+  useEffect(() => {
+    setPendingRows(pending)
+    setActiveRows(active)
+    setHistoryRows(history)
+  }, [pending, active, history])
 
   function isBusy(id: string, action?: BusyAction['action']) {
     if (!busy || busy.id !== id) return false
@@ -53,6 +62,15 @@ export function SponsorshipRequestsSection({
       if (result?.error) {
         toast.error(result.error)
         return
+      }
+      const approvedAt = new Date().toISOString()
+      const moved = pendingRows.find((row) => row.id === id)
+      if (moved) {
+        setPendingRows((rows) => rows.filter((row) => row.id !== id))
+        setActiveRows((rows) => [
+          { ...moved, status: 'approved', approved_at: approvedAt },
+          ...rows,
+        ])
       }
       toast.success('Sponsor approved.')
       router.refresh()
@@ -76,6 +94,15 @@ export function SponsorshipRequestsSection({
       if (result?.error) {
         toast.error(result.error)
         return
+      }
+      const declinedAt = new Date().toISOString()
+      const moved = pendingRows.find((row) => row.id === id)
+      if (moved) {
+        setPendingRows((rows) => rows.filter((row) => row.id !== id))
+        setHistoryRows((rows) => [
+          { ...moved, status: 'declined', declined_at: declinedAt },
+          ...rows,
+        ])
       }
       toast.success('Sponsor declined and payment refunded.')
       router.refresh()
@@ -110,6 +137,36 @@ export function SponsorshipRequestsSection({
         toast.error(result.error)
         return
       }
+
+      const nowIso = new Date().toISOString()
+      const moved = activeRows.find((row) => row.id === id)
+      if (moved) {
+        if (mode === 'end_of_period') {
+          setActiveRows((rows) =>
+            rows.map((row) =>
+              row.id === id
+                ? {
+                    ...row,
+                    cancel_at_period_end: true,
+                    current_period_end: row.current_period_end ?? nowIso,
+                  }
+                : row,
+            ),
+          )
+        } else {
+          setActiveRows((rows) => rows.filter((row) => row.id !== id))
+          setHistoryRows((rows) => [
+            {
+              ...moved,
+              status: 'canceled',
+              canceled_at: nowIso,
+              cancel_at_period_end: false,
+            },
+            ...rows,
+          ])
+        }
+      }
+
       toast.success(
         mode === 'end_of_period'
           ? 'Sponsorship will end after this period. Logo stays until then.'
@@ -128,14 +185,14 @@ export function SponsorshipRequestsSection({
   return (
     <div className="space-y-4">
       <ConsoleSection
-        title={pending.length > 0 ? `Pending (${pending.length})` : 'Pending'}
+        title={pendingRows.length > 0 ? `Pending (${pendingRows.length})` : 'Pending'}
         description="Approve a request before their logo goes live."
       >
-        {pending.length === 0 ? (
+        {pendingRows.length === 0 ? (
           <p className="text-sm text-zinc-500">No pending sponsor requests.</p>
         ) : (
           <ul className="space-y-3">
-            {pending.map((row) => {
+            {pendingRows.map((row) => {
               const rowBusy = isBusy(row.id)
               return (
                 <SponsorshipRowCard
@@ -171,14 +228,14 @@ export function SponsorshipRequestsSection({
       </ConsoleSection>
 
       <ConsoleSection
-        title={active.length > 0 ? `Active (${active.length})` : 'Active'}
+        title={activeRows.length > 0 ? `Active (${activeRows.length})` : 'Active'}
         description="Live sponsors on your public pages. Cancel a sponsorship when you need to."
       >
-        {active.length === 0 ? (
+        {activeRows.length === 0 ? (
           <p className="text-sm text-zinc-500">No approved sponsors yet.</p>
         ) : (
           <ul className="space-y-3">
-            {active.map((row) => {
+            {activeRows.map((row) => {
               const rowBusy = isBusy(row.id)
               const showing = row.status === 'hidden'
               const ending = Boolean(row.cancel_at_period_end)
@@ -222,16 +279,16 @@ export function SponsorshipRequestsSection({
       </ConsoleSection>
 
       <ConsoleSection
-        title={history.length > 0 ? `History (${history.length})` : 'History'}
+        title={historyRows.length > 0 ? `History (${historyRows.length})` : 'History'}
         description="Declined, canceled, and failed requests."
         collapsible
         defaultOpen={false}
       >
-        {history.length === 0 ? (
+        {historyRows.length === 0 ? (
           <p className="text-sm text-zinc-500">No past sponsorship requests yet.</p>
         ) : (
           <ul className="space-y-3">
-            {history.map((row) => (
+            {historyRows.map((row) => (
               <SponsorshipRowCard
                 key={row.id}
                 row={row}
