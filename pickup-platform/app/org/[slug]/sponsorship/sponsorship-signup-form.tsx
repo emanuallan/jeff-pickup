@@ -24,9 +24,9 @@ type Props = {
 const STEPS: Step[] = ['tier', 'details', 'confirm']
 
 function stepLabel(step: Step): string {
-  if (step === 'tier') return 'Choose a tier'
-  if (step === 'details') return 'Your company'
-  return 'Confirm'
+  if (step === 'tier') return 'Choose your level'
+  if (step === 'details') return 'Show your brand'
+  return 'Confirm & sponsor'
 }
 
 function StepDots({
@@ -228,8 +228,8 @@ export function SponsorshipSignupForm({
           {step === 'tier' ? (
             <div className="space-y-3">
               <p className="text-sm leading-relaxed text-zinc-400">
-                Pick the monthly tier that fits. Your logo is shown on {orgName}&apos;s public pages
-                after they approve your request.
+                Pick the monthly level that fits. Your logo appears on {orgName}&apos;s public pages
+                once they approve you.
               </p>
               <div className="grid gap-3">
                 {displayTiers.map((tier) => {
@@ -283,7 +283,7 @@ export function SponsorshipSignupForm({
           {step === 'details' ? (
             <div className="space-y-4">
               <p className="text-sm leading-relaxed text-zinc-400">
-                Tell {orgName} who you are. Your logo should look clear on a dark background.
+                This is how {orgName} and its members will recognize you.
               </p>
 
               <div>
@@ -293,13 +293,13 @@ export function SponsorshipSignupForm({
                   value={sponsorName}
                   onChange={(event) => setSponsorName(event.target.value)}
                   className={inputClass}
-                  placeholder={`Support ${orgName}`}
+                  placeholder="Your company or brand"
                   autoComplete="organization"
                 />
               </div>
 
               <div>
-                <FieldLabel htmlFor="sponsor-logo">Company logo</FieldLabel>
+                <FieldLabel htmlFor="sponsor-logo">Logo</FieldLabel>
                 <label
                   htmlFor="sponsor-logo"
                   className="mt-2 flex cursor-pointer flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-zinc-700 bg-zinc-950/50 px-4 py-6 text-center transition hover:border-zinc-500 hover:bg-zinc-950/80"
@@ -322,9 +322,11 @@ export function SponsorshipSignupForm({
                     </span>
                   )}
                   <span className="text-sm text-zinc-300">
-                    {logoFile ? 'Replace logo' : 'Upload PNG, JPG, or WebP'}
+                    {logoFile ? 'Replace logo' : 'Upload your logo'}
                   </span>
-                  <span className="text-xs text-zinc-500">Wide logos work best · max 2 MB</span>
+                  <span className="text-xs text-zinc-500">
+                    PNG, JPG, or WebP · wide marks look best · max 2 MB
+                  </span>
                   <input
                     id="sponsor-logo"
                     type="file"
@@ -342,21 +344,24 @@ export function SponsorshipSignupForm({
                   value={sponsorUrl}
                   onChange={(event) => setSponsorUrl(event.target.value)}
                   className={inputClass}
-                  placeholder="https://example.com"
+                  placeholder="https://yourbrand.com"
                   inputMode="url"
                   autoComplete="url"
                 />
+                <p className="mt-1.5 text-xs text-zinc-500">
+                  Members can open this when they tap your logo.
+                </p>
               </div>
 
               <div>
-                <FieldLabel htmlFor="sponsor-message">Note to organizer (optional)</FieldLabel>
+                <FieldLabel htmlFor="sponsor-message">Note to the organizers (optional)</FieldLabel>
                 <textarea
                   id="sponsor-message"
                   value={sponsorMessage}
                   onChange={(event) => setSponsorMessage(event.target.value)}
                   rows={3}
                   className={`${inputClass} resize-y`}
-                  placeholder="Anything they should know?"
+                  placeholder={`Why you're excited to support ${orgName}`}
                 />
               </div>
             </div>
@@ -365,7 +370,7 @@ export function SponsorshipSignupForm({
           {step === 'confirm' && selectedTier ? (
             <div className="space-y-4">
               <p className="text-sm leading-relaxed text-zinc-400">
-                Review your sponsorship, then continue to secure checkout.
+                You&apos;re one step from sponsoring {orgName}.
               </p>
 
               <div className="rounded-2xl border border-zinc-800 bg-zinc-950/55 px-4 py-4">
@@ -456,7 +461,7 @@ export function SponsorshipSignupForm({
               className="inline-flex min-h-11 flex-1 items-center justify-center rounded-xl px-5 py-3 text-sm font-semibold transition hover:brightness-110"
               style={{ backgroundColor: accent, color: accentFg }}
             >
-              Continue
+              Review sponsorship
             </button>
           ) : null}
 
@@ -468,7 +473,7 @@ export function SponsorshipSignupForm({
               className="inline-flex min-h-11 flex-1 items-center justify-center rounded-xl px-5 py-3 text-sm font-semibold transition hover:brightness-110 disabled:opacity-60"
               style={{ backgroundColor: accent, color: accentFg }}
             >
-              {pending ? 'Preparing checkout…' : 'Continue to payment'}
+              {pending ? 'Preparing checkout…' : 'Become a sponsor'}
             </button>
           ) : null}
         </div>

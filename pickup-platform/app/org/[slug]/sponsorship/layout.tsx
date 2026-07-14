@@ -28,8 +28,8 @@ export default async function SponsorshipLayout({ children, params }: Props) {
         <OrgHeader
           org={org}
           title={org.name}
-          eyebrow="Sponsorship"
-          subtitle="Become a community partner"
+          eyebrow="Community sponsors"
+          subtitle="Feature your brand where this group gathers"
           logoPriority
         />
         <div className="mt-8">{children}</div>
