@@ -3,6 +3,7 @@
 import { useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import Image from 'next/image'
+import { useRouter } from 'next/navigation'
 import {
   approveSponsorship,
   cancelSponsorship,
@@ -36,6 +37,7 @@ export function SponsorshipRequestsSection({
   history: SponsorshipRow[]
 }) {
   const toast = useConsoleToast()
+  const router = useRouter()
   const [busy, setBusy] = useState<BusyAction | null>(null)
 
   function isBusy(id: string, action?: BusyAction['action']) {
@@ -53,6 +55,9 @@ export function SponsorshipRequestsSection({
         return
       }
       toast.success('Sponsor approved.')
+      router.refresh()
+    } catch {
+      toast.error('Could not approve this sponsorship. Try again.')
     } finally {
       setBusy(null)
     }
@@ -68,6 +73,9 @@ export function SponsorshipRequestsSection({
         return
       }
       toast.success('Sponsor declined and payment refunded.')
+      router.refresh()
+    } catch {
+      toast.error('Could not decline this sponsorship. Try again.')
     } finally {
       setBusy(null)
     }
@@ -104,6 +112,9 @@ export function SponsorshipRequestsSection({
             ? 'Sponsorship canceled with a full refund.'
             : 'Sponsorship canceled and latest payment refunded (fees kept).',
       )
+      router.refresh()
+    } catch {
+      toast.error('Could not cancel this sponsorship. Try again.')
     } finally {
       setBusy(null)
     }

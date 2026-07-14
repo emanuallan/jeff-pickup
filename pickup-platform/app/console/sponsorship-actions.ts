@@ -489,7 +489,23 @@ export async function cancelSponsorship(
       p_current_period_end: currentPeriodEnd,
     })
 
-    if (error) return { error: error.message }
+    if (error) {
+      // Stripe webhooks often mark the row canceled before this RPC runs.
+      if (immediate && /cannot be canceled/i.test(error.message)) {
+        const { data: latest } = await supabase
+          .from('sponsorships')
+          .select('status')
+          .eq('id', sponsorshipId)
+          .eq('org_id', org.id)
+          .maybeSingle()
+
+        if (latest?.status === 'canceled') {
+          revalidateSponsorshipPaths(orgSlug)
+          return { ok: true as const, mode }
+        }
+      }
+      return { error: error.message }
+    }
 
     revalidateSponsorshipPaths(orgSlug)
     return { ok: true as const, mode }
