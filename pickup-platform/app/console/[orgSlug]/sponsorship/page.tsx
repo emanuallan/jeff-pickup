@@ -18,6 +18,7 @@ import { SponsorshipFeatureToggle } from './sponsorship-feature-toggle'
 import { SponsorshipIntroForm } from './sponsorship-intro-form'
 import { SponsorshipTiersSection } from './sponsorship-tiers-section'
 import { SponsorshipRequestsSection } from './sponsorship-requests-section'
+import { SponsorshipOverviewStats } from './sponsorship-overview-stats'
 import { SponsorshipConnectError, SponsorshipConnectSuccess } from './sponsorship-connect-error'
 
 type Props = {
@@ -66,6 +67,12 @@ export default async function SponsorshipConsolePage({ params, searchParams }: P
 
   const pending = sponsorships.filter((row) => row.status === 'pending_approval')
   const active = sponsorships.filter((row) => row.status === 'approved' || row.status === 'hidden')
+  const history = sponsorships.filter(
+    (row) =>
+      row.status === 'declined' ||
+      row.status === 'canceled' ||
+      row.status === 'payment_failed',
+  )
 
   return (
     <ConsolePage width="max-w-2xl">
@@ -77,6 +84,10 @@ export default async function SponsorshipConsolePage({ params, searchParams }: P
       />
 
       <div className="mt-8 space-y-6">
+        <ConsoleSection title="Overview" description="Counts from your sponsorship rows.">
+          <SponsorshipOverviewStats rows={sponsorships} />
+        </ConsoleSection>
+
         <ConsoleSection title="Availability">
           <SponsorshipFeatureToggle orgSlug={orgSlug} enabled={features.group_sponsorships} />
         </ConsoleSection>
@@ -152,7 +163,12 @@ export default async function SponsorshipConsolePage({ params, searchParams }: P
           title="Sponsor requests"
           description="Approve sponsors before their logos appear publicly."
         >
-          <SponsorshipRequestsSection orgSlug={orgSlug} pending={pending} active={active} />
+          <SponsorshipRequestsSection
+            orgSlug={orgSlug}
+            pending={pending}
+            active={active}
+            history={history}
+          />
         </ConsoleSection>
       </div>
     </ConsolePage>

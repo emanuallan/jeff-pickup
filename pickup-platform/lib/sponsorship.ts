@@ -218,6 +218,96 @@ export function formatPlatformFeePercent(platformFeePercent: number): string {
     : platformFeePercent.toFixed(1).replace(/\.0$/, '')
 }
 
+export type SponsorshipOverviewInput = {
+  status: string
+  monthly_amount_cents: number
+}
+
+export type SponsorshipOverviewStats = {
+  pendingCount: number
+  activeCount: number
+  hiddenCount: number
+  monthlyRecurringCents: number
+  historyCount: number
+}
+
+/** Quick-glance console stats from existing sponsorship rows (no payment ledger). */
+export function buildSponsorshipOverviewStats(
+  rows: SponsorshipOverviewInput[],
+): SponsorshipOverviewStats {
+  let pendingCount = 0
+  let activeCount = 0
+  let hiddenCount = 0
+  let monthlyRecurringCents = 0
+  let historyCount = 0
+
+  for (const row of rows) {
+    switch (row.status) {
+      case 'pending_approval':
+        pendingCount += 1
+        break
+      case 'approved':
+        activeCount += 1
+        monthlyRecurringCents += row.monthly_amount_cents
+        break
+      case 'hidden':
+        hiddenCount += 1
+        monthlyRecurringCents += row.monthly_amount_cents
+        break
+      case 'declined':
+      case 'canceled':
+      case 'payment_failed':
+        historyCount += 1
+        break
+      default:
+        break
+    }
+  }
+
+  return {
+    pendingCount,
+    activeCount,
+    hiddenCount,
+    monthlyRecurringCents,
+    historyCount,
+  }
+}
+
+export function sponsorshipHistoryStatusLabel(status: string): string {
+  switch (status) {
+    case 'declined':
+      return 'Declined'
+    case 'canceled':
+      return 'Canceled'
+    case 'payment_failed':
+      return 'Payment failed'
+    default:
+      return status
+  }
+}
+
+export function sponsorshipHistoryDateIso(row: {
+  status: string
+  declined_at?: string | null
+  canceled_at?: string | null
+  created_at: string
+  updated_at?: string | null
+}): string {
+  if (row.status === 'declined' && row.declined_at) return row.declined_at
+  if (row.status === 'canceled' && row.canceled_at) return row.canceled_at
+  return row.updated_at || row.created_at
+}
+
+export function formatSponsorshipConsoleDate(iso: string): string {
+  const date = new Date(iso)
+  if (Number.isNaN(date.getTime())) return iso
+  return new Intl.DateTimeFormat('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  }).format(date)
+}
+
 export function sponsorshipRefundPolicyText(orgName: string, platformFeePercent: number): string {
   const feeLabel = formatPlatformFeePercent(platformFeePercent)
   return `Requests are reviewed before your logo goes live. If ${orgName} declines your request, your sponsorship payment is refunded except for Organizr's ${feeLabel}% platform fee, which is non-refundable.`

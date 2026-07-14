@@ -7,6 +7,7 @@ import {
   resolveSponsorRefundAmountCents,
   sponsorRefundAmountCents,
   sponsorshipRefundPolicyText,
+  buildSponsorshipOverviewStats,
   validateSponsorLogoUrl,
   validateSponsorName,
   validateTierPriceCents,
@@ -83,6 +84,24 @@ describe('sponsorship lifecycle helpers', () => {
     expect(sponsorshipRefundPolicyText('Demo FC', 5)).toContain(
       "Organizr's 5% platform fee, which is non-refundable",
     )
+  })
+
+  it('builds simple console overview stats', () => {
+    expect(
+      buildSponsorshipOverviewStats([
+        { status: 'pending_approval', monthly_amount_cents: 2500 },
+        { status: 'approved', monthly_amount_cents: 2500 },
+        { status: 'hidden', monthly_amount_cents: 5000 },
+        { status: 'declined', monthly_amount_cents: 2500 },
+        { status: 'canceled', monthly_amount_cents: 2500 },
+      ]),
+    ).toEqual({
+      pendingCount: 1,
+      activeCount: 1,
+      hiddenCount: 1,
+      monthlyRecurringCents: 7500,
+      historyCount: 2,
+    })
   })
 
   it('checks approval transitions', () => {

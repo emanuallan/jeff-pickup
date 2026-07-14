@@ -29,7 +29,13 @@ export type SponsorshipRow = {
   contact_email: string
   monthly_amount_cents: number
   currency: string
+  subscription_status: string | null
   created_at: string
+  updated_at?: string | null
+  approved_at: string | null
+  declined_at: string | null
+  canceled_at: string | null
+  hidden_at: string | null
   tier_name?: string
 }
 

@@ -9,7 +9,12 @@ import {
 } from '../../sponsorship-actions'
 import { btnOutline, btnPrimary } from '../../_components/console-ui'
 import { useConsoleToast } from '../../_components/console-toast'
-import { formatTierPrice } from '@/lib/sponsorship'
+import {
+  formatSponsorshipConsoleDate,
+  formatTierPrice,
+  sponsorshipHistoryDateIso,
+  sponsorshipHistoryStatusLabel,
+} from '@/lib/sponsorship'
 import type { SponsorshipRow } from '@/lib/sponsorship.server'
 
 type BusyAction = {
@@ -21,10 +26,12 @@ export function SponsorshipRequestsSection({
   orgSlug,
   pending,
   active,
+  history,
 }: {
   orgSlug: string
   pending: SponsorshipRow[]
   active: SponsorshipRow[]
+  history: SponsorshipRow[]
 }) {
   const toast = useConsoleToast()
   const [busy, setBusy] = useState<BusyAction | null>(null)
@@ -93,6 +100,7 @@ export function SponsorshipRequestsSection({
                 <SponsorshipRowCard
                   key={row.id}
                   row={row}
+                  meta={`Requested ${formatSponsorshipConsoleDate(row.created_at)}`}
                   actions={
                     <>
                       <button
@@ -134,6 +142,12 @@ export function SponsorshipRequestsSection({
                 <SponsorshipRowCard
                   key={row.id}
                   row={row}
+                  badge={showing ? 'Hidden' : null}
+                  meta={
+                    row.approved_at
+                      ? `Approved ${formatSponsorshipConsoleDate(row.approved_at)}`
+                      : undefined
+                  }
                   actions={
                     showing ? (
                       <button
@@ -162,6 +176,24 @@ export function SponsorshipRequestsSection({
           </ul>
         )}
       </section>
+
+      <section>
+        <h3 className="text-sm font-medium text-zinc-200">History</h3>
+        {history.length === 0 ? (
+          <p className="mt-2 text-sm text-zinc-500">No past sponsorship requests yet.</p>
+        ) : (
+          <ul className="mt-3 space-y-3">
+            {history.map((row) => (
+              <SponsorshipRowCard
+                key={row.id}
+                row={row}
+                badge={sponsorshipHistoryStatusLabel(row.status)}
+                meta={formatSponsorshipConsoleDate(sponsorshipHistoryDateIso(row))}
+              />
+            ))}
+          </ul>
+        )}
+      </section>
     </div>
   )
 }
@@ -169,10 +201,14 @@ export function SponsorshipRequestsSection({
 function SponsorshipRowCard({
   row,
   actions,
+  badge,
+  meta,
   dimmed = false,
 }: {
   row: SponsorshipRow
-  actions: ReactNode
+  actions?: ReactNode
+  badge?: string | null
+  meta?: string
   dimmed?: boolean
 }) {
   return (
@@ -191,16 +227,24 @@ function SponsorshipRowCard({
           unoptimized
         />
         <div className="min-w-0">
-          <p className="truncate font-medium text-zinc-100">{row.sponsor_name}</p>
+          <div className="flex min-w-0 flex-wrap items-center gap-2">
+            <p className="truncate font-medium text-zinc-100">{row.sponsor_name}</p>
+            {badge ? (
+              <span className="rounded-full border border-white/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-zinc-400">
+                {badge}
+              </span>
+            ) : null}
+          </div>
           <p className="text-xs text-zinc-500">
             {row.tier_name} · {formatTierPrice(row.monthly_amount_cents, row.currency)}/month
+            {meta ? ` · ${meta}` : ''}
           </p>
           {row.sponsor_message ? (
             <p className="mt-1 text-xs text-zinc-400">{row.sponsor_message}</p>
           ) : null}
         </div>
       </div>
-      <div className="flex shrink-0 gap-2">{actions}</div>
+      {actions ? <div className="flex shrink-0 gap-2">{actions}</div> : null}
     </li>
   )
 }
