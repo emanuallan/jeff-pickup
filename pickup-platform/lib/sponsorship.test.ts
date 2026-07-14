@@ -4,6 +4,7 @@ import {
   canDeclineSponsorship,
   isSponsorshipsActiveLocally,
   parsePublicSponsors,
+  resolveSponsorRefundAmountCents,
   sponsorRefundAmountCents,
   sponsorshipRefundPolicyText,
   validateSponsorLogoUrl,
@@ -54,6 +55,28 @@ describe('sponsorship lifecycle helpers', () => {
   it('refunds the sponsor payment minus the platform fee', () => {
     expect(sponsorRefundAmountCents(2500, 125)).toBe(2375)
     expect(sponsorRefundAmountCents(1000, 1000)).toBe(0)
+  })
+
+  it('treats a prior sponsor refund (fee left on charge) as already done', () => {
+    expect(
+      resolveSponsorRefundAmountCents({
+        grossAmountCents: 2500,
+        amountRefundedCents: 2375,
+        reportedApplicationFeeCents: 125,
+        platformFeePercent: 5,
+      }),
+    ).toEqual({ refundAmountCents: 0, alreadyRefundedSponsorPortion: true })
+  })
+
+  it('refunds the sponsor portion on a fresh charge', () => {
+    expect(
+      resolveSponsorRefundAmountCents({
+        grossAmountCents: 2500,
+        amountRefundedCents: 0,
+        reportedApplicationFeeCents: 125,
+        platformFeePercent: 5,
+      }),
+    ).toEqual({ refundAmountCents: 2375, alreadyRefundedSponsorPortion: false })
   })
 
   it('describes the non-refundable platform fee policy', () => {

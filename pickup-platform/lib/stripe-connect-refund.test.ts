@@ -167,6 +167,30 @@ describe('refundAndCancelSponsorshipSubscription', () => {
     expect(subscriptionsCancel).toHaveBeenCalled()
   })
 
+  it('treats fee-only remainder after a prior sponsor refund as already done', async () => {
+    paymentIntentsRetrieve.mockResolvedValue({
+      amount: 2500,
+      status: 'succeeded',
+      application_fee_amount: 125,
+      latest_charge: {
+        id: 'ch_test_1',
+        amount: 2500,
+        amount_refunded: 2375,
+        application_fee_amount: 125,
+        refunded: false,
+      },
+    })
+
+    const result = await refundAndCancelSponsorshipSubscription({
+      subscriptionId: 'sub_test_1',
+      stripeAccountId: 'acct_test_1',
+    })
+
+    expect(result).toEqual({ refunded: true, canceled: true })
+    expect(refundsCreate).not.toHaveBeenCalled()
+    expect(subscriptionsCancel).toHaveBeenCalled()
+  })
+
   it('treats Stripe charge_already_refunded as success', async () => {
     refundsCreate.mockRejectedValue({ code: 'charge_already_refunded' })
 

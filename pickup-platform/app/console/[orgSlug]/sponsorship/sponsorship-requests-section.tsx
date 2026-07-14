@@ -1,6 +1,6 @@
 'use client'
 
-import type { ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import Image from 'next/image'
 import {
   approveSponsorship,
@@ -12,6 +12,11 @@ import { useConsoleToast } from '../../_components/console-toast'
 import { formatTierPrice } from '@/lib/sponsorship'
 import type { SponsorshipRow } from '@/lib/sponsorship.server'
 
+type BusyAction = {
+  id: string
+  action: 'approve' | 'decline' | 'hide' | 'show'
+}
+
 export function SponsorshipRequestsSection({
   orgSlug,
   pending,
@@ -22,32 +27,56 @@ export function SponsorshipRequestsSection({
   active: SponsorshipRow[]
 }) {
   const toast = useConsoleToast()
+  const [busy, setBusy] = useState<BusyAction | null>(null)
+
+  function isBusy(id: string, action?: BusyAction['action']) {
+    if (!busy || busy.id !== id) return false
+    return action ? busy.action === action : true
+  }
 
   async function handleApprove(id: string) {
-    const result = await approveSponsorship(orgSlug, id)
-    if (result?.error) {
-      toast.error(result.error)
-      return
+    if (busy) return
+    setBusy({ id, action: 'approve' })
+    try {
+      const result = await approveSponsorship(orgSlug, id)
+      if (result?.error) {
+        toast.error(result.error)
+        return
+      }
+      toast.success('Sponsor approved.')
+    } finally {
+      setBusy(null)
     }
-    toast.success('Sponsor approved.')
   }
 
   async function handleDecline(id: string) {
-    const result = await declineSponsorship(orgSlug, id)
-    if (result?.error) {
-      toast.error(result.error)
-      return
+    if (busy) return
+    setBusy({ id, action: 'decline' })
+    try {
+      const result = await declineSponsorship(orgSlug, id)
+      if (result?.error) {
+        toast.error(result.error)
+        return
+      }
+      toast.success('Sponsor declined and payment refunded.')
+    } finally {
+      setBusy(null)
     }
-    toast.success('Sponsor declined and payment refunded.')
   }
 
   async function handleHidden(id: string, hidden: boolean) {
-    const result = await setSponsorshipHidden(orgSlug, id, hidden)
-    if (result?.error) {
-      toast.error(result.error)
-      return
+    if (busy) return
+    setBusy({ id, action: hidden ? 'hide' : 'show' })
+    try {
+      const result = await setSponsorshipHidden(orgSlug, id, hidden)
+      if (result?.error) {
+        toast.error(result.error)
+        return
+      }
+      toast.success(hidden ? 'Sponsor hidden.' : 'Sponsor shown again.')
+    } finally {
+      setBusy(null)
     }
-    toast.success(hidden ? 'Sponsor hidden.' : 'Sponsor shown again.')
   }
 
   return (
@@ -58,22 +87,36 @@ export function SponsorshipRequestsSection({
           <p className="mt-2 text-sm text-zinc-500">No pending sponsor requests.</p>
         ) : (
           <ul className="mt-3 space-y-3">
-            {pending.map((row) => (
-              <SponsorshipRowCard
-                key={row.id}
-                row={row}
-                actions={
-                  <>
-                    <button type="button" className={btnPrimary} onClick={() => handleApprove(row.id)}>
-                      Approve
-                    </button>
-                    <button type="button" className={btnOutline} onClick={() => handleDecline(row.id)}>
-                      Decline
-                    </button>
-                  </>
-                }
-              />
-            ))}
+            {pending.map((row) => {
+              const rowBusy = isBusy(row.id)
+              return (
+                <SponsorshipRowCard
+                  key={row.id}
+                  row={row}
+                  actions={
+                    <>
+                      <button
+                        type="button"
+                        className={btnPrimary}
+                        disabled={Boolean(busy)}
+                        onClick={() => handleApprove(row.id)}
+                      >
+                        {isBusy(row.id, 'approve') ? 'Approving…' : 'Approve'}
+                      </button>
+                      <button
+                        type="button"
+                        className={btnOutline}
+                        disabled={Boolean(busy)}
+                        onClick={() => handleDecline(row.id)}
+                      >
+                        {isBusy(row.id, 'decline') ? 'Declining…' : 'Decline'}
+                      </button>
+                    </>
+                  }
+                  dimmed={rowBusy}
+                />
+              )
+            })}
           </ul>
         )}
       </section>
@@ -84,31 +127,38 @@ export function SponsorshipRequestsSection({
           <p className="mt-2 text-sm text-zinc-500">No approved sponsors yet.</p>
         ) : (
           <ul className="mt-3 space-y-3">
-            {active.map((row) => (
-              <SponsorshipRowCard
-                key={row.id}
-                row={row}
-                actions={
-                  row.status === 'hidden' ? (
-                    <button
-                      type="button"
-                      className={btnOutline}
-                      onClick={() => handleHidden(row.id, false)}
-                    >
-                      Show
-                    </button>
-                  ) : (
-                    <button
-                      type="button"
-                      className={btnOutline}
-                      onClick={() => handleHidden(row.id, true)}
-                    >
-                      Hide
-                    </button>
-                  )
-                }
-              />
-            ))}
+            {active.map((row) => {
+              const rowBusy = isBusy(row.id)
+              const showing = row.status === 'hidden'
+              return (
+                <SponsorshipRowCard
+                  key={row.id}
+                  row={row}
+                  actions={
+                    showing ? (
+                      <button
+                        type="button"
+                        className={btnOutline}
+                        disabled={Boolean(busy)}
+                        onClick={() => handleHidden(row.id, false)}
+                      >
+                        {isBusy(row.id, 'show') ? 'Showing…' : 'Show'}
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        className={btnOutline}
+                        disabled={Boolean(busy)}
+                        onClick={() => handleHidden(row.id, true)}
+                      >
+                        {isBusy(row.id, 'hide') ? 'Hiding…' : 'Hide'}
+                      </button>
+                    )
+                  }
+                  dimmed={rowBusy}
+                />
+              )
+            })}
           </ul>
         )}
       </section>
@@ -119,12 +169,18 @@ export function SponsorshipRequestsSection({
 function SponsorshipRowCard({
   row,
   actions,
+  dimmed = false,
 }: {
   row: SponsorshipRow
-  actions: React.ReactNode
+  actions: ReactNode
+  dimmed?: boolean
 }) {
   return (
-    <li className="flex flex-col gap-3 rounded-xl border border-white/10 bg-zinc-950/30 p-4 sm:flex-row sm:items-center">
+    <li
+      className={`flex flex-col gap-3 rounded-xl border border-white/10 bg-zinc-950/30 p-4 sm:flex-row sm:items-center ${
+        dimmed ? 'opacity-70' : ''
+      }`}
+    >
       <div className="flex min-w-0 flex-1 items-center gap-3">
         <Image
           src={row.logo_url}

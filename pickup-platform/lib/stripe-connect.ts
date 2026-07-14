@@ -1,6 +1,6 @@
 import type Stripe from 'stripe'
 import { getPlatformFeePercent, getStripe } from '@/lib/stripe'
-import { sponsorRefundAmountCents } from '@/lib/sponsorship'
+import { resolveSponsorRefundAmountCents } from '@/lib/sponsorship'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { rootBaseUrl } from '@/lib/site-url'
 
@@ -302,22 +302,17 @@ async function resolveSponsorshipPaymentIntent(
   return null
 }
 
-function applicationFeeCentsFromPaymentIntent(paymentIntent: Stripe.PaymentIntent): number {
+function reportedApplicationFeeCents(
+  paymentIntent: Stripe.PaymentIntent,
+  latestCharge: Stripe.Charge | null,
+): number | null {
+  if (latestCharge && typeof latestCharge.application_fee_amount === 'number') {
+    return latestCharge.application_fee_amount
+  }
   if (typeof paymentIntent.application_fee_amount === 'number') {
     return paymentIntent.application_fee_amount
   }
-
-  const latestCharge = paymentIntent.latest_charge
-  if (
-    latestCharge &&
-    typeof latestCharge !== 'string' &&
-    typeof latestCharge.application_fee_amount === 'number'
-  ) {
-    return latestCharge.application_fee_amount
-  }
-
-  // Fallback if Connect fee isn't expanded yet — keep expected platform fee non-refundable.
-  return Math.round((paymentIntent.amount * getPlatformFeePercent()) / 100)
+  return null
 }
 
 export function stripeErrorMessage(error: unknown): string | null {
@@ -378,17 +373,16 @@ async function resolveSponsorshipRefund(
     throw new Error(`Sponsorship payment is not refundable (status: ${paymentIntent.status}).`)
   }
 
-  const latestCharge = paymentIntent.latest_charge
+  const latestCharge =
+    paymentIntent.latest_charge && typeof paymentIntent.latest_charge !== 'string'
+      ? paymentIntent.latest_charge
+      : null
   const chargeId =
-    typeof latestCharge === 'string'
-      ? latestCharge
-      : latestCharge && typeof latestCharge === 'object'
-        ? latestCharge.id
-        : null
-  const alreadyRefunded =
-    latestCharge && typeof latestCharge !== 'string' && latestCharge.refunded === true
+    typeof paymentIntent.latest_charge === 'string'
+      ? paymentIntent.latest_charge
+      : latestCharge?.id ?? null
 
-  if (alreadyRefunded) {
+  if (latestCharge?.refunded === true) {
     return {
       paymentIntentId,
       chargeId,
@@ -396,12 +390,20 @@ async function resolveSponsorshipRefund(
     }
   }
 
-  const applicationFeeCents = applicationFeeCentsFromPaymentIntent(paymentIntent)
-  const chargedAmountCents =
-    latestCharge && typeof latestCharge !== 'string'
-      ? latestCharge.amount - latestCharge.amount_refunded
-      : paymentIntent.amount
-  const refundAmountCents = sponsorRefundAmountCents(chargedAmountCents, applicationFeeCents)
+  const { refundAmountCents, alreadyRefundedSponsorPortion } = resolveSponsorRefundAmountCents({
+    grossAmountCents: paymentIntent.amount,
+    amountRefundedCents: latestCharge?.amount_refunded ?? 0,
+    reportedApplicationFeeCents: reportedApplicationFeeCents(paymentIntent, latestCharge),
+    platformFeePercent: getPlatformFeePercent(),
+  })
+
+  if (alreadyRefundedSponsorPortion) {
+    return {
+      paymentIntentId,
+      chargeId,
+      refundAmountCents: 0,
+    }
+  }
 
   if (refundAmountCents <= 0) {
     throw new Error('Sponsorship refund amount must be greater than zero.')

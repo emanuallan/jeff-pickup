@@ -171,7 +171,45 @@ export function sponsorRefundAmountCents(
   chargeAmountCents: number,
   applicationFeeCents: number,
 ): number {
-  return Math.max(chargeAmountCents - applicationFeeCents, 0)
+  if (!Number.isFinite(chargeAmountCents) || chargeAmountCents <= 0) return 0
+  const fee = Number.isFinite(applicationFeeCents) ? Math.max(0, applicationFeeCents) : 0
+  return Math.max(chargeAmountCents - fee, 0)
+}
+
+/**
+ * Resolve how much of a charge to refund while keeping the platform fee.
+ * Treats “only the fee remains” (after a prior sponsor refund) as nothing left to refund.
+ */
+export function resolveSponsorRefundAmountCents(input: {
+  grossAmountCents: number
+  amountRefundedCents: number
+  reportedApplicationFeeCents: number | null
+  platformFeePercent: number
+}): { refundAmountCents: number; alreadyRefundedSponsorPortion: boolean } {
+  const gross = Math.max(0, input.grossAmountCents)
+  const amountRefunded = Math.max(0, input.amountRefundedCents)
+  const remaining = Math.max(gross - amountRefunded, 0)
+
+  if (remaining <= 0) {
+    return { refundAmountCents: 0, alreadyRefundedSponsorPortion: true }
+  }
+
+  const expectedFeeCents = Math.round((gross * input.platformFeePercent) / 100)
+  const reported = input.reportedApplicationFeeCents
+  const feeCents =
+    reported != null && Number.isFinite(reported) && reported > 0 && reported < gross
+      ? reported
+      : expectedFeeCents
+
+  // Prior successful decline refund leaves only the non-refundable fee on the charge.
+  if (amountRefunded > 0 && remaining <= feeCents) {
+    return { refundAmountCents: 0, alreadyRefundedSponsorPortion: true }
+  }
+
+  return {
+    refundAmountCents: sponsorRefundAmountCents(remaining, feeCents),
+    alreadyRefundedSponsorPortion: false,
+  }
 }
 
 export function formatPlatformFeePercent(platformFeePercent: number): string {
