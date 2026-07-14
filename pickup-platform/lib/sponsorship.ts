@@ -360,7 +360,7 @@ export function formatSponsorshipConsoleDate(iso: string): string {
 
 export function sponsorshipRefundPolicyText(orgName: string, platformFeePercent: number): string {
   const feeLabel = formatPlatformFeePercent(platformFeePercent)
-  return `An organizer at ${orgName} will review your request before your logo goes live. If they decline, you're refunded except for card processing fees and Organizr's ${feeLabel}% platform fee.`
+  return `Requests are reviewed before your logo goes live. If ${orgName} declines your request, your payment is refunded except for card processing fees and Organizr's ${feeLabel}% platform fee, which are non-refundable.`
 }
 
 export function formatTierPrice(priceCents: number, currency = 'usd'): string {

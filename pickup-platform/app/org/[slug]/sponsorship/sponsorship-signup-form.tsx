@@ -228,8 +228,8 @@ export function SponsorshipSignupForm({
           {step === 'tier' ? (
             <div className="space-y-3">
               <p className="text-sm leading-relaxed text-zinc-400">
-                Choose a monthly amount that feels right. If {orgName} approves your request,
-                we&apos;ll thank you by showing your logo on their public pages.
+                Pick the monthly tier that fits. Your logo is shown on {orgName}&apos;s public pages
+                after they approve your request.
               </p>
               <div className="grid gap-3">
                 {displayTiers.map((tier) => {
@@ -283,17 +283,17 @@ export function SponsorshipSignupForm({
           {step === 'details' ? (
             <div className="space-y-4">
               <p className="text-sm leading-relaxed text-zinc-400">
-                A few details so {orgName} knows who to thank.
+                Tell {orgName} who you are. Your logo should look clear on a dark background.
               </p>
 
               <div>
-                <FieldLabel htmlFor="sponsor-name">Company or name</FieldLabel>
+                <FieldLabel htmlFor="sponsor-name">Company name</FieldLabel>
                 <input
                   id="sponsor-name"
                   value={sponsorName}
                   onChange={(event) => setSponsorName(event.target.value)}
                   className={inputClass}
-                  placeholder="How you'd like to be listed"
+                  placeholder={`Support ${orgName}`}
                   autoComplete="organization"
                 />
               </div>
@@ -322,11 +322,9 @@ export function SponsorshipSignupForm({
                     </span>
                   )}
                   <span className="text-sm text-zinc-300">
-                    {logoFile ? 'Replace logo' : 'Upload a logo'}
+                    {logoFile ? 'Replace logo' : 'Upload PNG, JPG, or WebP'}
                   </span>
-                  <span className="text-xs text-zinc-500">
-                    PNG, JPG, or WebP · clear on a dark background · max 2 MB
-                  </span>
+                  <span className="text-xs text-zinc-500">Wide logos work best · max 2 MB</span>
                   <input
                     id="sponsor-logo"
                     type="file"
@@ -344,21 +342,21 @@ export function SponsorshipSignupForm({
                   value={sponsorUrl}
                   onChange={(event) => setSponsorUrl(event.target.value)}
                   className={inputClass}
-                  placeholder="Optional link from your logo"
+                  placeholder="https://example.com"
                   inputMode="url"
                   autoComplete="url"
                 />
               </div>
 
               <div>
-                <FieldLabel htmlFor="sponsor-message">Note to the organizers (optional)</FieldLabel>
+                <FieldLabel htmlFor="sponsor-message">Note to organizer (optional)</FieldLabel>
                 <textarea
                   id="sponsor-message"
                   value={sponsorMessage}
                   onChange={(event) => setSponsorMessage(event.target.value)}
                   rows={3}
                   className={`${inputClass} resize-y`}
-                  placeholder="Anything you'd like them to know?"
+                  placeholder="Anything they should know?"
                 />
               </div>
             </div>
@@ -367,7 +365,7 @@ export function SponsorshipSignupForm({
           {step === 'confirm' && selectedTier ? (
             <div className="space-y-4">
               <p className="text-sm leading-relaxed text-zinc-400">
-                Does everything look right? Next you&apos;ll finish checkout securely.
+                Review your sponsorship, then continue to secure checkout.
               </p>
 
               <div className="rounded-2xl border border-zinc-800 bg-zinc-950/55 px-4 py-4">
@@ -470,7 +468,7 @@ export function SponsorshipSignupForm({
               className="inline-flex min-h-11 flex-1 items-center justify-center rounded-xl px-5 py-3 text-sm font-semibold transition hover:brightness-110 disabled:opacity-60"
               style={{ backgroundColor: accent, color: accentFg }}
             >
-              {pending ? 'Preparing checkout…' : 'Continue to checkout'}
+              {pending ? 'Preparing checkout…' : 'Continue to payment'}
             </button>
           ) : null}
         </div>

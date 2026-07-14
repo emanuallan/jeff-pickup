@@ -29,7 +29,7 @@ export default async function SponsorshipLayout({ children, params }: Props) {
           org={org}
           title={org.name}
           eyebrow="Sponsorship"
-          subtitle="Help keep this community going"
+          subtitle="Become a community partner"
           logoPriority
         />
         <div className="mt-8">{children}</div>
