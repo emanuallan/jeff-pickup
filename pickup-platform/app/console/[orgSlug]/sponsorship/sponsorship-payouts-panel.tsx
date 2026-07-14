@@ -90,18 +90,9 @@ export function SponsorshipPayoutsPanel({
               Finish Stripe onboarding to accept sponsors and receive payouts to your bank.
             </p>
           ) : null}
-          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-            <a href={connectPath} className={`${btnPrimary} w-full sm:w-auto`}>
-              Continue Stripe payout setup
-            </a>
-            {canDisconnectStripe ? (
-              <SponsorshipDisconnectButton orgSlug={orgSlug} canDisconnect />
-            ) : (
-              <p className="text-xs leading-relaxed text-zinc-500 sm:self-center">
-                Cancel or decline all active and pending sponsorships to disconnect Stripe.
-              </p>
-            )}
-          </div>
+          <a href={connectPath} className={`${btnPrimary} w-full sm:w-auto`}>
+            Continue Stripe payout setup
+          </a>
         </div>
       ) : (
         <div className="space-y-3">

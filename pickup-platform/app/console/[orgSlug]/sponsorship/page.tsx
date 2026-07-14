@@ -124,30 +124,31 @@ export default async function SponsorshipConsolePage({ params, searchParams }: P
     <ConsolePage width="max-w-2xl">
       <ConsoleHeader
         title="Sponsorships"
-        description="Review sponsors, shape your public offer, and get paid through Stripe."
+        description={
+          stripeReady
+            ? 'Review sponsors, shape your public offer, and get paid through Stripe.'
+            : 'Connect Stripe to unlock sponsorship tools and get paid.'
+        }
         backHref={`/console/${orgSlug}`}
         backLabel="Console"
         actions={
           <>
             {payoutHeaderLink}
-            {previewLink}
+            {stripeReady ? previewLink : null}
           </>
         }
       />
 
       <div className="mt-8 space-y-8">
         <div className="space-y-3">
-          <ConsoleGroupLabel>At a glance</ConsoleGroupLabel>
-          <ConsoleSection>
-            <SponsorshipOverviewStats rows={sponsorships} />
-          </ConsoleSection>
-        </div>
-
-        <div className="space-y-3">
           <ConsoleGroupLabel>Payouts</ConsoleGroupLabel>
           <ConsoleSection
             title="Get paid"
-            description="Sponsor money is handled in Stripe — open it anytime to see balances and bank payouts."
+            description={
+              stripeReady
+                ? 'Sponsor money is handled in Stripe — open it anytime to see balances and bank payouts.'
+                : 'Connect Stripe to unlock sponsorship tools and get paid.'
+            }
           >
             <SponsorshipPayoutsPanel
               orgSlug={orgSlug}
@@ -165,62 +166,69 @@ export default async function SponsorshipConsolePage({ params, searchParams }: P
           </ConsoleSection>
         </div>
 
-        <div className="space-y-3">
-          <ConsoleGroupLabel>Sponsors</ConsoleGroupLabel>
-          <SponsorshipRequestsSection
-            orgSlug={orgSlug}
-            pending={pending}
-            active={active}
-            history={history}
-          />
-        </div>
+        {stripeReady ? (
+          <>
+            <div className="space-y-3">
+              <ConsoleGroupLabel>At a glance</ConsoleGroupLabel>
+              <ConsoleSection>
+                <SponsorshipOverviewStats rows={sponsorships} />
+              </ConsoleSection>
+            </div>
 
-        <div className="space-y-3">
-          <ConsoleGroupLabel>Public offer</ConsoleGroupLabel>
-          <ConsoleSection
-            title="Page intro"
-            description="Shown at the top of your public sponsorship page."
-          >
-            <SponsorshipIntroForm
-              orgSlug={orgSlug}
-              introText={sponsorshipSettings?.intro_text ?? ''}
-            />
-          </ConsoleSection>
-
-          <ConsoleSection
-            title="Tiers"
-            description={
-              stripeReady
-                ? 'Monthly options sponsors can choose from.'
-                : 'Connect Stripe before you can create or edit tiers.'
-            }
-          >
-            <SponsorshipTiersSection
-              orgSlug={orgSlug}
-              tiers={tiers}
-              canEdit={stripeReady}
-              lockedTierIds={collectTierIdsLockedBySponsors(sponsorships)}
-            />
-          </ConsoleSection>
-        </div>
-
-        <div className="space-y-3">
-          <ConsoleGroupLabel>Setup</ConsoleGroupLabel>
-          <ConsoleSection
-            title="Availability"
-            description="Turn the public sponsorship offer on or off."
-            collapsible={featureReady}
-            defaultOpen={!featureReady}
-          >
-            <div className="-mx-1">
-              <SponsorshipFeatureToggle
+            <div className="space-y-3">
+              <ConsoleGroupLabel>Sponsors</ConsoleGroupLabel>
+              <SponsorshipRequestsSection
                 orgSlug={orgSlug}
-                enabled={features.group_sponsorships}
-                locked={active.length > 0}
+                pending={pending}
+                active={active}
+                history={history}
               />
             </div>
-          </ConsoleSection>
-        </div>
+
+            <div className="space-y-3">
+              <ConsoleGroupLabel>Public offer</ConsoleGroupLabel>
+              <ConsoleSection
+                title="Page intro"
+                description="Shown at the top of your public sponsorship page."
+              >
+                <SponsorshipIntroForm
+                  orgSlug={orgSlug}
+                  introText={sponsorshipSettings?.intro_text ?? ''}
+                />
+              </ConsoleSection>
+
+              <ConsoleSection
+                title="Tiers"
+                description="Monthly options sponsors can choose from."
+              >
+                <SponsorshipTiersSection
+                  orgSlug={orgSlug}
+                  tiers={tiers}
+                  canEdit
+                  lockedTierIds={collectTierIdsLockedBySponsors(sponsorships)}
+                />
+              </ConsoleSection>
+            </div>
+
+            <div className="space-y-3">
+              <ConsoleGroupLabel>Setup</ConsoleGroupLabel>
+              <ConsoleSection
+                title="Availability"
+                description="Turn the public sponsorship offer on or off."
+                collapsible={featureReady}
+                defaultOpen={!featureReady}
+              >
+                <div className="-mx-1">
+                  <SponsorshipFeatureToggle
+                    orgSlug={orgSlug}
+                    enabled={features.group_sponsorships}
+                    locked={active.length > 0}
+                  />
+                </div>
+              </ConsoleSection>
+            </div>
+          </>
+        ) : null}
       </div>
     </ConsolePage>
   )
