@@ -65,6 +65,11 @@ export function SponsorshipRequestsSection({
 
   async function handleDecline(id: string) {
     if (busy) return
+    const confirmed = window.confirm(
+      'Decline this sponsorship request? Their latest payment will be refunded (minus platform and card fees), and their logo will not go live.',
+    )
+    if (!confirmed) return
+
     setBusy({ id, action: 'decline' })
     try {
       const result = await declineSponsorship(orgSlug, id)
