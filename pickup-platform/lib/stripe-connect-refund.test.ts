@@ -14,6 +14,7 @@ describe('refundAndCancelSponsorshipSubscription', () => {
   const subscriptionsRetrieve = vi.fn()
   const invoicesList = vi.fn()
   const invoicesRetrieve = vi.fn()
+  const invoicePaymentsList = vi.fn()
   const paymentIntentsRetrieve = vi.fn()
   const checkoutSessionsRetrieve = vi.fn()
 
@@ -23,6 +24,7 @@ describe('refundAndCancelSponsorshipSubscription', () => {
     subscriptionsRetrieve.mockReset()
     invoicesList.mockReset()
     invoicesRetrieve.mockReset()
+    invoicePaymentsList.mockReset()
     paymentIntentsRetrieve.mockReset()
     checkoutSessionsRetrieve.mockReset()
 
@@ -30,25 +32,32 @@ describe('refundAndCancelSponsorshipSubscription', () => {
       latest_invoice: {
         id: 'in_test_1',
         status: 'paid',
-        payments: {
-          data: [
-            {
-              status: 'paid',
-              payment: {
-                type: 'payment_intent',
-                payment_intent: 'pi_test_1',
-              },
-            },
-          ],
-        },
       },
     })
     invoicesList.mockResolvedValue({ data: [] })
+    invoicesRetrieve.mockResolvedValue({
+      id: 'in_test_1',
+      payments: { data: [] },
+    })
+    invoicePaymentsList.mockResolvedValue({
+      data: [
+        {
+          status: 'paid',
+          payment: {
+            type: 'payment_intent',
+            payment_intent: 'pi_test_1',
+          },
+        },
+      ],
+    })
     paymentIntentsRetrieve.mockResolvedValue({
       amount: 2500,
       status: 'succeeded',
       application_fee_amount: 125,
       latest_charge: {
+        id: 'ch_test_1',
+        amount: 2500,
+        amount_refunded: 0,
         application_fee_amount: 125,
         refunded: false,
       },
@@ -65,6 +74,9 @@ describe('refundAndCancelSponsorshipSubscription', () => {
         list: invoicesList,
         retrieve: invoicesRetrieve,
       },
+      invoicePayments: {
+        list: invoicePaymentsList,
+      },
       checkout: {
         sessions: {
           retrieve: checkoutSessionsRetrieve,
@@ -79,7 +91,7 @@ describe('refundAndCancelSponsorshipSubscription', () => {
     } as never)
   })
 
-  it('refunds the payment minus the platform fee and cancels the subscription', async () => {
+  it('refunds via charge amount minus platform fee, then cancels', async () => {
     const result = await refundAndCancelSponsorshipSubscription({
       subscriptionId: 'sub_test_1',
       stripeAccountId: 'acct_test_1',
@@ -87,14 +99,18 @@ describe('refundAndCancelSponsorshipSubscription', () => {
     })
 
     expect(result).toEqual({ refunded: true, canceled: true })
-    expect(paymentIntentsRetrieve).toHaveBeenCalledWith(
-      'pi_test_1',
-      { expand: ['latest_charge'] },
+    expect(invoicePaymentsList).toHaveBeenCalledWith(
+      {
+        invoice: 'in_test_1',
+        status: 'paid',
+        limit: 10,
+        expand: ['data.payment.payment_intent'],
+      },
       { stripeAccount: 'acct_test_1' },
     )
     expect(refundsCreate).toHaveBeenCalledWith(
       {
-        payment_intent: 'pi_test_1',
+        charge: 'ch_test_1',
         amount: 2375,
         refund_application_fee: false,
       },
@@ -133,6 +149,9 @@ describe('refundAndCancelSponsorshipSubscription', () => {
       status: 'succeeded',
       application_fee_amount: 125,
       latest_charge: {
+        id: 'ch_test_1',
+        amount: 2500,
+        amount_refunded: 2500,
         application_fee_amount: 125,
         refunded: true,
       },

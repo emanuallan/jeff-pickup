@@ -197,29 +197,52 @@ function paymentIntentIdFromExpanded(value: string | Stripe.PaymentIntent | null
   return null
 }
 
-/** Basil+ APIs removed Invoice.payment_intent — resolve via invoice payments instead. */
-function paymentIntentIdFromInvoicePayments(invoice: Stripe.Invoice): string | null {
-  const payments = invoice.payments?.data ?? []
-  for (const payment of payments) {
-    if (payment.status !== 'paid') continue
-    if (payment.payment.type !== 'payment_intent') continue
-    const paymentIntentId = paymentIntentIdFromExpanded(payment.payment.payment_intent)
-    if (paymentIntentId) return paymentIntentId
-  }
+function invoiceIdFromExpanded(value: string | Stripe.Invoice | null | undefined): string | null {
+  if (typeof value === 'string') return value
+  if (value && typeof value === 'object' && 'id' in value) return value.id
   return null
 }
 
+function paymentIntentIdFromInvoicePayment(payment: Stripe.InvoicePayment): string | null {
+  if (payment.status !== 'paid') return null
+  if (payment.payment.type !== 'payment_intent') return null
+  return paymentIntentIdFromExpanded(payment.payment.payment_intent)
+}
+
+/** Resolve PaymentIntent via Invoice Payments API (Basil+ removed Invoice.payment_intent). */
 async function paymentIntentIdFromInvoiceId(
   invoiceId: string,
   connectOpts: ConnectRequestOptions,
 ): Promise<string | null> {
   const stripe = getStripe()
+
+  const invoicePayments = await stripe.invoicePayments.list(
+    {
+      invoice: invoiceId,
+      status: 'paid',
+      limit: 10,
+      expand: ['data.payment.payment_intent'],
+    },
+    connectOpts,
+  )
+
+  for (const payment of invoicePayments.data) {
+    const paymentIntentId = paymentIntentIdFromInvoicePayment(payment)
+    if (paymentIntentId) return paymentIntentId
+  }
+
+  // Fallback: expand payments on the invoice itself (max 4 expand levels).
   const invoice = await stripe.invoices.retrieve(
     invoiceId,
     { expand: ['payments.data.payment.payment_intent'] },
     connectOpts,
   )
-  return paymentIntentIdFromInvoicePayments(invoice)
+  for (const payment of invoice.payments?.data ?? []) {
+    const paymentIntentId = paymentIntentIdFromInvoicePayment(payment)
+    if (paymentIntentId) return paymentIntentId
+  }
+
+  return null
 }
 
 async function resolveSponsorshipPaymentIntent(
@@ -229,30 +252,21 @@ async function resolveSponsorshipPaymentIntent(
 ): Promise<string | null> {
   const stripe = getStripe()
 
+  // Keep expands shallow — nested expands deeper than 4 levels are rejected by Stripe.
   const subscription = await stripe.subscriptions.retrieve(
     subscriptionId,
-    {
-      expand: [
-        'latest_invoice',
-        'latest_invoice.payments.data.payment.payment_intent',
-      ],
-    },
+    { expand: ['latest_invoice'] },
     connectOpts,
   )
 
   const latestInvoice = subscription.latest_invoice
-  if (latestInvoice && typeof latestInvoice !== 'string') {
-    if (latestInvoice.status === 'paid') {
-      const fromExpanded = paymentIntentIdFromInvoicePayments(latestInvoice)
-      if (fromExpanded) return fromExpanded
-      if (typeof latestInvoice.id === 'string') {
-        const fromRetrieve = await paymentIntentIdFromInvoiceId(latestInvoice.id, connectOpts)
-        if (fromRetrieve) return fromRetrieve
-      }
-    }
-  } else if (typeof latestInvoice === 'string') {
-    const fromRetrieve = await paymentIntentIdFromInvoiceId(latestInvoice, connectOpts)
-    if (fromRetrieve) return fromRetrieve
+  const latestInvoiceId = invoiceIdFromExpanded(latestInvoice)
+  const latestInvoicePaid =
+    typeof latestInvoice === 'string' || latestInvoice?.status === 'paid'
+
+  if (latestInvoiceId && latestInvoicePaid) {
+    const fromLatest = await paymentIntentIdFromInvoiceId(latestInvoiceId, connectOpts)
+    if (fromLatest) return fromLatest
   }
 
   const paidInvoices = await stripe.invoices.list(
@@ -260,42 +274,28 @@ async function resolveSponsorshipPaymentIntent(
       subscription: subscriptionId,
       status: 'paid',
       limit: 1,
-      expand: ['data.payments.data.payment.payment_intent'],
     },
     connectOpts,
   )
-  const paidInvoice = paidInvoices.data[0]
-  if (paidInvoice) {
-    const fromList = paymentIntentIdFromInvoicePayments(paidInvoice)
-    if (fromList) return fromList
-    const fromRetrieve = await paymentIntentIdFromInvoiceId(paidInvoice.id, connectOpts)
-    if (fromRetrieve) return fromRetrieve
+  const paidInvoiceId = paidInvoices.data[0]?.id
+  if (paidInvoiceId) {
+    const fromPaid = await paymentIntentIdFromInvoiceId(paidInvoiceId, connectOpts)
+    if (fromPaid) return fromPaid
   }
 
   if (checkoutSessionId) {
     const session = await stripe.checkout.sessions.retrieve(
       checkoutSessionId,
-      {
-        expand: [
-          'payment_intent',
-          'invoice',
-          'invoice.payments.data.payment.payment_intent',
-        ],
-      },
+      { expand: ['invoice', 'payment_intent'] },
       connectOpts,
     )
 
     const sessionPaymentIntent = paymentIntentIdFromExpanded(session.payment_intent)
     if (sessionPaymentIntent) return sessionPaymentIntent
 
-    const sessionInvoice = session.invoice
-    if (sessionInvoice && typeof sessionInvoice !== 'string') {
-      const fromSessionInvoice = paymentIntentIdFromInvoicePayments(sessionInvoice)
-      if (fromSessionInvoice) return fromSessionInvoice
-      return paymentIntentIdFromInvoiceId(sessionInvoice.id, connectOpts)
-    }
-    if (typeof sessionInvoice === 'string') {
-      return paymentIntentIdFromInvoiceId(sessionInvoice, connectOpts)
+    const sessionInvoiceId = invoiceIdFromExpanded(session.invoice)
+    if (sessionInvoiceId) {
+      return paymentIntentIdFromInvoiceId(sessionInvoiceId, connectOpts)
     }
   }
 
@@ -308,12 +308,25 @@ function applicationFeeCentsFromPaymentIntent(paymentIntent: Stripe.PaymentInten
   }
 
   const latestCharge = paymentIntent.latest_charge
-  if (latestCharge && typeof latestCharge !== 'string' && typeof latestCharge.application_fee_amount === 'number') {
+  if (
+    latestCharge &&
+    typeof latestCharge !== 'string' &&
+    typeof latestCharge.application_fee_amount === 'number'
+  ) {
     return latestCharge.application_fee_amount
   }
 
   // Fallback if Connect fee isn't expanded yet — keep expected platform fee non-refundable.
   return Math.round((paymentIntent.amount * getPlatformFeePercent()) / 100)
+}
+
+export function stripeErrorMessage(error: unknown): string | null {
+  if (typeof error === 'object' && error !== null && 'message' in error) {
+    const message = (error as { message?: unknown }).message
+    if (typeof message === 'string' && message.trim()) return message.trim()
+  }
+  if (error instanceof Error && error.message.trim()) return error.message.trim()
+  return null
 }
 
 function isStripeAlreadyRefunded(error: unknown): boolean {
@@ -343,7 +356,7 @@ async function resolveSponsorshipRefund(
   subscriptionId: string,
   checkoutSessionId: string | null | undefined,
   connectOpts: ConnectRequestOptions,
-): Promise<{ paymentIntentId: string; refundAmountCents: number }> {
+): Promise<{ paymentIntentId: string; chargeId: string | null; refundAmountCents: number }> {
   const stripe = getStripe()
   const paymentIntentId = await resolveSponsorshipPaymentIntent(
     subscriptionId,
@@ -366,26 +379,35 @@ async function resolveSponsorshipRefund(
   }
 
   const latestCharge = paymentIntent.latest_charge
+  const chargeId =
+    typeof latestCharge === 'string'
+      ? latestCharge
+      : latestCharge && typeof latestCharge === 'object'
+        ? latestCharge.id
+        : null
   const alreadyRefunded =
-    latestCharge &&
-    typeof latestCharge !== 'string' &&
-    latestCharge.refunded === true
+    latestCharge && typeof latestCharge !== 'string' && latestCharge.refunded === true
 
   if (alreadyRefunded) {
     return {
       paymentIntentId,
+      chargeId,
       refundAmountCents: 0,
     }
   }
 
   const applicationFeeCents = applicationFeeCentsFromPaymentIntent(paymentIntent)
-  const refundAmountCents = sponsorRefundAmountCents(paymentIntent.amount, applicationFeeCents)
+  const chargedAmountCents =
+    latestCharge && typeof latestCharge !== 'string'
+      ? latestCharge.amount - latestCharge.amount_refunded
+      : paymentIntent.amount
+  const refundAmountCents = sponsorRefundAmountCents(chargedAmountCents, applicationFeeCents)
 
   if (refundAmountCents <= 0) {
     throw new Error('Sponsorship refund amount must be greater than zero.')
   }
 
-  return { paymentIntentId, refundAmountCents }
+  return { paymentIntentId, chargeId, refundAmountCents }
 }
 
 /** Refund the sponsor payment minus the platform fee, then cancel the subscription. */
@@ -407,11 +429,17 @@ export async function refundAndCancelSponsorshipSubscription(input: {
   if (refundTarget.refundAmountCents > 0) {
     try {
       await stripe.refunds.create(
-        {
-          payment_intent: refundTarget.paymentIntentId,
-          amount: refundTarget.refundAmountCents,
-          refund_application_fee: false,
-        },
+        refundTarget.chargeId
+          ? {
+              charge: refundTarget.chargeId,
+              amount: refundTarget.refundAmountCents,
+              refund_application_fee: false,
+            }
+          : {
+              payment_intent: refundTarget.paymentIntentId,
+              amount: refundTarget.refundAmountCents,
+              refund_application_fee: false,
+            },
         connectOpts,
       )
       refunded = true

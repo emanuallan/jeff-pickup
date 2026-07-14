@@ -15,6 +15,7 @@ import {
   createTierStripeProductAndPrice,
   deactivateTierStripePrice,
   refundAndCancelSponsorshipSubscription,
+  stripeErrorMessage,
 } from '@/lib/stripe-connect'
 import { getOrgStripeAccount } from '@/lib/sponsorship.server'
 
@@ -326,10 +327,18 @@ export async function declineSponsorship(
           stripeAccountId: stripeAccount.stripe_account_id,
           checkoutSessionId: row.stripe_checkout_session_id,
         })
-      } catch {
+      } catch (error) {
+        console.error('Sponsorship decline refund failed', {
+          orgSlug,
+          sponsorshipId,
+          message: stripeErrorMessage(error),
+          error,
+        })
+        const detail = stripeErrorMessage(error)
         return {
-          error:
-            'Could not refund the sponsor payment. Try again, or issue a refund manually in Stripe.',
+          error: detail
+            ? `Could not refund the sponsor payment: ${detail}`
+            : 'Could not refund the sponsor payment. Try again, or issue a refund manually in Stripe.',
         }
       }
     }
