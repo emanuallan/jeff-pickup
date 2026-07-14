@@ -150,6 +150,41 @@ export async function syncConnectAccountForOrg(orgId: string) {
   return syncConnectAccountStatus(stripeAccountId)
 }
 
+/**
+ * Unlink a connected Express account from an org.
+ * Clears Stripe metadata so reconnect does not reattach the old account, deletes the DB row,
+ * and best-effort deletes the Express account (may fail if balance remains).
+ */
+export async function disconnectOrgStripeAccount(orgId: string, stripeAccountId: string) {
+  const stripe = getStripe()
+
+  try {
+    await stripe.accounts.update(stripeAccountId, {
+      metadata: {
+        org_id: '',
+        org_slug: '',
+      },
+    })
+  } catch {
+    // Account may already be deleted or unreachable — still clear our DB link.
+  }
+
+  try {
+    await stripe.accounts.del(stripeAccountId)
+  } catch {
+    // Nonzero balance / already gone — unlink still succeeds without deleting in Stripe.
+  }
+
+  const admin = createAdminClient()
+  const { error } = await admin.rpc('delete_org_stripe_account', {
+    p_org_id: orgId,
+  })
+
+  if (error) {
+    throw new Error(`delete_org_stripe_account failed: ${error.message}`)
+  }
+}
+
 export async function createTierStripeProductAndPrice(input: {
   stripeAccountId: string
   orgId: string

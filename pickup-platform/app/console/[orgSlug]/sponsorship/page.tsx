@@ -13,7 +13,10 @@ import {
 import { orgSponsorshipUrl } from '@/lib/site-url'
 import { isStripeConfigured } from '@/lib/stripe'
 import { getStripeConnectErrorDisplay } from '@/lib/stripe-connect-errors'
-import { collectTierIdsLockedBySponsors } from '@/lib/sponsorship'
+import {
+  collectTierIdsLockedBySponsors,
+  orgHasSponsorshipsBlockingStripeDisconnect,
+} from '@/lib/sponsorship'
 import {
   ConsoleHeader,
   ConsolePage,
@@ -93,6 +96,7 @@ export default async function SponsorshipConsolePage({ params, searchParams }: P
       row.status === 'canceled' ||
       row.status === 'payment_failed',
   )
+  const canDisconnectStripe = !orgHasSponsorshipsBlockingStripeDisconnect(sponsorships)
 
   const previewLink = (
     <Link
@@ -146,10 +150,12 @@ export default async function SponsorshipConsolePage({ params, searchParams }: P
             description="Sponsor money is handled in Stripe — open it anytime to see balances and bank payouts."
           >
             <SponsorshipPayoutsPanel
+              orgSlug={orgSlug}
               stripeConfigured={isStripeConfigured()}
               stripeReady={stripeReady}
               hasStripeAccount={Boolean(stripeAccount)}
               payoutsEnabled={payoutsEnabled}
+              canDisconnectStripe={canDisconnectStripe}
               connectPath={connectPath}
               payoutsPath={payoutsPath}
               connectErrorDisplay={connectErrorDisplay}

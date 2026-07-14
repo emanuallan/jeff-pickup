@@ -413,6 +413,20 @@ export function sponsorshipStatusLocksTier(status: string): boolean {
   return status === 'approved' || status === 'hidden'
 }
 
+/**
+ * Pending and live sponsors still have (or will keep) Stripe subscriptions —
+ * disconnecting Connect would orphan billing.
+ */
+export function sponsorshipBlocksStripeDisconnect(status: string): boolean {
+  return status === 'pending_approval' || status === 'approved' || status === 'hidden'
+}
+
+export function orgHasSponsorshipsBlockingStripeDisconnect(
+  rows: ReadonlyArray<{ status: string }>,
+): boolean {
+  return rows.some((row) => sponsorshipBlocksStripeDisconnect(row.status))
+}
+
 export function collectTierIdsLockedBySponsors(
   rows: ReadonlyArray<{ tier_id: string; status: string }>,
 ): string[] {

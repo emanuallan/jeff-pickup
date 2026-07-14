@@ -6,12 +6,14 @@ import {
   collectTierIdsLockedBySponsors,
   isSponsorshipCancelMode,
   isSponsorshipsActiveLocally,
+  orgHasSponsorshipsBlockingStripeDisconnect,
   parsePublicSponsors,
   resolveSponsorRefundAmountCents,
   sponsorLogoSizeForAmount,
   sponsorRefundAmountCents,
   sortPublicSponsorsByAmount,
   sortSponsorshipTiersForPublicDisplay,
+  sponsorshipBlocksStripeDisconnect,
   sponsorshipRefundPolicyText,
   sponsorshipStatusLocksTier,
   buildSponsorshipOverviewStats,
@@ -157,6 +159,17 @@ describe('sponsorship lifecycle helpers', () => {
     expect(sponsorshipStatusLocksTier('approved')).toBe(true)
     expect(sponsorshipStatusLocksTier('hidden')).toBe(true)
     expect(sponsorshipStatusLocksTier('pending_approval')).toBe(false)
+    expect(sponsorshipBlocksStripeDisconnect('pending_approval')).toBe(true)
+    expect(sponsorshipBlocksStripeDisconnect('approved')).toBe(true)
+    expect(sponsorshipBlocksStripeDisconnect('hidden')).toBe(true)
+    expect(sponsorshipBlocksStripeDisconnect('canceled')).toBe(false)
+    expect(
+      orgHasSponsorshipsBlockingStripeDisconnect([
+        { status: 'canceled' },
+        { status: 'pending_approval' },
+      ]),
+    ).toBe(true)
+    expect(orgHasSponsorshipsBlockingStripeDisconnect([{ status: 'declined' }])).toBe(false)
     expect(
       collectTierIdsLockedBySponsors([
         { tier_id: 'a', status: 'approved' },

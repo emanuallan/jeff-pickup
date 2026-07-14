@@ -1,12 +1,15 @@
 import { btnOutline, btnPrimary } from '../../_components/console-ui'
 import { SponsorshipConnectError, SponsorshipConnectSuccess } from './sponsorship-connect-error'
+import { SponsorshipDisconnectButton } from './sponsorship-disconnect-button'
 import type { StripeConnectErrorDisplay } from '@/lib/stripe-connect-errors'
 
 type Props = {
+  orgSlug: string
   stripeConfigured: boolean
   stripeReady: boolean
   hasStripeAccount: boolean
   payoutsEnabled: boolean
+  canDisconnectStripe: boolean
   connectPath: string
   payoutsPath: string
   connectErrorDisplay: StripeConnectErrorDisplay | null
@@ -15,10 +18,12 @@ type Props = {
 }
 
 export function SponsorshipPayoutsPanel({
+  orgSlug,
   stripeConfigured,
   stripeReady,
   hasStripeAccount,
   payoutsEnabled,
+  canDisconnectStripe,
   connectPath,
   payoutsPath,
   connectErrorDisplay,
@@ -64,11 +69,19 @@ export function SponsorshipPayoutsPanel({
             <a href={connectPath} className={`${btnOutline} w-full sm:w-auto`}>
               Update Stripe account details
             </a>
+            {canDisconnectStripe ? (
+              <SponsorshipDisconnectButton orgSlug={orgSlug} canDisconnect />
+            ) : null}
           </div>
           <p className="text-xs leading-relaxed text-zinc-500">
             Opens your Stripe Express dashboard in a new tab. Balances and bank payouts are managed
             there — not inside Organizr.
           </p>
+          {!canDisconnectStripe ? (
+            <p className="text-xs leading-relaxed text-zinc-500">
+              Cancel or decline all active and pending sponsorships to disconnect Stripe.
+            </p>
+          ) : null}
         </div>
       ) : hasStripeAccount ? (
         <div className="space-y-3">
@@ -77,9 +90,18 @@ export function SponsorshipPayoutsPanel({
               Finish Stripe onboarding to accept sponsors and receive payouts to your bank.
             </p>
           ) : null}
-          <a href={connectPath} className={`${btnPrimary} w-full sm:w-auto`}>
-            Continue Stripe payout setup
-          </a>
+          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+            <a href={connectPath} className={`${btnPrimary} w-full sm:w-auto`}>
+              Continue Stripe payout setup
+            </a>
+            {canDisconnectStripe ? (
+              <SponsorshipDisconnectButton orgSlug={orgSlug} canDisconnect />
+            ) : (
+              <p className="text-xs leading-relaxed text-zinc-500 sm:self-center">
+                Cancel or decline all active and pending sponsorships to disconnect Stripe.
+              </p>
+            )}
+          </div>
         </div>
       ) : (
         <div className="space-y-3">

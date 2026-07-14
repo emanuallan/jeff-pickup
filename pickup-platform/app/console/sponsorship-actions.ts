@@ -19,6 +19,7 @@ import {
 import {
   createTierStripeProductAndPrice,
   deactivateTierStripePrice,
+  disconnectOrgStripeAccount,
   refundAndCancelSponsorshipSubscription,
   scheduleCancelStripeSubscriptionAtPeriodEnd,
   stripeErrorMessage,
@@ -545,6 +546,55 @@ export async function cancelSponsorship(
     return { ok: true as const, mode }
   } catch {
     return { error: 'Not authorized.' }
+  }
+}
+
+export async function disconnectStripeAccount(orgSlug: string) {
+  try {
+    const org = await requireInteriorSponsorshipAccess(orgSlug)
+    const supabase = await createClient()
+
+    const stripeAccount = await getOrgStripeAccount(org.id)
+    if (!stripeAccount) {
+      return { error: 'No Stripe account is connected.' }
+    }
+
+    const { data: blocking, error: blockingError } = await supabase
+      .from('sponsorships')
+      .select('id')
+      .eq('org_id', org.id)
+      .in('status', ['pending_approval', 'approved', 'hidden'])
+      .limit(1)
+
+    if (blockingError) return { error: blockingError.message }
+    if ((blocking?.length ?? 0) > 0) {
+      return {
+        error:
+          'Cancel or decline all active and pending sponsorships before disconnecting Stripe.',
+      }
+    }
+
+    await disconnectOrgStripeAccount(org.id, stripeAccount.stripe_account_id)
+
+    const { error: clearTiersError } = await supabase
+      .from('sponsorship_tiers')
+      .update({
+        stripe_product_id: null,
+        stripe_price_id: null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('org_id', org.id)
+
+    if (clearTiersError) return { error: clearTiersError.message }
+
+    revalidateSponsorshipPaths(orgSlug)
+    return { ok: true as const }
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Could not disconnect Stripe.'
+    if (message === 'Not authorized') {
+      return { error: 'Not authorized.' }
+    }
+    return { error: message }
   }
 }
 
