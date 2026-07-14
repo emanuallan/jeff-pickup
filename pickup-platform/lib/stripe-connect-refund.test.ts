@@ -3,6 +3,7 @@ import { refundAndCancelSponsorshipSubscription } from './stripe-connect'
 
 vi.mock('@/lib/stripe', () => ({
   getStripe: vi.fn(),
+  getPlatformFeePercent: vi.fn(() => 5),
 }))
 
 import { getStripe } from '@/lib/stripe'
@@ -12,26 +13,44 @@ describe('refundAndCancelSponsorshipSubscription', () => {
   const subscriptionsCancel = vi.fn()
   const subscriptionsRetrieve = vi.fn()
   const invoicesList = vi.fn()
+  const invoicesRetrieve = vi.fn()
   const paymentIntentsRetrieve = vi.fn()
+  const checkoutSessionsRetrieve = vi.fn()
 
   beforeEach(() => {
     refundsCreate.mockReset()
     subscriptionsCancel.mockReset()
     subscriptionsRetrieve.mockReset()
     invoicesList.mockReset()
+    invoicesRetrieve.mockReset()
     paymentIntentsRetrieve.mockReset()
+    checkoutSessionsRetrieve.mockReset()
 
     subscriptionsRetrieve.mockResolvedValue({
       latest_invoice: {
+        id: 'in_test_1',
         status: 'paid',
-        payment_intent: 'pi_test_1',
+        payments: {
+          data: [
+            {
+              status: 'paid',
+              payment: {
+                type: 'payment_intent',
+                payment_intent: 'pi_test_1',
+              },
+            },
+          ],
+        },
       },
     })
     invoicesList.mockResolvedValue({ data: [] })
     paymentIntentsRetrieve.mockResolvedValue({
       amount: 2500,
+      status: 'succeeded',
+      application_fee_amount: 125,
       latest_charge: {
         application_fee_amount: 125,
+        refunded: false,
       },
     })
     refundsCreate.mockResolvedValue({ id: 're_test_1' })
@@ -44,6 +63,12 @@ describe('refundAndCancelSponsorshipSubscription', () => {
       },
       invoices: {
         list: invoicesList,
+        retrieve: invoicesRetrieve,
+      },
+      checkout: {
+        sessions: {
+          retrieve: checkoutSessionsRetrieve,
+        },
       },
       paymentIntents: {
         retrieve: paymentIntentsRetrieve,
@@ -82,20 +107,48 @@ describe('refundAndCancelSponsorshipSubscription', () => {
     )
   })
 
-  it('still cancels when there is nothing to refund', async () => {
+  it('fails instead of canceling when the paid charge cannot be found', async () => {
     subscriptionsRetrieve.mockResolvedValue({ latest_invoice: null })
+    invoicesList.mockResolvedValue({ data: [] })
+    checkoutSessionsRetrieve.mockResolvedValue({
+      payment_intent: null,
+      invoice: null,
+    })
+
+    await expect(
+      refundAndCancelSponsorshipSubscription({
+        subscriptionId: 'sub_test_1',
+        stripeAccountId: 'acct_test_1',
+        checkoutSessionId: 'cs_test_1',
+      }),
+    ).rejects.toThrow(/paid sponsorship charge/i)
+
+    expect(refundsCreate).not.toHaveBeenCalled()
+    expect(subscriptionsCancel).not.toHaveBeenCalled()
+  })
+
+  it('treats already-refunded charges as success and still cancels', async () => {
+    paymentIntentsRetrieve.mockResolvedValue({
+      amount: 2500,
+      status: 'succeeded',
+      application_fee_amount: 125,
+      latest_charge: {
+        application_fee_amount: 125,
+        refunded: true,
+      },
+    })
 
     const result = await refundAndCancelSponsorshipSubscription({
       subscriptionId: 'sub_test_1',
       stripeAccountId: 'acct_test_1',
     })
 
-    expect(result).toEqual({ refunded: false, canceled: true })
+    expect(result).toEqual({ refunded: true, canceled: true })
     expect(refundsCreate).not.toHaveBeenCalled()
     expect(subscriptionsCancel).toHaveBeenCalled()
   })
 
-  it('treats already-refunded charges as success', async () => {
+  it('treats Stripe charge_already_refunded as success', async () => {
     refundsCreate.mockRejectedValue({ code: 'charge_already_refunded' })
 
     const result = await refundAndCancelSponsorshipSubscription({
