@@ -57,7 +57,7 @@ export default async function SponsorshipPage({ params }: Props) {
             className="text-[11px] font-semibold uppercase tracking-[0.18em]"
             style={{ color: hexToRgba(accentSoft, 0.95) }}
           >
-            Partner with us
+            Thank you for considering us
           </p>
           <h2 className="mt-2 text-2xl font-semibold tracking-tight text-zinc-50 sm:text-[1.65rem]">
             Support {org.name}
@@ -73,7 +73,7 @@ export default async function SponsorshipPage({ params }: Props) {
                 style={{ backgroundColor: accent }}
                 aria-hidden
               />
-              <span>Your logo featured on this group&apos;s public pages</span>
+              <span>We&apos;ll show your logo on our public pages with thanks</span>
             </li>
             <li className="flex gap-2.5">
               <span
@@ -81,7 +81,7 @@ export default async function SponsorshipPage({ params }: Props) {
                 style={{ backgroundColor: accent }}
                 aria-hidden
               />
-              <span>Monthly support that helps keep sessions running</span>
+              <span>Your monthly support helps keep our sessions going</span>
             </li>
             <li className="flex gap-2.5">
               <span
@@ -89,7 +89,7 @@ export default async function SponsorshipPage({ params }: Props) {
                 style={{ backgroundColor: accent }}
                 aria-hidden
               />
-              <span>Organizer review before anything goes live</span>
+              <span>An organizer will review your request before anything goes live</span>
             </li>
           </ul>
         </div>

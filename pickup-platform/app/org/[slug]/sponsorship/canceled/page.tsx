@@ -30,11 +30,14 @@ export default async function SponsorshipCanceledPage({ params }: Props) {
           className="text-[11px] font-semibold uppercase tracking-[0.18em]"
           style={{ color: hexToRgba(accentSoft, 0.95) }}
         >
-          Checkout canceled
+          No charge made
         </p>
-        <h1 className="mt-2 text-2xl font-semibold tracking-tight text-zinc-50">No charge made</h1>
+        <h1 className="mt-2 text-2xl font-semibold tracking-tight text-zinc-50">
+          No worries
+        </h1>
         <p className="mt-3 max-w-prose text-sm leading-relaxed text-zinc-400">
-          No worries — pick a tier again whenever you&apos;re ready to support {org.name}.
+          Checkout was canceled, and nothing was charged. If you&apos;d still like to support{' '}
+          {org.name}, you can come back anytime — no pressure.
         </p>
         <div className="mt-6 flex flex-wrap gap-3">
           <Link
@@ -42,7 +45,7 @@ export default async function SponsorshipCanceledPage({ params }: Props) {
             className="inline-flex min-h-11 items-center justify-center rounded-xl px-5 py-3 text-sm font-semibold transition hover:brightness-110"
             style={{ backgroundColor: accent, color: accentFg }}
           >
-            Try again
+            Return to sponsorship
           </Link>
           <Link
             href="/"
