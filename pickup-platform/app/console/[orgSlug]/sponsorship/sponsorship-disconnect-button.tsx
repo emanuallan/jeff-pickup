@@ -20,7 +20,7 @@ export function SponsorshipDisconnectButton({ orgSlug, canDisconnect }: Props) {
     if (!canDisconnect || isPending) return
 
     const confirmed = window.confirm(
-      'Disconnect Stripe from this group? You can connect a different account later. Make sure any Stripe balance has been paid out first. Sponsorship tiers will need their prices recreated after you reconnect.',
+      'Disconnect Stripe from this group? All sponsorship tiers will be removed. You can connect a different account later and create new tiers. Make sure any Stripe balance has been paid out first.',
     )
     if (!confirmed) return
 
@@ -31,7 +31,7 @@ export function SponsorshipDisconnectButton({ orgSlug, canDisconnect }: Props) {
         return
       }
       toast.success('Stripe disconnected.')
-      router.replace(`/console/${orgSlug}/sponsorship`)
+      router.replace(`/console/${orgSlug}/sponsorship/setup`)
     })
   }
 

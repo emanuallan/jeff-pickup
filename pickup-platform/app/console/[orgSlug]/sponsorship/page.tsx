@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { notFound } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
 import type { ReactNode } from 'react'
 import { getOrgForMember } from '@/lib/orgs'
 import { createClient } from '@/lib/supabase/server'
@@ -17,6 +17,7 @@ import {
   collectTierIdsLockedBySponsors,
   orgHasSponsorshipsBlockingStripeDisconnect,
 } from '@/lib/sponsorship'
+import { isSponsorshipSetupComplete, sponsorshipSetupSearch } from '@/lib/sponsorship-setup'
 import {
   ConsoleHeader,
   ConsolePage,
@@ -80,11 +81,25 @@ export default async function SponsorshipConsolePage({ params, searchParams }: P
   const features = orgFeatures(org)
   const sponsorshipSettings = orgSponsorshipSettings(org)
   const stripeReady = Boolean(stripeAccount?.charges_enabled)
+  const setupComplete = isSponsorshipSetupComplete({
+    stripeReady,
+    activeTiersCount: tiers.length,
+    sponsorshipsEnabled: features.group_sponsorships,
+  })
+
+  if (!setupComplete) {
+    redirect(
+      `/console/${orgSlug}/sponsorship/setup${sponsorshipSetupSearch({
+        connected,
+        connect_error: connectError,
+      })}`,
+    )
+  }
+
   const payoutsEnabled = Boolean(stripeAccount?.payouts_enabled)
   const connectPath = `/api/console/${orgSlug}/sponsorship/connect`
   const payoutsPath = `/api/console/${orgSlug}/sponsorship/payouts`
   const connectErrorDisplay = getStripeConnectErrorDisplay(connectError)
-  // Ignore stale ?connected=1 after disconnect (or if there is no linked account).
   const hasStripeAccount = Boolean(stripeAccount)
   const showConnectSuccess = connected === '1' && !connectError && hasStripeAccount
   const showConnectPending = showConnectSuccess && !stripeReady
@@ -111,7 +126,7 @@ export default async function SponsorshipConsolePage({ params, searchParams }: P
     </Link>
   )
 
-  const payoutHeaderLink = stripeReady ? (
+  const payoutHeaderLink = (
     <a
       href={payoutsPath}
       className={`${btnPrimary}`}
@@ -120,83 +135,68 @@ export default async function SponsorshipConsolePage({ params, searchParams }: P
     >
       Open Stripe
     </a>
-  ) : null
+  )
 
   return (
     <ConsolePage width="max-w-2xl">
       <ConsoleHeader
         title="Sponsorships"
-        description={
-          stripeReady
-            ? 'Review sponsors, shape your public offer, and get paid through Stripe.'
-            : 'Connect Stripe to unlock sponsorship tools and get paid.'
-        }
+        description="Review sponsors, shape your public offer, and get paid through Stripe."
         backHref={`/console/${orgSlug}`}
         backLabel="Console"
         actions={
           <>
             {payoutHeaderLink}
-            {stripeReady ? previewLink : null}
+            {previewLink}
           </>
         }
       />
 
       <div className="mt-8 space-y-8">
-        {stripeReady ? (
-          <>
-            <div className="space-y-3">
-              <ConsoleGroupLabel>At a glance</ConsoleGroupLabel>
-              <ConsoleSection>
-                <SponsorshipOverviewStats rows={sponsorships} />
-              </ConsoleSection>
-            </div>
+        <div className="space-y-3">
+          <ConsoleGroupLabel>At a glance</ConsoleGroupLabel>
+          <ConsoleSection>
+            <SponsorshipOverviewStats rows={sponsorships} />
+          </ConsoleSection>
+        </div>
 
-            <div className="space-y-3">
-              <ConsoleGroupLabel>Sponsors</ConsoleGroupLabel>
-              <SponsorshipRequestsSection
-                orgSlug={orgSlug}
-                pending={pending}
-                active={active}
-                history={history}
-              />
-            </div>
+        <div className="space-y-3">
+          <ConsoleGroupLabel>Sponsors</ConsoleGroupLabel>
+          <SponsorshipRequestsSection
+            orgSlug={orgSlug}
+            pending={pending}
+            active={active}
+            history={history}
+          />
+        </div>
 
-            <div className="space-y-3">
-              <ConsoleGroupLabel>Public offer</ConsoleGroupLabel>
-              <ConsoleSection
-                title="Page intro"
-                description="Shown at the top of your public sponsorship page."
-              >
-                <SponsorshipIntroForm
-                  orgSlug={orgSlug}
-                  introText={sponsorshipSettings?.intro_text ?? ''}
-                />
-              </ConsoleSection>
+        <div className="space-y-3">
+          <ConsoleGroupLabel>Public offer</ConsoleGroupLabel>
+          <ConsoleSection
+            title="Page intro"
+            description="Shown at the top of your public sponsorship page."
+          >
+            <SponsorshipIntroForm
+              orgSlug={orgSlug}
+              introText={sponsorshipSettings?.intro_text ?? ''}
+            />
+          </ConsoleSection>
 
-              <ConsoleSection
-                title="Tiers"
-                description="Monthly options sponsors can choose from."
-              >
-                <SponsorshipTiersSection
-                  orgSlug={orgSlug}
-                  tiers={tiers}
-                  canEdit
-                  lockedTierIds={collectTierIdsLockedBySponsors(sponsorships)}
-                />
-              </ConsoleSection>
-            </div>
-          </>
-        ) : null}
+          <ConsoleSection title="Tiers" description="Monthly options sponsors can choose from.">
+            <SponsorshipTiersSection
+              orgSlug={orgSlug}
+              tiers={tiers}
+              canEdit
+              lockedTierIds={collectTierIdsLockedBySponsors(sponsorships)}
+            />
+          </ConsoleSection>
+        </div>
 
         <div className="space-y-3">
           <ConsoleGroupLabel>Payouts</ConsoleGroupLabel>
           <ConsoleSection
             title="Stripe"
-            description={
-              stripeReady
-                ? 'Balances and bank payouts live in Stripe — not inside Organizr.'
-                : 'Required before you can offer sponsorships.'
-            }
+            description="Balances and bank payouts live in Stripe — not inside Organizr."
           >
             <SponsorshipPayoutsPanel
               orgSlug={orgSlug}
@@ -214,25 +214,23 @@ export default async function SponsorshipConsolePage({ params, searchParams }: P
           </ConsoleSection>
         </div>
 
-        {stripeReady ? (
-          <div className="space-y-3">
-            <ConsoleGroupLabel>Setup</ConsoleGroupLabel>
-            <ConsoleSection
-              title="Availability"
-              description="Turn the public sponsorship offer on or off."
-              collapsible={featureReady}
-              defaultOpen={!featureReady}
-            >
-              <div className="-mx-1">
-                <SponsorshipFeatureToggle
-                  orgSlug={orgSlug}
-                  enabled={features.group_sponsorships}
-                  locked={active.length > 0}
-                />
-              </div>
-            </ConsoleSection>
-          </div>
-        ) : null}
+        <div className="space-y-3">
+          <ConsoleGroupLabel>Setup</ConsoleGroupLabel>
+          <ConsoleSection
+            title="Availability"
+            description="Turn the public sponsorship offer on or off."
+            collapsible={featureReady}
+            defaultOpen={!featureReady}
+          >
+            <div className="-mx-1">
+              <SponsorshipFeatureToggle
+                orgSlug={orgSlug}
+                enabled={features.group_sponsorships}
+                locked={active.length > 0}
+              />
+            </div>
+          </ConsoleSection>
+        </div>
       </div>
     </ConsolePage>
   )

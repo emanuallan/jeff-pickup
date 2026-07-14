@@ -20,7 +20,7 @@ type Props = {
 
 function connectErrorRedirect(orgSlug: string, code: string) {
   return NextResponse.redirect(
-    `${consoleOrgUrl(orgSlug)}/sponsorship?connect_error=${encodeURIComponent(code)}`,
+    `${consoleOrgUrl(orgSlug)}/sponsorship/setup?connect_error=${encodeURIComponent(code)}`,
   )
 }
 

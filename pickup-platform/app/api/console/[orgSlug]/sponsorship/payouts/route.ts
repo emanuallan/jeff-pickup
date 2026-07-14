@@ -14,7 +14,7 @@ type Props = {
 
 function payoutsErrorRedirect(orgSlug: string, code: string) {
   return NextResponse.redirect(
-    `${consoleOrgUrl(orgSlug)}/sponsorship?connect_error=${encodeURIComponent(code)}`,
+    `${consoleOrgUrl(orgSlug)}/sponsorship/setup?connect_error=${encodeURIComponent(code)}`,
   )
 }
 
@@ -38,7 +38,7 @@ export async function GET(_request: Request, { params }: Props) {
       stripeAccount?.stripe_account_id ?? (await findStripeAccountIdForOrg(org.id))
 
     if (!stripeAccountId) {
-      return NextResponse.redirect(`${consoleOrgUrl(orgSlug)}/sponsorship`)
+      return NextResponse.redirect(`${consoleOrgUrl(orgSlug)}/sponsorship/setup`)
     }
 
     if (!stripeAccount?.charges_enabled) {

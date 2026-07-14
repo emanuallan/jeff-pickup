@@ -13,7 +13,9 @@ type Props = {
 
 function returnRedirect(orgSlug: string, query: Record<string, string>) {
   const params = new URLSearchParams(query)
-  return NextResponse.redirect(`${consoleOrgUrl(orgSlug)}/sponsorship?${params.toString()}`)
+  return NextResponse.redirect(
+    `${consoleOrgUrl(orgSlug)}/sponsorship/setup?${params.toString()}`,
+  )
 }
 
 export async function GET(_request: Request, { params }: Props) {
@@ -36,6 +38,7 @@ export async function GET(_request: Request, { params }: Props) {
     }
 
     revalidatePath(`/console/${orgSlug}/sponsorship`)
+    revalidatePath(`/console/${orgSlug}/sponsorship/setup`)
 
     if (!account) {
       return returnRedirect(orgSlug, { connect_error: 'stripe_account_not_found' })

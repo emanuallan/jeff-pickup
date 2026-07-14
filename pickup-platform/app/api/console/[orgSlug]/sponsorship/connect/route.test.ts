@@ -49,7 +49,7 @@ describe('GET /api/console/[orgSlug]/sponsorship/connect', () => {
     })
     expect(response.status).toBe(307)
     expect(response.headers.get('location')).toBe(
-      'https://organizr.co/console/demo/sponsorship?connect_error=stripe_not_configured',
+      'https://organizr.co/console/demo/sponsorship/setup?connect_error=stripe_not_configured',
     )
   })
 
@@ -61,7 +61,7 @@ describe('GET /api/console/[orgSlug]/sponsorship/connect', () => {
     })
     expect(response.status).toBe(307)
     expect(response.headers.get('location')).toBe(
-      'https://organizr.co/console/demo/sponsorship?connect_error=unauthorized',
+      'https://organizr.co/console/demo/sponsorship/setup?connect_error=unauthorized',
     )
   })
 
@@ -73,7 +73,7 @@ describe('GET /api/console/[orgSlug]/sponsorship/connect', () => {
     })
     expect(response.status).toBe(307)
     expect(response.headers.get('location')).toBe(
-      'https://organizr.co/console/demo/sponsorship?connect_error=unauthorized',
+      'https://organizr.co/console/demo/sponsorship/setup?connect_error=unauthorized',
     )
   })
 

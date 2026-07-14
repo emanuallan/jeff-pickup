@@ -45,7 +45,7 @@ describe('GET /api/console/[orgSlug]/sponsorship/connect/return', () => {
 
     expect(response.status).toBe(307)
     expect(response.headers.get('location')).toBe(
-      'https://organizr.co/console/demo/sponsorship?connected=1',
+      'https://organizr.co/console/demo/sponsorship/setup?connected=1',
     )
   })
 
@@ -64,7 +64,7 @@ describe('GET /api/console/[orgSlug]/sponsorship/connect/return', () => {
 
     expect(response.status).toBe(307)
     expect(response.headers.get('location')).toBe(
-      'https://organizr.co/console/demo/sponsorship?connected=1&connect_pending=1',
+      'https://organizr.co/console/demo/sponsorship/setup?connected=1&connect_pending=1',
     )
   })
 })

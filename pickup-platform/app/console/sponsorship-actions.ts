@@ -57,6 +57,7 @@ async function requireInteriorSponsorshipAccess(slug: string) {
 
 function revalidateSponsorshipPaths(orgSlug: string) {
   revalidatePath(`/console/${orgSlug}/sponsorship`)
+  revalidatePath(`/console/${orgSlug}/sponsorship/setup`)
   revalidatePath(`/org/${orgSlug}`)
   revalidatePath(`/org/${orgSlug}/sponsorship`)
 }
@@ -175,6 +176,7 @@ export async function saveSponsorshipTier(orgSlug: string, formData: FormData) {
         .from('sponsorship_tiers')
         .select('id', { count: 'exact', head: true })
         .eq('org_id', org.id)
+        .eq('status', 'active')
 
       const limitError = assertTierCountLimit(count ?? 0)
       if (limitError) return { error: limitError }
@@ -576,16 +578,19 @@ export async function disconnectStripeAccount(orgSlug: string) {
 
     await disconnectOrgStripeAccount(org.id, stripeAccount.stripe_account_id)
 
-    const { error: clearTiersError } = await supabase
+    // Soft-delete: historical sponsorships reference tiers (ON DELETE RESTRICT).
+    const { error: deleteTiersError } = await supabase
       .from('sponsorship_tiers')
       .update({
+        status: 'inactive',
         stripe_product_id: null,
         stripe_price_id: null,
         updated_at: new Date().toISOString(),
       })
       .eq('org_id', org.id)
+      .eq('status', 'active')
 
-    if (clearTiersError) return { error: clearTiersError.message }
+    if (deleteTiersError) return { error: deleteTiersError.message }
 
     revalidateSponsorshipPaths(orgSlug)
     return { ok: true as const }
