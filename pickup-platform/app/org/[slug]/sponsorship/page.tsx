@@ -60,24 +60,24 @@ export default async function SponsorshipPage({ params }: Props) {
     )
   }
 
-  const benefits = [
-    {
-      title: 'Invest in the community',
-      body: 'Support a local initiative that brings people together week after week. Your sponsorship helps create a welcoming place for people to connect and build lasting friendships.',
-    },
-    {
-      title: 'Build meaningful visibility',
-      body: `Be recognized as a community partner by the people who participate in and support ${org.name}. It's a simple way to show your commitment to the community you serve.`,
-    },
-    {
-      title: 'Create lasting impact',
-      body: 'Your support helps us continue growing, improving the experience, and creating more opportunities for the community to come together.',
-    },
-    {
-      title: 'A simple partnership',
-      body: "Get started in minutes with no sales calls or complicated contracts. Choose a sponsorship tier, upload your logo, and we'll take care of the rest.",
-    },
-  ]
+  // const benefits = [
+  //   {
+  //     title: 'Invest in the community',
+  //     body: 'Support a local initiative that brings people together week after week. Your sponsorship helps create a welcoming place for people to connect and build lasting friendships.',
+  //   },
+  //   {
+  //     title: 'Build meaningful visibility',
+  //     body: `Be recognized as a community partner by the people who participate in and support ${org.name}. It's a simple way to show your commitment to the community you serve.`,
+  //   },
+  //   {
+  //     title: 'Create lasting impact',
+  //     body: 'Your support helps us continue growing, improving the experience, and creating more opportunities for the community to come together.',
+  //   },
+  //   {
+  //     title: 'A simple partnership',
+  //     body: "Get started in minutes with no sales calls or complicated contracts. Choose a sponsorship tier, upload your logo, and we'll take care of the rest.",
+  //   },
+  // ]
 
   return (
     <div className="space-y-6 sm:space-y-8">
@@ -111,7 +111,7 @@ export default async function SponsorshipPage({ params }: Props) {
         </div>
       </section>
 
-      <section className="rounded-3xl border border-zinc-800 bg-zinc-900/50 px-5 py-5 sm:px-6 sm:py-6">
+      {/* <section className="rounded-3xl border border-zinc-800 bg-zinc-900/50 px-5 py-5 sm:px-6 sm:py-6">
         <p
           className="text-[11px] font-semibold uppercase tracking-[0.18em]"
           style={{ color: hexToRgba(accentSoft, 0.95) }}
@@ -136,7 +136,7 @@ export default async function SponsorshipPage({ params }: Props) {
             </li>
           ))}
         </ul>
-      </section>
+      </section> */}
 
       <section>
         <SponsorshipSignupForm
