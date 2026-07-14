@@ -26,7 +26,7 @@ import { SponsorshipIntroForm } from './sponsorship-intro-form'
 import { SponsorshipTiersSection } from './sponsorship-tiers-section'
 import { SponsorshipRequestsSection } from './sponsorship-requests-section'
 import { SponsorshipOverviewStats } from './sponsorship-overview-stats'
-import { SponsorshipConnectError, SponsorshipConnectSuccess } from './sponsorship-connect-error'
+import { SponsorshipPayoutsPanel } from './sponsorship-payouts-panel'
 
 type Props = {
   params: Promise<{ orgSlug: string }>
@@ -77,11 +77,13 @@ export default async function SponsorshipConsolePage({ params, searchParams }: P
   const features = orgFeatures(org)
   const sponsorshipSettings = orgSponsorshipSettings(org)
   const stripeReady = Boolean(stripeAccount?.charges_enabled)
+  const payoutsEnabled = Boolean(stripeAccount?.payouts_enabled)
   const connectPath = `/api/console/${orgSlug}/sponsorship/connect`
+  const payoutsPath = `/api/console/${orgSlug}/sponsorship/payouts`
   const connectErrorDisplay = getStripeConnectErrorDisplay(connectError)
   const showConnectSuccess = connected === '1' && !connectError
   const showConnectPending = showConnectSuccess && !stripeReady
-  const setupComplete = stripeReady && features.group_sponsorships
+  const featureReady = features.group_sponsorships
 
   const pending = sponsorships.filter((row) => row.status === 'pending_approval')
   const active = sponsorships.filter((row) => row.status === 'approved' || row.status === 'hidden')
@@ -103,14 +105,30 @@ export default async function SponsorshipConsolePage({ params, searchParams }: P
     </Link>
   )
 
+  const payoutHeaderLink = stripeReady ? (
+    <a
+      href={payoutsPath}
+      className={`${btnPrimary}`}
+      target="_blank"
+      rel="noopener noreferrer"
+    >
+      Get payouts
+    </a>
+  ) : null
+
   return (
     <ConsolePage width="max-w-2xl">
       <ConsoleHeader
         title="Sponsorships"
-        description="Review sponsors, shape your public offer, and keep payouts connected."
+        description="Review sponsors, shape your public offer, and get paid through Stripe."
         backHref={`/console/${orgSlug}`}
         backLabel="Console"
-        actions={previewLink}
+        actions={
+          <>
+            {payoutHeaderLink}
+            {previewLink}
+          </>
+        }
       />
 
       <div className="mt-8 space-y-8">
@@ -118,6 +136,26 @@ export default async function SponsorshipConsolePage({ params, searchParams }: P
           <ConsoleGroupLabel>At a glance</ConsoleGroupLabel>
           <ConsoleSection>
             <SponsorshipOverviewStats rows={sponsorships} />
+          </ConsoleSection>
+        </div>
+
+        <div className="space-y-3">
+          <ConsoleGroupLabel>Payouts</ConsoleGroupLabel>
+          <ConsoleSection
+            title="Get paid"
+            description="Sponsor money is handled in Stripe — open it anytime to see balances and bank payouts."
+          >
+            <SponsorshipPayoutsPanel
+              stripeConfigured={isStripeConfigured()}
+              stripeReady={stripeReady}
+              hasStripeAccount={Boolean(stripeAccount)}
+              payoutsEnabled={payoutsEnabled}
+              connectPath={connectPath}
+              payoutsPath={payoutsPath}
+              connectErrorDisplay={connectErrorDisplay}
+              showConnectSuccess={showConnectSuccess}
+              showConnectPending={showConnectPending}
+            />
           </ConsoleSection>
         </div>
 
@@ -163,64 +201,17 @@ export default async function SponsorshipConsolePage({ params, searchParams }: P
         <div className="space-y-3">
           <ConsoleGroupLabel>Setup</ConsoleGroupLabel>
           <ConsoleSection
-            title="Availability & payouts"
-            description="Turn sponsorships on and connect Stripe for payouts. Organizr keeps a 5% platform fee."
-            collapsible={setupComplete}
-            defaultOpen={!setupComplete}
+            title="Availability"
+            description="Turn the public sponsorship offer on or off."
+            collapsible={featureReady}
+            defaultOpen={!featureReady}
           >
-            <div className="space-y-5">
-              <div className="-mx-1">
-                <SponsorshipFeatureToggle
-                  orgSlug={orgSlug}
-                  enabled={features.group_sponsorships}
-                  locked={active.length > 0}
-                />
-              </div>
-
-              <div className="border-t border-white/5 pt-5">
-                <p className="text-sm font-medium text-zinc-200">Stripe Connect</p>
-                <div className="mt-3 space-y-3">
-                  {connectErrorDisplay ? (
-                    <SponsorshipConnectError error={connectErrorDisplay} />
-                  ) : null}
-                  {showConnectSuccess ? (
-                    <SponsorshipConnectSuccess pending={showConnectPending && !stripeReady} />
-                  ) : null}
-                  {!isStripeConfigured() ? (
-                    <p className="text-sm text-amber-300">
-                      Stripe is not configured on this environment yet.
-                    </p>
-                  ) : stripeReady ? (
-                    !showConnectSuccess ? (
-                      <p className="text-sm text-emerald-300">
-                        Stripe is connected and ready to accept sponsors.
-                      </p>
-                    ) : null
-                  ) : stripeAccount ? (
-                    <div className="space-y-3">
-                      {!showConnectSuccess ? (
-                        <p className="text-sm text-amber-300">
-                          Finish Stripe onboarding to enable sponsor checkout.
-                        </p>
-                      ) : null}
-                      <a href={connectPath} className={`${btnPrimary} w-full sm:w-auto`}>
-                        Continue Stripe setup
-                      </a>
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      {!showConnectSuccess ? (
-                        <p className="text-sm text-zinc-400">
-                          Connect a Stripe account before creating tiers or accepting sponsors.
-                        </p>
-                      ) : null}
-                      <a href={connectPath} className={`${btnPrimary} w-full sm:w-auto`}>
-                        Connect Stripe
-                      </a>
-                    </div>
-                  )}
-                </div>
-              </div>
+            <div className="-mx-1">
+              <SponsorshipFeatureToggle
+                orgSlug={orgSlug}
+                enabled={features.group_sponsorships}
+                locked={active.length > 0}
+              />
             </div>
           </ConsoleSection>
         </div>

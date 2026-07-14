@@ -116,6 +116,12 @@ export async function createConnectAccountLink(
   })
 }
 
+/** Express dashboard login — balances, bank payouts, and payout schedule. */
+export async function createConnectExpressLoginLink(stripeAccountId: string) {
+  const stripe = getStripe()
+  return stripe.accounts.createLoginLink(stripeAccountId)
+}
+
 export async function syncConnectAccountStatus(stripeAccountId: string) {
   const stripe = getStripe()
   const account = await stripe.accounts.retrieve(stripeAccountId)

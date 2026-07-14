@@ -47,7 +47,7 @@ export function SponsorshipConnectSuccess({ pending = false }: SuccessProps) {
       <p className={`mt-1 text-sm leading-relaxed ${pending ? 'text-amber-200/90' : 'text-emerald-200/90'}`}>
         {pending
           ? 'Stripe received your details. Payouts usually activate within a few minutes in test mode — refresh this page shortly.'
-          : 'Your group can now create sponsorship tiers and accept monthly sponsors.'}
+          : 'Your group can accept monthly sponsors. Open Stripe anytime to view balances and bank payouts.'}
       </p>
     </div>
   )
