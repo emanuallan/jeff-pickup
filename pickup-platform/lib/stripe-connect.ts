@@ -2,7 +2,7 @@ import type Stripe from 'stripe'
 import { getPlatformFeePercent, getStripe } from '@/lib/stripe'
 import { resolveSponsorRefundAmountCents } from '@/lib/sponsorship'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { rootBaseUrl } from '@/lib/site-url'
+import { orgBaseUrl, rootBaseUrl } from '@/lib/site-url'
 
 type OrgStripeAccountSnapshot = {
   org_id: string
@@ -80,7 +80,7 @@ export async function createConnectExpressAccount(orgId: string, orgName: string
     },
     business_profile: {
       name: orgName,
-      url: `${rootBaseUrl()}/org/${orgSlug}`,
+      url: orgBaseUrl(orgSlug),
     },
     metadata: {
       org_id: orgId,
@@ -107,6 +107,13 @@ export async function createConnectAccountLink(
 ) {
   const stripe = getStripe()
   const base = rootBaseUrl()
+
+  // Keep the Express onboarding "website" prefill on the public vanity host.
+  await stripe.accounts.update(stripeAccountId, {
+    business_profile: {
+      url: orgBaseUrl(orgSlug),
+    },
+  })
 
   return stripe.accountLinks.create({
     account: stripeAccountId,
