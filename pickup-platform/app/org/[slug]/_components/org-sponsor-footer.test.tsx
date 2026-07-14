@@ -34,7 +34,7 @@ describe('OrgSponsorSection', () => {
       screen.getByRole('heading', { name: /thank you for supporting demo fc/i }),
     ).toBeInTheDocument()
     expect(screen.getByText('Community sponsors')).toBeInTheDocument()
-    expect(screen.getByAltText('Acme')).toBeInTheDocument()
+    expect(screen.getByText('Acme')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /want to sponsor us/i })).toHaveAttribute(
       'href',
       expect.stringContaining('/sponsorship'),

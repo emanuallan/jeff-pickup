@@ -21,26 +21,29 @@ type Props = {
 
 const LOGO_SIZE: Record<
   SponsorLogoSize,
-  { image: string; shell: string; width: number; height: number }
+  { image: string; shell: string; label: string; width: number; height: number }
 > = {
   lg: {
     image: 'h-11 w-auto max-w-[176px] object-contain md:h-12 md:max-w-[200px]',
     shell:
-      'inline-flex h-[4.75rem] min-w-[8rem] items-center justify-center rounded-2xl border px-5 py-3 transition-colors hover:border-white/20 hover:bg-zinc-950/70',
+      'inline-flex h-[4.75rem] min-w-[8rem] w-full items-center justify-center rounded-2xl border px-5 py-3 transition-colors group-hover:border-white/20 group-hover:bg-zinc-950/70',
+    label: 'max-w-[11rem] text-[11px] sm:text-xs',
     width: 200,
     height: 48,
   },
   md: {
     image: 'h-8 w-auto max-w-[128px] object-contain md:h-9 md:max-w-[152px]',
     shell:
-      'inline-flex h-[3.75rem] min-w-[6.5rem] items-center justify-center rounded-2xl border px-4 py-2 transition-colors hover:border-white/20 hover:bg-zinc-950/70',
+      'inline-flex h-[3.75rem] min-w-[6.5rem] w-full items-center justify-center rounded-2xl border px-4 py-2 transition-colors group-hover:border-white/20 group-hover:bg-zinc-950/70',
+    label: 'max-w-[9rem] text-[11px]',
     width: 160,
     height: 40,
   },
   sm: {
     image: 'h-6 w-auto max-w-[100px] object-contain md:h-7 md:max-w-[112px]',
     shell:
-      'inline-flex h-[3rem] min-w-[5.25rem] items-center justify-center rounded-xl border px-3 py-1.5 transition-colors hover:border-white/20 hover:bg-zinc-950/70',
+      'inline-flex h-[3rem] min-w-[5.25rem] w-full items-center justify-center rounded-xl border px-3 py-1.5 transition-colors group-hover:border-white/20 group-hover:bg-zinc-950/70',
+    label: 'max-w-[7.5rem] text-[10px]',
     width: 120,
     height: 32,
   },
@@ -56,16 +59,6 @@ function SponsorLogo({
   size: SponsorLogoSize
 }) {
   const dims = LOGO_SIZE[size]
-  const image = (
-    <Image
-      src={sponsor.logo_url}
-      alt={sponsor.sponsor_name}
-      width={dims.width}
-      height={dims.height}
-      className={dims.image}
-      unoptimized
-    />
-  )
 
   const shellStyle = {
     borderColor: hexToRgba(accent, size === 'lg' ? 0.42 : size === 'md' ? 0.28 : 0.2),
@@ -76,6 +69,26 @@ function SponsorLogo({
         : `inset 0 1px 0 0 ${hexToRgba(accent, 0.12)}`,
   }
 
+  const content = (
+    <>
+      <span className={dims.shell} style={shellStyle}>
+        <Image
+          src={sponsor.logo_url}
+          alt=""
+          width={dims.width}
+          height={dims.height}
+          className={dims.image}
+          unoptimized
+        />
+      </span>
+      <span
+        className={`truncate text-center font-medium leading-tight text-zinc-400 ${dims.label}`}
+      >
+        {sponsor.sponsor_name}
+      </span>
+    </>
+  )
+
   const href = sponsor.sponsor_url ? safeExternalHref(sponsor.sponsor_url) : null
   if (href) {
     return (
@@ -83,20 +96,14 @@ function SponsorLogo({
         href={href}
         target="_blank"
         rel="noopener noreferrer"
-        title={sponsor.sponsor_name}
-        className={dims.shell}
-        style={shellStyle}
+        className="group inline-flex max-w-full flex-col items-center gap-1.5"
       >
-        {image}
+        {content}
       </a>
     )
   }
 
-  return (
-    <span className={dims.shell} style={shellStyle} title={sponsor.sponsor_name}>
-      {image}
-    </span>
-  )
+  return <span className="inline-flex max-w-full flex-col items-center gap-1.5">{content}</span>
 }
 
 /** Inline sponsor recognition block at the bottom of public org pages. */
