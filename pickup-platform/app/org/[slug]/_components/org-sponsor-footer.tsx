@@ -151,7 +151,7 @@ export function OrgSponsorSection({ slug, orgName, accent, sponsors, showCta = t
                 Thank you for supporting {orgName}
               </h2>
               <p className="mt-1.5 max-w-prose text-sm leading-relaxed text-zinc-400">
-                These brands help this community keep showing up — and they get seen for it.
+                These partners help keep our group going — we&apos;re grateful for their support.
               </p>
             </div>
 
@@ -168,7 +168,7 @@ export function OrgSponsorSection({ slug, orgName, accent, sponsors, showCta = t
           </div>
         ) : (
           <h2 id="org-sponsor-section-title" className="text-lg font-semibold tracking-tight text-zinc-50">
-            Your brand could be here
+            Become a {orgName} sponsor
           </h2>
         )}
 
@@ -183,11 +183,9 @@ export function OrgSponsorSection({ slug, orgName, accent, sponsors, showCta = t
               }}
             >
               <span>
-                <span className="block text-sm font-medium text-zinc-100">
-                  Become a community sponsor
-                </span>
+                <span className="block text-sm font-medium text-zinc-100">Want to sponsor us?</span>
                 <span className="mt-0.5 block text-xs text-zinc-500">
-                  Put your logo here and help keep {orgName} going.
+                  Join our community partners and get your logo featured here.
                 </span>
               </span>
               <span

@@ -51,14 +51,13 @@ export default async function SponsorshipSuccessPage({ params, searchParams }: P
           className="text-[11px] font-semibold uppercase tracking-[0.18em]"
           style={{ color: hexToRgba(accentSoft, 0.95) }}
         >
-          You&apos;re almost live
+          Request received
         </p>
-        <h1 className="mt-2 text-2xl font-semibold tracking-tight text-zinc-50">
-          Thanks for sponsoring {org.name}
-        </h1>
+        <h1 className="mt-2 text-2xl font-semibold tracking-tight text-zinc-50">Thank you</h1>
         <p className="mt-3 max-w-prose text-sm leading-relaxed text-zinc-300">
-          Your request is with the organizers now. Once they approve, your logo shows up on their
-          public pages — and your monthly support helps keep this community going.
+          Your sponsorship request has been sent to {org.name}. You&apos;ll be billed monthly once
+          checkout is complete. Your logo appears on their public pages after they approve the
+          request.
         </p>
         <Link
           href="/"

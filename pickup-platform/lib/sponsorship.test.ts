@@ -113,7 +113,7 @@ describe('sponsorship lifecycle helpers', () => {
 
   it('describes the non-refundable processing + platform fee policy', () => {
     expect(sponsorshipRefundPolicyText('Demo FC', 5)).toContain(
-      "card processing fees and Organizr's 5% platform fee",
+      "card processing fees and Organizr's 5% platform fee, which are non-refundable",
     )
   })
 
