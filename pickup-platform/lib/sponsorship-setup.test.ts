@@ -6,7 +6,7 @@ describe('isSponsorshipSetupComplete', () => {
     expect(
       isSponsorshipSetupComplete({
         stripeReady: true,
-        activeTierCount: 1,
+        activeTiersCount: 1,
         sponsorshipsEnabled: true,
       }),
     ).toBe(true)
@@ -14,7 +14,7 @@ describe('isSponsorshipSetupComplete', () => {
     expect(
       isSponsorshipSetupComplete({
         stripeReady: false,
-        activeTierCount: 1,
+        activeTiersCount: 1,
         sponsorshipsEnabled: true,
       }),
     ).toBe(false)
@@ -30,7 +30,7 @@ describe('isSponsorshipSetupComplete', () => {
     expect(
       isSponsorshipSetupComplete({
         stripeReady: true,
-        activeTierCount: 2,
+        activeTiersCount: 2,
         sponsorshipsEnabled: false,
       }),
     ).toBe(false)

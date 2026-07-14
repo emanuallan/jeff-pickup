@@ -1,10 +1,10 @@
 /** Sponsorship console onboarding is done once Stripe can charge, a tier exists, and the offer is on. */
 export function isSponsorshipSetupComplete(args: {
   stripeReady: boolean
-  activeTierCount: number
+  activeTiersCount: number
   sponsorshipsEnabled: boolean
 }): boolean {
-  return args.stripeReady && args.activeTierCount > 0 && args.sponsorshipsEnabled
+  return args.stripeReady && args.activeTiersCount > 0 && args.sponsorshipsEnabled
 }
 
 export function sponsorshipSetupSearch(query: Record<string, string | undefined>): string {

@@ -95,7 +95,7 @@ export default async function SponsorshipSetupPage({ params, searchParams }: Pro
   const sponsorshipsEnabled = features.group_sponsorships
   const isComplete = isSponsorshipSetupComplete({
     stripeReady,
-    activeTierCount,
+    activeTiersCount,
     sponsorshipsEnabled,
   })
 

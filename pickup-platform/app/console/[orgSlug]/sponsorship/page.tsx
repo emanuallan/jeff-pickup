@@ -81,9 +81,10 @@ export default async function SponsorshipConsolePage({ params, searchParams }: P
   const features = orgFeatures(org)
   const sponsorshipSettings = orgSponsorshipSettings(org)
   const stripeReady = Boolean(stripeAccount?.charges_enabled)
+  const activeTiersCount = tiers.filter((tier) => tier.status === 'active').length
   const setupComplete = isSponsorshipSetupComplete({
     stripeReady,
-    activeTierCount: tiers.length,
+    activeTiersCount,
     sponsorshipsEnabled: features.group_sponsorships,
   })
 
