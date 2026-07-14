@@ -30,7 +30,11 @@ export type PublicSponsor = {
   sponsor_name: string
   logo_url: string
   sponsor_url: string | null
+  /** Monthly amount from the sponsorship row — used for public logo hierarchy. */
+  monthly_amount_cents?: number | null
 }
+
+export type SponsorLogoSize = 'lg' | 'md' | 'sm'
 
 export type PublicSponsorshipTier = {
   id: string
@@ -334,6 +338,54 @@ export function canToggleSponsorshipHidden(status: SponsorshipStatus): boolean {
   return status === 'approved' || status === 'hidden'
 }
 
+/** Highest price first so public pickers show prestige hierarchy. */
+export function sortSponsorshipTiersForPublicDisplay(
+  tiers: PublicSponsorshipTier[],
+): PublicSponsorshipTier[] {
+  return [...tiers].sort((a, b) => {
+    if (b.price_cents !== a.price_cents) return b.price_cents - a.price_cents
+    if (a.sort_order !== b.sort_order) return a.sort_order - b.sort_order
+    return a.name.localeCompare(b.name)
+  })
+}
+
+/** Featured price when there are 2+ tiers; null when hierarchy isn't useful. */
+export function sponsorshipFeaturedPriceCents(
+  tiers: ReadonlyArray<{ price_cents: number }>,
+): number | null {
+  if (tiers.length < 2) return null
+  return Math.max(...tiers.map((tier) => tier.price_cents))
+}
+
+/** Relative logo size from amount vs other visible sponsors. */
+export function sponsorLogoSizeForAmount(
+  amountCents: number,
+  allAmounts: ReadonlyArray<number>,
+): SponsorLogoSize {
+  const unique = [
+    ...new Set(allAmounts.filter((n) => Number.isFinite(n) && n >= 0)),
+  ].sort((a, b) => b - a)
+
+  if (unique.length <= 1) return 'md'
+  const index = unique.indexOf(amountCents)
+  if (index < 0) return 'md'
+  if (unique.length === 2) return index === 0 ? 'lg' : 'sm'
+
+  const ratio = index / (unique.length - 1)
+  if (ratio <= 0.34) return 'lg'
+  if (ratio <= 0.67) return 'md'
+  return 'sm'
+}
+
+export function sortPublicSponsorsByAmount(sponsors: PublicSponsor[]): PublicSponsor[] {
+  return [...sponsors].sort((a, b) => {
+    const amountA = a.monthly_amount_cents ?? 0
+    const amountB = b.monthly_amount_cents ?? 0
+    if (amountB !== amountA) return amountB - amountA
+    return a.sponsor_name.localeCompare(b.sponsor_name)
+  })
+}
+
 export function parsePublicSponsors(raw: unknown): PublicSponsor[] {
   if (!Array.isArray(raw)) return []
   return raw
@@ -351,6 +403,8 @@ export function parsePublicSponsors(raw: unknown): PublicSponsor[] {
         sponsor_name: row.sponsor_name,
         logo_url: row.logo_url,
         sponsor_url: typeof row.sponsor_url === 'string' ? row.sponsor_url : null,
+        monthly_amount_cents:
+          typeof row.monthly_amount_cents === 'number' ? row.monthly_amount_cents : null,
       }
     })
     .filter((item): item is PublicSponsor => item !== null)

@@ -5,7 +5,11 @@ import {
   isSponsorshipsActiveLocally,
   parsePublicSponsors,
   resolveSponsorRefundAmountCents,
+  sponsorLogoSizeForAmount,
   sponsorRefundAmountCents,
+  sortPublicSponsorsByAmount,
+  sortSponsorshipTiersForPublicDisplay,
+  sponsorshipFeaturedPriceCents,
   sponsorshipRefundPolicyText,
   buildSponsorshipOverviewStats,
   validateSponsorLogoUrl,
@@ -119,9 +123,69 @@ describe('parsePublicSponsors', () => {
         sponsor_name: 'Acme',
         logo_url: 'https://example.com/logo.png',
         sponsor_url: 'https://acme.test',
+        monthly_amount_cents: 5000,
       },
     ])
     expect(sponsors).toHaveLength(1)
     expect(sponsors[0]?.sponsor_name).toBe('Acme')
+    expect(sponsors[0]?.monthly_amount_cents).toBe(5000)
+  })
+})
+
+describe('public sponsorship hierarchy', () => {
+  it('sorts tiers highest price first', () => {
+    const sorted = sortSponsorshipTiersForPublicDisplay([
+      {
+        id: 'a',
+        name: 'Supporter',
+        description: '',
+        price_cents: 2500,
+        currency: 'usd',
+        sort_order: 0,
+      },
+      {
+        id: 'b',
+        name: 'Champion',
+        description: '',
+        price_cents: 10000,
+        currency: 'usd',
+        sort_order: 1,
+      },
+    ])
+    expect(sorted.map((t) => t.id)).toEqual(['b', 'a'])
+  })
+
+  it('marks featured only when multiple tiers exist', () => {
+    expect(sponsorshipFeaturedPriceCents([{ price_cents: 2500 }])).toBeNull()
+    expect(
+      sponsorshipFeaturedPriceCents([{ price_cents: 2500 }, { price_cents: 10000 }]),
+    ).toBe(10000)
+  })
+
+  it('sizes logos by relative amount', () => {
+    expect(sponsorLogoSizeForAmount(5000, [5000, 5000])).toBe('md')
+    expect(sponsorLogoSizeForAmount(10000, [10000, 2500])).toBe('lg')
+    expect(sponsorLogoSizeForAmount(2500, [10000, 2500])).toBe('sm')
+    expect(sponsorLogoSizeForAmount(7500, [10000, 7500, 2500])).toBe('md')
+  })
+
+  it('sorts sponsors by amount descending', () => {
+    const sorted = sortPublicSponsorsByAmount([
+      {
+        id: '1',
+        sponsor_name: 'Low',
+        logo_url: 'https://example.com/a.png',
+        sponsor_url: null,
+        monthly_amount_cents: 2500,
+      },
+      {
+        id: '2',
+        sponsor_name: 'High',
+        logo_url: 'https://example.com/b.png',
+        sponsor_url: null,
+        monthly_amount_cents: 10000,
+      },
+    ])
+    expect(sorted.map((s) => s.id)).toEqual(['2', '1'])
   })
 })

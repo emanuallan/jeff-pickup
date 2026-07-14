@@ -1,6 +1,11 @@
 import Image from 'next/image'
 import Link from 'next/link'
-import type { PublicSponsor } from '@/lib/sponsorship'
+import {
+  sortPublicSponsorsByAmount,
+  sponsorLogoSizeForAmount,
+  type PublicSponsor,
+  type SponsorLogoSize,
+} from '@/lib/sponsorship'
 import { orgSponsorshipUrl } from '@/lib/site-url'
 import { safeExternalHref } from '@/lib/social-links'
 import { accentOnDark, hexToRgba } from '@/lib/colors'
@@ -14,26 +19,62 @@ type Props = {
   showCta: boolean
 }
 
-function SponsorLogo({ sponsor, accent }: { sponsor: PublicSponsor; accent: string }) {
+const LOGO_SIZE: Record<
+  SponsorLogoSize,
+  { image: string; shell: string; width: number; height: number }
+> = {
+  lg: {
+    image: 'h-11 w-auto max-w-[176px] object-contain md:h-12 md:max-w-[200px]',
+    shell:
+      'inline-flex h-[4.75rem] min-w-[8rem] items-center justify-center rounded-2xl border px-5 py-3 transition-colors hover:border-white/20 hover:bg-zinc-950/70',
+    width: 200,
+    height: 48,
+  },
+  md: {
+    image: 'h-8 w-auto max-w-[128px] object-contain md:h-9 md:max-w-[152px]',
+    shell:
+      'inline-flex h-[3.75rem] min-w-[6.5rem] items-center justify-center rounded-2xl border px-4 py-2 transition-colors hover:border-white/20 hover:bg-zinc-950/70',
+    width: 160,
+    height: 40,
+  },
+  sm: {
+    image: 'h-6 w-auto max-w-[100px] object-contain md:h-7 md:max-w-[112px]',
+    shell:
+      'inline-flex h-[3rem] min-w-[5.25rem] items-center justify-center rounded-xl border px-3 py-1.5 transition-colors hover:border-white/20 hover:bg-zinc-950/70',
+    width: 120,
+    height: 32,
+  },
+}
+
+function SponsorLogo({
+  sponsor,
+  accent,
+  size,
+}: {
+  sponsor: PublicSponsor
+  accent: string
+  size: SponsorLogoSize
+}) {
+  const dims = LOGO_SIZE[size]
   const image = (
     <Image
       src={sponsor.logo_url}
       alt={sponsor.sponsor_name}
-      width={160}
-      height={40}
-      className="h-8 w-auto max-w-[128px] object-contain md:h-9 md:max-w-[152px]"
+      width={dims.width}
+      height={dims.height}
+      className={dims.image}
       unoptimized
     />
   )
 
   const shellStyle = {
-    borderColor: hexToRgba(accent, 0.28),
-    backgroundColor: hexToRgba(accent, 0.07),
-    boxShadow: `inset 0 1px 0 0 ${hexToRgba(accent, 0.12)}`,
+    borderColor: hexToRgba(accent, size === 'lg' ? 0.42 : size === 'md' ? 0.28 : 0.2),
+    backgroundColor: hexToRgba(accent, size === 'lg' ? 0.12 : size === 'md' ? 0.07 : 0.04),
+    boxShadow:
+      size === 'lg'
+        ? `inset 0 1px 0 0 ${hexToRgba(accent, 0.2)}, 0 0 0 1px ${hexToRgba(accent, 0.12)}`
+        : `inset 0 1px 0 0 ${hexToRgba(accent, 0.12)}`,
   }
-
-  const shellClassName =
-    'inline-flex h-[3.75rem] min-w-[6.5rem] items-center justify-center rounded-2xl border px-4 py-2 transition-colors hover:border-white/20 hover:bg-zinc-950/70'
 
   const href = sponsor.sponsor_url ? safeExternalHref(sponsor.sponsor_url) : null
   if (href) {
@@ -43,7 +84,7 @@ function SponsorLogo({ sponsor, accent }: { sponsor: PublicSponsor; accent: stri
         target="_blank"
         rel="noopener noreferrer"
         title={sponsor.sponsor_name}
-        className={shellClassName}
+        className={dims.shell}
         style={shellStyle}
       >
         {image}
@@ -52,7 +93,7 @@ function SponsorLogo({ sponsor, accent }: { sponsor: PublicSponsor; accent: stri
   }
 
   return (
-    <span className={shellClassName} style={shellStyle}>
+    <span className={dims.shell} style={shellStyle} title={sponsor.sponsor_name}>
       {image}
     </span>
   )
@@ -66,6 +107,8 @@ export function OrgSponsorSection({ slug, orgName, accent, sponsors, showCta = t
 
   const accentFg = accentOnDark(accent)
   const hasSponsors = sponsors.length > 0
+  const orderedSponsors = sortPublicSponsorsByAmount(sponsors)
+  const amounts = orderedSponsors.map((s) => s.monthly_amount_cents ?? 0)
 
   return (
     <section
@@ -105,9 +148,14 @@ export function OrgSponsorSection({ slug, orgName, accent, sponsors, showCta = t
               </p>
             </div>
 
-            <div className="flex flex-wrap items-center justify-center gap-3 sm:justify-start">
-              {sponsors.map((sponsor) => (
-                <SponsorLogo key={sponsor.id} sponsor={sponsor} accent={accent} />
+            <div className="flex flex-wrap items-end justify-center gap-3 sm:justify-start">
+              {orderedSponsors.map((sponsor) => (
+                <SponsorLogo
+                  key={sponsor.id}
+                  sponsor={sponsor}
+                  accent={accent}
+                  size={sponsorLogoSizeForAmount(sponsor.monthly_amount_cents ?? 0, amounts)}
+                />
               ))}
             </div>
           </div>
