@@ -36,8 +36,27 @@ export default async function SponsorshipPage({ params }: Props) {
     )
   }
 
+  const benefits = [
+    {
+      title: 'Get seen by people who actually show up',
+      body: `Your logo lives on ${org.name}'s public pages — in front of regulars, newcomers, and guests who visit every week.`,
+    },
+    {
+      title: 'Earn goodwill where it matters locally',
+      body: 'Players notice who helps keep the nights going. Sponsoring says you back the same community they care about.',
+    },
+    {
+      title: 'Simple monthly partnership, real impact',
+      body: 'Pick a tier, share your logo, and support the sessions that keep this group alive — without a custom contract or sales call.',
+    },
+    {
+      title: 'Your brand only goes live when it’s a fit',
+      body: 'Organizers review every request first, so you stay associated with a community that’s proud to feature you.',
+    },
+  ]
+
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8">
       <section
         className="relative overflow-hidden rounded-3xl border border-zinc-800"
         style={{
@@ -57,7 +76,7 @@ export default async function SponsorshipPage({ params }: Props) {
             className="text-[11px] font-semibold uppercase tracking-[0.18em]"
             style={{ color: hexToRgba(accentSoft, 0.95) }}
           >
-            Partner with us
+            A note from {org.name}
           </p>
           <h2 className="mt-2 text-2xl font-semibold tracking-tight text-zinc-50 sm:text-[1.65rem]">
             Support {org.name}
@@ -65,34 +84,34 @@ export default async function SponsorshipPage({ params }: Props) {
           <p className="mt-3 max-w-prose whitespace-pre-wrap text-sm leading-relaxed text-zinc-300">
             {page.intro_text}
           </p>
-
-          <ul className="mt-5 space-y-2.5 text-sm text-zinc-400">
-            <li className="flex gap-2.5">
-              <span
-                className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full"
-                style={{ backgroundColor: accent }}
-                aria-hidden
-              />
-              <span>Your logo featured on this group&apos;s public pages</span>
-            </li>
-            <li className="flex gap-2.5">
-              <span
-                className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full"
-                style={{ backgroundColor: accent }}
-                aria-hidden
-              />
-              <span>Monthly support that helps keep sessions running</span>
-            </li>
-            <li className="flex gap-2.5">
-              <span
-                className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full"
-                style={{ backgroundColor: accent }}
-                aria-hidden
-              />
-              <span>Organizer review before anything goes live</span>
-            </li>
-          </ul>
         </div>
+      </section>
+
+      <section className="rounded-3xl border border-zinc-800 bg-zinc-900/50 px-5 py-5 sm:px-6 sm:py-6">
+        <p
+          className="text-[11px] font-semibold uppercase tracking-[0.18em]"
+          style={{ color: hexToRgba(accentSoft, 0.95) }}
+        >
+          Why sponsor
+        </p>
+        <h3 className="mt-2 text-lg font-semibold tracking-tight text-zinc-50">
+          What your support unlocks
+        </h3>
+        <ul className="mt-4 space-y-4">
+          {benefits.map((benefit) => (
+            <li key={benefit.title} className="flex gap-3">
+              <span
+                className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full"
+                style={{ backgroundColor: accent }}
+                aria-hidden
+              />
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-zinc-100">{benefit.title}</p>
+                <p className="mt-0.5 text-sm leading-relaxed text-zinc-400">{benefit.body}</p>
+              </div>
+            </li>
+          ))}
+        </ul>
       </section>
 
       <section>
