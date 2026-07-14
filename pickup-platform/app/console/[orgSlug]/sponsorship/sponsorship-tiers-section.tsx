@@ -32,9 +32,19 @@ export function SponsorshipTiersSection({
   const toast = useConsoleToast()
   const [editingId, setEditingId] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
+  const [revealedLockIds, setRevealedLockIds] = useState<Set<string>>(() => new Set())
   const lockedIds = useMemo(() => new Set(lockedTierIds), [lockedTierIds])
 
   const activeTiers = tiers.filter((tier) => tier.status === 'active')
+
+  function revealTierLock(tierId: string) {
+    setRevealedLockIds((prev) => {
+      if (prev.has(tierId)) return prev
+      const next = new Set(prev)
+      next.add(tierId)
+      return next
+    })
+  }
 
   async function handleSave(formData: FormData) {
     setPending(true)
@@ -50,7 +60,7 @@ export function SponsorshipTiersSection({
 
   async function handleDelete(tierId: string) {
     if (lockedIds.has(tierId)) {
-      toast.error('This tier has an active sponsor. Cancel that sponsorship before removing the tier.')
+      revealTierLock(tierId)
       return
     }
     setPending(true)
@@ -71,6 +81,7 @@ export function SponsorshipTiersSection({
         <ul className="space-y-3">
           {activeTiers.map((tier) => {
             const locked = lockedIds.has(tier.id)
+            const showLockNote = locked && revealedLockIds.has(tier.id)
             return (
               <li
                 key={tier.id}
@@ -93,7 +104,7 @@ export function SponsorshipTiersSection({
                       {tier.description ? (
                         <p className="mt-2 text-sm text-zinc-400">{tier.description}</p>
                       ) : null}
-                      {locked ? (
+                      {showLockNote ? (
                         <p className="mt-2 text-xs leading-relaxed text-amber-300/90">
                           Has an active sponsor — cancel that sponsorship before editing or removing
                           this tier.
@@ -105,15 +116,21 @@ export function SponsorshipTiersSection({
                         <button
                           type="button"
                           className={`${btnOutline} w-full sm:w-auto`}
-                          disabled={locked || pending}
-                          onClick={() => setEditingId(tier.id)}
+                          disabled={pending}
+                          onClick={() => {
+                            if (locked) {
+                              revealTierLock(tier.id)
+                              return
+                            }
+                            setEditingId(tier.id)
+                          }}
                         >
                           Edit
                         </button>
                         <button
                           type="button"
                           className={`${btnOutline} w-full sm:w-auto`}
-                          disabled={locked || pending}
+                          disabled={pending}
                           onClick={() => handleDelete(tier.id)}
                         >
                           Remove
