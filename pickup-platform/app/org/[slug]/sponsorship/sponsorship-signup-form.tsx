@@ -414,7 +414,14 @@ export function SponsorshipSignupForm({
                 ) : null}
               </div>
 
-              <p className="text-xs leading-relaxed text-zinc-500">
+              <p
+                className="rounded-xl border px-3.5 py-3 text-xs leading-relaxed"
+                style={{
+                  color: accentSoft,
+                  borderColor: hexToRgba(accent, 0.35),
+                  backgroundColor: hexToRgba(accent, 0.12),
+                }}
+              >
                 {sponsorshipRefundPolicyText(orgName, platformFeePercent)}
               </p>
             </div>
