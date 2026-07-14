@@ -1,28 +1,26 @@
 'use client'
 
-import { useState, type ReactNode } from 'react'
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react'
 import Image from 'next/image'
 import {
   approveSponsorship,
   cancelSponsorship,
   declineSponsorship,
-  setSponsorshipHidden,
 } from '../../sponsorship-actions'
 import { btnOutline, btnPrimary, ConsoleSection } from '../../_components/console-ui'
 import { useConsoleToast } from '../../_components/console-toast'
 import {
   formatSponsorshipConsoleDate,
   formatTierPrice,
-  isSponsorshipCancelMode,
+  type SponsorshipCancelMode,
   sponsorshipHistoryDateIso,
   sponsorshipHistoryStatusLabel,
-  type SponsorshipCancelMode,
 } from '@/lib/sponsorship'
 import type { SponsorshipRow } from '@/lib/sponsorship.server'
 
 type BusyAction = {
   id: string
-  action: 'approve' | 'decline' | 'hide' | 'show' | 'cancel'
+  action: 'approve' | 'decline' | 'cancel'
 }
 
 export function SponsorshipRequestsSection({
@@ -74,31 +72,16 @@ export function SponsorshipRequestsSection({
     }
   }
 
-  async function handleHidden(id: string, hidden: boolean) {
-    if (busy) return
-    setBusy({ id, action: hidden ? 'hide' : 'show' })
-    try {
-      const result = await setSponsorshipHidden(orgSlug, id, hidden)
-      if (result?.error) {
-        toast.error(result.error)
-        return
-      }
-      toast.success(hidden ? 'Sponsor hidden.' : 'Sponsor shown again.')
-    } finally {
-      setBusy(null)
-    }
-  }
-
   async function handleCancel(id: string, mode: SponsorshipCancelMode) {
     if (busy) return
 
     const confirmed =
       mode === 'refund_now'
         ? window.confirm(
-            'Remove this sponsor now and refund their latest payment (minus platform and card fees)? Their logo comes down immediately.',
+            'End this sponsorship now? Their logo comes down immediately, and their latest payment is refunded (minus platform and card fees).',
           )
         : window.confirm(
-            'Stop future billing but keep their logo up until the current subscription period ends? Past payments are not refunded.',
+            'End billing after this period? Their logo stays up until the period ends. Past payments are not refunded.',
           )
     if (!confirmed) return
 
@@ -111,7 +94,7 @@ export function SponsorshipRequestsSection({
       }
       toast.success(
         mode === 'refund_now'
-          ? 'Sponsor removed and latest payment refunded.'
+          ? 'Sponsorship ended and latest payment refunded.'
           : 'Sponsorship will end after this period. Logo stays until then.',
       )
     } finally {
@@ -166,7 +149,7 @@ export function SponsorshipRequestsSection({
 
       <ConsoleSection
         title={active.length > 0 ? `Active (${active.length})` : 'Active'}
-        description="Live sponsors on your public pages. Hide a logo anytime, or end the sponsorship."
+        description="Live sponsors on your public pages. End a sponsorship when you need to."
       >
         {active.length === 0 ? (
           <p className="text-sm text-zinc-500">No approved sponsors yet.</p>
@@ -199,53 +182,13 @@ export function SponsorshipRequestsSection({
                       : undefined
                   }
                   actions={
-                    <>
-                      {showing ? (
-                        <button
-                          type="button"
-                          className={`${btnOutline} w-full sm:w-auto`}
-                          disabled={Boolean(busy)}
-                          onClick={() => handleHidden(row.id, false)}
-                        >
-                          {isBusy(row.id, 'show') ? 'Showing…' : 'Show'}
-                        </button>
-                      ) : (
-                        <button
-                          type="button"
-                          className={`${btnOutline} w-full sm:w-auto`}
-                          disabled={Boolean(busy)}
-                          onClick={() => handleHidden(row.id, true)}
-                        >
-                          {isBusy(row.id, 'hide') ? 'Hiding…' : 'Hide'}
-                        </button>
-                      )}
-                      {ending ? null : (
-                        <label className="block w-full sm:w-auto">
-                          <span className="sr-only">End sponsorship</span>
-                          <select
-                            className={`${btnOutline} w-full appearance-none sm:w-auto`}
-                            disabled={Boolean(busy)}
-                            defaultValue=""
-                            onChange={(event) => {
-                              const value = event.target.value
-                              event.target.value = ''
-                              if (!isSponsorshipCancelMode(value)) return
-                              void handleCancel(row.id, value)
-                            }}
-                          >
-                            <option value="" disabled>
-                              {isBusy(row.id, 'cancel') ? 'Ending…' : 'End sponsorship…'}
-                            </option>
-                            <option value="refund_now">
-                              Remove now + refund last payment
-                            </option>
-                            <option value="end_of_period">
-                              Keep until period ends (no refund)
-                            </option>
-                          </select>
-                        </label>
-                      )}
-                    </>
+                    ending ? null : (
+                      <EndSponsorshipMenu
+                        disabled={Boolean(busy)}
+                        busy={isBusy(row.id, 'cancel')}
+                        onSelect={(mode) => void handleCancel(row.id, mode)}
+                      />
+                    )
                   }
                   dimmed={rowBusy}
                 />
@@ -276,6 +219,110 @@ export function SponsorshipRequestsSection({
           </ul>
         )}
       </ConsoleSection>
+    </div>
+  )
+}
+
+function EndSponsorshipMenu({
+  disabled,
+  busy,
+  onSelect,
+}: {
+  disabled: boolean
+  busy: boolean
+  onSelect: (mode: SponsorshipCancelMode) => void
+}) {
+  const [open, setOpen] = useState(false)
+  const rootRef = useRef<HTMLDivElement>(null)
+  const menuId = useId()
+
+  useEffect(() => {
+    if (!open) return
+
+    function onPointerDown(event: MouseEvent) {
+      if (!rootRef.current?.contains(event.target as Node)) {
+        setOpen(false)
+      }
+    }
+
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') setOpen(false)
+    }
+
+    document.addEventListener('mousedown', onPointerDown)
+    document.addEventListener('keydown', onKeyDown)
+    return () => {
+      document.removeEventListener('mousedown', onPointerDown)
+      document.removeEventListener('keydown', onKeyDown)
+    }
+  }, [open])
+
+  useEffect(() => {
+    if (disabled || busy) setOpen(false)
+  }, [disabled, busy])
+
+  function choose(mode: SponsorshipCancelMode) {
+    setOpen(false)
+    onSelect(mode)
+  }
+
+  return (
+    <div ref={rootRef} className="relative w-full sm:w-auto">
+      <button
+        type="button"
+        className={`${btnOutline} w-full gap-2 sm:w-auto`}
+        disabled={disabled}
+        aria-expanded={open}
+        aria-haspopup="menu"
+        aria-controls={menuId}
+        onClick={() => setOpen((value) => !value)}
+      >
+        {busy ? 'Ending…' : 'End sponsorship'}
+        <svg
+          aria-hidden
+          viewBox="0 0 20 20"
+          fill="currentColor"
+          className={`size-4 shrink-0 text-zinc-400 transition ${open ? 'rotate-180' : ''}`}
+        >
+          <path
+            fillRule="evenodd"
+            d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.168l3.71-3.938a.75.75 0 1 1 1.08 1.04l-4.25 4.5a.75.75 0 0 1-1.08 0l-4.25-4.5a.75.75 0 0 1 .02-1.06Z"
+            clipRule="evenodd"
+          />
+        </svg>
+      </button>
+
+      {open ? (
+        <div
+          id={menuId}
+          role="menu"
+          className="absolute right-0 z-20 mt-2 w-[min(100vw-2.5rem,18rem)] overflow-hidden rounded-xl border border-white/10 bg-zinc-950 shadow-xl shadow-black/40 sm:w-72"
+        >
+          <button
+            type="button"
+            role="menuitem"
+            className="flex w-full flex-col gap-0.5 px-3.5 py-3 text-left transition hover:bg-white/5"
+            onClick={() => choose('end_of_period')}
+          >
+            <span className="text-sm font-medium text-zinc-100">Let it finish this period</span>
+            <span className="text-xs leading-relaxed text-zinc-500">
+              Logo stays until the paid period ends. No refund.
+            </span>
+          </button>
+          <div className="border-t border-white/5" />
+          <button
+            type="button"
+            role="menuitem"
+            className="flex w-full flex-col gap-0.5 px-3.5 py-3 text-left transition hover:bg-white/5"
+            onClick={() => choose('refund_now')}
+          >
+            <span className="text-sm font-medium text-zinc-100">End now and refund</span>
+            <span className="text-xs leading-relaxed text-zinc-500">
+              Logo comes down immediately. Latest payment refunded (fees kept).
+            </span>
+          </button>
+        </div>
+      ) : null}
     </div>
   )
 }
@@ -327,7 +374,9 @@ function SponsorshipRowCard({
         </div>
       </div>
       {actions ? (
-        <div className="flex w-full flex-col gap-2 sm:w-auto sm:shrink-0 sm:flex-row">{actions}</div>
+        <div className="flex w-full flex-col gap-2 sm:w-auto sm:shrink-0 sm:flex-row sm:justify-end">
+          {actions}
+        </div>
       ) : null}
     </li>
   )

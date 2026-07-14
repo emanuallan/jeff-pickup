@@ -98,7 +98,7 @@ export default async function SponsorshipConsolePage({ params, searchParams }: P
       target="_blank"
       rel="noopener noreferrer"
     >
-      Preview public page
+      View Sponsor Page
     </Link>
   )
 
@@ -167,6 +167,7 @@ export default async function SponsorshipConsolePage({ params, searchParams }: P
                 <SponsorshipFeatureToggle
                   orgSlug={orgSlug}
                   enabled={features.group_sponsorships}
+                  locked={active.length > 0}
                 />
               </div>
 

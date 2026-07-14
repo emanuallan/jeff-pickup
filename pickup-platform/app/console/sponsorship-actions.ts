@@ -65,6 +65,21 @@ export async function updateSponsorshipFeature(orgSlug: string, enabled: boolean
     const supabase = await createClient()
     const settings = org.settings
 
+    if (!enabled) {
+      const { count, error: activeError } = await supabase
+        .from('sponsorships')
+        .select('id', { count: 'exact', head: true })
+        .eq('org_id', org.id)
+        .in('status', ['approved', 'hidden'])
+
+      if (activeError) return { error: activeError.message }
+      if ((count ?? 0) > 0) {
+        return {
+          error: 'End all active sponsorships before turning sponsorships off.',
+        }
+      }
+    }
+
     const { error } = await supabase
       .from('orgs')
       .update({
