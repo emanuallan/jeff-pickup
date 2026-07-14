@@ -82,6 +82,7 @@ export async function getSponsorshipTiersForOrg(orgId: string) {
     .from('sponsorship_tiers')
     .select('*')
     .eq('org_id', orgId)
+    .eq('status', 'active')
     .order('sort_order', { ascending: true })
     .order('created_at', { ascending: true })
 
