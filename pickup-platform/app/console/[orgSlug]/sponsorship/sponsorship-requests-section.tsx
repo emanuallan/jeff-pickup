@@ -1,6 +1,7 @@
 'use client'
 
-import { useEffect, useId, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
 import Image from 'next/image'
 import {
   approveSponsorship,
@@ -239,16 +240,75 @@ function EndSponsorshipMenu({
   onSelect: (mode: SponsorshipCancelMode) => void
 }) {
   const [open, setOpen] = useState(false)
-  const rootRef = useRef<HTMLDivElement>(null)
+  const [mounted, setMounted] = useState(false)
+  const [menuStyle, setMenuStyle] = useState<CSSProperties | null>(null)
+  const buttonRef = useRef<HTMLButtonElement>(null)
+  const menuRef = useRef<HTMLDivElement>(null)
   const menuId = useId()
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  useLayoutEffect(() => {
+    if (!open || !buttonRef.current) {
+      setMenuStyle(null)
+      return
+    }
+
+    function positionMenu() {
+      const button = buttonRef.current
+      if (!button) return
+
+      const rect = button.getBoundingClientRect()
+      const menuWidth = Math.min(320, window.innerWidth - 16)
+      const estimatedHeight = 280
+      const gap = 8
+      const spaceBelow = window.innerHeight - rect.bottom - gap
+      const openUp = spaceBelow < estimatedHeight && rect.top > spaceBelow
+
+      let left = rect.right - menuWidth
+      left = Math.max(8, Math.min(left, window.innerWidth - menuWidth - 8))
+
+      if (openUp) {
+        setMenuStyle({
+          position: 'fixed',
+          left,
+          width: menuWidth,
+          bottom: window.innerHeight - rect.top + gap,
+          top: 'auto',
+          zIndex: 80,
+        })
+      } else {
+        setMenuStyle({
+          position: 'fixed',
+          left,
+          width: menuWidth,
+          top: rect.bottom + gap,
+          bottom: 'auto',
+          zIndex: 80,
+        })
+      }
+    }
+
+    positionMenu()
+    window.addEventListener('resize', positionMenu)
+    window.addEventListener('scroll', positionMenu, true)
+    return () => {
+      window.removeEventListener('resize', positionMenu)
+      window.removeEventListener('scroll', positionMenu, true)
+    }
+  }, [open])
 
   useEffect(() => {
     if (!open) return
 
     function onPointerDown(event: MouseEvent) {
-      if (!rootRef.current?.contains(event.target as Node)) {
-        setOpen(false)
+      const target = event.target as Node
+      if (buttonRef.current?.contains(target) || menuRef.current?.contains(target)) {
+        return
       }
+      setOpen(false)
     }
 
     function onKeyDown(event: KeyboardEvent) {
@@ -275,37 +335,14 @@ function EndSponsorshipMenu({
   const cancelButtonClass =
     'inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-2.5 text-sm font-medium text-red-300 transition hover:border-red-400/50 hover:bg-red-500/15 disabled:opacity-50 sm:w-auto'
 
-  return (
-    <div ref={rootRef} className="relative w-full sm:w-auto">
-      <button
-        type="button"
-        className={cancelButtonClass}
-        disabled={disabled}
-        aria-expanded={open}
-        aria-haspopup="menu"
-        aria-controls={menuId}
-        onClick={() => setOpen((value) => !value)}
-      >
-        {busy ? 'Canceling…' : 'Cancel'}
-        <svg
-          aria-hidden
-          viewBox="0 0 20 20"
-          fill="currentColor"
-          className={`size-4 shrink-0 text-red-400/80 transition ${open ? 'rotate-180' : ''}`}
-        >
-          <path
-            fillRule="evenodd"
-            d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.168l3.71-3.938a.75.75 0 1 1 1.08 1.04l-4.25 4.5a.75.75 0 0 1-1.08 0l-4.25-4.5a.75.75 0 0 1 .02-1.06Z"
-            clipRule="evenodd"
-          />
-        </svg>
-      </button>
-
-      {open ? (
+  const menu = open && menuStyle && mounted
+    ? createPortal(
         <div
+          ref={menuRef}
           id={menuId}
           role="menu"
-          className="absolute right-0 z-20 mt-2 w-[min(100vw-2.5rem,19rem)] overflow-hidden rounded-xl border border-red-500/20 bg-zinc-950 shadow-xl shadow-black/40 sm:w-80"
+          style={menuStyle}
+          className="overflow-hidden rounded-xl border border-red-500/20 bg-zinc-950 shadow-xl shadow-black/40"
         >
           <button
             type="button"
@@ -348,8 +385,38 @@ function EndSponsorshipMenu({
               most likely take a loss.
             </span>
           </button>
-        </div>
-      ) : null}
+        </div>,
+        document.body,
+      )
+    : null
+
+  return (
+    <div className="relative w-full sm:w-auto">
+      <button
+        ref={buttonRef}
+        type="button"
+        className={cancelButtonClass}
+        disabled={disabled}
+        aria-expanded={open}
+        aria-haspopup="menu"
+        aria-controls={menuId}
+        onClick={() => setOpen((value) => !value)}
+      >
+        {busy ? 'Canceling…' : 'Cancel'}
+        <svg
+          aria-hidden
+          viewBox="0 0 20 20"
+          fill="currentColor"
+          className={`size-4 shrink-0 text-red-400/80 transition ${open ? 'rotate-180' : ''}`}
+        >
+          <path
+            fillRule="evenodd"
+            d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.168l3.71-3.938a.75.75 0 1 1 1.08 1.04l-4.25 4.5a.75.75 0 0 1-1.08 0l-4.25-4.5a.75.75 0 0 1 .02-1.06Z"
+            clipRule="evenodd"
+          />
+        </svg>
+      </button>
+      {menu}
     </div>
   )
 }
