@@ -114,9 +114,12 @@ describe('sponsorship lifecycle helpers', () => {
   })
 
   it('describes the non-refundable processing + platform fee policy', () => {
-    expect(sponsorshipRefundPolicyText('Demo FC', 5)).toContain(
+    const text = sponsorshipRefundPolicyText('Demo FC', 5)
+    expect(text).toContain(
       "card processing fees and Organizr's 5% platform fee, which are non-refundable",
     )
+    expect(text).toContain('contact the group admins')
+    expect(text).toContain('self-serve cancellation is still under development and coming soon')
   })
 
   it('builds simple console overview stats', () => {
