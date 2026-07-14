@@ -315,6 +315,34 @@ function reportedApplicationFeeCents(
   return null
 }
 
+/** Stripe + tax/etc from balance_transaction, excluding Connect application fee. */
+function reportedStripeProcessingFeeCents(latestCharge: Stripe.Charge | null): number | null {
+  const balanceTransaction = latestCharge?.balance_transaction
+  if (!balanceTransaction || typeof balanceTransaction === 'string') return null
+  if (!Array.isArray(balanceTransaction.fee_details) || balanceTransaction.fee_details.length === 0) {
+    return null
+  }
+
+  let processing = 0
+  let sawNonApplication = false
+  for (const detail of balanceTransaction.fee_details) {
+    if (detail.type === 'application_fee') continue
+    processing += detail.amount
+    sawNonApplication = true
+  }
+  return sawNonApplication ? processing : null
+}
+
+/** Total fees on the connected-account balance transaction (app fee + Stripe). */
+function reportedTotalFeeCents(latestCharge: Stripe.Charge | null): number | null {
+  const balanceTransaction = latestCharge?.balance_transaction
+  if (!balanceTransaction || typeof balanceTransaction === 'string') return null
+  if (typeof balanceTransaction.fee === 'number' && balanceTransaction.fee > 0) {
+    return balanceTransaction.fee
+  }
+  return null
+}
+
 export function stripeErrorMessage(error: unknown): string | null {
   if (typeof error === 'object' && error !== null && 'message' in error) {
     const message = (error as { message?: unknown }).message
@@ -365,7 +393,7 @@ async function resolveSponsorshipRefund(
 
   const paymentIntent = await stripe.paymentIntents.retrieve(
     paymentIntentId,
-    { expand: ['latest_charge'] },
+    { expand: ['latest_charge.balance_transaction'] },
     connectOpts,
   )
 
@@ -394,6 +422,8 @@ async function resolveSponsorshipRefund(
     grossAmountCents: paymentIntent.amount,
     amountRefundedCents: latestCharge?.amount_refunded ?? 0,
     reportedApplicationFeeCents: reportedApplicationFeeCents(paymentIntent, latestCharge),
+    reportedStripeProcessingFeeCents: reportedStripeProcessingFeeCents(latestCharge),
+    reportedTotalFeeCents: reportedTotalFeeCents(latestCharge),
     platformFeePercent: getPlatformFeePercent(),
   })
 
@@ -412,7 +442,7 @@ async function resolveSponsorshipRefund(
   return { paymentIntentId, chargeId, refundAmountCents }
 }
 
-/** Refund the sponsor payment minus the platform fee, then cancel the subscription. */
+/** Refund sponsor payment minus platform + card processing fees, then cancel. */
 export async function refundAndCancelSponsorshipSubscription(input: {
   subscriptionId: string
   stripeAccountId: string

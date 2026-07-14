@@ -56,36 +56,64 @@ describe('sponsorship lifecycle helpers', () => {
     ).toBe(false)
   })
 
-  it('refunds the sponsor payment minus the platform fee', () => {
-    expect(sponsorRefundAmountCents(2500, 125)).toBe(2375)
+  it('refunds the sponsor payment minus platform + estimated Stripe fees', () => {
+    // $25 → 5% ($1.25) + 2.9%+$0.30 ($1.03) = $2.28 retain → $22.72 refund
+    expect(sponsorRefundAmountCents(2500, 125 + 103)).toBe(2272)
     expect(sponsorRefundAmountCents(1000, 1000)).toBe(0)
   })
 
-  it('treats a prior sponsor refund (fee left on charge) as already done', () => {
+  it('treats a prior sponsor refund (retain left on charge) as already done', () => {
     expect(
       resolveSponsorRefundAmountCents({
         grossAmountCents: 2500,
-        amountRefundedCents: 2375,
+        amountRefundedCents: 2280,
         reportedApplicationFeeCents: 125,
+        reportedTotalFeeCents: 220,
         platformFeePercent: 5,
       }),
-    ).toEqual({ refundAmountCents: 0, alreadyRefundedSponsorPortion: true })
+    ).toEqual({
+      refundAmountCents: 0,
+      alreadyRefundedSponsorPortion: true,
+      retainCents: 220,
+    })
   })
 
-  it('refunds the sponsor portion on a fresh charge', () => {
+  it('refunds the sponsor portion on a fresh charge using total reported fees', () => {
     expect(
       resolveSponsorRefundAmountCents({
         grossAmountCents: 2500,
         amountRefundedCents: 0,
         reportedApplicationFeeCents: 125,
+        reportedTotalFeeCents: 220,
         platformFeePercent: 5,
       }),
-    ).toEqual({ refundAmountCents: 2375, alreadyRefundedSponsorPortion: false })
+    ).toEqual({
+      refundAmountCents: 2280,
+      alreadyRefundedSponsorPortion: false,
+      retainCents: 220,
+    })
   })
 
-  it('describes the non-refundable platform fee policy', () => {
+  it('falls back to estimated Stripe processing when fees are not reported', () => {
+    expect(
+      resolveSponsorRefundAmountCents({
+        grossAmountCents: 2500,
+        amountRefundedCents: 0,
+        reportedApplicationFeeCents: 125,
+        reportedStripeProcessingFeeCents: null,
+        reportedTotalFeeCents: null,
+        platformFeePercent: 5,
+      }),
+    ).toEqual({
+      refundAmountCents: 2272,
+      alreadyRefundedSponsorPortion: false,
+      retainCents: 228,
+    })
+  })
+
+  it('describes the non-refundable processing + platform fee policy', () => {
     expect(sponsorshipRefundPolicyText('Demo FC', 5)).toContain(
-      "Organizr's 5% platform fee, which is non-refundable",
+      "card processing fees and Organizr's 5% platform fee, which are non-refundable",
     )
   })
 

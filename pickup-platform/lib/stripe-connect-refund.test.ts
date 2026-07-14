@@ -60,6 +60,13 @@ describe('refundAndCancelSponsorshipSubscription', () => {
         amount_refunded: 0,
         application_fee_amount: 125,
         refunded: false,
+        balance_transaction: {
+          fee: 220,
+          fee_details: [
+            { type: 'stripe_fee', amount: 95 },
+            { type: 'application_fee', amount: 125 },
+          ],
+        },
       },
     })
     refundsCreate.mockResolvedValue({ id: 're_test_1' })
@@ -91,7 +98,7 @@ describe('refundAndCancelSponsorshipSubscription', () => {
     } as never)
   })
 
-  it('refunds via charge amount minus platform fee, then cancels', async () => {
+  it('refunds via charge amount minus platform + Stripe fees, then cancels', async () => {
     const result = await refundAndCancelSponsorshipSubscription({
       subscriptionId: 'sub_test_1',
       stripeAccountId: 'acct_test_1',
@@ -108,10 +115,15 @@ describe('refundAndCancelSponsorshipSubscription', () => {
       },
       { stripeAccount: 'acct_test_1' },
     )
+    expect(paymentIntentsRetrieve).toHaveBeenCalledWith(
+      'pi_test_1',
+      { expand: ['latest_charge.balance_transaction'] },
+      { stripeAccount: 'acct_test_1' },
+    )
     expect(refundsCreate).toHaveBeenCalledWith(
       {
         charge: 'ch_test_1',
-        amount: 2375,
+        amount: 2280,
         refund_application_fee: false,
       },
       { stripeAccount: 'acct_test_1' },
@@ -175,9 +187,47 @@ describe('refundAndCancelSponsorshipSubscription', () => {
       latest_charge: {
         id: 'ch_test_1',
         amount: 2500,
+        amount_refunded: 2280,
+        application_fee_amount: 125,
+        refunded: false,
+        balance_transaction: {
+          fee: 220,
+          fee_details: [
+            { type: 'stripe_fee', amount: 95 },
+            { type: 'application_fee', amount: 125 },
+          ],
+        },
+      },
+    })
+
+    const result = await refundAndCancelSponsorshipSubscription({
+      subscriptionId: 'sub_test_1',
+      stripeAccountId: 'acct_test_1',
+    })
+
+    expect(result).toEqual({ refunded: true, canceled: true })
+    expect(refundsCreate).not.toHaveBeenCalled()
+    expect(subscriptionsCancel).toHaveBeenCalled()
+  })
+
+  it('treats legacy platform-fee-only remainder as already done', async () => {
+    paymentIntentsRetrieve.mockResolvedValue({
+      amount: 2500,
+      status: 'succeeded',
+      application_fee_amount: 125,
+      latest_charge: {
+        id: 'ch_test_1',
+        amount: 2500,
         amount_refunded: 2375,
         application_fee_amount: 125,
         refunded: false,
+        balance_transaction: {
+          fee: 220,
+          fee_details: [
+            { type: 'stripe_fee', amount: 95 },
+            { type: 'application_fee', amount: 125 },
+          ],
+        },
       },
     })
 

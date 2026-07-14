@@ -170,49 +170,95 @@ export function isSponsorshipsActiveLocally(input: {
   )
 }
 
-/** Sponsor refund on decline: full charge minus the non-refundable platform fee. */
-export function sponsorRefundAmountCents(
-  chargeAmountCents: number,
-  applicationFeeCents: number,
-): number {
-  if (!Number.isFinite(chargeAmountCents) || chargeAmountCents <= 0) return 0
-  const fee = Number.isFinite(applicationFeeCents) ? Math.max(0, applicationFeeCents) : 0
-  return Math.max(chargeAmountCents - fee, 0)
+/** US online card estimate: 2.9% + $0.30. Used when Stripe hasn't reported fees yet. */
+export function estimateStripeCardProcessingFeeCents(amountCents: number): number {
+  if (!Number.isFinite(amountCents) || amountCents <= 0) return 0
+  return Math.round(amountCents * 0.029) + 30
 }
 
 /**
- * Resolve how much of a charge to refund while keeping the platform fee.
- * Treats “only the fee remains” (after a prior sponsor refund) as nothing left to refund.
+ * Non-refundable amount on decline: Organizr application fee + Stripe processing
+ * so the connected org is left roughly whole-dollar flat (not negative).
+ */
+export function sponsorDeclineRetainCents(input: {
+  grossAmountCents: number
+  applicationFeeCents: number
+  /** Stripe processing only — exclude application fee. Null → estimate. */
+  stripeProcessingFeeCents: number | null
+}): number {
+  const gross = Math.max(0, input.grossAmountCents)
+  const applicationFee = Math.max(0, input.applicationFeeCents)
+  const processing =
+    input.stripeProcessingFeeCents != null &&
+    Number.isFinite(input.stripeProcessingFeeCents) &&
+    input.stripeProcessingFeeCents >= 0
+      ? input.stripeProcessingFeeCents
+      : estimateStripeCardProcessingFeeCents(gross)
+  return Math.min(gross, applicationFee + Math.max(0, processing))
+}
+
+/** Sponsor refund on decline: charge minus non-refundable retain (fees). */
+export function sponsorRefundAmountCents(
+  chargeAmountCents: number,
+  retainCents: number,
+): number {
+  if (!Number.isFinite(chargeAmountCents) || chargeAmountCents <= 0) return 0
+  const retain = Number.isFinite(retainCents) ? Math.max(0, retainCents) : 0
+  return Math.max(chargeAmountCents - retain, 0)
+}
+
+/**
+ * Resolve how much of a charge to refund on decline while retaining
+ * platform fee + Stripe processing.
+ * Treats “only retain remains” (after a prior sponsor refund) as nothing left to refund.
  */
 export function resolveSponsorRefundAmountCents(input: {
   grossAmountCents: number
   amountRefundedCents: number
   reportedApplicationFeeCents: number | null
+  /** Balance-transaction fee excluding application_fee (stripe_fee, tax, etc.). */
+  reportedStripeProcessingFeeCents?: number | null
+  /**
+   * Prefer total balance_transaction.fee when present (application + Stripe).
+   * Avoids double-counting when fee_details already include both.
+   */
+  reportedTotalFeeCents?: number | null
   platformFeePercent: number
-}): { refundAmountCents: number; alreadyRefundedSponsorPortion: boolean } {
+}): { refundAmountCents: number; alreadyRefundedSponsorPortion: boolean; retainCents: number } {
   const gross = Math.max(0, input.grossAmountCents)
   const amountRefunded = Math.max(0, input.amountRefundedCents)
   const remaining = Math.max(gross - amountRefunded, 0)
 
   if (remaining <= 0) {
-    return { refundAmountCents: 0, alreadyRefundedSponsorPortion: true }
+    return { refundAmountCents: 0, alreadyRefundedSponsorPortion: true, retainCents: 0 }
   }
 
-  const expectedFeeCents = Math.round((gross * input.platformFeePercent) / 100)
-  const reported = input.reportedApplicationFeeCents
-  const feeCents =
-    reported != null && Number.isFinite(reported) && reported > 0 && reported < gross
-      ? reported
-      : expectedFeeCents
+  const expectedAppFeeCents = Math.round((gross * input.platformFeePercent) / 100)
+  const reportedApp = input.reportedApplicationFeeCents
+  const applicationFeeCents =
+    reportedApp != null && Number.isFinite(reportedApp) && reportedApp > 0 && reportedApp < gross
+      ? reportedApp
+      : expectedAppFeeCents
 
-  // Prior successful decline refund leaves only the non-refundable fee on the charge.
-  if (amountRefunded > 0 && remaining <= feeCents) {
-    return { refundAmountCents: 0, alreadyRefundedSponsorPortion: true }
+  const reportedTotal = input.reportedTotalFeeCents
+  const retainCents =
+    reportedTotal != null && Number.isFinite(reportedTotal) && reportedTotal > 0 && reportedTotal < gross
+      ? reportedTotal
+      : sponsorDeclineRetainCents({
+          grossAmountCents: gross,
+          applicationFeeCents,
+          stripeProcessingFeeCents: input.reportedStripeProcessingFeeCents ?? null,
+        })
+
+  // Prior successful decline refund leaves only the non-refundable retain on the charge.
+  if (amountRefunded > 0 && remaining <= retainCents) {
+    return { refundAmountCents: 0, alreadyRefundedSponsorPortion: true, retainCents }
   }
 
   return {
-    refundAmountCents: sponsorRefundAmountCents(remaining, feeCents),
+    refundAmountCents: sponsorRefundAmountCents(remaining, retainCents),
     alreadyRefundedSponsorPortion: false,
+    retainCents,
   }
 }
 
@@ -314,7 +360,7 @@ export function formatSponsorshipConsoleDate(iso: string): string {
 
 export function sponsorshipRefundPolicyText(orgName: string, platformFeePercent: number): string {
   const feeLabel = formatPlatformFeePercent(platformFeePercent)
-  return `Requests are reviewed before your logo goes live. If ${orgName} declines your request, your sponsorship payment is refunded except for Organizr's ${feeLabel}% platform fee, which is non-refundable.`
+  return `Requests are reviewed before your logo goes live. If ${orgName} declines your request, your payment is refunded except for card processing fees and Organizr's ${feeLabel}% platform fee, which are non-refundable.`
 }
 
 export function formatTierPrice(priceCents: number, currency = 'usd'): string {
