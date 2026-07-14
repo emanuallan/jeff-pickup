@@ -400,11 +400,19 @@ export type RefundAndCancelSponsorshipResult = {
   canceled: boolean
 }
 
+export type SponsorshipRefundPolicy = 'retain_fees' | 'full'
+
 async function resolveSponsorshipRefund(
   subscriptionId: string,
   checkoutSessionId: string | null | undefined,
   connectOpts: ConnectRequestOptions,
-): Promise<{ paymentIntentId: string; chargeId: string | null; refundAmountCents: number }> {
+  policy: SponsorshipRefundPolicy,
+): Promise<{
+  paymentIntentId: string
+  chargeId: string | null
+  refundAmountCents: number
+  refundApplicationFee: boolean
+}> {
   const stripe = getStripe()
   const paymentIntentId = await resolveSponsorshipPaymentIntent(
     subscriptionId,
@@ -440,12 +448,33 @@ async function resolveSponsorshipRefund(
       paymentIntentId,
       chargeId,
       refundAmountCents: 0,
+      refundApplicationFee: false,
+    }
+  }
+
+  const amountRefundedCents = latestCharge?.amount_refunded ?? 0
+  const remainingCents = Math.max(paymentIntent.amount - amountRefundedCents, 0)
+
+  if (policy === 'full') {
+    if (remainingCents <= 0) {
+      return {
+        paymentIntentId,
+        chargeId,
+        refundAmountCents: 0,
+        refundApplicationFee: false,
+      }
+    }
+    return {
+      paymentIntentId,
+      chargeId,
+      refundAmountCents: remainingCents,
+      refundApplicationFee: true,
     }
   }
 
   const { refundAmountCents, alreadyRefundedSponsorPortion } = resolveSponsorRefundAmountCents({
     grossAmountCents: paymentIntent.amount,
-    amountRefundedCents: latestCharge?.amount_refunded ?? 0,
+    amountRefundedCents,
     reportedApplicationFeeCents: reportedApplicationFeeCents(paymentIntent, latestCharge),
     reportedStripeProcessingFeeCents: reportedStripeProcessingFeeCents(latestCharge),
     reportedTotalFeeCents: reportedTotalFeeCents(latestCharge),
@@ -457,6 +486,7 @@ async function resolveSponsorshipRefund(
       paymentIntentId,
       chargeId,
       refundAmountCents: 0,
+      refundApplicationFee: false,
     }
   }
 
@@ -464,22 +494,34 @@ async function resolveSponsorshipRefund(
     throw new Error('Sponsorship refund amount must be greater than zero.')
   }
 
-  return { paymentIntentId, chargeId, refundAmountCents }
+  return {
+    paymentIntentId,
+    chargeId,
+    refundAmountCents,
+    refundApplicationFee: false,
+  }
 }
 
-/** Refund sponsor payment minus platform + card processing fees, then cancel. */
+/**
+ * Refund the latest paid invoice charge, then cancel the subscription.
+ * - retain_fees (default): sponsor portion only; keep platform + Stripe processing
+ * - full: remaining charge amount + Stripe application fee (group may still eat card fees)
+ */
 export async function refundAndCancelSponsorshipSubscription(input: {
   subscriptionId: string
   stripeAccountId: string
   checkoutSessionId?: string | null
+  refundPolicy?: SponsorshipRefundPolicy
 }): Promise<RefundAndCancelSponsorshipResult> {
   const stripe = getStripe()
   const connectOpts: ConnectRequestOptions = { stripeAccount: input.stripeAccountId }
+  const refundPolicy = input.refundPolicy ?? 'retain_fees'
 
   const refundTarget = await resolveSponsorshipRefund(
     input.subscriptionId,
     input.checkoutSessionId,
     connectOpts,
+    refundPolicy,
   )
 
   let refunded = refundTarget.refundAmountCents === 0
@@ -490,12 +532,12 @@ export async function refundAndCancelSponsorshipSubscription(input: {
           ? {
               charge: refundTarget.chargeId,
               amount: refundTarget.refundAmountCents,
-              refund_application_fee: false,
+              refund_application_fee: refundTarget.refundApplicationFee,
             }
           : {
               payment_intent: refundTarget.paymentIntentId,
               amount: refundTarget.refundAmountCents,
-              refund_application_fee: false,
+              refund_application_fee: refundTarget.refundApplicationFee,
             },
         connectOpts,
       )

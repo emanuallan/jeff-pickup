@@ -76,13 +76,17 @@ export function SponsorshipRequestsSection({
     if (busy) return
 
     const confirmed =
-      mode === 'refund_now'
+      mode === 'end_of_period'
         ? window.confirm(
-            'End this sponsorship now? Their logo comes down immediately, and their latest payment is refunded (minus platform and card fees).',
+            'Cancel billing after this period? Their logo stays up until the period ends. Past payments are not refunded.',
           )
-        : window.confirm(
-            'End billing after this period? Their logo stays up until the period ends. Past payments are not refunded.',
-          )
+        : mode === 'refund_full'
+          ? window.confirm(
+              'NOT RECOMMENDED: Cancel now and refund the full payment (including fees)? Their logo comes down immediately. Your group will likely take a loss from card processing and payout clawbacks. Continue?',
+            )
+          : window.confirm(
+              'Cancel now? Their logo comes down immediately, and their latest payment is refunded (minus platform and card fees).',
+            )
     if (!confirmed) return
 
     setBusy({ id, action: 'cancel' })
@@ -93,9 +97,11 @@ export function SponsorshipRequestsSection({
         return
       }
       toast.success(
-        mode === 'refund_now'
-          ? 'Sponsorship ended and latest payment refunded.'
-          : 'Sponsorship will end after this period. Logo stays until then.',
+        mode === 'end_of_period'
+          ? 'Sponsorship will end after this period. Logo stays until then.'
+          : mode === 'refund_full'
+            ? 'Sponsorship canceled with a full refund.'
+            : 'Sponsorship canceled and latest payment refunded (fees kept).',
       )
     } finally {
       setBusy(null)
@@ -149,7 +155,7 @@ export function SponsorshipRequestsSection({
 
       <ConsoleSection
         title={active.length > 0 ? `Active (${active.length})` : 'Active'}
-        description="Live sponsors on your public pages. End a sponsorship when you need to."
+        description="Live sponsors on your public pages. Cancel a sponsorship when you need to."
       >
         {active.length === 0 ? (
           <p className="text-sm text-zinc-500">No approved sponsors yet.</p>
@@ -266,23 +272,26 @@ function EndSponsorshipMenu({
     onSelect(mode)
   }
 
+  const cancelButtonClass =
+    'inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-2.5 text-sm font-medium text-red-300 transition hover:border-red-400/50 hover:bg-red-500/15 disabled:opacity-50 sm:w-auto'
+
   return (
     <div ref={rootRef} className="relative w-full sm:w-auto">
       <button
         type="button"
-        className={`${btnOutline} w-full gap-2 sm:w-auto`}
+        className={cancelButtonClass}
         disabled={disabled}
         aria-expanded={open}
         aria-haspopup="menu"
         aria-controls={menuId}
         onClick={() => setOpen((value) => !value)}
       >
-        {busy ? 'Ending…' : 'End sponsorship'}
+        {busy ? 'Canceling…' : 'Cancel'}
         <svg
           aria-hidden
           viewBox="0 0 20 20"
           fill="currentColor"
-          className={`size-4 shrink-0 text-zinc-400 transition ${open ? 'rotate-180' : ''}`}
+          className={`size-4 shrink-0 text-red-400/80 transition ${open ? 'rotate-180' : ''}`}
         >
           <path
             fillRule="evenodd"
@@ -296,7 +305,7 @@ function EndSponsorshipMenu({
         <div
           id={menuId}
           role="menu"
-          className="absolute right-0 z-20 mt-2 w-[min(100vw-2.5rem,18rem)] overflow-hidden rounded-xl border border-white/10 bg-zinc-950 shadow-xl shadow-black/40 sm:w-72"
+          className="absolute right-0 z-20 mt-2 w-[min(100vw-2.5rem,19rem)] overflow-hidden rounded-xl border border-red-500/20 bg-zinc-950 shadow-xl shadow-black/40 sm:w-80"
         >
           <button
             type="button"
@@ -316,9 +325,27 @@ function EndSponsorshipMenu({
             className="flex w-full flex-col gap-0.5 px-3.5 py-3 text-left transition hover:bg-white/5"
             onClick={() => choose('refund_now')}
           >
-            <span className="text-sm font-medium text-zinc-100">End now and refund</span>
+            <span className="text-sm font-medium text-zinc-100">Cancel now, refund minus fees</span>
             <span className="text-xs leading-relaxed text-zinc-500">
-              Logo comes down immediately. Latest payment refunded (fees kept).
+              Logo comes down immediately. Latest payment refunded; platform and card fees kept.
+            </span>
+          </button>
+          <div className="border-t border-white/5" />
+          <button
+            type="button"
+            role="menuitem"
+            className="flex w-full flex-col gap-0.5 px-3.5 py-3 text-left transition hover:bg-red-500/10"
+            onClick={() => choose('refund_full')}
+          >
+            <span className="text-sm font-medium text-red-300">
+              Cancel now, full refund
+              <span className="ml-1.5 text-[10px] font-semibold uppercase tracking-wide text-red-400/90">
+                Not recommended
+              </span>
+            </span>
+            <span className="text-xs leading-relaxed text-red-300/70">
+              Logo down immediately. Sponsor gets remaining payment + fees back. Your group will
+              most likely take a loss.
             </span>
           </button>
         </div>

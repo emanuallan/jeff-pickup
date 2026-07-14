@@ -380,10 +380,23 @@ export function canDeclineSponsorship(status: SponsorshipStatus): boolean {
   return status === 'pending_approval'
 }
 
-export type SponsorshipCancelMode = 'refund_now' | 'end_of_period'
+/**
+ * How to end an active sponsorship from the console:
+ * - end_of_period: logo stays until billing period ends; no refund
+ * - refund_now: end immediately; refund last payment minus platform + card fees
+ * - refund_full: end immediately; refund remaining charge + application fee
+ *   (group may lose Stripe processing / already-paid balance — not recommended)
+ */
+export type SponsorshipCancelMode = 'end_of_period' | 'refund_now' | 'refund_full'
 
 export function isSponsorshipCancelMode(value: string): value is SponsorshipCancelMode {
-  return value === 'refund_now' || value === 'end_of_period'
+  return value === 'end_of_period' || value === 'refund_now' || value === 'refund_full'
+}
+
+export function isImmediateSponsorshipCancelMode(
+  mode: SponsorshipCancelMode,
+): mode is 'refund_now' | 'refund_full' {
+  return mode === 'refund_now' || mode === 'refund_full'
 }
 
 /** End a live sponsorship: stop billing; no auto-refund of past periods. */

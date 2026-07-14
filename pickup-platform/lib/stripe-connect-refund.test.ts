@@ -252,4 +252,59 @@ describe('refundAndCancelSponsorshipSubscription', () => {
     expect(result.refunded).toBe(true)
     expect(subscriptionsCancel).toHaveBeenCalled()
   })
+
+  it('full policy refunds remaining charge and application fee', async () => {
+    const result = await refundAndCancelSponsorshipSubscription({
+      subscriptionId: 'sub_test_1',
+      stripeAccountId: 'acct_test_1',
+      refundPolicy: 'full',
+    })
+
+    expect(result).toEqual({ refunded: true, canceled: true })
+    expect(refundsCreate).toHaveBeenCalledWith(
+      {
+        charge: 'ch_test_1',
+        amount: 2500,
+        refund_application_fee: true,
+      },
+      { stripeAccount: 'acct_test_1' },
+    )
+  })
+
+  it('full policy refunds only the unpaid remainder after a prior partial refund', async () => {
+    paymentIntentsRetrieve.mockResolvedValue({
+      amount: 2500,
+      status: 'succeeded',
+      application_fee_amount: 125,
+      latest_charge: {
+        id: 'ch_test_1',
+        amount: 2500,
+        amount_refunded: 2280,
+        application_fee_amount: 125,
+        refunded: false,
+        balance_transaction: {
+          fee: 220,
+          fee_details: [
+            { type: 'stripe_fee', amount: 95 },
+            { type: 'application_fee', amount: 125 },
+          ],
+        },
+      },
+    })
+
+    await refundAndCancelSponsorshipSubscription({
+      subscriptionId: 'sub_test_1',
+      stripeAccountId: 'acct_test_1',
+      refundPolicy: 'full',
+    })
+
+    expect(refundsCreate).toHaveBeenCalledWith(
+      {
+        charge: 'ch_test_1',
+        amount: 220,
+        refund_application_fee: true,
+      },
+      { stripeAccount: 'acct_test_1' },
+    )
+  })
 })

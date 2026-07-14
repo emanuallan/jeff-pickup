@@ -11,6 +11,7 @@ import {
   parseSponsorshipTierFormData,
 } from '@/lib/console/parse-sponsorship-tier-form'
 import {
+  isImmediateSponsorshipCancelMode,
   isSponsorshipCancelMode,
   type SponsorshipCancelMode,
   validateSponsorshipIntroText,
@@ -402,6 +403,7 @@ export async function setSponsorshipHidden(
 /**
  * End an approved/hidden sponsorship.
  * - refund_now: refund last invoice (minus fees), cancel Stripe now, remove logo
+ * - refund_full: refund remaining charge + application fee, cancel now, remove logo
  * - end_of_period: stop renewals; logo stays until Stripe period ends
  */
 export async function cancelSponsorship(
@@ -411,7 +413,7 @@ export async function cancelSponsorship(
 ) {
   try {
     if (!isSponsorshipCancelMode(mode)) {
-      return { error: 'Choose how to end this sponsorship.' }
+      return { error: 'Choose how to cancel this sponsorship.' }
     }
 
     const org = await requireInteriorSponsorshipAccess(orgSlug)
@@ -437,6 +439,7 @@ export async function cancelSponsorship(
     }
 
     let currentPeriodEnd: string | null = null
+    const immediate = isImmediateSponsorshipCancelMode(mode)
 
     if (row.stripe_subscription_id) {
       const stripeAccount = await getOrgStripeAccount(org.id)
@@ -445,11 +448,12 @@ export async function cancelSponsorship(
       }
 
       try {
-        if (mode === 'refund_now') {
+        if (immediate) {
           await refundAndCancelSponsorshipSubscription({
             subscriptionId: row.stripe_subscription_id,
             stripeAccountId: stripeAccount.stripe_account_id,
             checkoutSessionId: row.stripe_checkout_session_id,
+            refundPolicy: mode === 'refund_full' ? 'full' : 'retain_fees',
           })
         } else {
           const scheduled = await scheduleCancelStripeSubscriptionAtPeriodEnd(
@@ -469,11 +473,11 @@ export async function cancelSponsorship(
         const detail = stripeErrorMessage(error)
         return {
           error: detail
-            ? `Could not end the sponsorship: ${detail}`
-            : 'Could not end the sponsorship. Try again, or manage it manually in Stripe.',
+            ? `Could not cancel the sponsorship: ${detail}`
+            : 'Could not cancel the sponsorship. Try again, or manage it manually in Stripe.',
         }
       }
-    } else if (mode === 'refund_now') {
+    } else if (immediate) {
       // No Stripe sub — still mark canceled locally.
     } else {
       return { error: 'No Stripe subscription found to schedule an end date.' }

@@ -147,6 +147,7 @@ describe('sponsorship lifecycle helpers', () => {
     expect(canCancelSponsorship('pending_approval')).toBe(false)
     expect(isSponsorshipCancelMode('refund_now')).toBe(true)
     expect(isSponsorshipCancelMode('end_of_period')).toBe(true)
+    expect(isSponsorshipCancelMode('refund_full')).toBe(true)
     expect(isSponsorshipCancelMode('nope')).toBe(false)
   })
 })
