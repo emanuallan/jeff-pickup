@@ -84,7 +84,9 @@ export default async function SponsorshipConsolePage({ params, searchParams }: P
   const connectPath = `/api/console/${orgSlug}/sponsorship/connect`
   const payoutsPath = `/api/console/${orgSlug}/sponsorship/payouts`
   const connectErrorDisplay = getStripeConnectErrorDisplay(connectError)
-  const showConnectSuccess = connected === '1' && !connectError
+  // Ignore stale ?connected=1 after disconnect (or if there is no linked account).
+  const hasStripeAccount = Boolean(stripeAccount)
+  const showConnectSuccess = connected === '1' && !connectError && hasStripeAccount
   const showConnectPending = showConnectSuccess && !stripeReady
   const featureReady = features.group_sponsorships
 
@@ -200,7 +202,7 @@ export default async function SponsorshipConsolePage({ params, searchParams }: P
               orgSlug={orgSlug}
               stripeConfigured={isStripeConfigured()}
               stripeReady={stripeReady}
-              hasStripeAccount={Boolean(stripeAccount)}
+              hasStripeAccount={hasStripeAccount}
               payoutsEnabled={payoutsEnabled}
               canDisconnectStripe={canDisconnectStripe}
               connectPath={connectPath}

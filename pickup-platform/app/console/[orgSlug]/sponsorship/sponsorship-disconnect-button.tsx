@@ -31,7 +31,7 @@ export function SponsorshipDisconnectButton({ orgSlug, canDisconnect }: Props) {
         return
       }
       toast.success('Stripe disconnected.')
-      router.refresh()
+      router.replace(`/console/${orgSlug}/sponsorship`)
     })
   }
 
