@@ -5,7 +5,6 @@ import Image from 'next/image'
 import {
   formatTierPrice,
   sortSponsorshipTiersForPublicDisplay,
-  sponsorshipFeaturedPriceCents,
   sponsorshipRefundPolicyText,
   type PublicSponsorshipTier,
 } from '@/lib/sponsorship'
@@ -93,10 +92,6 @@ export function SponsorshipSignupForm({
   const accentFg = readableTextColor(accent)
   const accentSoft = accentOnDark(accent)
   const displayTiers = useMemo(() => sortSponsorshipTiersForPublicDisplay(tiers), [tiers])
-  const featuredPriceCents = useMemo(
-    () => sponsorshipFeaturedPriceCents(displayTiers),
-    [displayTiers],
-  )
 
   const selectedTier = useMemo(
     () => displayTiers.find((tier) => tier.id === selectedTierId) ?? null,
@@ -239,8 +234,6 @@ export function SponsorshipSignupForm({
               <div className="grid gap-3">
                 {displayTiers.map((tier) => {
                   const selected = selectedTierId === tier.id
-                  const featured =
-                    featuredPriceCents !== null && tier.price_cents === featuredPriceCents
                   return (
                     <button
                       key={tier.id}
@@ -257,35 +250,15 @@ export function SponsorshipSignupForm({
                               backgroundColor: hexToRgba(accent, 0.12),
                               boxShadow: `inset 0 0 0 1px ${hexToRgba(accent, 0.25)}`,
                             }
-                          : featured
-                            ? {
-                                borderColor: hexToRgba(accent, 0.38),
-                                backgroundColor: hexToRgba(accent, 0.08),
-                                boxShadow: `inset 0 1px 0 0 ${hexToRgba(accent, 0.18)}`,
-                              }
-                            : {
-                                borderColor: 'rgba(39,39,42,0.95)',
-                                backgroundColor: 'rgba(9,9,11,0.45)',
-                              }
+                          : {
+                              borderColor: 'rgba(39,39,42,0.95)',
+                              backgroundColor: 'rgba(9,9,11,0.45)',
+                            }
                       }
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <p className="font-medium text-zinc-50">{tier.name}</p>
-                            {featured ? (
-                              <span
-                                className="rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
-                                style={{
-                                  color: accentSoft,
-                                  backgroundColor: hexToRgba(accent, 0.16),
-                                  border: `1px solid ${hexToRgba(accent, 0.28)}`,
-                                }}
-                              >
-                                Featured
-                              </span>
-                            ) : null}
-                          </div>
+                          <p className="font-medium text-zinc-50">{tier.name}</p>
                           {tier.description ? (
                             <p className="mt-1 text-sm leading-relaxed text-zinc-400">
                               {tier.description}
@@ -294,10 +267,7 @@ export function SponsorshipSignupForm({
                         </div>
                         <p
                           className="shrink-0 text-sm font-semibold tabular-nums"
-                          style={{
-                            color: selected || featured ? accentSoft : '#a1a1aa',
-                            fontSize: featured ? '0.95rem' : undefined,
-                          }}
+                          style={{ color: selected ? accentSoft : '#a1a1aa' }}
                         >
                           {formatTierPrice(tier.price_cents, tier.currency)}
                           <span className="font-normal text-zinc-500">/mo</span>

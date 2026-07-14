@@ -9,7 +9,6 @@ import {
   sponsorRefundAmountCents,
   sortPublicSponsorsByAmount,
   sortSponsorshipTiersForPublicDisplay,
-  sponsorshipFeaturedPriceCents,
   sponsorshipRefundPolicyText,
   buildSponsorshipOverviewStats,
   validateSponsorLogoUrl,
@@ -153,13 +152,6 @@ describe('public sponsorship hierarchy', () => {
       },
     ])
     expect(sorted.map((t) => t.id)).toEqual(['b', 'a'])
-  })
-
-  it('marks featured only when multiple tiers exist', () => {
-    expect(sponsorshipFeaturedPriceCents([{ price_cents: 2500 }])).toBeNull()
-    expect(
-      sponsorshipFeaturedPriceCents([{ price_cents: 2500 }, { price_cents: 10000 }]),
-    ).toBe(10000)
   })
 
   it('sizes logos by relative amount', () => {

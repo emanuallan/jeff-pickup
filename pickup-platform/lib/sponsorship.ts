@@ -349,14 +349,6 @@ export function sortSponsorshipTiersForPublicDisplay(
   })
 }
 
-/** Featured price when there are 2+ tiers; null when hierarchy isn't useful. */
-export function sponsorshipFeaturedPriceCents(
-  tiers: ReadonlyArray<{ price_cents: number }>,
-): number | null {
-  if (tiers.length < 2) return null
-  return Math.max(...tiers.map((tier) => tier.price_cents))
-}
-
 /** Relative logo size from amount vs other visible sponsors. */
 export function sponsorLogoSizeForAmount(
   amountCents: number,
