@@ -8,7 +8,7 @@ import {
   declineSponsorship,
   setSponsorshipHidden,
 } from '../../sponsorship-actions'
-import { btnOutline, btnPrimary } from '../../_components/console-ui'
+import { btnOutline, btnPrimary, ConsoleSection } from '../../_components/console-ui'
 import { useConsoleToast } from '../../_components/console-toast'
 import {
   formatSponsorshipConsoleDate,
@@ -120,13 +120,15 @@ export function SponsorshipRequestsSection({
   }
 
   return (
-    <div className="space-y-8">
-      <section>
-        <h3 className="text-sm font-medium text-zinc-200">Pending requests</h3>
+    <div className="space-y-4">
+      <ConsoleSection
+        title={pending.length > 0 ? `Pending (${pending.length})` : 'Pending'}
+        description="Approve a request before their logo goes live."
+      >
         {pending.length === 0 ? (
-          <p className="mt-2 text-sm text-zinc-500">No pending sponsor requests.</p>
+          <p className="text-sm text-zinc-500">No pending sponsor requests.</p>
         ) : (
-          <ul className="mt-3 space-y-3">
+          <ul className="space-y-3">
             {pending.map((row) => {
               const rowBusy = isBusy(row.id)
               return (
@@ -160,14 +162,16 @@ export function SponsorshipRequestsSection({
             })}
           </ul>
         )}
-      </section>
+      </ConsoleSection>
 
-      <section>
-        <h3 className="text-sm font-medium text-zinc-200">Active sponsors</h3>
+      <ConsoleSection
+        title={active.length > 0 ? `Active (${active.length})` : 'Active'}
+        description="Live sponsors on your public pages. Hide a logo anytime, or end the sponsorship."
+      >
         {active.length === 0 ? (
-          <p className="mt-2 text-sm text-zinc-500">No approved sponsors yet.</p>
+          <p className="text-sm text-zinc-500">No approved sponsors yet.</p>
         ) : (
-          <ul className="mt-3 space-y-3">
+          <ul className="space-y-3">
             {active.map((row) => {
               const rowBusy = isBusy(row.id)
               const showing = row.status === 'hidden'
@@ -249,14 +253,18 @@ export function SponsorshipRequestsSection({
             })}
           </ul>
         )}
-      </section>
+      </ConsoleSection>
 
-      <section>
-        <h3 className="text-sm font-medium text-zinc-200">History</h3>
+      <ConsoleSection
+        title={history.length > 0 ? `History (${history.length})` : 'History'}
+        description="Declined, canceled, and failed requests."
+        collapsible
+        defaultOpen={false}
+      >
         {history.length === 0 ? (
-          <p className="mt-2 text-sm text-zinc-500">No past sponsorship requests yet.</p>
+          <p className="text-sm text-zinc-500">No past sponsorship requests yet.</p>
         ) : (
-          <ul className="mt-3 space-y-3">
+          <ul className="space-y-3">
             {history.map((row) => (
               <SponsorshipRowCard
                 key={row.id}
@@ -267,7 +275,7 @@ export function SponsorshipRequestsSection({
             ))}
           </ul>
         )}
-      </section>
+      </ConsoleSection>
     </div>
   )
 }

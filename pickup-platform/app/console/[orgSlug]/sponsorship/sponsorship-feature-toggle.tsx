@@ -37,7 +37,7 @@ export function SponsorshipFeatureToggle({
 
   return (
     <label
-      className={`flex cursor-pointer items-center justify-between gap-4 px-4 py-3.5 transition ${
+      className={`flex cursor-pointer items-center justify-between gap-4 py-1 transition ${
         isPending ? 'opacity-70' : ''
       }`}
     >

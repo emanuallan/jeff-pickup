@@ -9,25 +9,25 @@ export function SponsorshipOverviewStats({ rows }: { rows: SponsorshipRow[] }) {
     {
       label: 'Pending',
       value: String(stats.pendingCount),
-      hint: 'Awaiting approval',
+      hint: 'Awaiting your review',
     },
     {
-      label: 'Active sponsors',
+      label: 'Active',
       value: String(visibleSponsors),
       hint:
         stats.hiddenCount > 0
           ? `${stats.activeCount} live · ${stats.hiddenCount} hidden`
-          : 'Approved on your page',
+          : 'On your public pages',
     },
     {
-      label: 'Monthly recurring',
+      label: 'Monthly',
       value: formatTierPrice(stats.monthlyRecurringCents),
-      hint: 'From approved sponsors',
+      hint: 'From active sponsors',
     },
     {
-      label: 'Past requests',
+      label: 'History',
       value: String(stats.historyCount),
-      hint: 'Declined, canceled, or failed',
+      hint: 'Ended or declined',
     },
   ]
 
