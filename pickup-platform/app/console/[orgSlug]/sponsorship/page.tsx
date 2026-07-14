@@ -83,7 +83,7 @@ export default async function SponsorshipConsolePage({ params, searchParams }: P
   const stripeReady = Boolean(stripeAccount?.charges_enabled)
   const setupComplete = isSponsorshipSetupComplete({
     stripeReady,
-    activeTiersCount: tiers.length,
+    activeTierCount: tiers.length,
     sponsorshipsEnabled: features.group_sponsorships,
   })
 
