@@ -3,6 +3,7 @@ import {
   canApproveSponsorship,
   canCancelSponsorship,
   canDeclineSponsorship,
+  collectTierIdsLockedBySponsors,
   isSponsorshipCancelMode,
   isSponsorshipsActiveLocally,
   parsePublicSponsors,
@@ -12,6 +13,7 @@ import {
   sortPublicSponsorsByAmount,
   sortSponsorshipTiersForPublicDisplay,
   sponsorshipRefundPolicyText,
+  sponsorshipStatusLocksTier,
   buildSponsorshipOverviewStats,
   validateSponsorLogoUrl,
   validateSponsorName,
@@ -152,6 +154,17 @@ describe('sponsorship lifecycle helpers', () => {
     expect(isSponsorshipCancelMode('end_of_period')).toBe(true)
     expect(isSponsorshipCancelMode('refund_full')).toBe(true)
     expect(isSponsorshipCancelMode('nope')).toBe(false)
+    expect(sponsorshipStatusLocksTier('approved')).toBe(true)
+    expect(sponsorshipStatusLocksTier('hidden')).toBe(true)
+    expect(sponsorshipStatusLocksTier('pending_approval')).toBe(false)
+    expect(
+      collectTierIdsLockedBySponsors([
+        { tier_id: 'a', status: 'approved' },
+        { tier_id: 'a', status: 'hidden' },
+        { tier_id: 'b', status: 'pending_approval' },
+        { tier_id: 'c', status: 'canceled' },
+      ]),
+    ).toEqual(['a'])
   })
 })
 

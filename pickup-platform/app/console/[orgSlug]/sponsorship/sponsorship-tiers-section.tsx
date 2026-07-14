@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { saveSponsorshipTier, deleteSponsorshipTier } from '../../sponsorship-actions'
 import { ConsoleSubmitButton } from '../../_components/console-submit-button'
 import { btnOutline, btnSecondary, consoleInput, consoleLabel } from '../../_components/console-ui'
@@ -21,14 +21,18 @@ export function SponsorshipTiersSection({
   orgSlug,
   tiers,
   canEdit,
+  lockedTierIds = [],
 }: {
   orgSlug: string
   tiers: Tier[]
   canEdit: boolean
+  /** Tier ids with approved/hidden sponsors — cannot edit or remove. */
+  lockedTierIds?: string[]
 }) {
   const toast = useConsoleToast()
   const [editingId, setEditingId] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
+  const lockedIds = useMemo(() => new Set(lockedTierIds), [lockedTierIds])
 
   const activeTiers = tiers.filter((tier) => tier.status === 'active')
 
@@ -45,6 +49,10 @@ export function SponsorshipTiersSection({
   }
 
   async function handleDelete(tierId: string) {
+    if (lockedIds.has(tierId)) {
+      toast.error('This tier has an active sponsor. Cancel that sponsorship before removing the tier.')
+      return
+    }
     setPending(true)
     const result = await deleteSponsorshipTier(orgSlug, tierId)
     setPending(false)
@@ -61,52 +69,62 @@ export function SponsorshipTiersSection({
         <p className="text-sm text-zinc-500">No tiers yet.</p>
       ) : (
         <ul className="space-y-3">
-          {activeTiers.map((tier) => (
-            <li
-              key={tier.id}
-              className="rounded-xl border border-white/10 bg-zinc-950/30 p-4"
-            >
-              {editingId === tier.id ? (
-                <TierForm
-                  tier={tier}
-                  onSubmit={handleSave}
-                  onCancel={() => setEditingId(null)}
-                  pending={pending}
-                />
-              ) : (
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                  <div>
-                    <p className="font-medium text-zinc-100">{tier.name}</p>
-                    <p className="mt-1 text-sm text-indigo-200">
-                      {formatTierPrice(tier.price_cents, tier.currency)}/month
-                    </p>
-                    {tier.description ? (
-                      <p className="mt-2 text-sm text-zinc-400">{tier.description}</p>
+          {activeTiers.map((tier) => {
+            const locked = lockedIds.has(tier.id)
+            return (
+              <li
+                key={tier.id}
+                className="rounded-xl border border-white/10 bg-zinc-950/30 p-4"
+              >
+                {editingId === tier.id && !locked ? (
+                  <TierForm
+                    tier={tier}
+                    onSubmit={handleSave}
+                    onCancel={() => setEditingId(null)}
+                    pending={pending}
+                  />
+                ) : (
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                      <p className="font-medium text-zinc-100">{tier.name}</p>
+                      <p className="mt-1 text-sm text-indigo-200">
+                        {formatTierPrice(tier.price_cents, tier.currency)}/month
+                      </p>
+                      {tier.description ? (
+                        <p className="mt-2 text-sm text-zinc-400">{tier.description}</p>
+                      ) : null}
+                      {locked ? (
+                        <p className="mt-2 text-xs leading-relaxed text-amber-300/90">
+                          Has an active sponsor — cancel that sponsorship before editing or removing
+                          this tier.
+                        </p>
+                      ) : null}
+                    </div>
+                    {canEdit ? (
+                      <div className="flex w-full shrink-0 flex-col gap-2 sm:w-auto sm:flex-row">
+                        <button
+                          type="button"
+                          className={`${btnOutline} w-full sm:w-auto`}
+                          disabled={locked || pending}
+                          onClick={() => setEditingId(tier.id)}
+                        >
+                          Edit
+                        </button>
+                        <button
+                          type="button"
+                          className={`${btnOutline} w-full sm:w-auto`}
+                          disabled={locked || pending}
+                          onClick={() => handleDelete(tier.id)}
+                        >
+                          Remove
+                        </button>
+                      </div>
                     ) : null}
                   </div>
-                  {canEdit ? (
-                    <div className="flex w-full shrink-0 flex-col gap-2 sm:w-auto sm:flex-row">
-                      <button
-                        type="button"
-                        className={`${btnOutline} w-full sm:w-auto`}
-                        onClick={() => setEditingId(tier.id)}
-                      >
-                        Edit
-                      </button>
-                      <button
-                        type="button"
-                        className={`${btnOutline} w-full sm:w-auto`}
-                        disabled={pending}
-                        onClick={() => handleDelete(tier.id)}
-                      >
-                        Remove
-                      </button>
-                    </div>
-                  ) : null}
-                </div>
-              )}
-            </li>
-          ))}
+                )}
+              </li>
+            )
+          })}
         </ul>
       )}
 

@@ -408,6 +408,23 @@ export function canToggleSponsorshipHidden(status: SponsorshipStatus): boolean {
   return status === 'approved' || status === 'hidden'
 }
 
+/** Live sponsors block editing or removing their tier. */
+export function sponsorshipStatusLocksTier(status: string): boolean {
+  return status === 'approved' || status === 'hidden'
+}
+
+export function collectTierIdsLockedBySponsors(
+  rows: ReadonlyArray<{ tier_id: string; status: string }>,
+): string[] {
+  const locked = new Set<string>()
+  for (const row of rows) {
+    if (sponsorshipStatusLocksTier(row.status) && row.tier_id) {
+      locked.add(row.tier_id)
+    }
+  }
+  return [...locked]
+}
+
 /** Highest price first so public pickers show prestige hierarchy. */
 export function sortSponsorshipTiersForPublicDisplay(
   tiers: PublicSponsorshipTier[],

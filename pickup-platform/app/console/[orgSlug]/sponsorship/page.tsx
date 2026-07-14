@@ -13,6 +13,7 @@ import {
 import { orgSponsorshipUrl } from '@/lib/site-url'
 import { isStripeConfigured } from '@/lib/stripe'
 import { getStripeConnectErrorDisplay } from '@/lib/stripe-connect-errors'
+import { collectTierIdsLockedBySponsors } from '@/lib/sponsorship'
 import {
   ConsoleHeader,
   ConsolePage,
@@ -150,7 +151,12 @@ export default async function SponsorshipConsolePage({ params, searchParams }: P
                 : 'Connect Stripe before you can create or edit tiers.'
             }
           >
-            <SponsorshipTiersSection orgSlug={orgSlug} tiers={tiers} canEdit={stripeReady} />
+            <SponsorshipTiersSection
+              orgSlug={orgSlug}
+              tiers={tiers}
+              canEdit={stripeReady}
+              lockedTierIds={collectTierIdsLockedBySponsors(sponsorships)}
+            />
           </ConsoleSection>
         </div>
 

@@ -60,6 +60,23 @@ function revalidateSponsorshipPaths(orgSlug: string) {
   revalidatePath(`/org/${orgSlug}/sponsorship`)
 }
 
+async function tierHasActiveSponsors(
+  orgId: string,
+  tierId: string,
+): Promise<{ locked: boolean; error?: string }> {
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from('sponsorships')
+    .select('status')
+    .eq('org_id', orgId)
+    .eq('tier_id', tierId)
+    .in('status', ['approved', 'hidden'])
+    .limit(1)
+
+  if (error) return { locked: false, error: error.message }
+  return { locked: (data?.length ?? 0) > 0 }
+}
+
 export async function updateSponsorshipFeature(orgSlug: string, enabled: boolean) {
   try {
     const org = await requireInteriorSponsorshipAccess(orgSlug)
@@ -174,6 +191,15 @@ export async function saveSponsorshipTier(orgSlug: string, formData: FormData) {
         .maybeSingle()
 
       if (!existing) return { error: 'Tier not found.' }
+
+      const activeCheck = await tierHasActiveSponsors(org.id, tierId)
+      if (activeCheck.error) return { error: activeCheck.error }
+      if (activeCheck.locked) {
+        return {
+          error: 'This tier has an active sponsor. Cancel that sponsorship before editing the tier.',
+        }
+      }
+
       sortOrder = existing.sort_order
 
       if (existing.stripe_price_id) {
@@ -257,6 +283,14 @@ export async function deleteSponsorshipTier(orgSlug: string, tierId: string) {
       .maybeSingle()
 
     if (!tier) return { error: 'Tier not found.' }
+
+    const activeCheck = await tierHasActiveSponsors(org.id, tierId)
+    if (activeCheck.error) return { error: activeCheck.error }
+    if (activeCheck.locked) {
+      return {
+        error: 'This tier has an active sponsor. Cancel that sponsorship before removing the tier.',
+      }
+    }
 
     const stripeAccount = await getOrgStripeAccount(org.id)
     if (stripeAccount && tier.stripe_price_id) {
