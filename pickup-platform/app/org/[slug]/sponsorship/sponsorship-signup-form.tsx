@@ -423,7 +423,7 @@ export function SponsorshipSignupForm({
 
         {error ? <p className="mt-4 text-sm text-red-300">{error}</p> : null}
 
-        <div className="mt-6 flex items-center gap-3">
+        <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:items-center">
           {step !== 'tier' ? (
             <button
               type="button"
@@ -432,7 +432,7 @@ export function SponsorshipSignupForm({
                 setStep(step === 'confirm' ? 'details' : 'tier')
               }}
               disabled={pending}
-              className="inline-flex min-h-11 flex-1 items-center justify-center rounded-xl border border-zinc-700 bg-transparent px-4 py-3 text-sm font-semibold text-zinc-200 transition hover:border-zinc-500 hover:bg-zinc-900/60 disabled:opacity-50 sm:flex-none sm:px-5"
+              className="inline-flex min-h-11 w-full items-center justify-center rounded-xl border border-zinc-700 bg-transparent px-4 py-3 text-sm font-semibold text-zinc-200 transition hover:border-zinc-500 hover:bg-zinc-900/60 disabled:opacity-50 sm:w-auto sm:px-5"
             >
               Back
             </button>
@@ -442,7 +442,7 @@ export function SponsorshipSignupForm({
             <button
               type="button"
               onClick={goNextFromTier}
-              className="inline-flex min-h-11 flex-1 items-center justify-center rounded-xl px-5 py-3 text-sm font-semibold transition hover:brightness-110"
+              className="inline-flex min-h-11 w-full items-center justify-center rounded-xl px-5 py-3 text-sm font-semibold transition hover:brightness-110 sm:flex-1"
               style={{ backgroundColor: accent, color: accentFg }}
             >
               Continue
@@ -453,7 +453,7 @@ export function SponsorshipSignupForm({
             <button
               type="button"
               onClick={goNextFromDetails}
-              className="inline-flex min-h-11 flex-1 items-center justify-center rounded-xl px-5 py-3 text-sm font-semibold transition hover:brightness-110"
+              className="inline-flex min-h-11 w-full items-center justify-center rounded-xl px-5 py-3 text-sm font-semibold transition hover:brightness-110 sm:flex-1"
               style={{ backgroundColor: accent, color: accentFg }}
             >
               Continue
@@ -465,7 +465,7 @@ export function SponsorshipSignupForm({
               type="button"
               onClick={() => void handleContinue()}
               disabled={pending}
-              className="inline-flex min-h-11 flex-1 items-center justify-center rounded-xl px-5 py-3 text-sm font-semibold transition hover:brightness-110 disabled:opacity-60"
+              className="inline-flex min-h-11 w-full items-center justify-center rounded-xl px-5 py-3 text-sm font-semibold transition hover:brightness-110 disabled:opacity-60 sm:flex-1"
               style={{ backgroundColor: accent, color: accentFg }}
             >
               {pending ? 'Preparing checkout…' : 'Continue to payment'}

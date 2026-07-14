@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { saveSponsorshipTier, deleteSponsorshipTier } from '../../sponsorship-actions'
 import { ConsoleSubmitButton } from '../../_components/console-submit-button'
-import { btnOutline, consoleInput, consoleLabel } from '../../_components/console-ui'
+import { btnOutline, btnSecondary, consoleInput, consoleLabel } from '../../_components/console-ui'
 import { useConsoleToast } from '../../_components/console-toast'
 import { formatTierPrice } from '@/lib/sponsorship'
 
@@ -74,7 +74,7 @@ export function SponsorshipTiersSection({
                   pending={pending}
                 />
               ) : (
-                <div className="flex items-start justify-between gap-4">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                   <div>
                     <p className="font-medium text-zinc-100">{tier.name}</p>
                     <p className="mt-1 text-sm text-indigo-200">
@@ -85,17 +85,17 @@ export function SponsorshipTiersSection({
                     ) : null}
                   </div>
                   {canEdit ? (
-                    <div className="flex shrink-0 gap-2">
+                    <div className="flex w-full shrink-0 flex-col gap-2 sm:w-auto sm:flex-row">
                       <button
                         type="button"
-                        className={btnOutline}
+                        className={`${btnOutline} w-full sm:w-auto`}
                         onClick={() => setEditingId(tier.id)}
                       >
                         Edit
                       </button>
                       <button
                         type="button"
-                        className={btnOutline}
+                        className={`${btnOutline} w-full sm:w-auto`}
                         disabled={pending}
                         onClick={() => handleDelete(tier.id)}
                       >
@@ -185,11 +185,15 @@ function TierForm({
           required
         />
       </div>
-      <div className="flex gap-2">
-        <ConsoleSubmitButton pending={pending} pendingLabel="Saving…">
+      <div className="flex flex-col gap-2 sm:flex-row">
+        <ConsoleSubmitButton
+          pending={pending}
+          pendingLabel="Saving…"
+          className={`${btnSecondary} w-full sm:w-auto`}
+        >
           Save tier
         </ConsoleSubmitButton>
-        <button type="button" className={btnOutline} onClick={onCancel}>
+        <button type="button" className={`${btnOutline} w-full sm:w-auto`} onClick={onCancel}>
           Cancel
         </button>
       </div>

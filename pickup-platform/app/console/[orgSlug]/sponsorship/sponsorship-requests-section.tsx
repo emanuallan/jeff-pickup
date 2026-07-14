@@ -105,7 +105,7 @@ export function SponsorshipRequestsSection({
                     <>
                       <button
                         type="button"
-                        className={btnPrimary}
+                        className={`${btnPrimary} w-full sm:w-auto`}
                         disabled={Boolean(busy)}
                         onClick={() => handleApprove(row.id)}
                       >
@@ -113,7 +113,7 @@ export function SponsorshipRequestsSection({
                       </button>
                       <button
                         type="button"
-                        className={btnOutline}
+                        className={`${btnOutline} w-full sm:w-auto`}
                         disabled={Boolean(busy)}
                         onClick={() => handleDecline(row.id)}
                       >
@@ -152,7 +152,7 @@ export function SponsorshipRequestsSection({
                     showing ? (
                       <button
                         type="button"
-                        className={btnOutline}
+                        className={`${btnOutline} w-full sm:w-auto`}
                         disabled={Boolean(busy)}
                         onClick={() => handleHidden(row.id, false)}
                       >
@@ -161,7 +161,7 @@ export function SponsorshipRequestsSection({
                     ) : (
                       <button
                         type="button"
-                        className={btnOutline}
+                        className={`${btnOutline} w-full sm:w-auto`}
                         disabled={Boolean(busy)}
                         onClick={() => handleHidden(row.id, true)}
                       >
@@ -244,7 +244,9 @@ function SponsorshipRowCard({
           ) : null}
         </div>
       </div>
-      {actions ? <div className="flex shrink-0 gap-2">{actions}</div> : null}
+      {actions ? (
+        <div className="flex w-full flex-col gap-2 sm:w-auto sm:shrink-0 sm:flex-row">{actions}</div>
+      ) : null}
     </li>
   )
 }

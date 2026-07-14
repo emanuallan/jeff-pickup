@@ -36,17 +36,17 @@ export default async function SponsorshipCanceledPage({ params }: Props) {
         <p className="mt-3 max-w-prose text-sm leading-relaxed text-zinc-400">
           No worries — pick a tier again whenever you&apos;re ready to support {org.name}.
         </p>
-        <div className="mt-6 flex flex-wrap gap-3">
+        <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
           <Link
             href="/sponsorship"
-            className="inline-flex min-h-11 items-center justify-center rounded-xl px-5 py-3 text-sm font-semibold transition hover:brightness-110"
+            className="inline-flex min-h-11 w-full items-center justify-center rounded-xl px-5 py-3 text-sm font-semibold transition hover:brightness-110 sm:w-auto"
             style={{ backgroundColor: accent, color: accentFg }}
           >
             Try again
           </Link>
           <Link
             href="/"
-            className="inline-flex min-h-11 items-center justify-center rounded-xl border border-zinc-700 px-5 py-3 text-sm font-semibold text-zinc-200 transition hover:border-zinc-500 hover:bg-zinc-900/60"
+            className="inline-flex min-h-11 w-full items-center justify-center rounded-xl border border-zinc-700 px-5 py-3 text-sm font-semibold text-zinc-200 transition hover:border-zinc-500 hover:bg-zinc-900/60 sm:w-auto"
           >
             Back to {org.name}
           </Link>
