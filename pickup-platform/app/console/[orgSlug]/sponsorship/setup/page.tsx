@@ -90,11 +90,12 @@ export default async function SponsorshipSetupPage({ params, searchParams }: Pro
   const stripeReady = Boolean(stripeAccount?.charges_enabled)
   const payoutsEnabled = Boolean(stripeAccount?.payouts_enabled)
   const hasStripeAccount = Boolean(stripeAccount)
-  const hasTier = tiers.length > 0
+  const activeTiersCount = tiers.filter((tier) => tier.status === 'active').length
+  const hasTier = activeTiersCount > 0
   const sponsorshipsEnabled = features.group_sponsorships
   const isComplete = isSponsorshipSetupComplete({
     stripeReady,
-    activeTierCount: activeTiers.length,
+    activeTierCount,
     sponsorshipsEnabled,
   })
 
