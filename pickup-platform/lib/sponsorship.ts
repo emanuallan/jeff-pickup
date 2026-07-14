@@ -372,6 +372,74 @@ export function formatTierPrice(priceCents: number, currency = 'usd'): string {
   }).format(priceCents / 100)
 }
 
+/** Monthly price range for public sponsorship tiers — used in share previews. */
+export function summarizeSponsorshipTierPrices(tiers: PublicSponsorshipTier[]): string | null {
+  if (tiers.length === 0) return null
+
+  const sorted = [...tiers].sort((a, b) => a.price_cents - b.price_cents)
+  const min = formatTierPrice(sorted[0].price_cents, sorted[0].currency)
+  if (sorted.length === 1) return `${min}/month`
+
+  const max = formatTierPrice(sorted[sorted.length - 1].price_cents, sorted[sorted.length - 1].currency)
+  return `${min}–${max}/month`
+}
+
+export type SponsorshipPageShareCopy = {
+  title: string
+  description: string
+  imageAlt: string
+  ogHeadline: string
+  ogSubline?: string
+  ogCta?: string
+}
+
+/** Copy for link previews (Open Graph / Twitter) on the public sponsorship page. */
+export function buildSponsorshipPageShareCopy(
+  orgName: string,
+  page: PublicSponsorshipPage | null,
+): SponsorshipPageShareCopy {
+  const title = `Support ${orgName}`
+  const imageAlt = `Sponsor ${orgName}`
+  const priceLine = page?.tiers.length ? summarizeSponsorshipTierPrices(page.tiers) : null
+  const tierCount = page?.tiers.length ?? 0
+
+  if (page?.active && page.intro_text?.trim()) {
+    const intro = page.intro_text.replace(/\s+/g, ' ').trim()
+    const description = priceLine
+      ? `${intro} Monthly sponsorship from ${priceLine}.`
+      : intro
+
+    return {
+      title,
+      description,
+      imageAlt,
+      ogHeadline: `Support ${orgName}`,
+      ogSubline: priceLine ?? intro,
+      ogCta: 'Become a sponsor',
+    }
+  }
+
+  if (page?.active && priceLine) {
+    const tierLabel = tierCount === 1 ? '1 monthly tier' : `${tierCount} monthly tiers`
+    return {
+      title,
+      description: `Become a community partner for ${orgName}. ${tierLabel} from ${priceLine}.`,
+      imageAlt,
+      ogHeadline: `Support ${orgName}`,
+      ogSubline: `${tierLabel} · ${priceLine}`,
+      ogCta: 'Become a sponsor',
+    }
+  }
+
+  return {
+    title: `${orgName} · Sponsorship`,
+    description: `Sponsorships for ${orgName} aren't available right now.`,
+    imageAlt: orgName,
+    ogHeadline: `${orgName}`,
+    ogSubline: 'Sponsorships are not available right now.',
+  }
+}
+
 export function canApproveSponsorship(status: SponsorshipStatus): boolean {
   return status === 'pending_approval'
 }

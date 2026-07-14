@@ -206,6 +206,8 @@ export type OrgOgCardProps = {
   cta?: string
   logoUrl?: string | null
   organizrLogoSrc: string
+  /** When false, subline renders without the location pin (e.g. sponsorship pricing). */
+  sublineIcon?: boolean
 }
 
 /** Tenant preview — uses the group&apos;s accent color and logo. */
@@ -219,6 +221,7 @@ export function OrgOgCard({
   cta,
   logoUrl,
   organizrLogoSrc,
+  sublineIcon = true,
 }: OrgOgCardProps) {
   const accentText = readableTextColor(accent)
   const accentFg = accentOnDark(accent)
@@ -388,7 +391,7 @@ export function OrgOgCard({
               maxWidth: '920px',
             }}
           >
-            <LocationMark accentFg={accentFg} online={locationOnline} />
+            {sublineIcon ? <LocationMark accentFg={accentFg} online={locationOnline} /> : null}
             <div
               style={{
                 display: 'flex',

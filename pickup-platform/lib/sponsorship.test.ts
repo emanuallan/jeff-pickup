@@ -14,6 +14,8 @@ import {
   sortPublicSponsorsByAmount,
   sortSponsorshipTiersForPublicDisplay,
   sponsorshipBlocksStripeDisconnect,
+  buildSponsorshipPageShareCopy,
+  summarizeSponsorshipTierPrices,
   sponsorshipRefundPolicyText,
   sponsorshipStatusLocksTier,
   buildSponsorshipOverviewStats,
@@ -124,6 +126,47 @@ describe('sponsorship lifecycle helpers', () => {
     )
     expect(text).toContain('contact the group admins')
     expect(text).toContain('self-serve cancellation is still under development and coming soon')
+  })
+
+  it('summarizes sponsorship tier prices for share previews', () => {
+    expect(
+      summarizeSponsorshipTierPrices([
+        { id: '1', name: 'Gold', description: '', price_cents: 5000, currency: 'usd', sort_order: 0 },
+      ]),
+    ).toBe('$50/month')
+
+    expect(
+      summarizeSponsorshipTierPrices([
+        { id: '1', name: 'Bronze', description: '', price_cents: 2500, currency: 'usd', sort_order: 0 },
+        { id: '2', name: 'Gold', description: '', price_cents: 10000, currency: 'usd', sort_order: 1 },
+      ]),
+    ).toBe('$25–$100/month')
+  })
+
+  it('builds sponsorship share copy from intro and tiers', () => {
+    const share = buildSponsorshipPageShareCopy('Demo FC', {
+      active: true,
+      intro_text: 'Help us keep the pitch booked every week.',
+      tiers: [
+        { id: '1', name: 'Partner', description: '', price_cents: 2500, currency: 'usd', sort_order: 0 },
+      ],
+    })
+
+    expect(share.title).toBe('Support Demo FC')
+    expect(share.description).toContain('Help us keep the pitch booked every week.')
+    expect(share.description).toContain('Monthly sponsorship from $25/month.')
+    expect(share.ogSubline).toBe('$25/month')
+  })
+
+  it('builds fallback sponsorship share copy when the page is inactive', () => {
+    const share = buildSponsorshipPageShareCopy('Demo FC', {
+      active: false,
+      intro_text: null,
+      tiers: [],
+    })
+
+    expect(share.title).toBe('Demo FC · Sponsorship')
+    expect(share.description).toContain("aren't available right now")
   })
 
   it('builds simple console overview stats', () => {

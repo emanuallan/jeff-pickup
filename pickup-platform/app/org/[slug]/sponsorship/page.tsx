@@ -1,13 +1,37 @@
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { getPublicOrgBySlug } from '@/lib/public-data'
 import { getPublicSponsorshipPage } from '@/lib/sponsorship.server'
 import { getPlatformFeePercent } from '@/lib/stripe'
 import { accentOnDark, hexToRgba } from '@/lib/colors'
+import { buildSponsorshipPageShareCopy } from '@/lib/sponsorship'
+import { buildOrgMetadata } from '@/lib/og-metadata'
 import { SponsorshipSignupForm } from './sponsorship-signup-form'
 
 type Props = {
   params: Promise<{ slug: string }>
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { slug } = await params
+  const [org, page] = await Promise.all([getPublicOrgBySlug(slug), getPublicSponsorshipPage(slug)])
+
+  if (!org || org.status !== 'active') {
+    return {}
+  }
+
+  const share = buildSponsorshipPageShareCopy(org.name, page)
+
+  return buildOrgMetadata({
+    slug,
+    path: '/sponsorship',
+    imagePath: '/sponsorship/og-image',
+    title: share.title,
+    description: share.description,
+    siteName: org.name,
+    imageAlt: share.imageAlt,
+  })
 }
 
 export default async function SponsorshipPage({ params }: Props) {
