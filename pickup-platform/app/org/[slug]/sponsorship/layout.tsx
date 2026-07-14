@@ -29,16 +29,22 @@ export default async function SponsorshipLayout({ children, params }: Props) {
     <>
       <OrgPublicBackdrop accent={org.branding.accent_color} />
       <main
-        className={`mx-auto min-h-dvh px-5 py-6 sm:px-6 sm:py-8 ${ORG_PUBLIC_CONTENT_MAX}`}
+        className={`mx-auto min-h-dvh px-5 pb-10 pt-6 sm:px-6 sm:pb-12 sm:pt-8 ${ORG_PUBLIC_CONTENT_MAX}`}
       >
-        <OrgHeader org={org} title={org.name} subtitle="Sponsor this group" logoPriority />
+        <OrgHeader
+          org={org}
+          title={org.name}
+          eyebrow="Sponsorship"
+          subtitle="Become a community partner"
+          logoPriority
+        />
         <div className="mt-8">{children}</div>
         <OrgPublicSiteFooter
           slug={slug}
           orgName={org.name}
           accent={org.branding.accent_color}
           sponsors={sponsors}
-          showSponsorshipCta={page?.active ?? false}
+          showSponsorshipCta={false}
           showPoweredByOnMobile
         />
       </main>
