@@ -33,9 +33,9 @@ describe('OrgSponsorSection', () => {
     expect(
       screen.getByRole('heading', { name: /thank you for supporting demo fc/i }),
     ).toBeInTheDocument()
-    expect(screen.getByText('Community sponsors')).toBeInTheDocument()
+    expect(screen.getByText('Community partners')).toBeInTheDocument()
     expect(screen.getByText('Acme')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /want to sponsor us/i })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: /want to become a community partner/i })).toHaveAttribute(
       'href',
       expect.stringContaining('/sponsorship'),
     )
@@ -44,8 +44,8 @@ describe('OrgSponsorSection', () => {
   it('renders a sponsor CTA card when there are no logos yet', () => {
     render(<OrgSponsorSection {...baseProps} sponsors={[]} showCta />)
 
-    expect(screen.getByRole('heading', { name: /become a demo fc sponsor/i })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /want to sponsor us/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /become a community partner/i })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /want to become a community partner/i })).toBeInTheDocument()
   })
 
   it('always shows the sponsor CTA when the section is visible', () => {
@@ -65,7 +65,7 @@ describe('OrgSponsorSection', () => {
       />,
     )
 
-    expect(screen.getByRole('link', { name: /want to sponsor us/i })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: /want to become a community partner/i })).toHaveAttribute(
       'href',
       expect.stringContaining('/sponsorship'),
     )

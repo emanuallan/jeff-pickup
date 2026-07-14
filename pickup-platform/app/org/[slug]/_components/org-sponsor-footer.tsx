@@ -142,7 +142,7 @@ export function OrgSponsorSection({ slug, orgName, accent, sponsors, showCta = t
                 className="text-[11px] font-semibold uppercase tracking-[0.18em]"
                 style={{ color: hexToRgba(accentFg, 0.9) }}
               >
-                Community sponsors
+                Community partners
               </p>
               <h2
                 id="org-sponsor-section-title"
@@ -168,7 +168,7 @@ export function OrgSponsorSection({ slug, orgName, accent, sponsors, showCta = t
           </div>
         ) : (
           <h2 id="org-sponsor-section-title" className="text-lg font-semibold tracking-tight text-zinc-50">
-            Become a {orgName} sponsor
+            Become a community partner
           </h2>
         )}
 
@@ -183,9 +183,9 @@ export function OrgSponsorSection({ slug, orgName, accent, sponsors, showCta = t
               }}
             >
               <span>
-                <span className="block text-sm font-medium text-zinc-100">Want to sponsor us?</span>
+                <span className="block text-sm font-medium text-zinc-100">Want to become a community partner?</span>
                 <span className="mt-0.5 block text-xs text-zinc-500">
-                  Join our community partners and get your logo featured here.
+                  Join our community partners and show your logo here.
                 </span>
               </span>
               <span

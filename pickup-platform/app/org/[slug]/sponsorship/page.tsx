@@ -38,20 +38,20 @@ export default async function SponsorshipPage({ params }: Props) {
 
   const benefits = [
     {
-      title: 'Get seen by people who actually show up',
-      body: `Your logo lives on ${org.name}'s public pages — in front of regulars, newcomers, and guests who visit every week.`,
+      title: 'Invest in the community',
+      body: 'Support a local initiative that brings people together week after week. Your sponsorship helps create a welcoming place for people to connect and build lasting friendships.',
     },
     {
-      title: 'Earn goodwill where it matters locally',
-      body: 'Players notice who helps keep the nights going. Sponsoring says you back the same community they care about.',
+      title: 'Build meaningful visibility',
+      body: `Be recognized as a community partner by the people who participate in and support ${org.name}. It's a simple way to show your commitment to the community you serve.`,
     },
     {
-      title: 'Simple monthly partnership, real impact',
-      body: 'Pick a tier, share your logo, and support the sessions that keep this group alive — without a custom contract or sales call.',
+      title: 'Create lasting impact',
+      body: 'Your support helps us continue growing, improving the experience, and creating more opportunities for the community to come together.',
     },
     {
-      title: 'Your brand only goes live when it’s a fit',
-      body: 'Organizers review every request first, so you stay associated with a community that’s proud to feature you.',
+      title: 'A simple partnership',
+      body: "Get started in minutes with no sales calls or complicated contracts. Choose a sponsorship tier, upload your logo, and we'll take care of the rest.",
     },
   ]
 
