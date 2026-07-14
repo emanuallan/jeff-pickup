@@ -4,6 +4,7 @@ import { useState, type ReactNode } from 'react'
 import Image from 'next/image'
 import {
   approveSponsorship,
+  cancelSponsorship,
   declineSponsorship,
   setSponsorshipHidden,
 } from '../../sponsorship-actions'
@@ -12,14 +13,16 @@ import { useConsoleToast } from '../../_components/console-toast'
 import {
   formatSponsorshipConsoleDate,
   formatTierPrice,
+  isSponsorshipCancelMode,
   sponsorshipHistoryDateIso,
   sponsorshipHistoryStatusLabel,
+  type SponsorshipCancelMode,
 } from '@/lib/sponsorship'
 import type { SponsorshipRow } from '@/lib/sponsorship.server'
 
 type BusyAction = {
   id: string
-  action: 'approve' | 'decline' | 'hide' | 'show'
+  action: 'approve' | 'decline' | 'hide' | 'show' | 'cancel'
 }
 
 export function SponsorshipRequestsSection({
@@ -86,6 +89,36 @@ export function SponsorshipRequestsSection({
     }
   }
 
+  async function handleCancel(id: string, mode: SponsorshipCancelMode) {
+    if (busy) return
+
+    const confirmed =
+      mode === 'refund_now'
+        ? window.confirm(
+            'Remove this sponsor now and refund their latest payment (minus platform and card fees)? Their logo comes down immediately.',
+          )
+        : window.confirm(
+            'Stop future billing but keep their logo up until the current subscription period ends? Past payments are not refunded.',
+          )
+    if (!confirmed) return
+
+    setBusy({ id, action: 'cancel' })
+    try {
+      const result = await cancelSponsorship(orgSlug, id, mode)
+      if (result?.error) {
+        toast.error(result.error)
+        return
+      }
+      toast.success(
+        mode === 'refund_now'
+          ? 'Sponsor removed and latest payment refunded.'
+          : 'Sponsorship will end after this period. Logo stays until then.',
+      )
+    } finally {
+      setBusy(null)
+    }
+  }
+
   return (
     <div className="space-y-8">
       <section>
@@ -138,36 +171,77 @@ export function SponsorshipRequestsSection({
             {active.map((row) => {
               const rowBusy = isBusy(row.id)
               const showing = row.status === 'hidden'
+              const ending = Boolean(row.cancel_at_period_end)
+              const endingLabel =
+                ending && row.current_period_end
+                  ? `Ends ${formatSponsorshipConsoleDate(row.current_period_end)}`
+                  : ending
+                    ? 'Ending after this period'
+                    : null
               return (
                 <SponsorshipRowCard
                   key={row.id}
                   row={row}
-                  badge={showing ? 'Hidden' : null}
+                  badge={
+                    showing && endingLabel
+                      ? `Hidden · ${endingLabel}`
+                      : showing
+                        ? 'Hidden'
+                        : endingLabel
+                  }
                   meta={
                     row.approved_at
                       ? `Approved ${formatSponsorshipConsoleDate(row.approved_at)}`
                       : undefined
                   }
                   actions={
-                    showing ? (
-                      <button
-                        type="button"
-                        className={`${btnOutline} w-full sm:w-auto`}
-                        disabled={Boolean(busy)}
-                        onClick={() => handleHidden(row.id, false)}
-                      >
-                        {isBusy(row.id, 'show') ? 'Showing…' : 'Show'}
-                      </button>
-                    ) : (
-                      <button
-                        type="button"
-                        className={`${btnOutline} w-full sm:w-auto`}
-                        disabled={Boolean(busy)}
-                        onClick={() => handleHidden(row.id, true)}
-                      >
-                        {isBusy(row.id, 'hide') ? 'Hiding…' : 'Hide'}
-                      </button>
-                    )
+                    <>
+                      {showing ? (
+                        <button
+                          type="button"
+                          className={`${btnOutline} w-full sm:w-auto`}
+                          disabled={Boolean(busy)}
+                          onClick={() => handleHidden(row.id, false)}
+                        >
+                          {isBusy(row.id, 'show') ? 'Showing…' : 'Show'}
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          className={`${btnOutline} w-full sm:w-auto`}
+                          disabled={Boolean(busy)}
+                          onClick={() => handleHidden(row.id, true)}
+                        >
+                          {isBusy(row.id, 'hide') ? 'Hiding…' : 'Hide'}
+                        </button>
+                      )}
+                      {ending ? null : (
+                        <label className="block w-full sm:w-auto">
+                          <span className="sr-only">End sponsorship</span>
+                          <select
+                            className={`${btnOutline} w-full appearance-none sm:w-auto`}
+                            disabled={Boolean(busy)}
+                            defaultValue=""
+                            onChange={(event) => {
+                              const value = event.target.value
+                              event.target.value = ''
+                              if (!isSponsorshipCancelMode(value)) return
+                              void handleCancel(row.id, value)
+                            }}
+                          >
+                            <option value="" disabled>
+                              {isBusy(row.id, 'cancel') ? 'Ending…' : 'End sponsorship…'}
+                            </option>
+                            <option value="refund_now">
+                              Remove now + refund last payment
+                            </option>
+                            <option value="end_of_period">
+                              Keep until period ends (no refund)
+                            </option>
+                          </select>
+                        </label>
+                      )}
+                    </>
                   }
                   dimmed={rowBusy}
                 />

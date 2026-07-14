@@ -370,6 +370,31 @@ function isStripeMissingResource(error: unknown): boolean {
   )
 }
 
+/** Period end unix seconds from modern Stripe subscription shapes. */
+export function stripeSubscriptionPeriodEndUnix(
+  subscription: Stripe.Subscription,
+): number | null {
+  if (typeof subscription.cancel_at === 'number' && subscription.cancel_at > 0) {
+    return subscription.cancel_at
+  }
+
+  const itemEnds = (subscription.items?.data ?? [])
+    .map((item) =>
+      typeof item.current_period_end === 'number' ? item.current_period_end : null,
+    )
+    .filter((value): value is number => value != null && value > 0)
+
+  if (itemEnds.length === 0) return null
+  return Math.max(...itemEnds)
+}
+
+export function stripeSubscriptionPeriodEndIso(
+  subscription: Stripe.Subscription,
+): string | null {
+  const unix = stripeSubscriptionPeriodEndUnix(subscription)
+  return unix ? new Date(unix * 1000).toISOString() : null
+}
+
 export type RefundAndCancelSponsorshipResult = {
   refunded: boolean
   canceled: boolean
@@ -503,5 +528,26 @@ export async function refundAndCancelSponsorshipSubscription(input: {
 
 export async function cancelStripeSubscription(subscriptionId: string, stripeAccountId: string) {
   const stripe = getStripe()
-  await stripe.subscriptions.cancel(subscriptionId, {}, { stripeAccount: stripeAccountId })
+  try {
+    await stripe.subscriptions.cancel(subscriptionId, {}, { stripeAccount: stripeAccountId })
+  } catch (error) {
+    if (!isStripeMissingResource(error)) {
+      throw error
+    }
+  }
+}
+
+/** Stop renewals but keep access until current_period_end. */
+export async function scheduleCancelStripeSubscriptionAtPeriodEnd(
+  subscriptionId: string,
+  stripeAccountId: string,
+): Promise<{ currentPeriodEndIso: string | null }> {
+  const stripe = getStripe()
+  const subscription = await stripe.subscriptions.update(
+    subscriptionId,
+    { cancel_at_period_end: true },
+    { stripeAccount: stripeAccountId },
+  )
+
+  return { currentPeriodEndIso: stripeSubscriptionPeriodEndIso(subscription) }
 }

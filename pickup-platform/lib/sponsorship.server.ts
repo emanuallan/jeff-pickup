@@ -36,6 +36,8 @@ export type SponsorshipRow = {
   declined_at: string | null
   canceled_at: string | null
   hidden_at: string | null
+  cancel_at_period_end?: boolean | null
+  current_period_end?: string | null
   tier_name?: string
 }
 

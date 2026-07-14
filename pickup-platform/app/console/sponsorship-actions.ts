@@ -10,11 +10,16 @@ import {
   parseSponsorshipIntroFormData,
   parseSponsorshipTierFormData,
 } from '@/lib/console/parse-sponsorship-tier-form'
-import { validateSponsorshipIntroText } from '@/lib/sponsorship'
+import {
+  isSponsorshipCancelMode,
+  type SponsorshipCancelMode,
+  validateSponsorshipIntroText,
+} from '@/lib/sponsorship'
 import {
   createTierStripeProductAndPrice,
   deactivateTierStripePrice,
   refundAndCancelSponsorshipSubscription,
+  scheduleCancelStripeSubscriptionAtPeriodEnd,
   stripeErrorMessage,
 } from '@/lib/stripe-connect'
 import { getOrgStripeAccount } from '@/lib/sponsorship.server'
@@ -374,6 +379,101 @@ export async function setSponsorshipHidden(
 
     revalidateSponsorshipPaths(orgSlug)
     return { ok: true as const }
+  } catch {
+    return { error: 'Not authorized.' }
+  }
+}
+
+/**
+ * End an approved/hidden sponsorship.
+ * - refund_now: refund last invoice (minus fees), cancel Stripe now, remove logo
+ * - end_of_period: stop renewals; logo stays until Stripe period ends
+ */
+export async function cancelSponsorship(
+  orgSlug: string,
+  sponsorshipId: string,
+  mode: SponsorshipCancelMode | string,
+) {
+  try {
+    if (!isSponsorshipCancelMode(mode)) {
+      return { error: 'Choose how to end this sponsorship.' }
+    }
+
+    const org = await requireInteriorSponsorshipAccess(orgSlug)
+    const supabase = await createClient()
+
+    const { data: row, error: rowError } = await supabase
+      .from('sponsorships')
+      .select('status, stripe_subscription_id, stripe_checkout_session_id, cancel_at_period_end')
+      .eq('id', sponsorshipId)
+      .eq('org_id', org.id)
+      .maybeSingle()
+
+    if (rowError || !row) {
+      return { error: 'Sponsorship not found.' }
+    }
+
+    if (row.status !== 'approved' && row.status !== 'hidden') {
+      return { error: 'Only active sponsors can be canceled.' }
+    }
+
+    if (mode === 'end_of_period' && row.cancel_at_period_end) {
+      return { error: 'This sponsorship is already set to end after the current period.' }
+    }
+
+    let currentPeriodEnd: string | null = null
+
+    if (row.stripe_subscription_id) {
+      const stripeAccount = await getOrgStripeAccount(org.id)
+      if (!stripeAccount) {
+        return { error: 'Stripe is not connected for this group.' }
+      }
+
+      try {
+        if (mode === 'refund_now') {
+          await refundAndCancelSponsorshipSubscription({
+            subscriptionId: row.stripe_subscription_id,
+            stripeAccountId: stripeAccount.stripe_account_id,
+            checkoutSessionId: row.stripe_checkout_session_id,
+          })
+        } else {
+          const scheduled = await scheduleCancelStripeSubscriptionAtPeriodEnd(
+            row.stripe_subscription_id,
+            stripeAccount.stripe_account_id,
+          )
+          currentPeriodEnd = scheduled.currentPeriodEndIso
+        }
+      } catch (error) {
+        console.error('Sponsorship cancel failed', {
+          orgSlug,
+          sponsorshipId,
+          mode,
+          message: stripeErrorMessage(error),
+          error,
+        })
+        const detail = stripeErrorMessage(error)
+        return {
+          error: detail
+            ? `Could not end the sponsorship: ${detail}`
+            : 'Could not end the sponsorship. Try again, or manage it manually in Stripe.',
+        }
+      }
+    } else if (mode === 'refund_now') {
+      // No Stripe sub — still mark canceled locally.
+    } else {
+      return { error: 'No Stripe subscription found to schedule an end date.' }
+    }
+
+    const { error } = await supabase.rpc('organizer_cancel_sponsorship', {
+      p_sponsorship_id: sponsorshipId,
+      p_mode: mode,
+      p_current_period_end: currentPeriodEnd,
+    })
+
+    if (error) return { error: error.message }
+
+    revalidateSponsorshipPaths(orgSlug)
+    return { ok: true as const, mode }
   } catch {
     return { error: 'Not authorized.' }
   }

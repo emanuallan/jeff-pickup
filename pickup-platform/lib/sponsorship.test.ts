@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import {
   canApproveSponsorship,
+  canCancelSponsorship,
   canDeclineSponsorship,
+  isSponsorshipCancelMode,
   isSponsorshipsActiveLocally,
   parsePublicSponsors,
   resolveSponsorRefundAmountCents,
@@ -138,7 +140,14 @@ describe('sponsorship lifecycle helpers', () => {
   it('checks approval transitions', () => {
     expect(canApproveSponsorship('pending_approval')).toBe(true)
     expect(canApproveSponsorship('approved')).toBe(false)
-    expect(canDeclineSponsorship('approved')).toBe(true)
+    expect(canDeclineSponsorship('pending_approval')).toBe(true)
+    expect(canDeclineSponsorship('approved')).toBe(false)
+    expect(canCancelSponsorship('approved')).toBe(true)
+    expect(canCancelSponsorship('hidden')).toBe(true)
+    expect(canCancelSponsorship('pending_approval')).toBe(false)
+    expect(isSponsorshipCancelMode('refund_now')).toBe(true)
+    expect(isSponsorshipCancelMode('end_of_period')).toBe(true)
+    expect(isSponsorshipCancelMode('nope')).toBe(false)
   })
 })
 

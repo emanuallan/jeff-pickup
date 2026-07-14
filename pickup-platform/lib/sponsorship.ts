@@ -377,7 +377,18 @@ export function canApproveSponsorship(status: SponsorshipStatus): boolean {
 }
 
 export function canDeclineSponsorship(status: SponsorshipStatus): boolean {
-  return status === 'pending_approval' || status === 'approved' || status === 'payment_failed'
+  return status === 'pending_approval'
+}
+
+export type SponsorshipCancelMode = 'refund_now' | 'end_of_period'
+
+export function isSponsorshipCancelMode(value: string): value is SponsorshipCancelMode {
+  return value === 'refund_now' || value === 'end_of_period'
+}
+
+/** End a live sponsorship: stop billing; no auto-refund of past periods. */
+export function canCancelSponsorship(status: SponsorshipStatus): boolean {
+  return status === 'approved' || status === 'hidden'
 }
 
 export function canToggleSponsorshipHidden(status: SponsorshipStatus): boolean {

@@ -3,6 +3,7 @@ import type Stripe from 'stripe'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { upsertSponsorshipFromCheckoutSession } from '@/lib/sponsorship-checkout'
 import { getStripe, stripeWebhookSecret } from '@/lib/stripe'
+import { stripeSubscriptionPeriodEndIso } from '@/lib/stripe-connect'
 
 export const runtime = 'nodejs'
 
@@ -32,6 +33,8 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
     p_stripe_subscription_id: subscription.id,
     p_subscription_status: subscription.status,
     p_sponsorship_status: sponsorshipStatus,
+    p_cancel_at_period_end: Boolean(subscription.cancel_at_period_end),
+    p_current_period_end: stripeSubscriptionPeriodEndIso(subscription),
   })
 
   if (error) {
