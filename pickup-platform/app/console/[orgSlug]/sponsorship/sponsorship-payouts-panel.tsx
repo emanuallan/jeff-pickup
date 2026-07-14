@@ -17,6 +17,17 @@ type Props = {
   showConnectPending: boolean
 }
 
+function StatusDot({ tone }: { tone: 'ok' | 'warn' }) {
+  return (
+    <span
+      className={`mt-1.5 size-1.5 shrink-0 rounded-full ${
+        tone === 'ok' ? 'bg-emerald-400' : 'bg-amber-400'
+      }`}
+      aria-hidden
+    />
+  )
+}
+
 export function SponsorshipPayoutsPanel({
   orgSlug,
   stripeConfigured,
@@ -30,12 +41,14 @@ export function SponsorshipPayoutsPanel({
   showConnectSuccess,
   showConnectPending,
 }: Props) {
+  // Only show the flash banner while Stripe is still verifying — once ready,
+  // the connected status row already communicates success.
+  const showPendingBanner = showConnectSuccess && showConnectPending && !stripeReady
+
   return (
     <div className="space-y-4">
       {connectErrorDisplay ? <SponsorshipConnectError error={connectErrorDisplay} /> : null}
-      {showConnectSuccess ? (
-        <SponsorshipConnectSuccess pending={showConnectPending && !stripeReady} />
-      ) : null}
+      {showPendingBanner ? <SponsorshipConnectSuccess pending /> : null}
 
       {!stripeConfigured ? (
         <p className="text-sm text-amber-300">
@@ -43,18 +56,18 @@ export function SponsorshipPayoutsPanel({
         </p>
       ) : stripeReady ? (
         <div className="space-y-4">
-          <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-3.5">
-            <p className="text-sm font-medium text-emerald-100">Where your money goes</p>
-            <p className="mt-1.5 text-sm leading-relaxed text-emerald-100/85">
-              Sponsor payments land in your connected Stripe account (after Organizr&apos;s 5%
-              platform fee). Stripe then pays out to your bank on its normal schedule — open Stripe
-              to check your balance, payouts, and bank details.
-            </p>
-            {!payoutsEnabled ? (
-              <p className="mt-2 text-sm leading-relaxed text-amber-200/90">
-                Stripe still needs payout details finished before money can leave for your bank.
+          <div className="flex gap-2.5">
+            <StatusDot tone={payoutsEnabled ? 'ok' : 'warn'} />
+            <div className="min-w-0 space-y-1">
+              <p className="text-sm font-medium text-zinc-100">
+                {payoutsEnabled ? 'Connected' : 'Connected — finish payout setup'}
               </p>
-            ) : null}
+              <p className="text-sm leading-relaxed text-zinc-400">
+                {payoutsEnabled
+                  ? 'Sponsor payments go to your Stripe account (5% platform fee), then to your bank on Stripe\'s schedule.'
+                  : 'Your account can take payments, but Stripe still needs payout details before money can reach your bank.'}
+              </p>
+            </div>
           </div>
 
           <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
@@ -64,50 +77,46 @@ export function SponsorshipPayoutsPanel({
               target="_blank"
               rel="noopener noreferrer"
             >
-              {payoutsEnabled ? 'Open Stripe for payouts' : 'Finish payout setup in Stripe'}
+              {payoutsEnabled ? 'Open Stripe' : 'Finish in Stripe'}
             </a>
             <a href={connectPath} className={`${btnOutline} w-full sm:w-auto`}>
-              Update Stripe account details
+              Update account
             </a>
+          </div>
+
+          <div className="border-t border-white/5 pt-3">
             {canDisconnectStripe ? (
               <SponsorshipDisconnectButton orgSlug={orgSlug} canDisconnect />
-            ) : null}
+            ) : (
+              <p className="text-xs leading-relaxed text-zinc-500">
+                Cancel or decline all active and pending sponsorships before you can disconnect
+                Stripe.
+              </p>
+            )}
           </div>
-          <p className="text-xs leading-relaxed text-zinc-500">
-            Opens your Stripe Express dashboard in a new tab. Balances and bank payouts are managed
-            there — not inside Organizr.
-          </p>
-          {!canDisconnectStripe ? (
-            <p className="text-xs leading-relaxed text-zinc-500">
-              Cancel or decline all active and pending sponsorships to disconnect Stripe.
-            </p>
-          ) : null}
         </div>
       ) : hasStripeAccount ? (
         <div className="space-y-3">
-          {!showConnectSuccess ? (
-            <p className="text-sm leading-relaxed text-amber-300">
-              Finish Stripe onboarding to accept sponsors and receive payouts to your bank.
-            </p>
-          ) : null}
-          <a href={connectPath} className={`${btnPrimary} w-full sm:w-auto`}>
-            Continue Stripe payout setup
-          </a>
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {!showConnectSuccess ? (
-            <div className="rounded-xl border border-white/10 bg-zinc-950/40 px-4 py-3.5">
-              <p className="text-sm font-medium text-zinc-100">Connect Stripe to get paid</p>
-              <p className="mt-1.5 text-sm leading-relaxed text-zinc-400">
-                Sponsorships use Stripe Connect. Once connected, monthly sponsor payments are
-                deposited to your Stripe balance, then paid out to the bank account you add in
-                Stripe. Organizr keeps a 5% platform fee.
+          {!showPendingBanner ? (
+            <div className="flex gap-2.5">
+              <StatusDot tone="warn" />
+              <p className="text-sm leading-relaxed text-zinc-400">
+                Finish onboarding so this group can accept sponsors and get paid.
               </p>
             </div>
           ) : null}
           <a href={connectPath} className={`${btnPrimary} w-full sm:w-auto`}>
-            Connect Stripe for payouts
+            Continue setup
+          </a>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          <p className="text-sm leading-relaxed text-zinc-400">
+            Connect Stripe Express to collect monthly sponsorships. Payments go to your Stripe
+            balance, then your bank. Organizr keeps a 5% platform fee.
+          </p>
+          <a href={connectPath} className={`${btnPrimary} w-full sm:w-auto`}>
+            Connect Stripe
           </a>
         </div>
       )}

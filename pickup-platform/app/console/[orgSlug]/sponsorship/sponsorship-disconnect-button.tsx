@@ -4,7 +4,7 @@ import { useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { disconnectStripeAccount } from '../../sponsorship-actions'
 import { useConsoleToast } from '../../_components/console-toast'
-import { btnOutline } from '../../_components/console-ui'
+import { chipAction } from '../../_components/console-ui'
 
 type Props = {
   orgSlug: string
@@ -38,7 +38,7 @@ export function SponsorshipDisconnectButton({ orgSlug, canDisconnect }: Props) {
   if (!canDisconnect) {
     return (
       <p className="text-xs leading-relaxed text-zinc-500">
-        Cancel or decline all active and pending sponsorships to disconnect Stripe.
+        Cancel or decline all active and pending sponsorships before you can disconnect Stripe.
       </p>
     )
   }
@@ -48,7 +48,7 @@ export function SponsorshipDisconnectButton({ orgSlug, canDisconnect }: Props) {
       type="button"
       onClick={handleDisconnect}
       disabled={isPending}
-      className={`${btnOutline} w-full border-red-500/30 text-red-300 hover:border-red-400/40 hover:bg-red-500/10 sm:w-auto`}
+      className={`${chipAction} -ml-2.5 text-zinc-500 hover:bg-red-500/10 hover:text-red-300`}
     >
       {isPending ? 'Disconnecting…' : 'Disconnect Stripe'}
     </button>

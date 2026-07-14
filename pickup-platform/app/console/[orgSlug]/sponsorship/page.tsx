@@ -116,7 +116,7 @@ export default async function SponsorshipConsolePage({ params, searchParams }: P
       target="_blank"
       rel="noopener noreferrer"
     >
-      Get payouts
+      Open Stripe
     </a>
   ) : null
 
@@ -143,11 +143,11 @@ export default async function SponsorshipConsolePage({ params, searchParams }: P
         <div className="space-y-3">
           <ConsoleGroupLabel>Payouts</ConsoleGroupLabel>
           <ConsoleSection
-            title="Get paid"
+            title="Stripe"
             description={
               stripeReady
-                ? 'Sponsor money is handled in Stripe — open it anytime to see balances and bank payouts.'
-                : 'Connect Stripe to unlock sponsorship tools and get paid.'
+                ? 'Balances and bank payouts live in Stripe — not inside Organizr.'
+                : 'Required before you can offer sponsorships.'
             }
           >
             <SponsorshipPayoutsPanel
