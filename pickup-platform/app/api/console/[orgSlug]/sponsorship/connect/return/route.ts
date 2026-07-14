@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server'
 import { getAuthUser } from '@/lib/auth'
 import { isInteriorOperator } from '@/lib/interior'
 import { getOrgForMember } from '@/lib/orgs'
-import { syncConnectAccountForOrg } from '@/lib/stripe-connect'
+import { syncConnectAccountForOrg, syncOrgBrandingToConnectAccount } from '@/lib/stripe-connect'
 import { classifyStripeConnectFailure } from '@/lib/stripe-connect-errors'
 import { consoleOrgUrl } from '@/lib/site-url'
 
@@ -26,6 +26,14 @@ export async function GET(_request: Request, { params }: Props) {
 
   try {
     const account = await syncConnectAccountForOrg(org.id)
+
+    if (account) {
+      // Best-effort: branding sync must never block the onboarding return path.
+      await syncOrgBrandingToConnectAccount(account.id, {
+        logoUrl: org.branding?.logo_url ?? null,
+        accentColor: org.branding?.accent_color ?? '#2563eb',
+      })
+    }
 
     revalidatePath(`/console/${orgSlug}/sponsorship`)
 

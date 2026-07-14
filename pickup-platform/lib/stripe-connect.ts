@@ -1,5 +1,5 @@
 import type Stripe from 'stripe'
-import { getPlatformFeePercent, getStripe } from '@/lib/stripe'
+import { getPlatformFeePercent, getStripe, isStripeConfigured } from '@/lib/stripe'
 import { resolveSponsorRefundAmountCents } from '@/lib/sponsorship'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { orgBaseUrl, rootBaseUrl } from '@/lib/site-url'
@@ -121,6 +121,135 @@ export async function createConnectAccountLink(
     return_url: `${base}${returnPath}`,
     type: 'account_onboarding',
   })
+}
+
+/** Organizr branding mirrored onto a connected Express account for Checkout/receipts. */
+export type ConnectAccountBranding = {
+  logoUrl: string | null
+  accentColor: string
+}
+
+const MAX_CONNECT_BRANDING_FILE_BYTES = 512 * 1024
+
+function normalizeConnectAccentHex(accentColor: string): string | null {
+  const trimmed = accentColor.trim()
+  if (!/^#[0-9a-fA-F]{6}$/.test(trimmed)) return null
+  return trimmed.toLowerCase()
+}
+
+async function uploadConnectBrandingFiles(
+  stripe: Stripe,
+  logoUrl: string,
+): Promise<{ logoFileId?: string; iconFileId?: string }> {
+  const response = await fetch(logoUrl)
+  if (!response.ok) {
+    return {}
+  }
+
+  const contentType = (response.headers.get('content-type') ?? '').split(';')[0]?.trim().toLowerCase()
+  if (contentType !== 'image/png' && contentType !== 'image/jpeg' && contentType !== 'image/jpg') {
+    return {}
+  }
+
+  const buffer = Buffer.from(await response.arrayBuffer())
+  if (buffer.byteLength === 0 || buffer.byteLength > MAX_CONNECT_BRANDING_FILE_BYTES) {
+    return {}
+  }
+
+  const mime = contentType === 'image/png' ? 'image/png' : 'image/jpeg'
+  const fileName = mime === 'image/png' ? 'logo.png' : 'logo.jpg'
+  const filePayload = {
+    data: buffer,
+    name: fileName,
+    type: mime,
+  }
+
+  const result: { logoFileId?: string; iconFileId?: string } = {}
+
+  try {
+    const logo = await stripe.files.create({
+      purpose: 'business_logo',
+      file: filePayload,
+    })
+    result.logoFileId = logo.id
+  } catch {
+    // Logo optional — colors may still apply.
+  }
+
+  try {
+    const icon = await stripe.files.create({
+      purpose: 'business_icon',
+      file: filePayload,
+    })
+    result.iconFileId = icon.id
+  } catch {
+    // Icon must be square; non-square logos often fail — ignore.
+  }
+
+  return result
+}
+
+/**
+ * Push org logo + accent onto a connected Stripe account for Checkout branding.
+ * Never throws — Stripe/file failures are logged and ignored so connect/save flows
+ * are not interrupted.
+ */
+export async function syncOrgBrandingToConnectAccount(
+  stripeAccountId: string,
+  branding: ConnectAccountBranding,
+): Promise<void> {
+  try {
+    if (!isStripeConfigured()) return
+
+    const stripe = getStripe()
+    const accent = normalizeConnectAccentHex(branding.accentColor)
+    const brandingUpdate: Stripe.AccountUpdateParams.Settings.Branding = {}
+
+    if (accent) {
+      brandingUpdate.primary_color = accent
+      brandingUpdate.secondary_color = accent
+    }
+
+    if (branding.logoUrl?.trim()) {
+      const files = await uploadConnectBrandingFiles(stripe, branding.logoUrl.trim())
+      if (files.logoFileId) brandingUpdate.logo = files.logoFileId
+      if (files.iconFileId) brandingUpdate.icon = files.iconFileId
+    }
+
+    if (Object.keys(brandingUpdate).length === 0) return
+
+    await stripe.accounts.update(stripeAccountId, {
+      settings: { branding: brandingUpdate },
+    })
+  } catch (error) {
+    console.warn('Stripe Connect branding sync failed (ignored)', error)
+  }
+}
+
+/**
+ * Sync branding when the org already has a linked Express account.
+ * No-ops (never throws) if Stripe is unset, no account exists, or sync fails.
+ */
+export async function syncOrgBrandingToStripeIfConnected(
+  orgId: string,
+  branding: ConnectAccountBranding,
+): Promise<void> {
+  try {
+    if (!isStripeConfigured()) return
+
+    const admin = createAdminClient()
+    const { data, error } = await admin
+      .from('org_stripe_accounts')
+      .select('stripe_account_id')
+      .eq('org_id', orgId)
+      .maybeSingle()
+
+    if (error || !data?.stripe_account_id) return
+
+    await syncOrgBrandingToConnectAccount(data.stripe_account_id, branding)
+  } catch (error) {
+    console.warn('Stripe Connect branding sync failed (ignored)', error)
+  }
 }
 
 /** Express dashboard login — balances, bank payouts, and payout schedule. */

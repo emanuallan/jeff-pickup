@@ -15,6 +15,7 @@ vi.mock('@/lib/stripe-connect', () => ({
   createConnectAccountLink: vi.fn(),
   findStripeAccountIdForOrg: vi.fn(),
   syncConnectAccountStatus: vi.fn(),
+  syncOrgBrandingToConnectAccount: vi.fn().mockResolvedValue(undefined),
 }))
 
 vi.mock('@/lib/sponsorship.server', () => ({
@@ -81,6 +82,7 @@ describe('GET /api/console/[orgSlug]/sponsorship/connect', () => {
       id: 'org-1',
       slug: 'demo',
       name: 'Demo',
+      branding: { logo_url: null, accent_color: '#2563eb', links: [] },
     } as never)
     vi.mocked(getAuthUser).mockResolvedValue({ id: INTERIOR_OPERATOR_USER_ID } as never)
     vi.mocked(getOrgStripeAccount).mockResolvedValue(null)

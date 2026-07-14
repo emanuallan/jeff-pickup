@@ -36,6 +36,7 @@ import { parseSessionFormData } from '@/lib/console/parse-session-form'
 import { parseScheduleFormData } from '@/lib/console/parse-schedule-form'
 import { parseLocationFormData } from '@/lib/console/parse-location-form'
 import { assertLocationInOrg } from '@/lib/console/location-ownership'
+import { syncOrgBrandingToStripeIfConnected } from '@/lib/stripe-connect'
 
 async function requireOrgAdmin(slug: string) {
   const org = await getOrgForMember(slug)
@@ -797,6 +798,11 @@ async function updateOrgLogoUrl(orgSlug: string, logoUrl: string | null) {
     return { error: error.message }
   }
 
+  await syncOrgBrandingToStripeIfConnected(org.id, {
+    logoUrl,
+    accentColor: org.branding.accent_color,
+  })
+
   revalidateOrgBrandingPaths(orgSlug)
   return { ok: true as const, logoUrl }
 }
@@ -913,6 +919,11 @@ export async function updateBranding(orgSlug: string, formData: FormData) {
   if (error) {
     return { error: error.message }
   }
+
+  await syncOrgBrandingToStripeIfConnected(org.id, {
+    logoUrl: org.branding.logo_url,
+    accentColor: accent,
+  })
 
   revalidateOrgBrandingPaths(orgSlug)
   return { ok: true }

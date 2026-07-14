@@ -16,6 +16,7 @@ vi.mock('@/lib/auth', () => ({
 
 vi.mock('@/lib/stripe-connect', () => ({
   syncConnectAccountForOrg: vi.fn(),
+  syncOrgBrandingToConnectAccount: vi.fn().mockResolvedValue(undefined),
 }))
 
 import { getOrgForMember } from '@/lib/orgs'

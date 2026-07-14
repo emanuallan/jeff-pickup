@@ -140,32 +140,6 @@ export default async function SponsorshipConsolePage({ params, searchParams }: P
       />
 
       <div className="mt-8 space-y-8">
-        <div className="space-y-3">
-          <ConsoleGroupLabel>Payouts</ConsoleGroupLabel>
-          <ConsoleSection
-            title="Stripe"
-            description={
-              stripeReady
-                ? 'Balances and bank payouts live in Stripe — not inside Organizr.'
-                : 'Required before you can offer sponsorships.'
-            }
-          >
-            <SponsorshipPayoutsPanel
-              orgSlug={orgSlug}
-              stripeConfigured={isStripeConfigured()}
-              stripeReady={stripeReady}
-              hasStripeAccount={Boolean(stripeAccount)}
-              payoutsEnabled={payoutsEnabled}
-              canDisconnectStripe={canDisconnectStripe}
-              connectPath={connectPath}
-              payoutsPath={payoutsPath}
-              connectErrorDisplay={connectErrorDisplay}
-              showConnectSuccess={showConnectSuccess}
-              showConnectPending={showConnectPending}
-            />
-          </ConsoleSection>
-        </div>
-
         {stripeReady ? (
           <>
             <div className="space-y-3">
@@ -209,25 +183,53 @@ export default async function SponsorshipConsolePage({ params, searchParams }: P
                 />
               </ConsoleSection>
             </div>
-
-            <div className="space-y-3">
-              <ConsoleGroupLabel>Setup</ConsoleGroupLabel>
-              <ConsoleSection
-                title="Availability"
-                description="Turn the public sponsorship offer on or off."
-                collapsible={featureReady}
-                defaultOpen={!featureReady}
-              >
-                <div className="-mx-1">
-                  <SponsorshipFeatureToggle
-                    orgSlug={orgSlug}
-                    enabled={features.group_sponsorships}
-                    locked={active.length > 0}
-                  />
-                </div>
-              </ConsoleSection>
-            </div>
           </>
+        ) : null}
+
+        <div className="space-y-3">
+          <ConsoleGroupLabel>Payouts</ConsoleGroupLabel>
+          <ConsoleSection
+            title="Stripe"
+            description={
+              stripeReady
+                ? 'Balances and bank payouts live in Stripe — not inside Organizr.'
+                : 'Required before you can offer sponsorships.'
+            }
+          >
+            <SponsorshipPayoutsPanel
+              orgSlug={orgSlug}
+              stripeConfigured={isStripeConfigured()}
+              stripeReady={stripeReady}
+              hasStripeAccount={Boolean(stripeAccount)}
+              payoutsEnabled={payoutsEnabled}
+              canDisconnectStripe={canDisconnectStripe}
+              connectPath={connectPath}
+              payoutsPath={payoutsPath}
+              connectErrorDisplay={connectErrorDisplay}
+              showConnectSuccess={showConnectSuccess}
+              showConnectPending={showConnectPending}
+            />
+          </ConsoleSection>
+        </div>
+
+        {stripeReady ? (
+          <div className="space-y-3">
+            <ConsoleGroupLabel>Setup</ConsoleGroupLabel>
+            <ConsoleSection
+              title="Availability"
+              description="Turn the public sponsorship offer on or off."
+              collapsible={featureReady}
+              defaultOpen={!featureReady}
+            >
+              <div className="-mx-1">
+                <SponsorshipFeatureToggle
+                  orgSlug={orgSlug}
+                  enabled={features.group_sponsorships}
+                  locked={active.length > 0}
+                />
+              </div>
+            </ConsoleSection>
+          </div>
         ) : null}
       </div>
     </ConsolePage>

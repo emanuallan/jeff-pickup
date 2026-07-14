@@ -7,6 +7,7 @@ import {
   createConnectExpressAccount,
   findStripeAccountIdForOrg,
   syncConnectAccountStatus,
+  syncOrgBrandingToConnectAccount,
 } from '@/lib/stripe-connect'
 import { getOrgStripeAccount } from '@/lib/sponsorship.server'
 import { isStripeConfigured } from '@/lib/stripe'
@@ -46,6 +47,12 @@ export async function GET(_request: Request, { params }: Props) {
     } else {
       await syncConnectAccountStatus(stripeAccountId)
     }
+
+    // Best-effort: Checkout branding must never block Connect onboarding.
+    await syncOrgBrandingToConnectAccount(stripeAccountId, {
+      logoUrl: org.branding?.logo_url ?? null,
+      accentColor: org.branding?.accent_color ?? '#2563eb',
+    })
 
     const refreshPath = `/api/console/${orgSlug}/sponsorship/connect`
     const returnPath = `/api/console/${orgSlug}/sponsorship/connect/return`
