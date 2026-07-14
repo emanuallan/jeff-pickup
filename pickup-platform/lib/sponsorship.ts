@@ -31,7 +31,7 @@ export type PublicSponsor = {
   logo_url: string
   sponsor_url: string | null
   /** Monthly amount from the sponsorship row — used for public logo hierarchy. */
-  monthly_amount_cents?: number | null
+  monthly_amount_cents: number | null
 }
 
 export type SponsorLogoSize = 'lg' | 'md' | 'sm'

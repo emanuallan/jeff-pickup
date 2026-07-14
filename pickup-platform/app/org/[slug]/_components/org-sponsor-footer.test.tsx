@@ -23,6 +23,7 @@ describe('OrgSponsorSection', () => {
             sponsor_name: 'Acme',
             logo_url: 'https://example.com/logo.png',
             sponsor_url: 'https://acme.test',
+            monthly_amount_cents: 5000,
           },
         ]}
         showCta
@@ -57,8 +58,10 @@ describe('OrgSponsorSection', () => {
             sponsor_name: 'Acme',
             logo_url: 'https://example.com/logo.png',
             sponsor_url: null,
+            monthly_amount_cents: 2500,
           },
         ]}
+        showCta
       />,
     )
 
