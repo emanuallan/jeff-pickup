@@ -7,8 +7,11 @@ import {
 import type { PublicSponsor } from '@/lib/sponsorship'
 import { sortPublicSponsorsByAmount } from '@/lib/sponsorship'
 
-export const SCROLLING_FEED_SEEN_STORAGE_PREFIX = 'organizr:scrolling-feed-seen:'
-export const SCROLLING_FEED_SEEN_CAP = 100
+/** How many recent feed highlights to show in the ticker. */
+export const SCROLLING_FEED_TICKER_LIMIT = 10
+
+/** Minimum time the Powered-by intro stays visible before the ticker. */
+export const SCROLLING_FEED_INTRO_MIN_MS = 2800
 
 export type ScrollingFeedTickerKind = 'mvp' | 'player_stats' | 'sponsor'
 
@@ -33,10 +36,6 @@ export type ScrollingFeedApiItem = {
 export type ScrollingFeedApiResponse = {
   enabled: boolean
   items?: ScrollingFeedApiItem[]
-}
-
-export function scrollingFeedSeenStorageKey(slug: string): string {
-  return `${SCROLLING_FEED_SEEN_STORAGE_PREFIX}${slug}`
 }
 
 export function scrollingFeedItemKey(item: OrgSessionFeedItem): string {
@@ -70,11 +69,12 @@ export function buildScrollingFeedTickerItems(
   })
 }
 
-export function filterUnseenScrollingFeedItems<T extends { id: string }>(
+/** Keep the most recent N feed items (RPC already returns newest-first). */
+export function takeLatestScrollingFeedItems<T>(
   items: T[],
-  seenKeys: ReadonlySet<string>,
+  limit = SCROLLING_FEED_TICKER_LIMIT,
 ): T[] {
-  return items.filter((item) => !seenKeys.has(item.id))
+  return items.slice(0, Math.max(0, limit))
 }
 
 export function buildSponsorTickerItem(sponsor: PublicSponsor): ScrollingFeedTickerItem {
@@ -102,57 +102,6 @@ export function appendSponsorToTickerItems(
   const top = pickTopSponsorForTicker(sponsors)
   if (!top) return feedItems
   return [...feedItems, buildSponsorTickerItem(top)]
-}
-
-export function trimScrollingFeedSeenKeys(keys: string[], cap = SCROLLING_FEED_SEEN_CAP): string[] {
-  if (keys.length <= cap) return keys
-  return keys.slice(keys.length - cap)
-}
-
-export function parseScrollingFeedSeenKeys(raw: string | null): string[] {
-  if (!raw) return []
-  try {
-    const parsed = JSON.parse(raw) as unknown
-    if (!Array.isArray(parsed)) return []
-    return parsed.filter((entry): entry is string => typeof entry === 'string')
-  } catch {
-    return []
-  }
-}
-
-export function readScrollingFeedSeenKeys(slug: string): Set<string> {
-  if (typeof window === 'undefined') return new Set()
-  try {
-    const raw = window.localStorage.getItem(scrollingFeedSeenStorageKey(slug))
-    return new Set(parseScrollingFeedSeenKeys(raw))
-  } catch {
-    return new Set()
-  }
-}
-
-export function writeScrollingFeedSeenKeys(slug: string, keys: Iterable<string>): void {
-  if (typeof window === 'undefined') return
-  try {
-    const existing = parseScrollingFeedSeenKeys(
-      window.localStorage.getItem(scrollingFeedSeenStorageKey(slug)),
-    )
-    const seen = new Set(existing)
-    for (const key of keys) {
-      if (seen.has(key)) continue
-      existing.push(key)
-      seen.add(key)
-    }
-    const trimmed = trimScrollingFeedSeenKeys(existing)
-    window.localStorage.setItem(scrollingFeedSeenStorageKey(slug), JSON.stringify(trimmed))
-  } catch {
-    // private mode / quota — ignore
-  }
-}
-
-export function markScrollingFeedItemsSeen(slug: string, items: { id: string }[]): void {
-  const feedIds = items.filter((item) => !item.id.startsWith('sponsor:')).map((item) => item.id)
-  if (feedIds.length === 0) return
-  writeScrollingFeedSeenKeys(slug, feedIds)
 }
 
 export function parseScrollingFeedApiResponse(raw: unknown): ScrollingFeedApiResponse | null {

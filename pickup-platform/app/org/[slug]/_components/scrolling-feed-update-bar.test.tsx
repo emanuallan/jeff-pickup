@@ -1,7 +1,7 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ReactNode } from 'react'
-import { SCROLLING_FEED_SEEN_STORAGE_PREFIX } from '@/lib/scrolling-feed-update-bar'
+import { SCROLLING_FEED_INTRO_MIN_MS } from '@/lib/scrolling-feed-update-bar'
 import { ScrollingFeedUpdateBar } from './scrolling-feed-update-bar'
 
 vi.mock('next/image', () => ({
@@ -54,30 +54,15 @@ function mockFetchJson(payload: unknown, ok = true) {
 }
 
 describe('ScrollingFeedUpdateBar', () => {
-  const storage = new Map<string, string>()
-
   beforeEach(() => {
-    storage.clear()
-    vi.stubGlobal('localStorage', {
-      getItem: (key: string) => storage.get(key) ?? null,
-      setItem: (key: string, value: string) => {
-        storage.set(key, value)
-      },
-      removeItem: (key: string) => {
-        storage.delete(key)
-      },
-    })
     Object.defineProperty(document, 'readyState', {
       configurable: true,
       get: () => 'complete',
     })
-    vi.stubGlobal(
-      'requestIdleCallback',
-      (cb: () => void) => {
-        cb()
-        return 1
-      },
-    )
+    vi.stubGlobal('requestIdleCallback', (cb: () => void) => {
+      cb()
+      return 1
+    })
     vi.stubGlobal('cancelIdleCallback', () => {})
     vi.useFakeTimers({ shouldAdvanceTime: true })
   })
@@ -89,16 +74,18 @@ describe('ScrollingFeedUpdateBar', () => {
     vi.restoreAllMocks()
   })
 
-  it('renders powered-by initially', () => {
+  it('renders centered powered-by intro initially', () => {
     mockFetchJson({ enabled: false })
     render(<ScrollingFeedUpdateBar {...baseProps} feedEnabled={false} />)
 
     expect(screen.getByTestId('scrolling-feed-powered-by')).toBeInTheDocument()
-    expect(screen.getByText('jeff.organizr.co')).toBeInTheDocument()
     expect(screen.getByTitle('Create your own group on Organizr')).toBeInTheDocument()
+    expect(screen.getByLabelText('Organizr')).toBeInTheDocument()
+    expect(screen.getByTestId('scrolling-feed-powered-by')).toHaveTextContent(/powered by/i)
+    expect(screen.getByTestId('scrolling-feed-powered-by')).toHaveTextContent(/organizr/i)
   })
 
-  it('stays powered-by when feed is disabled', async () => {
+  it('stays on powered-by intro when feed is disabled', async () => {
     mockFetchJson({ enabled: true, items: [] })
     render(<ScrollingFeedUpdateBar {...baseProps} feedEnabled={false} />)
 
@@ -108,7 +95,7 @@ describe('ScrollingFeedUpdateBar', () => {
     expect(screen.getByTestId('scrolling-feed-powered-by')).toBeInTheDocument()
   })
 
-  it('transitions to ticker when API returns unseen items', async () => {
+  it('transitions to ticker with latest items regardless of prior visits', async () => {
     mockFetchJson({
       enabled: true,
       items: [
@@ -123,6 +110,7 @@ describe('ScrollingFeedUpdateBar', () => {
     })
 
     render(<ScrollingFeedUpdateBar {...baseProps} />)
+    await vi.advanceTimersByTimeAsync(SCROLLING_FEED_INTRO_MIN_MS + 300)
 
     await waitFor(() => {
       expect(screen.getByTestId('scrolling-feed-update-bar')).toBeInTheDocument()
@@ -130,33 +118,16 @@ describe('ScrollingFeedUpdateBar', () => {
     expect(screen.getAllByText('Alex is session MVP').length).toBeGreaterThan(0)
     expect(screen.getByText('Live')).toBeInTheDocument()
     expect(screen.queryByTestId('scrolling-feed-powered-by')).not.toBeInTheDocument()
-
-    await waitFor(() => {
-      expect(storage.get(`${SCROLLING_FEED_SEEN_STORAGE_PREFIX}jeff`) ?? '').toContain(
-        'mvp:event-1',
-      )
-    })
   })
 
-  it('stays powered-by when all items are already seen', async () => {
-    storage.set(
-      `${SCROLLING_FEED_SEEN_STORAGE_PREFIX}jeff`,
-      JSON.stringify(['mvp:event-1']),
-    )
+  it('stays on powered-by intro when the feed returns no items', async () => {
     mockFetchJson({
       enabled: true,
-      items: [
-        {
-          id: 'mvp:event-1',
-          kind: 'mvp',
-          headline: 'Alex is session MVP',
-          eventShortId: 'abc123',
-          dateLabel: 'Sun, Jul 12',
-        },
-      ],
+      items: [],
     })
 
     render(<ScrollingFeedUpdateBar {...baseProps} />)
+    await vi.advanceTimersByTimeAsync(SCROLLING_FEED_INTRO_MIN_MS + 300)
 
     await waitFor(() => {
       expect(fetch).toHaveBeenCalled()
@@ -193,6 +164,7 @@ describe('ScrollingFeedUpdateBar', () => {
         ]}
       />,
     )
+    await vi.advanceTimersByTimeAsync(SCROLLING_FEED_INTRO_MIN_MS + 300)
 
     await waitFor(() => {
       expect(screen.getAllByText(/brought to you by acme sports/i).length).toBeGreaterThan(0)
@@ -215,6 +187,7 @@ describe('ScrollingFeedUpdateBar', () => {
     })
 
     render(<ScrollingFeedUpdateBar {...baseProps} />)
+    await vi.advanceTimersByTimeAsync(SCROLLING_FEED_INTRO_MIN_MS + 300)
 
     await waitFor(() => {
       expect(screen.getByTestId('scrolling-feed-update-bar')).toBeInTheDocument()

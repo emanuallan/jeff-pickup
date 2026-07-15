@@ -1,7 +1,10 @@
 import { getPublicOrgBySlug } from '@/lib/public-data'
 import { isOrgSessionFeedEnabled } from '@/lib/org-session-feed'
 import { getOrgSessionFeed } from '@/lib/org-session-feed.server'
-import { buildScrollingFeedTickerItems } from '@/lib/scrolling-feed-update-bar'
+import {
+  SCROLLING_FEED_TICKER_LIMIT,
+  buildScrollingFeedTickerItems,
+} from '@/lib/scrolling-feed-update-bar'
 
 type Props = {
   params: Promise<{ slug: string }>
@@ -26,7 +29,7 @@ export async function GET(_request: Request, { params }: Props) {
     )
   }
 
-  const feedItems = await getOrgSessionFeed(org.id, 20)
+  const feedItems = await getOrgSessionFeed(org.id, SCROLLING_FEED_TICKER_LIMIT)
   const items = buildScrollingFeedTickerItems(feedItems).map((item) => ({
     id: item.id,
     kind: item.kind as 'mvp' | 'player_stats',

@@ -769,9 +769,101 @@ textarea {
 	animation: scrolling-feed-live-pulse 1.6s ease-in-out infinite;
 }
 
+@keyframes scrolling-feed-intro-letter {
+	0%,
+	6% {
+		color: #71717a;
+		text-shadow: none;
+	}
+	10%,
+	18% {
+		color: var(--organizr-brand, #6366f1);
+		text-shadow: 0 0 10px color-mix(in srgb, var(--organizr-brand, #6366f1) 40%, transparent);
+	}
+	24%,
+	100% {
+		color: #71717a;
+		text-shadow: none;
+	}
+}
+
+@keyframes scrolling-feed-organizr-letter {
+	0%,
+	6% {
+		color: #71717a;
+		text-shadow: none;
+	}
+	10%,
+	18% {
+		color: var(--organizr-brand, #6366f1);
+		text-shadow: 0 0 10px color-mix(in srgb, var(--organizr-brand, #6366f1) 40%, transparent);
+	}
+	24%,
+	58% {
+		color: #71717a;
+		text-shadow: none;
+	}
+	/* End flash — all Organizr letters light together after the sweep */
+	64%,
+	70% {
+		color: #e0e7ff;
+		text-shadow:
+			0 0 14px color-mix(in srgb, var(--organizr-brand, #6366f1) 70%, transparent),
+			0 0 28px color-mix(in srgb, var(--organizr-brand, #6366f1) 35%, transparent);
+	}
+	74%,
+	78% {
+		color: var(--organizr-brand, #6366f1);
+		text-shadow: 0 0 12px color-mix(in srgb, var(--organizr-brand, #6366f1) 55%, transparent);
+	}
+	86%,
+	100% {
+		color: #71717a;
+		text-shadow: none;
+	}
+}
+
+@keyframes scrolling-feed-organizr-flash {
+	0%,
+	58%,
+	100% {
+		filter: brightness(1);
+	}
+	64%,
+	70% {
+		filter: brightness(1.35);
+	}
+	78% {
+		filter: brightness(1.1);
+	}
+}
+
+.scrolling-feed-intro-letter {
+	color: #71717a;
+	animation: scrolling-feed-intro-letter 2.8s ease-in-out infinite;
+}
+
+.scrolling-feed-organizr-letter {
+	animation-name: scrolling-feed-organizr-letter;
+}
+
+.scrolling-feed-organizr-flash {
+	animation: scrolling-feed-organizr-flash 2.8s ease-in-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
 	.scrolling-feed-marquee-track,
-	.scrolling-feed-live-dot {
+	.scrolling-feed-live-dot,
+	.scrolling-feed-intro-letter,
+	.scrolling-feed-organizr-flash {
 		animation: none !important;
+	}
+
+	.scrolling-feed-intro-letter {
+		color: #a1a1aa;
+	}
+
+	.scrolling-feed-organizr-letter {
+		color: var(--organizr-brand, #6366f1);
 	}
 }

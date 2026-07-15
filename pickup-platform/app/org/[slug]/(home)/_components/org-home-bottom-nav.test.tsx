@@ -45,7 +45,7 @@ describe('OrgHomeBottomNav', () => {
       />,
     )
 
-    expect(screen.getByText('jeff.organizr.co')).toBeInTheDocument()
+    expect(screen.getByTestId('scrolling-feed-powered-by')).toHaveTextContent(/powered by/i)
     expect(screen.getByTitle('Create your own group on Organizr')).toBeInTheDocument()
   })
 })

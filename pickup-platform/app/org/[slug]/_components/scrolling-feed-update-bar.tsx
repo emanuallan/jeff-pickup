@@ -7,6 +7,7 @@ import {
   useMemo,
   useRef,
   useState,
+  type CSSProperties,
   type PointerEvent as ReactPointerEvent,
   type ReactNode,
 } from 'react'
@@ -17,14 +18,15 @@ import { safeExternalHref } from '@/lib/social-links'
 import {
   apiItemsToTickerItems,
   appendSponsorToTickerItems,
-  filterUnseenScrollingFeedItems,
-  markScrollingFeedItemsSeen,
   parseScrollingFeedApiResponse,
-  readScrollingFeedSeenKeys,
   scrollingFeedMarqueeDurationSeconds,
+  takeLatestScrollingFeedItems,
+  SCROLLING_FEED_INTRO_MIN_MS,
   type ScrollingFeedTickerItem,
 } from '@/lib/scrolling-feed-update-bar'
-import { OrgPublicPoweredByStrip } from './org-public-powered-by-strip'
+import { OrganizrLogo } from '@/app/_components/organizr-logo'
+import { ORGANIZR_BRAND_COLOR } from '@/lib/organizr-brand'
+import { rootBaseUrl } from '@/lib/site-url'
 
 type Props = {
   slug: string
@@ -36,7 +38,63 @@ type Props = {
   compact?: boolean
 }
 
-type Phase = 'powered-by' | 'ticker'
+type Phase = 'intro' | 'ticker'
+
+const POWERED_BY_TEXT = 'Powered by'
+const ORGANIZR_WORD = 'Organizr'
+const INTRO_LETTER_STAGGER_MS = 75
+
+function IntroLetters({
+  text,
+  startIndex,
+  letterClassName = 'scrolling-feed-intro-letter',
+}: {
+  text: string
+  startIndex: number
+  letterClassName?: string
+}) {
+  return (
+    <>
+      {text.split('').map((letter, index) => (
+        <span
+          key={`${letter}-${startIndex + index}`}
+          className={`${letterClassName} inline-block`}
+          style={{ animationDelay: `${(startIndex + index) * INTRO_LETTER_STAGGER_MS}ms` }}
+        >
+          {letter === ' ' ? '\u00A0' : letter}
+        </span>
+      ))}
+    </>
+  )
+}
+
+function PoweredByIntro({ compact }: { compact: boolean }) {
+  const textClass = compact ? 'text-[10px] leading-none' : 'text-xs leading-relaxed'
+
+  return (
+    <a
+      href={rootBaseUrl()}
+      title="Create your own group on Organizr"
+      className={`scrolling-feed-powered-by-intro inline-flex items-center justify-center gap-1.5 ${textClass}`}
+      data-testid="scrolling-feed-powered-by"
+    >
+      <span className="font-medium tracking-wide">
+        <IntroLetters text={POWERED_BY_TEXT} startIndex={0} />
+      </span>
+      <OrganizrLogo size={compact ? 12 : 14} showWordmark={false} />
+      <span
+        className="scrolling-feed-organizr-flash font-medium tracking-tight"
+        aria-label="Organizr"
+      >
+        <IntroLetters
+          text={ORGANIZR_WORD}
+          startIndex={POWERED_BY_TEXT.length}
+          letterClassName="scrolling-feed-intro-letter scrolling-feed-organizr-letter"
+        />
+      </span>
+    </a>
+  )
+}
 
 function scheduleIdle(callback: () => void): () => void {
   if (typeof window === 'undefined') return () => {}
@@ -401,11 +459,13 @@ export function ScrollingFeedUpdateBar({
   sponsors = [],
   compact = false,
 }: Props) {
-  const [phase, setPhase] = useState<Phase>('powered-by')
+  const [phase, setPhase] = useState<Phase>('intro')
   const [items, setItems] = useState<ScrollingFeedTickerItem[]>([])
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false)
   const [visible, setVisible] = useState(true)
-  const markedSeenRef = useRef(false)
+  const introStartedAtRef = useRef(
+    typeof performance !== 'undefined' ? performance.now() : Date.now(),
+  )
 
   useEffect(() => {
     if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return
@@ -421,6 +481,25 @@ export function ScrollingFeedUpdateBar({
 
     let cancelled = false
     let cancelIdle: (() => void) | null = null
+    let transitionTimer: number | null = null
+
+    const revealTicker = (next: ScrollingFeedTickerItem[]) => {
+      const elapsed =
+        (typeof performance !== 'undefined' ? performance.now() : Date.now()) -
+        introStartedAtRef.current
+      const wait = Math.max(0, SCROLLING_FEED_INTRO_MIN_MS - elapsed)
+
+      transitionTimer = window.setTimeout(() => {
+        if (cancelled) return
+        setVisible(false)
+        window.setTimeout(() => {
+          if (cancelled) return
+          setItems(next)
+          setPhase('ticker')
+          setVisible(true)
+        }, 160)
+      }, wait)
+    }
 
     const loadTicker = () => {
       cancelIdle = scheduleIdle(async () => {
@@ -431,21 +510,12 @@ export function ScrollingFeedUpdateBar({
           const parsed = parseScrollingFeedApiResponse(await res.json())
           if (!parsed?.enabled || cancelled) return
 
-          const tickerItems = apiItemsToTickerItems(parsed.items ?? [])
-          const seen = readScrollingFeedSeenKeys(slug)
-          const unseen = filterUnseenScrollingFeedItems(tickerItems, seen)
-          if (unseen.length === 0 || cancelled) return
+          const latest = takeLatestScrollingFeedItems(apiItemsToTickerItems(parsed.items ?? []))
+          if (latest.length === 0 || cancelled) return
 
-          const next = appendSponsorToTickerItems(unseen, sponsors)
-          setVisible(false)
-          window.setTimeout(() => {
-            if (cancelled) return
-            setItems(next)
-            setPhase('ticker')
-            setVisible(true)
-          }, 160)
+          revealTicker(appendSponsorToTickerItems(latest, sponsors))
         } catch {
-          // keep powered-by on network errors
+          // keep powered-by intro on network errors
         }
       })
     }
@@ -459,15 +529,10 @@ export function ScrollingFeedUpdateBar({
     return () => {
       cancelled = true
       cancelIdle?.()
+      if (transitionTimer != null) window.clearTimeout(transitionTimer)
       window.removeEventListener('load', loadTicker)
     }
   }, [feedEnabled, slug, sponsors])
-
-  useEffect(() => {
-    if (phase !== 'ticker' || items.length === 0 || markedSeenRef.current) return
-    markedSeenRef.current = true
-    markScrollingFeedItemsSeen(slug, items)
-  }, [phase, items, slug])
 
   const durationSeconds = useMemo(
     () => scrollingFeedMarqueeDurationSeconds(items.length),
@@ -521,12 +586,17 @@ export function ScrollingFeedUpdateBar({
 
   return (
     <div
-      className={`transition-opacity duration-300 ${
+      className={`flex justify-center transition-opacity duration-300 ${
         visible ? 'opacity-100' : 'opacity-0'
       } ${compact ? '' : 'border-t border-zinc-800/70 pt-5'}`}
-      data-testid="scrolling-feed-powered-by"
+      style={
+        {
+          // Expose brand color for the letter shimmer CSS.
+          ['--organizr-brand' as string]: ORGANIZR_BRAND_COLOR,
+        } as CSSProperties
+      }
     >
-      <OrgPublicPoweredByStrip slug={slug} compact={compact} />
+      <PoweredByIntro compact={compact} />
     </div>
   )
 }

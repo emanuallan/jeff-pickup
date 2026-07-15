@@ -1,24 +1,17 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import type { OrgSessionFeedItem } from '@/lib/org-session-feed'
 import type { PublicSponsor } from '@/lib/sponsorship'
 import {
-  SCROLLING_FEED_SEEN_CAP,
-  SCROLLING_FEED_SEEN_STORAGE_PREFIX,
+  SCROLLING_FEED_TICKER_LIMIT,
   apiItemsToTickerItems,
   appendSponsorToTickerItems,
   buildScrollingFeedTickerItems,
   buildSponsorTickerItem,
-  filterUnseenScrollingFeedItems,
-  markScrollingFeedItemsSeen,
   parseScrollingFeedApiResponse,
-  parseScrollingFeedSeenKeys,
   pickTopSponsorForTicker,
-  readScrollingFeedSeenKeys,
   scrollingFeedItemKey,
   scrollingFeedMarqueeDurationSeconds,
-  scrollingFeedSeenStorageKey,
-  trimScrollingFeedSeenKeys,
-  writeScrollingFeedSeenKeys,
+  takeLatestScrollingFeedItems,
 } from './scrolling-feed-update-bar'
 
 const mvpItem: OrgSessionFeedItem = {
@@ -81,18 +74,24 @@ describe('buildScrollingFeedTickerItems', () => {
       headline: 'Sam — 2 goals, 1 assist',
       eventShortId: 'def456',
     })
-    // Session was Jul 12 ET; post/finalize was Jul 14 — ticker must use session date.
     expect(items[0].dateLabel).toMatch(/Jul 12/)
     expect(items[0].dateLabel).not.toMatch(/Jul 14/)
     expect(items[1].dateLabel).toMatch(/Jul 13/)
   })
 })
 
-describe('filterUnseenScrollingFeedItems', () => {
-  it('keeps only items not in the seen set', () => {
-    const items = buildScrollingFeedTickerItems([mvpItem, statsItem])
-    const unseen = filterUnseenScrollingFeedItems(items, new Set(['mvp:event-1']))
-    expect(unseen.map((item) => item.id)).toEqual(['player_stats:event-2:p2'])
+describe('takeLatestScrollingFeedItems', () => {
+  it('keeps only the first N items (newest-first)', () => {
+    const many = Array.from({ length: 15 }, (_, i) => ({ id: `item-${i}` }))
+    expect(takeLatestScrollingFeedItems(many)).toHaveLength(SCROLLING_FEED_TICKER_LIMIT)
+    expect(takeLatestScrollingFeedItems(many).map((item) => item.id)).toEqual(
+      many.slice(0, 10).map((item) => item.id),
+    )
+    expect(takeLatestScrollingFeedItems(many, 3).map((item) => item.id)).toEqual([
+      'item-0',
+      'item-1',
+      'item-2',
+    ])
   })
 })
 
@@ -127,66 +126,6 @@ describe('sponsor ticker helpers', () => {
   it('does not append when there are no sponsors', () => {
     const feed = buildScrollingFeedTickerItems([mvpItem])
     expect(appendSponsorToTickerItems(feed, [])).toEqual(feed)
-  })
-})
-
-describe('seen key localStorage helpers', () => {
-  const storage = new Map<string, string>()
-
-  beforeEach(() => {
-    storage.clear()
-    vi.stubGlobal('localStorage', {
-      getItem: (key: string) => storage.get(key) ?? null,
-      setItem: (key: string, value: string) => {
-        storage.set(key, value)
-      },
-      removeItem: (key: string) => {
-        storage.delete(key)
-      },
-    })
-  })
-
-  afterEach(() => {
-    vi.unstubAllGlobals()
-  })
-
-  it('uses a per-slug storage key', () => {
-    expect(scrollingFeedSeenStorageKey('jeff')).toBe(`${SCROLLING_FEED_SEEN_STORAGE_PREFIX}jeff`)
-  })
-
-  it('parses and trims seen keys', () => {
-    expect(parseScrollingFeedSeenKeys(null)).toEqual([])
-    expect(parseScrollingFeedSeenKeys('not-json')).toEqual([])
-    expect(parseScrollingFeedSeenKeys('["a","b"]')).toEqual(['a', 'b'])
-
-    const many = Array.from({ length: SCROLLING_FEED_SEEN_CAP + 5 }, (_, i) => `k${i}`)
-    const trimmed = trimScrollingFeedSeenKeys(many)
-    expect(trimmed).toHaveLength(SCROLLING_FEED_SEEN_CAP)
-    expect(trimmed[0]).toBe('k5')
-  })
-
-  it('reads and writes seen keys with FIFO trim', () => {
-    writeScrollingFeedSeenKeys('jeff', ['mvp:event-1'])
-    expect(readScrollingFeedSeenKeys('jeff')).toEqual(new Set(['mvp:event-1']))
-
-    writeScrollingFeedSeenKeys('jeff', ['player_stats:event-2:p2'])
-    expect(readScrollingFeedSeenKeys('jeff')).toEqual(
-      new Set(['mvp:event-1', 'player_stats:event-2:p2']),
-    )
-
-    const overflow = Array.from({ length: SCROLLING_FEED_SEEN_CAP + 2 }, (_, i) => `extra:${i}`)
-    writeScrollingFeedSeenKeys('jeff', overflow)
-    const seen = [...readScrollingFeedSeenKeys('jeff')]
-    expect(seen).toHaveLength(SCROLLING_FEED_SEEN_CAP)
-    expect(seen.includes('mvp:event-1')).toBe(false)
-  })
-
-  it('marks feed items seen but skips sponsor ids', () => {
-    markScrollingFeedItemsSeen('jeff', [
-      { id: 'mvp:event-1' },
-      { id: 'sponsor:sponsor-1' },
-    ])
-    expect(readScrollingFeedSeenKeys('jeff')).toEqual(new Set(['mvp:event-1']))
   })
 })
 
