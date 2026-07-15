@@ -1,9 +1,12 @@
 import type { ComponentProps } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { cleanup, render, screen } from '@testing-library/react'
+import { act, cleanup, render, screen } from '@testing-library/react'
+import { makeRosterEntry } from '@/test/fixtures/events'
+import type { LiveSessionPayload } from '@/lib/live-session-poll'
 import { ParticipationPanel } from './participation-panel'
 
 const reopenJoinPanelMock = vi.fn()
+let liveSessionListener: ((payload: LiveSessionPayload) => void) | null = null
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({
@@ -14,6 +17,21 @@ vi.mock('next/navigation', () => ({
     forward: vi.fn(),
     prefetch: vi.fn(),
   }),
+}))
+
+vi.mock('@/lib/live-session-poll', () => ({
+  subscribeLiveSessionPoll: (
+    _orgSlug: string,
+    _eventRef: string,
+    listener: (payload: LiveSessionPayload) => void,
+  ) => {
+    liveSessionListener = listener
+    return () => {
+      if (liveSessionListener === listener) {
+        liveSessionListener = null
+      }
+    }
+  },
 }))
 
 const motionState = {
@@ -47,7 +65,17 @@ vi.mock('./join-section-lazy', () => ({
 }))
 
 vi.mock('./roster-list-lazy', () => ({
-  RosterListLazy: () => <ul data-testid="roster-list" />,
+  RosterListLazy: ({
+    entries,
+  }: {
+    entries: Array<{ id: string; display_name: string }>
+  }) => (
+    <ul data-testid="roster-list">
+      {entries.map((entry) => (
+        <li key={entry.id}>{entry.display_name}</li>
+      ))}
+    </ul>
+  ),
 }))
 
 vi.mock('./waitlist-section', () => ({
@@ -87,6 +115,7 @@ const basePanelProps: ComponentProps<typeof ParticipationPanel> = {
   waitlistEnabled: false,
   isOnline: false,
   spotsLeft: 10,
+  capacity: 20,
   participant,
   mySignup: null,
   eventTitle: 'Tuesday Pickup',
@@ -115,6 +144,7 @@ describe('ParticipationPanel signup confirmation', () => {
     motionState.joinClosing = false
     motionState.controlsClosing = false
     reopenJoinPanelMock.mockReset()
+    liveSessionListener = null
   })
 
   afterEach(() => {
@@ -151,5 +181,32 @@ describe('ParticipationPanel signup confirmation', () => {
       screen.getByRole('heading', { name: /thanks for signing up, jeff!/i }),
     ).toBeInTheDocument()
     expect(reopenJoinPanelMock).toHaveBeenCalled()
+  })
+
+  it('updates the roster list from the shared live session poll', () => {
+    renderPanel({
+      publicRosterEnabled: true,
+      roster: [makeRosterEntry({ id: 's1', display_name: 'Alex' })],
+      headcount: 1,
+    })
+
+    expect(screen.getByText('Alex')).toBeInTheDocument()
+    expect(screen.getByText('(1)')).toBeInTheDocument()
+    expect(liveSessionListener).toBeTypeOf('function')
+
+    act(() => {
+      liveSessionListener?.({
+        headcount: 2,
+        roster: [
+          makeRosterEntry({ id: 's1', display_name: 'Alex' }),
+          makeRosterEntry({ id: 's2', display_name: 'Sam' }),
+        ],
+        waitlist: [],
+      })
+    })
+
+    expect(screen.getByText('Alex')).toBeInTheDocument()
+    expect(screen.getByText('Sam')).toBeInTheDocument()
+    expect(screen.getByText('(2)')).toBeInTheDocument()
   })
 })

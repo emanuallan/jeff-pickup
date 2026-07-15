@@ -3,8 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { hexToRgba } from '@/lib/colors'
 import { showHeadcountChipOnCard } from '@/lib/headcount-display'
-
-const POLL_MS = 20_000
+import { subscribeLiveSessionPoll } from '@/lib/live-session-poll'
 
 type Props = {
   orgSlug: string
@@ -43,52 +42,27 @@ export function LiveHeadcountPill({
   useEffect(() => {
     if (!active) return
 
-    let cancelled = false
+    return subscribeLiveSessionPoll(orgSlug, eventRef, (payload) => {
+      const next = payload.headcount
+      const prev = prevHeadcount.current
+      if (next === prev) return
 
-    async function poll() {
-      if (document.visibilityState !== 'visible') return
-
-      try {
-        const res = await fetch(`/api/org/${orgSlug}/cal/${eventRef}/headcount`)
-        if (!res.ok || cancelled) return
-
-        const data = (await res.json()) as { headcount?: number }
-        const next = data.headcount
-        if (typeof next !== 'number' || cancelled) return
-
-        const prev = prevHeadcount.current
-        if (next !== prev) {
-          if (next > prev) {
-            setPulse(true)
-            if (pulseTimer.current) clearTimeout(pulseTimer.current)
-            pulseTimer.current = setTimeout(() => setPulse(false), 650)
-          }
-
-          prevHeadcount.current = next
-          setHeadcount(next)
-        }
-      } catch {
-        // Best-effort polling — ignore transient network errors.
+      if (next > prev) {
+        setPulse(true)
+        if (pulseTimer.current) clearTimeout(pulseTimer.current)
+        pulseTimer.current = setTimeout(() => setPulse(false), 650)
       }
-    }
 
-    function onVisibilityChange() {
-      if (document.visibilityState === 'visible') {
-        void poll()
-      }
-    }
+      prevHeadcount.current = next
+      setHeadcount(next)
+    })
+  }, [active, orgSlug, eventRef])
 
-    void poll()
-    const interval = setInterval(() => void poll(), POLL_MS)
-    document.addEventListener('visibilitychange', onVisibilityChange)
-
+  useEffect(() => {
     return () => {
-      cancelled = true
-      clearInterval(interval)
-      document.removeEventListener('visibilitychange', onVisibilityChange)
       if (pulseTimer.current) clearTimeout(pulseTimer.current)
     }
-  }, [active, orgSlug, eventRef])
+  }, [])
 
   if (!showHeadcountChipOnCard(headcount, { cancelled })) {
     return null

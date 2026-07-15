@@ -1,4 +1,4 @@
-import { getPublicOrgAndEvent, getPublicRosterLive } from '@/lib/public-data'
+import { getPublicOrgAndEvent, getPublicRosterLive, getPublicWaitlistLive } from '@/lib/public-data'
 import { rosterHeadcount } from '@/lib/signups'
 
 type Props = {
@@ -13,10 +13,19 @@ export async function GET(_request: Request, { params }: Props) {
     return Response.json({ error: 'Not found' }, { status: 404 })
   }
 
-  const roster = await getPublicRosterLive(result.event.id)
+  const waitlistEnabled = result.event.capacity != null
+  const [roster, waitlist] = await Promise.all([
+    getPublicRosterLive(result.event.id),
+    waitlistEnabled ? getPublicWaitlistLive(result.event.id) : Promise.resolve([]),
+  ])
 
   return Response.json(
-    { headcount: rosterHeadcount(roster), status: result.event.status },
+    {
+      headcount: rosterHeadcount(roster),
+      status: result.event.status,
+      roster,
+      waitlist,
+    },
     {
       headers: {
         'Cache-Control': 'no-store',

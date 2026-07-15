@@ -88,6 +88,7 @@ export async function EventParticipation({ slug, eventId, org, event }: Props) {
       accent={accent}
       accentText={accentText}
       isFull={isFull}
+      capacity={event.capacity}
       waitlistEnabled={waitlistEnabled}
       isOnline={event.location_is_online}
       spotsLeft={spotsLeft}

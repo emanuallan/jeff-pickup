@@ -5,6 +5,7 @@ import type { Participant, MySignup } from '@/lib/participant'
 import type { RosterEntry, SignupListStatus } from '@/lib/signups'
 import type { RosterBadgeInfo } from '@/lib/badges'
 import type { ArrivalStatus } from '@/lib/arrival-status'
+import { subscribeLiveSessionPoll } from '@/lib/live-session-poll'
 import { JoinSectionLazy } from './join-section-lazy'
 import { RosterListLazy } from './roster-list-lazy'
 import { WaitlistSection } from './waitlist-section'
@@ -46,6 +47,7 @@ type Props = JoinProps & {
   roster: RosterEntry[]
   waitlist: RosterEntry[]
   headcount: number
+  capacity?: number | null
   isEnded: boolean
   isCancelled?: boolean
   confirmedMySignupId: string | null
@@ -230,9 +232,21 @@ function ParticipationPanelBody({
 }
 
 export function ParticipationPanel(props: Props) {
-  const { mySignup, isEnded, isCancelled = false, ...rest } = props
+  const {
+    mySignup,
+    isEnded,
+    isCancelled = false,
+    roster,
+    waitlist,
+    headcount,
+    capacity = null,
+    ...rest
+  } = props
   const canJoin = !mySignup && !isEnded && !isCancelled
   const [showJoin, setShowJoin] = useState(canJoin)
+  const [liveRoster, setLiveRoster] = useState(roster)
+  const [liveWaitlist, setLiveWaitlist] = useState(waitlist)
+  const [liveHeadcount, setLiveHeadcount] = useState(headcount)
 
   useEffect(() => {
     if (mySignup || isCancelled) {
@@ -244,6 +258,27 @@ export function ParticipationPanel(props: Props) {
     }
   }, [mySignup, isEnded, isCancelled])
 
+  useEffect(() => {
+    setLiveRoster(roster)
+    setLiveWaitlist(waitlist)
+    setLiveHeadcount(headcount)
+  }, [roster, waitlist, headcount])
+
+  useEffect(() => {
+    if (isCancelled || isEnded) return
+
+    return subscribeLiveSessionPoll(rest.orgSlug, rest.eventId, (payload) => {
+      setLiveRoster(payload.roster)
+      setLiveWaitlist(payload.waitlist)
+      setLiveHeadcount(payload.headcount)
+    })
+  }, [isCancelled, isEnded, rest.orgSlug, rest.eventId])
+
+  const liveIsFull =
+    rest.waitlistEnabled && capacity != null ? liveHeadcount >= capacity : rest.isFull
+  const liveSpotsLeft =
+    capacity != null ? Math.max(0, capacity - liveHeadcount) : rest.spotsLeft
+
   const joinProps = useMemo<JoinProps>(
     () => ({
       orgSlug: rest.orgSlug,
@@ -251,10 +286,10 @@ export function ParticipationPanel(props: Props) {
       eventId: rest.eventId,
       accent: rest.accent,
       accentText: rest.accentText,
-      isFull: rest.isFull,
+      isFull: liveIsFull,
       waitlistEnabled: rest.waitlistEnabled,
       isOnline: rest.isOnline,
-      spotsLeft: rest.spotsLeft,
+      spotsLeft: liveSpotsLeft,
       participant: rest.participant,
       mySignup,
       eventTitle: rest.eventTitle,
@@ -274,10 +309,10 @@ export function ParticipationPanel(props: Props) {
       rest.eventId,
       rest.accent,
       rest.accentText,
-      rest.isFull,
+      liveIsFull,
       rest.waitlistEnabled,
       rest.isOnline,
-      rest.spotsLeft,
+      liveSpotsLeft,
       rest.participant,
       mySignup,
       rest.eventTitle,
@@ -299,6 +334,10 @@ export function ParticipationPanel(props: Props) {
     >
       <ParticipationPanelBody
         {...rest}
+        roster={liveRoster}
+        waitlist={liveWaitlist}
+        headcount={liveHeadcount}
+        capacity={capacity}
         mySignup={mySignup}
         isEnded={isEnded}
         isCancelled={isCancelled}
