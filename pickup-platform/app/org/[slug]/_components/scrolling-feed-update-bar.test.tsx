@@ -1,4 +1,4 @@
-import { cleanup, render, screen, waitFor } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ReactNode } from 'react'
 import { SCROLLING_FEED_SEEN_STORAGE_PREFIX } from '@/lib/scrolling-feed-update-bar'
@@ -198,5 +198,56 @@ describe('ScrollingFeedUpdateBar', () => {
       expect(screen.getAllByText(/brought to you by acme sports/i).length).toBeGreaterThan(0)
     })
     expect(screen.getAllByText('Partner').length).toBeGreaterThan(0)
+  })
+
+  it('can be grabbed, swiped, and resumes from the released position', async () => {
+    mockFetchJson({
+      enabled: true,
+      items: [
+        {
+          id: 'mvp:event-1',
+          kind: 'mvp',
+          headline: 'Alex is session MVP',
+          eventShortId: 'abc123',
+          dateLabel: 'Sun, Jul 12',
+        },
+      ],
+    })
+
+    render(<ScrollingFeedUpdateBar {...baseProps} />)
+
+    await waitFor(() => {
+      expect(screen.getByTestId('scrolling-feed-update-bar')).toBeInTheDocument()
+    })
+
+    const viewport = screen.getByTestId('scrolling-feed-track-viewport')
+    const track = screen.getByTestId('scrolling-feed-marquee-track')
+    Object.defineProperty(track, 'scrollWidth', { configurable: true, value: 400 })
+
+    fireEvent.pointerDown(viewport, {
+      pointerId: 1,
+      pointerType: 'touch',
+      clientX: 200,
+      button: 0,
+    })
+    expect(viewport).toHaveClass('cursor-grabbing')
+
+    fireEvent.pointerMove(viewport, {
+      pointerId: 1,
+      pointerType: 'touch',
+      clientX: 100,
+    })
+    expect(track.style.transform).toBe('translateX(-100px)')
+
+    fireEvent.pointerUp(viewport, {
+      pointerId: 1,
+      pointerType: 'touch',
+      clientX: 100,
+    })
+
+    expect(viewport).toHaveClass('cursor-grab')
+    expect(track.style.transform).toBe('')
+    expect(track.style.animationName).toBe('scrolling-feed-marquee')
+    expect(track.style.animationDelay).toBe('-18s')
   })
 })

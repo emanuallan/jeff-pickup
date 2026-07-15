@@ -744,7 +744,6 @@ textarea {
 	will-change: transform;
 }
 
-.scrolling-feed-update-bar:hover .scrolling-feed-marquee-track,
 .scrolling-feed-update-bar:focus-within .scrolling-feed-marquee-track {
 	animation-play-state: paused;
 }

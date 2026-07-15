@@ -2,7 +2,14 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type PointerEvent as ReactPointerEvent,
+  type ReactNode,
+} from 'react'
 import { accentOnDark, hexToRgba, readableTextColor } from '@/lib/colors'
 import { orgPublicEventHref } from '@/lib/org-public-nav'
 import type { PublicSponsor } from '@/lib/sponsorship'
@@ -240,9 +247,103 @@ function TickerTrack({
   animate: boolean
   durationSeconds: number
 }) {
+  const trackRef = useRef<HTMLDivElement>(null)
+  const dragRef = useRef<{
+    pointerId: number
+    startX: number
+    startTranslate: number
+    currentTranslate: number
+    moved: boolean
+  } | null>(null)
+  const suppressClickRef = useRef(false)
+  const [dragging, setDragging] = useState(false)
   const segments = items.map((item) => (
     <TickerSegment key={item.id} item={item} accent={accent} compact={compact} />
   ))
+
+  const translatedX = (element: HTMLElement): number => {
+    const transform = window.getComputedStyle(element).transform
+    if (!transform || transform === 'none') return 0
+
+    const matrix3d = transform.match(/^matrix3d\((.+)\)$/)
+    if (matrix3d) {
+      const values = matrix3d[1].split(',').map(Number)
+      return Number.isFinite(values[12]) ? values[12] : 0
+    }
+
+    const matrix = transform.match(/^matrix\((.+)\)$/)
+    if (matrix) {
+      const values = matrix[1].split(',').map(Number)
+      return Number.isFinite(values[4]) ? values[4] : 0
+    }
+
+    return 0
+  }
+
+  const normalizeTranslate = (translate: number, cycleWidth: number): number => {
+    if (cycleWidth <= 0) return translate
+    return ((translate % cycleWidth) - cycleWidth) % cycleWidth
+  }
+
+  const handlePointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (event.button !== 0 && event.pointerType === 'mouse') return
+    const track = trackRef.current
+    if (!track) return
+
+    const currentTranslate = translatedX(track)
+    dragRef.current = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startTranslate: currentTranslate,
+      currentTranslate,
+      moved: false,
+    }
+    suppressClickRef.current = false
+    track.style.animationName = 'none'
+    track.style.transform = `translateX(${currentTranslate}px)`
+    event.currentTarget.setPointerCapture?.(event.pointerId)
+    setDragging(true)
+  }
+
+  const handlePointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
+    const drag = dragRef.current
+    const track = trackRef.current
+    if (!drag || !track || drag.pointerId !== event.pointerId) return
+
+    const delta = event.clientX - drag.startX
+    const cycleWidth = track.scrollWidth / 2
+    const nextTranslate = normalizeTranslate(drag.startTranslate + delta, cycleWidth)
+    drag.currentTranslate = nextTranslate
+    if (Math.abs(delta) > 4) {
+      drag.moved = true
+      suppressClickRef.current = true
+    }
+    track.style.transform = `translateX(${nextTranslate}px)`
+  }
+
+  const finishDrag = (event: ReactPointerEvent<HTMLDivElement>) => {
+    const drag = dragRef.current
+    const track = trackRef.current
+    if (!drag || !track || drag.pointerId !== event.pointerId) return
+
+    const cycleWidth = track.scrollWidth / 2
+    const normalized = normalizeTranslate(drag.currentTranslate, cycleWidth)
+    const progress = cycleWidth > 0 ? -normalized / cycleWidth : 0
+
+    track.style.transform = ''
+    track.style.animationName = 'none'
+    // Restart the CSS animation at the position where the user released it.
+    void track.offsetWidth
+    track.style.animationDelay = `${-(progress * durationSeconds)}s`
+    track.style.animationName = 'scrolling-feed-marquee'
+
+    if (drag.moved && document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur()
+    }
+    event.currentTarget.releasePointerCapture?.(event.pointerId)
+    dragRef.current = null
+    setDragging(false)
+  }
 
   if (!animate) {
     return (
@@ -253,10 +354,27 @@ function TickerTrack({
   }
 
   return (
-    <div className="scrolling-feed-mask relative min-w-0 flex-1 overflow-hidden">
+    <div
+      className={`scrolling-feed-mask relative min-w-0 flex-1 overflow-hidden select-none touch-pan-y ${
+        dragging ? 'cursor-grabbing' : 'cursor-grab'
+      }`}
+      data-testid="scrolling-feed-track-viewport"
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={finishDrag}
+      onPointerCancel={finishDrag}
+      onClickCapture={(event) => {
+        if (!suppressClickRef.current) return
+        event.preventDefault()
+        event.stopPropagation()
+        suppressClickRef.current = false
+      }}
+    >
       <div
+        ref={trackRef}
         className="scrolling-feed-marquee-track flex w-max items-center gap-3"
         style={{ animationDuration: `${durationSeconds}s` }}
+        data-testid="scrolling-feed-marquee-track"
       >
         <div className="flex items-center gap-3">{segments}</div>
         <div className="flex items-center gap-3" aria-hidden>
