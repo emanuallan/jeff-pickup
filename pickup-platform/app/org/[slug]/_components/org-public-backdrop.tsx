@@ -1,11 +1,18 @@
 import { hexToRgba } from '@/lib/colors'
 
 /** Subtle branded backdrop using the group's accent color. */
-export function OrgPublicBackdrop({ accent }: { accent: string }) {
+export function OrgPublicBackdrop({
+  accent,
+  className = 'fixed inset-0 -z-10',
+}: {
+  accent: string
+  /** Override positioning — use `absolute inset-0` inside overlays. */
+  className?: string
+}) {
   const glow = hexToRgba(accent, 0.14)
 
   return (
-    <div className="pointer-events-none fixed inset-0 -z-10 bg-zinc-950">
+    <div className={`pointer-events-none bg-zinc-950 ${className}`}>
       <div
         className="absolute inset-x-0 top-0 h-[28rem]"
         style={{

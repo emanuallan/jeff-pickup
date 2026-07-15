@@ -20,6 +20,22 @@ export type MySignup = {
 
 export type SessionInfo = { participant: Participant | null; mySignup: MySignup | null }
 
+/** Resolve a returning participant from their device session for an org. */
+export const getParticipantForSession = cache(async (
+  token: string | null,
+  orgId: string,
+): Promise<Participant | null> => {
+  if (!token) return null
+
+  const supabase = await createClient()
+  const { data } = await supabase.rpc('get_participant_for_session', {
+    p_session_token: token,
+    p_org_id: orgId,
+  })
+
+  return (data as Participant | null) ?? null
+})
+
 /** Returning-participant lookup. Both RPCs share one client and run in parallel. */
 export const getSessionInfo = cache(async (
   token: string | null,
