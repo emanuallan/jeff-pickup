@@ -36,6 +36,8 @@ export function OrgHomeShell({
   sponsors = [],
   showSponsorshipCta = false,
   orgName,
+  orgLogoUrl = null,
+  feedEnabled = false,
 }: {
   children: ReactNode
   bottomChrome: ReactNode
@@ -44,6 +46,8 @@ export function OrgHomeShell({
   slug: string
   accent: string
   orgName: string
+  orgLogoUrl?: string | null
+  feedEnabled?: boolean
   /** When false, skip the inline site footer (demo org). */
   showSiteFooter?: boolean
   sponsors?: PublicSponsor[]
@@ -69,6 +73,8 @@ export function OrgHomeShell({
             slug={slug}
             orgName={orgName}
             accent={accent}
+            orgLogoUrl={orgLogoUrl}
+            feedEnabled={feedEnabled}
             sponsors={sponsors}
             showSponsorshipCta={showSponsorshipCta}
           />

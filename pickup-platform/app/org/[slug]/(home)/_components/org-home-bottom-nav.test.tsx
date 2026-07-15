@@ -24,6 +24,7 @@ describe('OrgHomeBottomNav', () => {
         accent="#2563eb"
         basePath="/"
         slug="jeff"
+        orgName="Jeff Soccer"
         isOrganizer
       />,
     )
@@ -40,6 +41,7 @@ describe('OrgHomeBottomNav', () => {
         accent="#2563eb"
         basePath="/"
         slug="jeff"
+        orgName="Jeff Soccer"
       />,
     )
 

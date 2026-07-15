@@ -5,6 +5,7 @@ import { getPublicOrgBySlug, getPublicUpcomingEventsForOrg } from '@/lib/public-
 import { pickFeaturedUpcomingEvent } from '@/lib/events'
 import { getOrgForMember } from '@/lib/orgs'
 import { orgFeatures } from '@/lib/org-features'
+import { isOrgSessionFeedEnabled } from '@/lib/org-session-feed'
 import { getPublicSponsors } from '@/lib/sponsorship.server'
 import { ORG_PUBLIC_NAV_BASE } from '@/lib/org-public-nav'
 import { isLeaderboardUnlocked } from '@/lib/engagement'
@@ -59,6 +60,8 @@ export default async function OrgHomeLayout({ children, params }: Props) {
   const defaultEventShortId = featured?.short_id ?? events[0]?.short_id ?? null
   const isOrganizer = !!membership
   const showSponsorshipCta = orgFeatures(org).group_sponsorships
+  const feedEnabled = isOrgSessionFeedEnabled(org)
+  const orgLogoUrl = org.branding.logo_url
 
   const showSiteFooter = slug !== 'demo'
 
@@ -67,6 +70,8 @@ export default async function OrgHomeLayout({ children, params }: Props) {
       slug={slug}
       orgName={org.name}
       accent={accent}
+      orgLogoUrl={orgLogoUrl}
+      feedEnabled={feedEnabled}
       footerOnly={navItems.length <= 1}
       isOrganizer={isOrganizer}
       showSiteFooter={showSiteFooter}
@@ -79,6 +84,10 @@ export default async function OrgHomeLayout({ children, params }: Props) {
             accent={accent}
             basePath={ORG_PUBLIC_NAV_BASE}
             slug={slug}
+            orgName={org.name}
+            orgLogoUrl={orgLogoUrl}
+            feedEnabled={feedEnabled}
+            sponsors={sponsors}
             isOrganizer={isOrganizer}
           />
         </Suspense>

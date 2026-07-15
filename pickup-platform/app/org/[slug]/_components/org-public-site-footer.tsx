@@ -1,11 +1,13 @@
 import type { PublicSponsor } from '@/lib/sponsorship'
-import { OrgPublicPoweredByStrip } from './org-public-powered-by-strip'
 import { OrgSponsorSection } from './org-sponsor-footer'
+import { ScrollingFeedUpdateBar } from './scrolling-feed-update-bar'
 
 type Props = {
   slug: string
   orgName: string
   accent: string
+  orgLogoUrl?: string | null
+  feedEnabled?: boolean
   sponsors?: PublicSponsor[]
   showSponsorshipCta?: boolean
   showPoweredBy?: boolean
@@ -13,11 +15,13 @@ type Props = {
   showPoweredByOnMobile?: boolean
 }
 
-/** Bottom-of-page public org chrome: sponsor recognition + optional powered-by strip. */
+/** Bottom-of-page public org chrome: sponsor recognition + optional powered-by / ticker strip. */
 export function OrgPublicSiteFooter({
   slug,
   orgName,
   accent,
+  orgLogoUrl = null,
+  feedEnabled = false,
   sponsors = [],
   showSponsorshipCta = false,
   showPoweredBy = true,
@@ -38,8 +42,15 @@ export function OrgPublicSiteFooter({
         />
       ) : null}
       {showPoweredBy ? (
-        <div className={`border-t border-zinc-800/70 pt-5 ${poweredByVisibility}`}>
-          <OrgPublicPoweredByStrip slug={slug} />
+        <div className={poweredByVisibility}>
+          <ScrollingFeedUpdateBar
+            slug={slug}
+            accent={accent}
+            orgName={orgName}
+            orgLogoUrl={orgLogoUrl}
+            feedEnabled={feedEnabled}
+            sponsors={sponsors}
+          />
         </div>
       ) : null}
     </footer>

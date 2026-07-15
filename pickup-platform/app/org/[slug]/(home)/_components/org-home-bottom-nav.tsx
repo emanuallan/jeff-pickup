@@ -11,8 +11,9 @@ import {
 } from '@/lib/org-public-nav'
 import { accentOnDark } from '@/lib/colors'
 import { ORG_PUBLIC_CONTENT_MAX } from '@/lib/org-public-layout'
-import { OrgPublicPoweredByStrip } from '../../_components/org-public-powered-by-strip'
+import type { PublicSponsor } from '@/lib/sponsorship'
 import { OrganizerConsoleFooterLink } from '../../_components/organizer-console-footer-link'
+import { ScrollingFeedUpdateBar } from '../../_components/scrolling-feed-update-bar'
 import { IconFeed, IconLeaderboard, IconMatchday } from './org-home-nav-icons'
 
 function rootBaseUrl(): string {
@@ -28,6 +29,10 @@ type Props = {
   accent: string
   basePath: string
   slug: string
+  orgName: string
+  orgLogoUrl?: string | null
+  feedEnabled?: boolean
+  sponsors?: PublicSponsor[]
   isOrganizer?: boolean
 }
 
@@ -201,6 +206,10 @@ export function OrgHomeBottomNav({
   accent,
   basePath,
   slug,
+  orgName,
+  orgLogoUrl = null,
+  feedEnabled = false,
+  sponsors = [],
   isOrganizer = false,
 }: Props) {
   const { navItems, activeKey } = useOrgHomeNavState({ items, basePath })
@@ -244,11 +253,19 @@ export function OrgHomeBottomNav({
         </footer>
       ) : (
         <footer
-          className={`mx-auto max-w-lg px-5 py-1.5 pb-[max(0.25rem,env(safe-area-inset-bottom))] ${
+          className={`mx-auto max-w-lg py-1.5 pb-[max(0.25rem,env(safe-area-inset-bottom))] ${
             showTabs ? 'border-t border-white/10' : 'border-t border-zinc-800/80'
-          }`}
+          } px-5 has-[[data-testid=scrolling-feed-update-bar]]:max-w-none has-[[data-testid=scrolling-feed-update-bar]]:border-t-0 has-[[data-testid=scrolling-feed-update-bar]]:px-0 has-[[data-testid=scrolling-feed-update-bar]]:py-0`}
         >
-          <OrgPublicPoweredByStrip slug={slug} compact />
+          <ScrollingFeedUpdateBar
+            slug={slug}
+            accent={accent}
+            orgName={orgName}
+            orgLogoUrl={orgLogoUrl}
+            feedEnabled={feedEnabled}
+            sponsors={sponsors}
+            compact
+          />
         </footer>
       )}
     </div>
