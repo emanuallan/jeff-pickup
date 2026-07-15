@@ -5,10 +5,10 @@ import {
   formatPlayerStatsFeedHeadline,
 } from '@/lib/org-session-feed'
 import type { PublicSponsor } from '@/lib/sponsorship'
-import { sortPublicSponsorsByAmount } from '@/lib/sponsorship'
 
 /** How many recent feed highlights to show in the ticker. */
 export const SCROLLING_FEED_TICKER_LIMIT = 10
+export const SCROLLING_FEED_SPONSOR_INTERVAL = 5
 
 /** Minimum time the Powered-by intro stays visible before the ticker.
  * Covers one letter-sweep + Organizr flash (2.8s) plus stagger for ~18 letters. */
@@ -78,9 +78,12 @@ export function takeLatestScrollingFeedItems<T>(
   return items.slice(0, Math.max(0, limit))
 }
 
-export function buildSponsorTickerItem(sponsor: PublicSponsor): ScrollingFeedTickerItem {
+export function buildSponsorTickerItem(
+  sponsor: PublicSponsor,
+  occurrence?: number,
+): ScrollingFeedTickerItem {
   return {
-    id: `sponsor:${sponsor.id}`,
+    id: `sponsor:${sponsor.id}${occurrence == null ? '' : `:${occurrence}`}`,
     kind: 'sponsor',
     headline: `Brought to you by ${sponsor.sponsor_name}`,
     eventShortId: null,
@@ -90,19 +93,64 @@ export function buildSponsorTickerItem(sponsor: PublicSponsor): ScrollingFeedTic
   }
 }
 
-/** Top sponsor by monthly amount for ticker attribution. */
-export function pickTopSponsorForTicker(sponsors: PublicSponsor[]): PublicSponsor | null {
+/**
+ * Weighted sponsor draw: contribution amount is the weight, so a $90 sponsor
+ * has nine times the odds of a $10 sponsor. When an earlier sponsor is
+ * excluded and alternatives exist, weighting applies among the remainder.
+ */
+export function pickWeightedSponsorForTicker(
+  sponsors: PublicSponsor[],
+  random: () => number = Math.random,
+  excludeSponsorId?: string | null,
+): PublicSponsor | null {
   if (sponsors.length === 0) return null
-  return sortPublicSponsorsByAmount(sponsors)[0] ?? null
+
+  const eligible =
+    sponsors.length > 1 && excludeSponsorId
+      ? sponsors.filter((sponsor) => sponsor.id !== excludeSponsorId)
+      : sponsors
+  const weighted = eligible.map((sponsor) => ({
+    sponsor,
+    weight: Math.max(1, sponsor.monthly_amount_cents ?? 0),
+  }))
+  const totalWeight = weighted.reduce((total, entry) => total + entry.weight, 0)
+  const draw = Math.min(Math.max(random(), 0), 0.999999999) * totalWeight
+
+  let cursor = 0
+  for (const entry of weighted) {
+    cursor += entry.weight
+    if (draw < cursor) return entry.sponsor
+  }
+
+  return weighted.at(-1)?.sponsor ?? null
 }
 
-export function appendSponsorToTickerItems(
+/** Insert a weighted sponsor after every N feed items. */
+export function interleaveSponsorsIntoTickerItems(
   feedItems: ScrollingFeedTickerItem[],
   sponsors: PublicSponsor[],
+  random: () => number = Math.random,
+  interval = SCROLLING_FEED_SPONSOR_INTERVAL,
 ): ScrollingFeedTickerItem[] {
-  const top = pickTopSponsorForTicker(sponsors)
-  if (!top) return feedItems
-  return [...feedItems, buildSponsorTickerItem(top)]
+  if (sponsors.length === 0 || interval <= 0) return feedItems
+
+  const result: ScrollingFeedTickerItem[] = []
+  let previousSponsorId: string | null = null
+  let sponsorOccurrence = 0
+
+  feedItems.forEach((item, index) => {
+    result.push(item)
+    if ((index + 1) % interval !== 0) return
+
+    const sponsor = pickWeightedSponsorForTicker(sponsors, random, previousSponsorId)
+    if (!sponsor) return
+
+    result.push(buildSponsorTickerItem(sponsor, sponsorOccurrence))
+    previousSponsorId = sponsor.id
+    sponsorOccurrence += 1
+  })
+
+  return result
 }
 
 export function parseScrollingFeedApiResponse(raw: unknown): ScrollingFeedApiResponse | null {

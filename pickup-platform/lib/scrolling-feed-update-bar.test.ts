@@ -2,13 +2,14 @@ import { describe, expect, it } from 'vitest'
 import type { OrgSessionFeedItem } from '@/lib/org-session-feed'
 import type { PublicSponsor } from '@/lib/sponsorship'
 import {
+  SCROLLING_FEED_SPONSOR_INTERVAL,
   SCROLLING_FEED_TICKER_LIMIT,
   apiItemsToTickerItems,
-  appendSponsorToTickerItems,
   buildScrollingFeedTickerItems,
   buildSponsorTickerItem,
+  interleaveSponsorsIntoTickerItems,
   parseScrollingFeedApiResponse,
-  pickTopSponsorForTicker,
+  pickWeightedSponsorForTicker,
   scrollingFeedItemKey,
   scrollingFeedMarqueeDurationSeconds,
   takeLatestScrollingFeedItems,
@@ -108,24 +109,47 @@ describe('sponsor ticker helpers', () => {
     })
   })
 
-  it('picks the top sponsor by amount', () => {
-    const top = pickTopSponsorForTicker([
-      { ...sponsor, id: 'low', monthly_amount_cents: 1000, sponsor_name: 'Low' },
-      { ...sponsor, id: 'high', monthly_amount_cents: 9000, sponsor_name: 'High' },
-    ])
-    expect(top?.id).toBe('high')
+  const weightedSponsors = [
+    { ...sponsor, id: 'low', monthly_amount_cents: 1000, sponsor_name: 'Low' },
+    { ...sponsor, id: 'high', monthly_amount_cents: 9000, sponsor_name: 'High' },
+  ]
+
+  it('weights sponsor draws by contribution amount', () => {
+    // Low owns the first 10% of the weighted range; high owns the other 90%.
+    expect(pickWeightedSponsorForTicker(weightedSponsors, () => 0.05)?.id).toBe('low')
+    expect(pickWeightedSponsorForTicker(weightedSponsors, () => 0.5)?.id).toBe('high')
   })
 
-  it('appends one sponsor segment after feed items', () => {
-    const feed = buildScrollingFeedTickerItems([mvpItem])
-    const withSponsor = appendSponsorToTickerItems(feed, [sponsor])
-    expect(withSponsor).toHaveLength(2)
-    expect(withSponsor[1].kind).toBe('sponsor')
+  it('excludes the previous sponsor when alternatives exist', () => {
+    expect(pickWeightedSponsorForTicker(weightedSponsors, () => 0.5, 'high')?.id).toBe('low')
+    expect(pickWeightedSponsorForTicker([sponsor], () => 0.5, sponsor.id)?.id).toBe(sponsor.id)
   })
 
-  it('does not append when there are no sponsors', () => {
-    const feed = buildScrollingFeedTickerItems([mvpItem])
-    expect(appendSponsorToTickerItems(feed, [])).toEqual(feed)
+  it('inserts one weighted sponsor after every five feed items', () => {
+    const feed = Array.from({ length: 10 }, (_, index) => ({
+      ...buildScrollingFeedTickerItems([mvpItem])[0],
+      id: `feed-${index}`,
+    }))
+    const interleaved = interleaveSponsorsIntoTickerItems(
+      feed,
+      weightedSponsors,
+      () => 0.5,
+    )
+
+    expect(SCROLLING_FEED_SPONSOR_INTERVAL).toBe(5)
+    expect(interleaved).toHaveLength(12)
+    expect(interleaved[5]).toMatchObject({ kind: 'sponsor', headline: 'Brought to you by High' })
+    expect(interleaved[11]).toMatchObject({ kind: 'sponsor', headline: 'Brought to you by Low' })
+    expect(interleaved[5].id).not.toBe(interleaved[11].id)
+  })
+
+  it('does not insert a sponsor before five feed items or without sponsors', () => {
+    const shortFeed = Array.from({ length: 4 }, (_, index) => ({
+      ...buildScrollingFeedTickerItems([mvpItem])[0],
+      id: `feed-${index}`,
+    }))
+    expect(interleaveSponsorsIntoTickerItems(shortFeed, [sponsor])).toEqual(shortFeed)
+    expect(interleaveSponsorsIntoTickerItems(shortFeed, [])).toEqual(shortFeed)
   })
 })
 

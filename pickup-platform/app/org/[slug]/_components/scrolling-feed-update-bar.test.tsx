@@ -139,15 +139,13 @@ describe('ScrollingFeedUpdateBar', () => {
   it('includes a sponsor segment when ticker is active and sponsors are present', async () => {
     mockFetchJson({
       enabled: true,
-      items: [
-        {
-          id: 'mvp:event-1',
-          kind: 'mvp',
-          headline: 'Alex is session MVP',
-          eventShortId: 'abc123',
-          dateLabel: 'Sun, Jul 12',
-        },
-      ],
+      items: Array.from({ length: 5 }, (_, index) => ({
+        id: `mvp:event-${index}`,
+        kind: 'mvp',
+        headline: `Player ${index} is session MVP`,
+        eventShortId: `event${index}`,
+        dateLabel: 'Sun, Jul 12',
+      })),
     })
 
     render(

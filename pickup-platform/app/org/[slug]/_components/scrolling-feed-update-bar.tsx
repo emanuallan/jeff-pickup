@@ -17,7 +17,7 @@ import type { PublicSponsor } from '@/lib/sponsorship'
 import { safeExternalHref } from '@/lib/social-links'
 import {
   apiItemsToTickerItems,
-  appendSponsorToTickerItems,
+  interleaveSponsorsIntoTickerItems,
   parseScrollingFeedApiResponse,
   scrollingFeedMarqueeDurationSeconds,
   takeLatestScrollingFeedItems,
@@ -517,7 +517,7 @@ export function ScrollingFeedUpdateBar({
           const latest = takeLatestScrollingFeedItems(apiItemsToTickerItems(parsed.items ?? []))
           if (latest.length === 0 || cancelled) return
 
-          revealTicker(appendSponsorToTickerItems(latest, sponsors))
+          revealTicker(interleaveSponsorsIntoTickerItems(latest, sponsors))
         } catch {
           // keep powered-by intro on network errors
         }
