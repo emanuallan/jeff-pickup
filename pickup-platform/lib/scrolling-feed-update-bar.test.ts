@@ -23,10 +23,12 @@ import {
 
 const mvpItem: OrgSessionFeedItem = {
   kind: 'mvp',
-  occurred_at: '2026-07-12T18:00:00.000Z',
+  occurred_at: '2026-07-14T18:00:00.000Z',
   event_id: 'event-1',
   event_short_id: 'abc123',
   event_label: 'Sunday session',
+  event_starts_at: '2026-07-12T22:00:00.000Z',
+  event_timezone: 'America/New_York',
   total_votes: 5,
   winners: [{ participant_id: 'p1', display_name: 'Alex', vote_count: 3 }],
   nominees: [],
@@ -35,10 +37,12 @@ const mvpItem: OrgSessionFeedItem = {
 
 const statsItem: OrgSessionFeedItem = {
   kind: 'player_stats',
-  occurred_at: '2026-07-13T18:00:00.000Z',
+  occurred_at: '2026-07-15T18:00:00.000Z',
   event_id: 'event-2',
   event_short_id: 'def456',
   event_label: 'Wednesday session',
+  event_starts_at: '2026-07-13T22:00:00.000Z',
+  event_timezone: 'America/New_York',
   participant_id: 'p2',
   display_name: 'Sam',
   goals: 2,
@@ -62,7 +66,7 @@ describe('scrollingFeedItemKey', () => {
 })
 
 describe('buildScrollingFeedTickerItems', () => {
-  it('maps feed items to headlines and metadata', () => {
+  it('maps feed items to headlines and session dates (not post times)', () => {
     const items = buildScrollingFeedTickerItems([mvpItem, statsItem])
     expect(items).toHaveLength(2)
     expect(items[0]).toMatchObject({
@@ -77,7 +81,10 @@ describe('buildScrollingFeedTickerItems', () => {
       headline: 'Sam — 2 goals, 1 assist',
       eventShortId: 'def456',
     })
-    expect(items[0].dateLabel).toBeTruthy()
+    // Session was Jul 12 ET; post/finalize was Jul 14 — ticker must use session date.
+    expect(items[0].dateLabel).toMatch(/Jul 12/)
+    expect(items[0].dateLabel).not.toMatch(/Jul 14/)
+    expect(items[1].dateLabel).toMatch(/Jul 13/)
   })
 })
 

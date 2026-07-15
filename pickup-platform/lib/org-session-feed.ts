@@ -25,6 +25,9 @@ export type OrgSessionFeedMvpItem = {
   event_id: string
   event_short_id: string
   event_label: string
+  /** Session start instant — preferred for date labels over occurred_at. */
+  event_starts_at: string | null
+  event_timezone: string | null
   total_votes: number
   winners: OrgSessionFeedMvpWinner[]
   nominees: OrgSessionFeedMvpNominee[]
@@ -37,6 +40,9 @@ export type OrgSessionFeedPlayerStatsItem = {
   event_id: string
   event_short_id: string
   event_label: string
+  /** Session start instant — preferred for date labels over occurred_at. */
+  event_starts_at: string | null
+  event_timezone: string | null
   participant_id: string
   display_name: string
   goals: number
@@ -129,6 +135,11 @@ export function parseOrgSessionFeedItem(raw: unknown): OrgSessionFeedItem | null
   if (typeof value.event_short_id !== 'string') return null
   if (typeof value.event_label !== 'string') return null
 
+  const eventStartsAt =
+    typeof value.event_starts_at === 'string' ? value.event_starts_at : null
+  const eventTimezone =
+    typeof value.event_timezone === 'string' ? value.event_timezone : null
+
   if (value.kind === 'mvp') {
     const totalVotes = Number(value.total_votes)
     if (!Number.isFinite(totalVotes)) return null
@@ -139,6 +150,8 @@ export function parseOrgSessionFeedItem(raw: unknown): OrgSessionFeedItem | null
       event_id: value.event_id,
       event_short_id: value.event_short_id,
       event_label: value.event_label,
+      event_starts_at: eventStartsAt,
+      event_timezone: eventTimezone,
       total_votes: totalVotes,
       winners: parseMvpWinners(value.winners),
       nominees: parseMvpNominees(value.nominees),
@@ -158,6 +171,8 @@ export function parseOrgSessionFeedItem(raw: unknown): OrgSessionFeedItem | null
       event_id: value.event_id,
       event_short_id: value.event_short_id,
       event_label: value.event_label,
+      event_starts_at: eventStartsAt,
+      event_timezone: eventTimezone,
       participant_id: value.participant_id,
       display_name: typeof value.display_name === 'string' ? value.display_name : 'Player',
       goals,
@@ -211,12 +226,21 @@ export function formatPlayerStatsFeedHeadline(item: OrgSessionFeedPlayerStatsIte
 }
 
 /** Short calendar label for feed metadata, e.g. "Sun, Jul 12". */
-export function formatFeedItemDate(iso: string): string {
+export function formatFeedItemDate(iso: string, timeZone?: string | null): string {
   return new Date(iso).toLocaleDateString(undefined, {
     weekday: 'short',
     month: 'short',
     day: 'numeric',
+    ...(timeZone ? { timeZone } : {}),
   })
+}
+
+/** Session/event date for ticker and feed metadata (not post/finalized time). */
+export function formatFeedSessionDate(item: OrgSessionFeedItem): string {
+  if (item.event_starts_at) {
+    return formatFeedItemDate(item.event_starts_at, item.event_timezone)
+  }
+  return item.event_label
 }
 
 export function formatPlayerStatsInline(goals: number, assists: number): string | null {

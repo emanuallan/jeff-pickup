@@ -1,6 +1,6 @@
 import type { OrgSessionFeedItem } from '@/lib/org-session-feed'
 import {
-  formatFeedItemDate,
+  formatFeedSessionDate,
   formatMvpFeedHeadline,
   formatPlayerStatsFeedHeadline,
 } from '@/lib/org-session-feed'
@@ -56,7 +56,7 @@ export function buildScrollingFeedTickerItems(
         kind: 'mvp',
         headline: formatMvpFeedHeadline(item),
         eventShortId: item.event_short_id,
-        dateLabel: formatFeedItemDate(item.occurred_at),
+        dateLabel: formatFeedSessionDate(item),
       }
     }
 
@@ -65,7 +65,7 @@ export function buildScrollingFeedTickerItems(
       kind: 'player_stats',
       headline: formatPlayerStatsFeedHeadline(item),
       eventShortId: item.event_short_id,
-      dateLabel: formatFeedItemDate(item.occurred_at),
+      dateLabel: formatFeedSessionDate(item),
     }
   })
 }
