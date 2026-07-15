@@ -59,7 +59,11 @@ function IntroLetters({
         <span
           key={`${letter}-${startIndex + index}`}
           className={`${letterClassName} inline-block`}
-          style={{ animationDelay: `${(startIndex + index) * INTRO_LETTER_STAGGER_MS}ms` }}
+          style={
+            {
+              ['--intro-letter-delay' as string]: `${(startIndex + index) * INTRO_LETTER_STAGGER_MS}ms`,
+            } as CSSProperties
+          }
         >
           {letter === ' ' ? '\u00A0' : letter}
         </span>

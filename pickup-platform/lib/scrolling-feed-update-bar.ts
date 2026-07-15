@@ -10,8 +10,9 @@ import { sortPublicSponsorsByAmount } from '@/lib/sponsorship'
 /** How many recent feed highlights to show in the ticker. */
 export const SCROLLING_FEED_TICKER_LIMIT = 10
 
-/** Minimum time the Powered-by intro stays visible before the ticker. */
-export const SCROLLING_FEED_INTRO_MIN_MS = 2800
+/** Minimum time the Powered-by intro stays visible before the ticker.
+ * Covers one letter-sweep + Organizr flash (2.8s) plus stagger for ~18 letters. */
+export const SCROLLING_FEED_INTRO_MIN_MS = 4200
 
 export type ScrollingFeedTickerKind = 'mvp' | 'player_stats' | 'sponsor'
 

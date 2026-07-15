@@ -787,74 +787,62 @@ textarea {
 	}
 }
 
-@keyframes scrolling-feed-organizr-letter {
-	0%,
-	6% {
+/* After the shared end flash, hold Organizr on brand color. */
+@keyframes scrolling-feed-organizr-settle {
+	0% {
 		color: #71717a;
 		text-shadow: none;
 	}
-	10%,
-	18% {
-		color: var(--organizr-brand, #6366f1);
-		text-shadow: 0 0 10px color-mix(in srgb, var(--organizr-brand, #6366f1) 40%, transparent);
-	}
-	24%,
-	58% {
-		color: #71717a;
-		text-shadow: none;
-	}
-	/* End flash — all Organizr letters light together after the sweep */
-	64%,
-	70% {
-		color: #e0e7ff;
-		text-shadow:
-			0 0 14px color-mix(in srgb, var(--organizr-brand, #6366f1) 70%, transparent),
-			0 0 28px color-mix(in srgb, var(--organizr-brand, #6366f1) 35%, transparent);
-	}
-	74%,
-	78% {
-		color: var(--organizr-brand, #6366f1);
-		text-shadow: 0 0 12px color-mix(in srgb, var(--organizr-brand, #6366f1) 55%, transparent);
-	}
-	86%,
 	100% {
-		color: #71717a;
+		color: var(--organizr-brand, #6366f1);
 		text-shadow: none;
 	}
 }
 
 @keyframes scrolling-feed-organizr-flash {
 	0%,
-	58%,
-	100% {
+	8% {
 		filter: brightness(1);
 	}
-	64%,
-	70% {
-		filter: brightness(1.35);
+	18%,
+	32% {
+		filter: brightness(1.5);
+		text-shadow:
+			0 0 14px color-mix(in srgb, var(--organizr-brand, #6366f1) 55%, transparent),
+			0 0 28px color-mix(in srgb, var(--organizr-brand, #6366f1) 30%, transparent);
 	}
-	78% {
-		filter: brightness(1.1);
+	48% {
+		filter: brightness(1.2);
+	}
+	100% {
+		filter: brightness(1);
+		text-shadow: none;
 	}
 }
 
 .scrolling-feed-intro-letter {
 	color: #71717a;
-	animation: scrolling-feed-intro-letter 2.8s ease-in-out infinite;
+	animation: scrolling-feed-intro-letter 2.8s ease-in-out var(--intro-letter-delay, 0ms) 1
+		forwards;
 }
 
+/* Sweep with the rest of the phrase, then settle to brand after the end flash. */
 .scrolling-feed-organizr-letter {
-	animation-name: scrolling-feed-organizr-letter;
+	animation:
+		scrolling-feed-intro-letter 2.8s ease-in-out var(--intro-letter-delay, 0ms) 1 forwards,
+		scrolling-feed-organizr-settle 0.35s ease-out 3.55s 1 forwards;
 }
 
+/* Delayed so the word flashes once after the full letter sweep. */
 .scrolling-feed-organizr-flash {
-	animation: scrolling-feed-organizr-flash 2.8s ease-in-out infinite;
+	animation: scrolling-feed-organizr-flash 0.9s ease-in-out 3.2s 1 forwards;
 }
 
 @media (prefers-reduced-motion: reduce) {
 	.scrolling-feed-marquee-track,
 	.scrolling-feed-live-dot,
 	.scrolling-feed-intro-letter,
+	.scrolling-feed-organizr-letter,
 	.scrolling-feed-organizr-flash {
 		animation: none !important;
 	}
