@@ -2,6 +2,25 @@ import { createClient } from '@/lib/supabase/server'
 import { computeConversionRate, countUniquePageViewPeople } from '@/lib/event-analytics'
 import { getOrgCapsLeaderboard } from '@/lib/engagement'
 
+export type MetricTrend = {
+  current: number
+  previous: number
+}
+
+/** Nullable averages — periods with no sessions yield null. */
+export type NullableMetricTrend = {
+  current: number | null
+  previous: number | null
+}
+
+export type OrgAnalyticsTrends = {
+  pageViews: MetricTrend
+  joins: MetricTrend
+  newParticipants: MetricTrend
+  sessions: MetricTrend
+  avgAttendance: NullableMetricTrend
+}
+
 export type OrgAnalytics = {
   pageViews: number
   uniqueVisitors: number
@@ -13,6 +32,14 @@ export type OrgAnalytics = {
   avgAttendance: number | null
   activeSignups: number
   topAttendee: { name: string; caps: number } | null
+  trends: OrgAnalyticsTrends | null
+}
+
+export type TrendDirection = 'up' | 'down' | 'flat' | 'new'
+
+export type TrendDisplay = {
+  label: string
+  direction: TrendDirection
 }
 
 type OrgAnalyticsRpcRow = {
@@ -23,6 +50,101 @@ type OrgAnalyticsRpcRow = {
   past_sessions?: number
   avg_attendance?: number | null
   active_signups?: number
+  trends?: {
+    page_views?: { current?: number; previous?: number }
+    joins?: { current?: number; previous?: number }
+    new_participants?: { current?: number; previous?: number }
+    sessions?: { current?: number; previous?: number }
+    avg_attendance?: { current?: number | null; previous?: number | null }
+  }
+}
+
+function parseMetricTrend(raw: { current?: number; previous?: number } | undefined): MetricTrend {
+  return {
+    current: Number(raw?.current ?? 0),
+    previous: Number(raw?.previous ?? 0),
+  }
+}
+
+function parseNullableMetricTrend(
+  raw: { current?: number | null; previous?: number | null } | undefined,
+): NullableMetricTrend {
+  return {
+    current: raw?.current == null ? null : Number(raw.current),
+    previous: raw?.previous == null ? null : Number(raw.previous),
+  }
+}
+
+export function parseOrgAnalyticsTrends(
+  raw: OrgAnalyticsRpcRow['trends'] | null | undefined,
+): OrgAnalyticsTrends | null {
+  if (!raw) return null
+  return {
+    pageViews: parseMetricTrend(raw.page_views),
+    joins: parseMetricTrend(raw.joins),
+    newParticipants: parseMetricTrend(raw.new_participants),
+    sessions: parseMetricTrend(raw.sessions),
+    avgAttendance: parseNullableMetricTrend(raw.avg_attendance),
+  }
+}
+
+/**
+ * Compact week-over-week label for console stat cards.
+ * Returns null when both periods are empty (nothing useful to show).
+ */
+export function formatWeekOverWeekTrend(
+  current: number,
+  previous: number,
+  options?: { asPercent?: boolean; unit?: string },
+): TrendDisplay | null {
+  if (current === 0 && previous === 0) return null
+
+  if (previous === 0) {
+    const unit = options?.unit ? ` ${options.unit}` : ''
+    return {
+      label: `+${formatTrendNumber(current)}${unit} this week`,
+      direction: 'new',
+    }
+  }
+
+  const delta = current - previous
+  if (delta === 0) {
+    return { label: 'Same as last week', direction: 'flat' }
+  }
+
+  const direction: TrendDirection = delta > 0 ? 'up' : 'down'
+  const arrow = direction === 'up' ? '↑' : '↓'
+
+  if (options?.asPercent) {
+    const pct = Math.round((Math.abs(delta) / previous) * 100)
+    return {
+      label: `${arrow}${pct}% vs last week`,
+      direction,
+    }
+  }
+
+  const unit = options?.unit ? ` ${options.unit}` : ''
+  return {
+    label: `${arrow}${formatTrendNumber(Math.abs(delta))}${unit} vs last week`,
+    direction,
+  }
+}
+
+function formatTrendNumber(value: number): string {
+  return Number.isInteger(value) ? String(value) : value.toFixed(1)
+}
+
+/** Prefer attendance WoW when both weeks had sessions; otherwise session count. */
+export function formatPastSessionsTrend(
+  sessions: MetricTrend,
+  avgAttendance: NullableMetricTrend,
+): TrendDisplay | null {
+  if (avgAttendance.current != null && avgAttendance.previous != null) {
+    return formatWeekOverWeekTrend(avgAttendance.current, avgAttendance.previous, {
+      unit: 'avg',
+    })
+  }
+  return formatWeekOverWeekTrend(sessions.current, sessions.previous)
 }
 
 export async function getOrgAnalytics(orgId: string): Promise<OrgAnalytics> {
@@ -60,10 +182,11 @@ export async function getOrgAnalytics(orgId: string): Promise<OrgAnalytics> {
       row.avg_attendance != null ? Number(row.avg_attendance) : null,
     activeSignups: Number(row.active_signups ?? 0),
     topAttendee: top ? { name: top.display_name, caps: top.caps } : null,
+    trends: parseOrgAnalyticsTrends(row.trends),
   }
 }
 
-/** Pre-RPC fallback when migration 027 is not applied. */
+/** Pre-RPC fallback when migration 027+ is not applied. */
 async function getOrgAnalyticsLegacy(orgId: string): Promise<OrgAnalytics> {
   const supabase = await createClient()
   const now = new Date().toISOString()
@@ -148,5 +271,6 @@ async function getOrgAnalyticsLegacy(orgId: string): Promise<OrgAnalytics> {
     avgAttendance,
     activeSignups,
     topAttendee: top ? { name: top.display_name, caps: top.caps } : null,
+    trends: null,
   }
 }

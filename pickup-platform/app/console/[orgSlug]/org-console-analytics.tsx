@@ -1,22 +1,47 @@
 import { ConsoleCard, ConsoleSection } from '../_components/console-ui'
 import { getOrgAnalytics } from '@/lib/org-analytics'
 import { getParticipantHistoryForOrg } from '@/lib/participants'
-import type { OrgAnalytics } from '@/lib/org-analytics'
+import {
+  formatPastSessionsTrend,
+  formatWeekOverWeekTrend,
+  type OrgAnalytics,
+  type TrendDisplay,
+} from '@/lib/org-analytics'
+
+function trendClassName(direction: TrendDisplay['direction']): string {
+  switch (direction) {
+    case 'up':
+      return 'text-emerald-400/90'
+    case 'down':
+      return 'text-rose-400/80'
+    case 'new':
+      return 'text-indigo-300/90'
+    default:
+      return 'text-zinc-500'
+  }
+}
 
 function StatCard({
   label,
   value,
   hint,
+  trend,
 }: {
   label: string
   value: string
   hint?: string
+  trend?: TrendDisplay | null
 }) {
   return (
     <ConsoleCard className="flex min-h-[4.5rem] flex-col justify-center gap-1">
       <div className="text-2xl font-semibold tabular-nums text-zinc-50">{value}</div>
       <div className="text-xs font-medium text-zinc-400">{label}</div>
       {hint ? <div className="text-[11px] leading-snug text-zinc-600">{hint}</div> : null}
+      {trend ? (
+        <div className={`text-[11px] leading-snug tabular-nums ${trendClassName(trend.direction)}`}>
+          {trend.label}
+        </div>
+      ) : null}
     </ConsoleCard>
   )
 }
@@ -47,11 +72,27 @@ export function OrgConsoleAnalytics({ analytics, participantCount, regularCount 
     )
   }
 
+  const trends = analytics.trends
+  const participantsTrend = trends
+    ? formatWeekOverWeekTrend(trends.newParticipants.current, trends.newParticipants.previous)
+    : null
+  const sessionsTrend = trends
+    ? formatPastSessionsTrend(trends.sessions, trends.avgAttendance)
+    : null
+  const pageViewsTrend = trends
+    ? formatWeekOverWeekTrend(trends.pageViews.current, trends.pageViews.previous, {
+        asPercent: true,
+      })
+    : null
+  const joinsTrend = trends
+    ? formatWeekOverWeekTrend(trends.joins.current, trends.joins.previous, { unit: 'joins' })
+    : null
+
   return (
     <section className="mt-10">
       <ConsoleSection
         title="At a glance"
-        description="All-time stats across your public pages and sessions."
+        description="All-time stats with week-over-week changes where available."
       >
         <div className="grid grid-cols-2 gap-3">
           <StatCard
@@ -64,6 +105,7 @@ export function OrgConsoleAnalytics({ analytics, participantCount, regularCount 
                   ? 'Signed up at least once'
                   : undefined
             }
+            trend={participantsTrend}
           />
           <StatCard
             label="Past sessions"
@@ -73,6 +115,7 @@ export function OrgConsoleAnalytics({ analytics, participantCount, regularCount 
                 ? `~${analytics.avgAttendance} avg attendance`
                 : 'None completed yet'
             }
+            trend={sessionsTrend}
           />
           <StatCard
             label="Active sign-ups"
@@ -83,6 +126,7 @@ export function OrgConsoleAnalytics({ analytics, participantCount, regularCount 
             label="Page views"
             value={String(analytics.pageViews)}
             hint={`${analytics.uniqueVisitors} unique visitor${analytics.uniqueVisitors === 1 ? '' : 's'}`}
+            trend={pageViewsTrend}
           />
           <StatCard
             label="Sign-up rate"
@@ -96,6 +140,7 @@ export function OrgConsoleAnalytics({ analytics, participantCount, regularCount 
                   ? 'No sign-ups yet'
                   : 'Needs page traffic'
             }
+            trend={joinsTrend}
           />
           <StatCard
             label="Top attendee"
