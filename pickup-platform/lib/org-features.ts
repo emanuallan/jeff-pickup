@@ -113,25 +113,32 @@ export type OrgFeatureDefinition = {
   key: keyof OrgFeatures
   label: string
   description: string
+  /**
+   * When set, this feature is nested under the parent in settings and only
+   * applies while the parent is on. Managed elsewhere when omitted from groups.
+   */
+  dependsOn?: keyof OrgFeatures
+}
+
+export type OrgFeatureGroupDefinition = {
+  id: string
+  title: string
+  description: string
+  /** Top-level feature keys; dependents are attached via `dependsOn`. */
+  features: (keyof OrgFeatures)[]
 }
 
 export const ORG_FEATURE_DEFINITIONS: OrgFeatureDefinition[] = [
-  {
-    key: 'user_badges',
-    label: 'User badges',
-    description: 'Show milestone, streak, and caps badges on the event roster.',
-  },
-  {
-    key: 'leaderboard',
-    label: 'Leaderboard',
-    description:
-      'Show the caps and streak leaderboard on public pages. The leaderboard only becomes visible after 3 completed sessions.',
-  },
   {
     key: 'returning_signup_modal',
     label: 'Quick signup prompt',
     description:
       'Show returning participants a simplified one-tap signup modal before the full join form.',
+  },
+  {
+    key: 'guest_signups',
+    label: 'Guest sign-ups',
+    description: 'Let participants bring guests when they join or update their sign-up.',
   },
   {
     key: 'public_roster',
@@ -140,9 +147,16 @@ export const ORG_FEATURE_DEFINITIONS: OrgFeatureDefinition[] = [
       "Show who's coming on public session pages. When off, sign-ups still work and participants see a confirmation message.",
   },
   {
-    key: 'guest_signups',
-    label: 'Guest sign-ups',
-    description: 'Let participants bring guests when they join or update their sign-up.',
+    key: 'user_badges',
+    label: 'User badges',
+    description: 'Show milestone, streak, and caps badges next to names on the public roster.',
+    dependsOn: 'public_roster',
+  },
+  {
+    key: 'leaderboard',
+    label: 'Leaderboard',
+    description:
+      'Show the caps and streak leaderboard on public pages. The leaderboard only becomes visible after 3 completed sessions.',
   },
   {
     key: 'session_feedback',
@@ -155,12 +169,14 @@ export const ORG_FEATURE_DEFINITIONS: OrgFeatureDefinition[] = [
     label: 'Session MVP voting',
     description:
       `Let participants vote for a session MVP in the post-session debrief. Voting closes ${MVP_VOTING_WINDOW_HOURS} hours after the session ends.`,
+    dependsOn: 'session_feedback',
   },
   {
     key: 'session_player_stats',
     label: 'Goals and assists',
     description:
       'Let participants self-report goals and assists in the post-session debrief. Best for soccer and similar sports.',
+    dependsOn: 'session_feedback',
   },
   {
     key: 'group_rules',
@@ -175,3 +191,38 @@ export const ORG_FEATURE_DEFINITIONS: OrgFeatureDefinition[] = [
       'Let visitors sponsor your group with monthly contributions. Sponsors appear as logos on your public pages after you approve them.',
   },
 ]
+
+/** Settings form layout — features not listed here are managed in other sections. */
+export const ORG_FEATURE_GROUPS: OrgFeatureGroupDefinition[] = [
+  {
+    id: 'signup',
+    title: 'Sign-up',
+    description: 'How people join a session.',
+    features: ['returning_signup_modal', 'guest_signups'],
+  },
+  {
+    id: 'roster_recognition',
+    title: 'Roster & recognition',
+    description: 'What shows on public session and leaderboard pages.',
+    features: ['public_roster', 'leaderboard'],
+  },
+  {
+    id: 'after_sessions',
+    title: 'After sessions',
+    description: 'Prompts and extras once a session ends.',
+    features: ['session_feedback'],
+  },
+]
+
+const FEATURE_DEFINITION_BY_KEY = Object.fromEntries(
+  ORG_FEATURE_DEFINITIONS.map((feature) => [feature.key, feature]),
+) as Record<keyof OrgFeatures, OrgFeatureDefinition>
+
+export function orgFeatureDefinition(key: keyof OrgFeatures): OrgFeatureDefinition {
+  return FEATURE_DEFINITION_BY_KEY[key]
+}
+
+/** Child features that nest under a parent in the settings form. */
+export function orgFeatureChildren(parent: keyof OrgFeatures): OrgFeatureDefinition[] {
+  return ORG_FEATURE_DEFINITIONS.filter((feature) => feature.dependsOn === parent)
+}

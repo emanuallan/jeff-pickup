@@ -70,7 +70,7 @@ export default async function OrgSettingsPage({ params }: Props) {
       <div className="mt-8 space-y-6">
         <ConsoleSection
           title="Features"
-          description="Turn optional public features on or off for your group."
+          description="Turn optional public features on or off. Nested options only apply when their parent is on."
         >
           <FeatureTogglesForm orgSlug={orgSlug} features={orgFeatures(org)} />
         </ConsoleSection>
