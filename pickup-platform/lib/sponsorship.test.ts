@@ -13,6 +13,7 @@ import {
   sponsorRefundAmountCents,
   sortPublicSponsorsByAmount,
   sortSponsorshipTiersForPublicDisplay,
+  moveTierInOrder,
   sponsorshipBlocksStripeDisconnect,
   buildSponsorshipPageShareCopy,
   summarizeSponsorshipTierPrices,
@@ -242,7 +243,7 @@ describe('parsePublicSponsors', () => {
 })
 
 describe('public sponsorship hierarchy', () => {
-  it('sorts tiers highest price first', () => {
+  it('sorts tiers by organizer sort_order, not price', () => {
     const sorted = sortSponsorshipTiersForPublicDisplay([
       {
         id: 'a',
@@ -261,7 +262,14 @@ describe('public sponsorship hierarchy', () => {
         sort_order: 1,
       },
     ])
-    expect(sorted.map((t) => t.id)).toEqual(['b', 'a'])
+    expect(sorted.map((t) => t.id)).toEqual(['a', 'b'])
+  })
+
+  it('moves tiers one step in the ordered id list', () => {
+    expect(moveTierInOrder(['a', 'b', 'c'], 'b', 'up')).toEqual(['b', 'a', 'c'])
+    expect(moveTierInOrder(['a', 'b', 'c'], 'b', 'down')).toEqual(['a', 'c', 'b'])
+    expect(moveTierInOrder(['a', 'b', 'c'], 'a', 'up')).toBeNull()
+    expect(moveTierInOrder(['a', 'b', 'c'], 'c', 'down')).toBeNull()
   })
 
   it('sizes logos by relative amount', () => {
