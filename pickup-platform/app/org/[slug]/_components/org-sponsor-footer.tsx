@@ -176,23 +176,11 @@ export function OrgSponsorSection({ slug, orgName, accent, sponsors, showCta = t
           <div className={hasSponsors ? 'mt-5 border-t border-white/5 pt-4' : 'mt-4'}>
             <Link
               href={orgSponsorshipUrl(slug)}
-              className="group flex items-center justify-between gap-4 rounded-2xl border px-4 py-3.5 transition-colors hover:bg-zinc-950/55"
-              style={{
-                borderColor: hexToRgba(accent, 0.32),
-                backgroundColor: hexToRgba(accent, 0.08),
-              }}
+              className="group inline-flex items-center gap-1.5 text-sm font-medium transition-opacity hover:opacity-85"
+              style={{ color: hexToRgba(accentFg, 0.95) }}
             >
-              <span>
-                <span className="block text-sm font-medium text-zinc-100">Want to become a community partner?</span>
-                <span className="mt-0.5 block text-xs text-zinc-500">
-                  Join our community partners and show your logo here.
-                </span>
-              </span>
-              <span
-                aria-hidden
-                className="shrink-0 text-sm transition-transform group-hover:translate-x-0.5"
-                style={{ color: hexToRgba(accentFg, 0.9) }}
-              >
+              {hasSponsors ? 'Become a community partner' : 'Learn more'}
+              <span aria-hidden className="transition-transform group-hover:translate-x-0.5">
                 {arrowRight}
               </span>
             </Link>
