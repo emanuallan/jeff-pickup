@@ -507,12 +507,11 @@ export function collectTierIdsLockedBySponsors(
   return [...locked]
 }
 
-/** Highest price first so public pickers show prestige hierarchy. */
+/** Same order as the console: organizer sort_order, then name. */
 export function sortSponsorshipTiersForPublicDisplay(
   tiers: PublicSponsorshipTier[],
 ): PublicSponsorshipTier[] {
   return [...tiers].sort((a, b) => {
-    if (b.price_cents !== a.price_cents) return b.price_cents - a.price_cents
     if (a.sort_order !== b.sort_order) return a.sort_order - b.sort_order
     return a.name.localeCompare(b.name)
   })

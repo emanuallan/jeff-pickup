@@ -242,7 +242,7 @@ describe('parsePublicSponsors', () => {
 })
 
 describe('public sponsorship hierarchy', () => {
-  it('sorts tiers highest price first', () => {
+  it('sorts tiers by organizer sort_order, not price', () => {
     const sorted = sortSponsorshipTiersForPublicDisplay([
       {
         id: 'a',
@@ -261,7 +261,7 @@ describe('public sponsorship hierarchy', () => {
         sort_order: 1,
       },
     ])
-    expect(sorted.map((t) => t.id)).toEqual(['b', 'a'])
+    expect(sorted.map((t) => t.id)).toEqual(['a', 'b'])
   })
 
   it('sizes logos by relative amount', () => {
