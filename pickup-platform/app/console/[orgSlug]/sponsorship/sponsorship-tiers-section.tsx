@@ -1,15 +1,11 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import {
-  deleteSponsorshipTier,
-  reorderSponsorshipTiers,
-  saveSponsorshipTier,
-} from '../../sponsorship-actions'
+import { saveSponsorshipTier, deleteSponsorshipTier } from '../../sponsorship-actions'
 import { ConsoleSubmitButton } from '../../_components/console-submit-button'
 import { btnOutline, btnSecondary, consoleInput, consoleLabel } from '../../_components/console-ui'
 import { useConsoleToast } from '../../_components/console-toast'
-import { formatTierPrice, moveTierInOrder } from '@/lib/sponsorship'
+import { formatTierPrice } from '@/lib/sponsorship'
 
 type Tier = {
   id: string
@@ -39,16 +35,7 @@ export function SponsorshipTiersSection({
   const [revealedLockIds, setRevealedLockIds] = useState<Set<string>>(() => new Set())
   const lockedIds = useMemo(() => new Set(lockedTierIds), [lockedTierIds])
 
-  const activeTiers = useMemo(
-    () =>
-      [...tiers]
-        .filter((tier) => tier.status === 'active')
-        .sort((a, b) => {
-          if (a.sort_order !== b.sort_order) return a.sort_order - b.sort_order
-          return a.name.localeCompare(b.name)
-        }),
-    [tiers],
-  )
+  const activeTiers = tiers.filter((tier) => tier.status === 'active')
 
   function revealTierLock(tierId: string) {
     setRevealedLockIds((prev) => {
@@ -86,31 +73,13 @@ export function SponsorshipTiersSection({
     toast.success('Tier removed.')
   }
 
-  async function handleMove(tierId: string, direction: 'up' | 'down') {
-    const nextOrder = moveTierInOrder(
-      activeTiers.map((tier) => tier.id),
-      tierId,
-      direction,
-    )
-    if (!nextOrder) return
-
-    setPending(true)
-    const result = await reorderSponsorshipTiers(orgSlug, nextOrder)
-    setPending(false)
-    if (result?.error) {
-      toast.error(result.error)
-      return
-    }
-    toast.success('Tier order updated.')
-  }
-
   return (
     <div className="space-y-4">
       {activeTiers.length === 0 ? (
         <p className="text-sm text-zinc-500">No tiers yet.</p>
       ) : (
         <ul className="space-y-3">
-          {activeTiers.map((tier, index) => {
+          {activeTiers.map((tier) => {
             const locked = lockedIds.has(tier.id)
             const showLockNote = locked && revealedLockIds.has(tier.id)
             return (
@@ -143,51 +112,29 @@ export function SponsorshipTiersSection({
                       ) : null}
                     </div>
                     {canEdit ? (
-                      <div className="flex w-full shrink-0 flex-col gap-2 sm:w-auto">
-                        <div className="flex w-full flex-col gap-2 sm:flex-row">
-                          <button
-                            type="button"
-                            className={`${btnOutline} w-full sm:w-auto`}
-                            disabled={pending || index === 0}
-                            aria-label={`Move ${tier.name} up`}
-                            onClick={() => handleMove(tier.id, 'up')}
-                          >
-                            Move up
-                          </button>
-                          <button
-                            type="button"
-                            className={`${btnOutline} w-full sm:w-auto`}
-                            disabled={pending || index === activeTiers.length - 1}
-                            aria-label={`Move ${tier.name} down`}
-                            onClick={() => handleMove(tier.id, 'down')}
-                          >
-                            Move down
-                          </button>
-                        </div>
-                        <div className="flex w-full flex-col gap-2 sm:flex-row">
-                          <button
-                            type="button"
-                            className={`${btnOutline} w-full sm:w-auto`}
-                            disabled={pending}
-                            onClick={() => {
-                              if (locked) {
-                                revealTierLock(tier.id)
-                                return
-                              }
-                              setEditingId(tier.id)
-                            }}
-                          >
-                            Edit
-                          </button>
-                          <button
-                            type="button"
-                            className={`${btnOutline} w-full sm:w-auto`}
-                            disabled={pending}
-                            onClick={() => handleDelete(tier.id)}
-                          >
-                            Remove
-                          </button>
-                        </div>
+                      <div className="flex w-full shrink-0 flex-col gap-2 sm:w-auto sm:flex-row">
+                        <button
+                          type="button"
+                          className={`${btnOutline} w-full sm:w-auto`}
+                          disabled={pending}
+                          onClick={() => {
+                            if (locked) {
+                              revealTierLock(tier.id)
+                              return
+                            }
+                            setEditingId(tier.id)
+                          }}
+                        >
+                          Edit
+                        </button>
+                        <button
+                          type="button"
+                          className={`${btnOutline} w-full sm:w-auto`}
+                          disabled={pending}
+                          onClick={() => handleDelete(tier.id)}
+                        >
+                          Remove
+                        </button>
                       </div>
                     ) : null}
                   </div>

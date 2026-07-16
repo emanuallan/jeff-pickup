@@ -318,40 +318,15 @@ export async function deleteSponsorshipTier(orgSlug: string, tierId: string) {
 export async function reorderSponsorshipTiers(orgSlug: string, orderedIds: string[]) {
   try {
     const org = await requireInteriorSponsorshipAccess(orgSlug)
-    if (!Array.isArray(orderedIds) || orderedIds.length === 0) {
-      return { error: 'Nothing to reorder.' }
-    }
-    if (new Set(orderedIds).size !== orderedIds.length) {
-      return { error: 'Duplicate tiers in order.' }
-    }
-
     const supabase = await createClient()
-    const { data: activeTiers, error: listError } = await supabase
-      .from('sponsorship_tiers')
-      .select('id')
-      .eq('org_id', org.id)
-      .eq('status', 'active')
 
-    if (listError) return { error: listError.message }
-
-    const activeIds = new Set((activeTiers ?? []).map((tier) => tier.id as string))
-    if (
-      orderedIds.length !== activeIds.size ||
-      orderedIds.some((id) => !activeIds.has(id))
-    ) {
-      return { error: 'Tier list is out of date. Refresh and try again.' }
-    }
-
-    const updatedAt = new Date().toISOString()
     for (let index = 0; index < orderedIds.length; index += 1) {
       const id = orderedIds[index]
-      const { error } = await supabase
+      await supabase
         .from('sponsorship_tiers')
-        .update({ sort_order: index, updated_at: updatedAt })
+        .update({ sort_order: index, updated_at: new Date().toISOString() })
         .eq('id', id)
         .eq('org_id', org.id)
-
-      if (error) return { error: error.message }
     }
 
     revalidateSponsorshipPaths(orgSlug)

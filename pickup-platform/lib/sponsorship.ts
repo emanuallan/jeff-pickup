@@ -507,33 +507,15 @@ export function collectTierIdsLockedBySponsors(
   return [...locked]
 }
 
-/** Console + public order: organizer-controlled sort_order, then name. */
+/** Highest price first so public pickers show prestige hierarchy. */
 export function sortSponsorshipTiersForPublicDisplay(
   tiers: PublicSponsorshipTier[],
 ): PublicSponsorshipTier[] {
   return [...tiers].sort((a, b) => {
+    if (b.price_cents !== a.price_cents) return b.price_cents - a.price_cents
     if (a.sort_order !== b.sort_order) return a.sort_order - b.sort_order
     return a.name.localeCompare(b.name)
   })
-}
-
-/** Swap a tier one step up or down. Returns null when the move is not possible. */
-export function moveTierInOrder(
-  orderedIds: string[],
-  tierId: string,
-  direction: 'up' | 'down',
-): string[] | null {
-  const index = orderedIds.indexOf(tierId)
-  if (index < 0) return null
-  const target = direction === 'up' ? index - 1 : index + 1
-  if (target < 0 || target >= orderedIds.length) return null
-  const next = [...orderedIds]
-  const current = next[index]
-  const swap = next[target]
-  if (current == null || swap == null) return null
-  next[index] = swap
-  next[target] = current
-  return next
 }
 
 /** Relative logo size from amount vs other visible sponsors. */
