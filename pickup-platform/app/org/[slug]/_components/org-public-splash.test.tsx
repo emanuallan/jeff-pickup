@@ -129,4 +129,46 @@ describe('OrgPublicSplash', () => {
     expect(screen.getByText('Welcome Back Alex')).toBeInTheDocument()
     expect(screen.queryByText('Welcome')).not.toBeInTheDocument()
   })
+
+  it('shows community partner logos when sponsors are present', () => {
+    render(
+      <OrgPublicSplash
+        slug="demo"
+        orgName="Demo FC"
+        accent="#22c55e"
+        sponsors={[
+          {
+            id: '1',
+            sponsor_name: 'Acme',
+            logo_url: 'https://cdn.example/acme.png',
+            sponsor_url: null,
+            monthly_amount_cents: 5000,
+          },
+          {
+            id: '2',
+            sponsor_name: 'Beta Co',
+            logo_url: 'https://cdn.example/beta.png',
+            sponsor_url: null,
+            monthly_amount_cents: 2500,
+          },
+        ]}
+      />,
+    )
+
+    expect(screen.getByTestId('org-public-splash-sponsors')).toBeInTheDocument()
+    expect(screen.getByText('Community partners')).toBeInTheDocument()
+    expect(screen.getByRole('img', { name: 'Acme' })).toHaveAttribute(
+      'src',
+      'https://cdn.example/acme.png',
+    )
+    expect(screen.getByRole('img', { name: 'Beta Co' })).toBeInTheDocument()
+  })
+
+  it('hides the partners strip when there are no sponsors', () => {
+    render(
+      <OrgPublicSplash slug="demo" orgName="Demo FC" accent="#22c55e" sponsors={[]} />,
+    )
+
+    expect(screen.queryByTestId('org-public-splash-sponsors')).not.toBeInTheDocument()
+  })
 })

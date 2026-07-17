@@ -1,7 +1,7 @@
 'use client'
 
 import Image from 'next/image'
-import { useLayoutEffect, useState } from 'react'
+import { useLayoutEffect, useMemo, useState } from 'react'
 import { OrganizrLogo } from '@/app/_components/organizr-logo'
 import { accentOnDark, readableTextColor } from '@/lib/colors'
 import {
@@ -10,10 +10,14 @@ import {
   shouldShowOrgPublicSplash,
   waitUntilSplashCanDismiss,
 } from '@/lib/org-public-splash'
+import { sortPublicSponsorsByAmount, type PublicSponsor } from '@/lib/sponsorship'
 import { OrgPublicBackdrop } from './org-public-backdrop'
 import { rootBaseUrl } from '@/lib/site-url'
 
 type Phase = 'hidden' | 'visible' | 'exiting'
+
+/** Keep the splash calm even when a group has many partners. */
+export const ORG_PUBLIC_SPLASH_MAX_SPONSORS = 6
 
 type Props = {
   slug: string
@@ -21,6 +25,7 @@ type Props = {
   accent: string
   orgLogoUrl?: string | null
   participantFirstName?: string | null
+  sponsors?: PublicSponsor[]
 }
 
 function prefersReducedMotion(): boolean {
@@ -35,9 +40,15 @@ export function OrgPublicSplash({
   accent,
   orgLogoUrl = null,
   participantFirstName = null,
+  sponsors = [],
 }: Props) {
   // Start visible so first paint is covered; hide immediately if this tab already saw it.
   const [phase, setPhase] = useState<Phase>('visible')
+
+  const splashSponsors = useMemo(
+    () => sortPublicSponsorsByAmount(sponsors).slice(0, ORG_PUBLIC_SPLASH_MAX_SPONSORS),
+    [sponsors],
+  )
 
   useLayoutEffect(() => {
     if (!shouldShowOrgPublicSplash(slug)) {
@@ -133,6 +144,31 @@ export function OrgPublicSplash({
           <h1 className="mt-2 max-w-xs text-3xl font-bold tracking-tight text-zinc-50 sm:max-w-sm sm:text-4xl">
             {orgName}
           </h1>
+
+          {splashSponsors.length > 0 ? (
+            <div
+              className="mt-8 flex w-full max-w-md flex-col items-center gap-2.5"
+              data-testid="org-public-splash-sponsors"
+            >
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-500">
+                Community partners
+              </p>
+              <ul className="flex flex-wrap items-center justify-center gap-3">
+                {splashSponsors.map((sponsor) => (
+                  <li key={sponsor.id}>
+                    <Image
+                      src={sponsor.logo_url}
+                      alt={sponsor.sponsor_name}
+                      width={96}
+                      height={28}
+                      className="h-6 w-auto max-w-[96px] object-contain"
+                      unoptimized
+                    />
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
         </div>
 
         <div className="absolute inset-x-0 bottom-[max(1.75rem,env(safe-area-inset-bottom))] flex justify-center px-6">
