@@ -241,6 +241,7 @@ export function SponsorshipSignupForm({
                       onClick={() => {
                         setSelectedTierId(tier.id)
                         setError(null)
+                        setStep('details')
                       }}
                       className="rounded-2xl border px-4 py-4 text-left transition"
                       style={
