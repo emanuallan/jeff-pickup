@@ -29,7 +29,8 @@ const DateChipButton = memo(function DateChipButton({
   onSelect,
 }: DateChipButtonProps) {
   const strike = chip.cancelled ? 'line-through decoration-zinc-500/80' : ''
-  const dimmed = chip.cancelled || chip.pastReference
+  const isPast = chip.pastReference
+  const dimmed = chip.cancelled || isPast
 
   return (
     <button
@@ -38,22 +39,26 @@ const DateChipButton = memo(function DateChipButton({
       onClick={() => onSelect(chip.shortId)}
       aria-current={active ? 'true' : undefined}
       aria-label={chip.ariaLabel}
-      className={`flex shrink-0 touch-manipulation select-none flex-col items-center justify-center rounded-xl border px-2 py-2 transition-[border-color,background-color,box-shadow,color] duration-200 ${chipWidthClass} ${
+      className={`flex shrink-0 touch-manipulation select-none flex-col items-center justify-center rounded-xl border px-2 py-2 transition-[border-color,background-color,box-shadow,color,opacity,transform] duration-200 ${
+        isPast && !active ? 'w-[3.6rem] scale-[0.92] py-1.5' : chipWidthClass
+      } ${
         active
           ? 'border-zinc-700 bg-zinc-900 shadow-sm ring-1 ring-white/10'
-          : 'border-zinc-800/90 bg-zinc-900/40 hover:border-zinc-700 hover:bg-zinc-900/65'
-      } ${dimmed ? 'opacity-60' : ''} [-webkit-tap-highlight-color:transparent]`}
+          : isPast
+            ? 'border-zinc-800/70 bg-zinc-950/50 hover:border-zinc-700 hover:bg-zinc-900/50'
+            : 'border-zinc-800/90 bg-zinc-900/40 hover:border-zinc-700 hover:bg-zinc-900/65'
+      } ${dimmed && !active ? 'opacity-60' : dimmed ? 'opacity-70' : ''} [-webkit-tap-highlight-color:transparent]`}
     >
       <span
         className={`text-[10px] font-medium uppercase tracking-wide ${
-          active ? 'text-zinc-500' : 'text-zinc-600'
+          active ? 'text-zinc-500' : isPast ? 'text-zinc-600' : 'text-zinc-600'
         } ${strike}`}
       >
         {chip.month}
       </span>
       <span
         className={`font-semibold tabular-nums leading-tight ${
-          active ? 'text-lg' : 'text-sm text-zinc-300'
+          active ? 'text-lg' : isPast ? 'text-xs text-zinc-500' : 'text-sm text-zinc-300'
         } ${strike}`}
         style={active ? { color: accentFg } : undefined}
       >
@@ -61,7 +66,7 @@ const DateChipButton = memo(function DateChipButton({
       </span>
       <span
         className={`text-[9px] font-medium tabular-nums ${
-          active ? 'text-zinc-500' : 'text-zinc-600'
+          active ? 'text-zinc-500' : isPast ? 'text-zinc-600' : 'text-zinc-600'
         } ${strike}`}
       >
         {chip.bottomLabel}
@@ -287,7 +292,7 @@ export function MatchdayDateChips({ chips, activeEventId, accent }: Props) {
       <div
         ref={scrollRef}
         className="flex gap-2 overflow-x-auto px-5 pb-1 sm:px-6 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-        aria-label="Upcoming matchdays"
+        aria-label="Sessions"
       >
         {chips.map((chip) => {
           const active = chip.shortId === displayActiveId

@@ -65,7 +65,7 @@ export function buildMatchdayChipDisplays(events: ChipEventInput[]): MatchdayChi
     const bottomLabel = showTime ? time : weekday
 
     const ariaLabel = pastReference
-      ? `${month} ${day}${showTime ? `, ${time}` : ''}, past session`
+      ? `${month} ${day}${showTime ? `, ${time}` : `, ${weekday}`}, past session`
       : cancelled
         ? `${month} ${day}${showTime ? `, ${time}` : ''}, cancelled session`
         : `${month} ${day}, ${showTime ? time : weekday}`

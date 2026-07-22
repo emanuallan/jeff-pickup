@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { notFound, redirect } from 'next/navigation'
-import { getPublicOrgBySlug, getPublicUpcomingEventsForOrg, getPublicOrgAndEvent } from '@/lib/public-data'
+import { getPublicOrgBySlug, getPublicUpcomingEventsForOrg, getPublicOrgAndEvent, getPublicPreviousEventForOrg } from '@/lib/public-data'
 import { isLeaderboardUnlocked } from '@/lib/engagement'
 import { orgFeatures } from '@/lib/org-features'
 import { formatEventTime, isEventCancelled, isEventEnded, pickFeaturedUpcomingEvent } from '@/lib/events'
@@ -117,12 +117,15 @@ export default async function OrgHomePage({ params, searchParams }: Props) {
     return <FeedPanelSection org={org} />
   }
 
-  const events = await getPublicUpcomingEventsForOrg(org.id, 20, true)
+  const [events, previousEvent] = await Promise.all([
+    getPublicUpcomingEventsForOrg(org.id, 20, true),
+    getPublicPreviousEventForOrg(org.id),
+  ])
   const activeEvents = events.filter((event) => !isEventEnded(event))
   const defaultEvent =
     activeEvents.find((event) => !isEventCancelled(event.status)) ?? activeEvents[0] ?? null
 
-  let chipPrefixEvents: typeof events = []
+  let chipPrefixEvents: typeof events = previousEvent ? [previousEvent] : []
   let selectedEvent = defaultEvent
 
   if (eventRef) {

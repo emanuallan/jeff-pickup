@@ -56,6 +56,7 @@ describe('matchday-chip-display', () => {
     expect(chips[0]?.cancelled).toBe(true)
     expect(chips[0]?.ariaLabel).toContain('cancelled session')
     expect(chips[1]?.pastReference).toBe(true)
+    expect(chips[1]?.bottomLabel).toMatch(/^(Mon|Tue|Wed|Thu|Fri|Sat|Sun)/)
     expect(chips[1]?.ariaLabel).toContain('past session')
   })
 })

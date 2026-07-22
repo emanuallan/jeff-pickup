@@ -151,6 +151,42 @@ async function fetchPublicUpcomingEvents(
     .slice(0, limit)
 }
 
+async function fetchPublicPreviousEvent(orgId: string): Promise<EventWithLocation | null> {
+  const supabase = createPublicClient()
+  const now = new Date()
+
+  const { data, error } = await supabase
+    .from('events')
+    .select(LOCATION_SELECT)
+    .eq('org_id', orgId)
+    .neq('status', 'cancelled')
+    .lt('starts_at', now.toISOString())
+    .order('starts_at', { ascending: false })
+    .limit(12)
+
+  if (error || !data) {
+    return null
+  }
+
+  const previous = data
+    .map((row) => mapEventRow(row as Record<string, unknown>))
+    .find((event) => isEventEnded(event, now))
+
+  return previous ?? null
+}
+
+/** Most recent ended session for the matchday chip rail — cookie-less + cached. */
+export const getPublicPreviousEventForOrg = cache(
+  async (orgId: string): Promise<EventWithLocation | null> => {
+    return withPublicCache(
+      ['public-previous-event', orgId],
+      PUBLIC_EVENTS_REVALIDATE,
+      [`org-events:${orgId}`],
+      () => fetchPublicPreviousEvent(orgId),
+    )
+  },
+)
+
 /** Upcoming events for public org pages — cookie-less + cached. */
 export const getPublicUpcomingEventsForOrg = cache(
   async (

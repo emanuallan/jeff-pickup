@@ -78,4 +78,30 @@ describe('MatchdayDateChips', () => {
 
     expect(replaceMock).not.toHaveBeenCalled()
   })
+
+  it('renders a faded past-session chip that can still be selected', async () => {
+    const user = userEvent.setup()
+    const withPast: MatchdayChipDisplay[] = [
+      {
+        shortId: 'evt-past',
+        month: 'Jul',
+        day: '8',
+        bottomLabel: 'Tue',
+        cancelled: false,
+        pastReference: true,
+        showTime: false,
+        ariaLabel: 'Jul 8, Tue, past session',
+      },
+      ...chips,
+    ]
+
+    render(<MatchdayDateChips chips={withPast} activeEventId="evt-a" accent="#22c55e" />)
+
+    const pastChip = screen.getByRole('button', { name: 'Jul 8, Tue, past session' })
+    expect(pastChip).toHaveTextContent('Tue')
+    expect(pastChip.className).toMatch(/opacity-60/)
+
+    await user.click(pastChip)
+    expect(replaceMock).toHaveBeenCalledWith('/?cal=evt-past', { scroll: false })
+  })
 })
