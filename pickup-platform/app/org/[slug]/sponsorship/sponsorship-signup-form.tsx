@@ -25,7 +25,7 @@ const STEPS: Step[] = ['tier', 'details', 'confirm']
 
 function stepLabel(step: Step): string {
   if (step === 'tier') return 'Choose a tier'
-  if (step === 'details') return 'Your company'
+  if (step === 'details') return 'More about you'
   return 'Confirm'
 }
 
@@ -118,11 +118,11 @@ export function SponsorshipSignupForm({
   function goNextFromDetails() {
     setError(null)
     if (!sponsorName.trim()) {
-      setError('Company name is required.')
+      setError('Name is required.')
       return
     }
     if (!logoFile) {
-      setError('Upload a logo so it can appear on the group pages.')
+      setError('Upload a logo or image so it can appear on the group pages.')
       return
     }
     if (logoFile.size > MAX_ORG_LOGO_BYTES) {
@@ -145,7 +145,7 @@ export function SponsorshipSignupForm({
       return
     }
     if (!sponsorName.trim() || !logoFile) {
-      setError('Company name and logo are required.')
+      setError('Name and logo are required.')
       setStep('details')
       return
     }
@@ -288,19 +288,18 @@ export function SponsorshipSignupForm({
               </p>
 
               <div>
-                <FieldLabel htmlFor="sponsor-name">Company name</FieldLabel>
+                <FieldLabel htmlFor="sponsor-name">Name</FieldLabel>
                 <input
                   id="sponsor-name"
                   value={sponsorName}
                   onChange={(event) => setSponsorName(event.target.value)}
                   className={inputClass}
-                  placeholder={`Support ${orgName}`}
                   autoComplete="organization"
                 />
               </div>
 
               <div>
-                <FieldLabel htmlFor="sponsor-logo">Company logo</FieldLabel>
+                <FieldLabel htmlFor="sponsor-logo">Logo or Image</FieldLabel>
                 <label
                   htmlFor="sponsor-logo"
                   className="mt-2 flex cursor-pointer flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-zinc-700 bg-zinc-950/50 px-4 py-6 text-center transition hover:border-zinc-500 hover:bg-zinc-950/80"
