@@ -47,18 +47,18 @@ const DateChipButton = memo(function DateChipButton({
           : isPast
             ? 'border-zinc-800/70 bg-zinc-950/50 hover:border-zinc-700 hover:bg-zinc-900/50'
             : 'border-zinc-800/90 bg-zinc-900/40 hover:border-zinc-700 hover:bg-zinc-900/65'
-      } ${dimmed && !active ? 'opacity-60' : dimmed ? 'opacity-70' : ''} [-webkit-tap-highlight-color:transparent]`}
+      } ${dimmed && !active ? 'opacity-80' : dimmed ? 'opacity-90' : ''} [-webkit-tap-highlight-color:transparent]`}
     >
       <span
         className={`text-[10px] font-medium uppercase tracking-wide ${
-          active ? 'text-zinc-500' : isPast ? 'text-zinc-600' : 'text-zinc-600'
+          active ? 'text-zinc-500' : isPast ? 'text-zinc-500' : 'text-zinc-600'
         } ${strike}`}
       >
         {chip.month}
       </span>
       <span
         className={`font-semibold tabular-nums leading-tight ${
-          active ? 'text-lg' : isPast ? 'text-xs text-zinc-500' : 'text-sm text-zinc-300'
+          active ? 'text-lg' : isPast ? 'text-xs text-zinc-400' : 'text-sm text-zinc-300'
         } ${strike}`}
         style={active ? { color: accentFg } : undefined}
       >
@@ -66,7 +66,7 @@ const DateChipButton = memo(function DateChipButton({
       </span>
       <span
         className={`text-[9px] font-medium tabular-nums ${
-          active ? 'text-zinc-500' : isPast ? 'text-zinc-600' : 'text-zinc-600'
+          active ? 'text-zinc-500' : isPast ? 'text-zinc-500' : 'text-zinc-600'
         } ${strike}`}
       >
         {chip.bottomLabel}

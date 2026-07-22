@@ -99,7 +99,7 @@ describe('MatchdayDateChips', () => {
 
     const pastChip = screen.getByRole('button', { name: 'Jul 8, Tue, past session' })
     expect(pastChip).toHaveTextContent('Tue')
-    expect(pastChip.className).toMatch(/opacity-60/)
+    expect(pastChip.className).toMatch(/opacity-80/)
 
     await user.click(pastChip)
     expect(replaceMock).toHaveBeenCalledWith('/?cal=evt-past', { scroll: false })
