@@ -91,6 +91,7 @@ export async function SessionPanel({ slug, org, event, eventId }: Props) {
                 <EventHeadcountFallback
                   capacity={event.capacity}
                   minPlayers={event.min_players}
+                  status={event.status}
                   ended={isEnded}
                 />
               }
@@ -101,6 +102,7 @@ export async function SessionPanel({ slug, org, event, eventId }: Props) {
                 eventId={event.id}
                 capacity={event.capacity}
                 minPlayers={event.min_players}
+                status={event.status}
                 accent={accent}
                 pollActive={!isCancelled && !isEnded}
                 ended={isEnded}

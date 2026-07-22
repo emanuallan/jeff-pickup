@@ -6,3 +6,14 @@ export function showHeadcountChipOnCard(
   if (options?.cancelled) return false
   return headcount > 1
 }
+
+/**
+ * Public "min N participants" chip — only while the session is still tentative.
+ * Once status is on (auto or organizer override), the chip is confusing.
+ */
+export function showMinPlayersChip(
+  minPlayers: number | null | undefined,
+  status: string,
+): boolean {
+  return minPlayers != null && status === 'tentative'
+}

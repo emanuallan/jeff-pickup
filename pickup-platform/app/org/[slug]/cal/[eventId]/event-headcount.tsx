@@ -1,5 +1,5 @@
 import { getPublicRoster, rosterHeadcount } from '@/lib/signups'
-import { showHeadcountChipOnCard } from '@/lib/headcount-display'
+import { showHeadcountChipOnCard, showMinPlayersChip } from '@/lib/headcount-display'
 import { LiveHeadcountPill } from './live-headcount-pill'
 
 type Props = {
@@ -8,6 +8,7 @@ type Props = {
   eventId: string
   capacity: number | null
   minPlayers: number | null
+  status: string
   accent: string
   pollActive: boolean
   ended?: boolean
@@ -20,6 +21,7 @@ export async function EventHeadcount({
   eventId,
   capacity,
   minPlayers,
+  status,
   accent,
   pollActive,
   ended = false,
@@ -27,6 +29,7 @@ export async function EventHeadcount({
 }: Props) {
   const roster = cancelled ? [] : await getPublicRoster(eventId)
   const headcount = rosterHeadcount(roster)
+  const showMin = showMinPlayersChip(minPlayers, status)
 
   return (
     <>
@@ -40,7 +43,7 @@ export async function EventHeadcount({
         ended={ended}
         cancelled={cancelled}
       />
-      {minPlayers != null ? (
+      {showMin ? (
         <span className="rounded-lg bg-zinc-800/60 px-2.5 py-1 text-zinc-400">
           min {minPlayers} participants
         </span>
@@ -77,18 +80,20 @@ export function FeaturedEventHeadcountFallback(_props: { capacity: number | null
 
 export function EventHeadcountFallback({
   minPlayers,
+  status,
 }: {
   capacity: number | null
   minPlayers: number | null
+  status: string
   ended?: boolean
 }) {
+  if (!showMinPlayersChip(minPlayers, status)) {
+    return null
+  }
+
   return (
-    <>
-      {minPlayers != null ? (
-        <span className="rounded-lg bg-zinc-800/60 px-2.5 py-1 text-zinc-500">
-          min {minPlayers} participants
-        </span>
-      ) : null}
-    </>
+    <span className="rounded-lg bg-zinc-800/60 px-2.5 py-1 text-zinc-500">
+      min {minPlayers} participants
+    </span>
   )
 }
