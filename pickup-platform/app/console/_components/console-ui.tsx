@@ -15,14 +15,17 @@ export const consoleInput =
 
 export const consoleLabel = 'text-xs font-medium text-zinc-400'
 
-/** Bottom sheet on mobile, centered dialog on larger screens. */
+/**
+ * Legacy modal class tokens. Prefer `BottomSheet` — it switches sheet vs dialog
+ * using compact width *or* short-height media (foldables / landscape).
+ */
 export const consoleModalOverlay =
   'fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-4'
 
 export const consoleModalBackdrop = 'absolute inset-0 bg-black/60 backdrop-blur-sm'
 
 export const consoleModalPanel =
-  'relative max-h-[90dvh] w-full max-w-lg overflow-y-auto rounded-t-2xl border border-white/10 bg-zinc-900 p-5 shadow-xl pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:rounded-xl sm:pb-5'
+  'relative max-h-[min(90dvh,100%)] w-full max-w-lg overflow-y-auto rounded-t-2xl border border-white/10 bg-zinc-900 p-5 shadow-xl pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:rounded-xl sm:pb-5'
 
 // Touch-friendly tap targets (min ~44px tall) — mobile is the primary surface.
 export const btnPrimary =

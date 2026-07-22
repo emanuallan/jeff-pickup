@@ -9,6 +9,7 @@ import {
   type ReactNode,
 } from 'react'
 import { lockBodyScroll } from '@/lib/body-scroll-lock'
+import { COMPACT_SHEET_MEDIA_QUERY, matchesCompactSheetLayout } from '@/lib/sheet-layout'
 
 const DISMISS_THRESHOLD = 72
 const SHEET_EASING = 'cubic-bezier(0.32, 0.72, 0, 1)'
@@ -18,17 +19,17 @@ const BACKDROP_EXIT_MS = 380
 const NOTIFICATION_EXIT_MS = 360
 const DIALOG_EXIT_MS = 320
 
-function initialSwipeEnabled(variant: 'console' | 'fixed' | 'top') {
+function initialCompactLayout(variant: 'console' | 'fixed' | 'top') {
   if (variant === 'fixed' || variant === 'top') return true
   if (typeof window === 'undefined') return false
-  return window.matchMedia('(max-width: 639px)').matches
+  return matchesCompactSheetLayout()
 }
 
 type Props = {
   open: boolean
   onClose: () => void
   children: ReactNode
-  /** Console: bottom sheet on mobile, centered dialog on sm+. Fixed: bottom-anchored. Top: top-anchored. */
+  /** Console: bottom sheet on compact viewports, centered dialog otherwise. Fixed: bottom-anchored. Top: top-anchored. */
   variant?: 'console' | 'fixed' | 'top'
   panelClassName?: string
   panelStyle?: CSSProperties
@@ -80,14 +81,15 @@ export function BottomSheet({
   const [exiting, setExiting] = useState(false)
   const [dragOffset, setDragOffset] = useState(0)
   const [isDragging, setIsDragging] = useState(false)
-  const [swipeEnabled, setSwipeEnabled] = useState(() => initialSwipeEnabled(variant))
+  const [compactLayout, setCompactLayout] = useState(() => initialCompactLayout(variant))
   const dragStartY = useRef<number | null>(null)
   const dragOffsetRef = useRef(0)
+  const swipeEnabled = variant === 'fixed' || variant === 'top' || compactLayout
 
   useEffect(() => {
     if (variant !== 'console') return
-    const mq = window.matchMedia('(max-width: 639px)')
-    const update = () => setSwipeEnabled(mq.matches)
+    const mq = window.matchMedia(COMPACT_SHEET_MEDIA_QUERY)
+    const update = () => setCompactLayout(mq.matches)
     update()
     mq.addEventListener('change', update)
     return () => mq.removeEventListener('change', update)
@@ -188,15 +190,19 @@ export function BottomSheet({
 
   const overlayClass =
     variant === 'console'
-      ? 'fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-4'
+      ? compactLayout
+        ? 'fixed inset-0 z-50 flex items-end justify-center p-0'
+        : 'fixed inset-0 z-50 flex items-center justify-center p-4'
       : 'fixed inset-0 z-50'
 
   const panelBase =
     variant === 'console'
-      ? 'relative max-h-[90dvh] w-full max-w-lg overflow-y-auto rounded-t-2xl border border-white/10 bg-zinc-900 shadow-xl sm:rounded-xl'
+      ? compactLayout
+        ? 'relative max-h-[min(90dvh,100%)] w-full max-w-lg overflow-y-auto rounded-t-2xl border border-white/10 bg-zinc-900 shadow-xl'
+        : 'relative max-h-[min(90dvh,100%)] w-full max-w-lg overflow-y-auto rounded-xl border border-white/10 bg-zinc-900 shadow-xl'
       : variant === 'top'
         ? 'absolute inset-x-0 top-0 mx-auto flex max-h-[min(85dvh,28rem)] w-full flex-col overflow-hidden rounded-b-2xl border border-t-0 border-white/10 bg-zinc-950/95 shadow-xl shadow-black/40 backdrop-blur-md pt-[env(safe-area-inset-top,0px)]'
-        : 'absolute inset-x-0 bottom-0 mx-auto w-full max-w-lg overflow-hidden rounded-t-3xl border border-b-0 border-zinc-800 bg-linear-to-b from-zinc-900 to-zinc-950 shadow-2xl'
+        : 'absolute inset-x-0 bottom-0 mx-auto flex max-h-[min(90dvh,100%)] w-full max-w-lg flex-col overflow-hidden rounded-t-3xl border border-b-0 border-zinc-800 bg-linear-to-b from-zinc-900 to-zinc-950 shadow-2xl'
 
   const translateY =
     dragOffset > 0 ? (dragUp ? -dragOffset : dragOffset) : 0
@@ -204,7 +210,7 @@ export function BottomSheet({
   const exitAnimation = exiting
     ? variant === 'top'
       ? `notification-sheet-out ${NOTIFICATION_EXIT_MS}ms ease-in forwards`
-      : variant === 'fixed' || (variant === 'console' && swipeEnabled)
+      : variant === 'fixed' || (variant === 'console' && compactLayout)
         ? `bottom-sheet-out ${SHEET_EXIT_MS}ms ${SHEET_EASING} forwards`
         : variant === 'console'
           ? `dialog-out ${DIALOG_EXIT_MS}ms ${SHEET_EASING} forwards`
@@ -215,7 +221,7 @@ export function BottomSheet({
     !exiting && dragOffset === 0 && !isDragging
       ? variant === 'top'
         ? `notification-sheet-in 220ms ease-out`
-        : variant === 'fixed' || (variant === 'console' && swipeEnabled)
+        : variant === 'fixed' || (variant === 'console' && compactLayout)
           ? `bottom-sheet-in ${SHEET_ENTER_MS}ms ${SHEET_EASING}`
           : variant === 'console'
             ? `dialog-in 200ms ${SHEET_EASING}`
@@ -247,9 +253,11 @@ export function BottomSheet({
   const contentClass =
     variant === 'top'
       ? 'flex min-h-0 flex-1 flex-col overflow-hidden'
-      : `px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:pb-5 ${
-          swipeEnabled ? 'pt-0' : 'pt-5'
-        }`
+      : variant === 'fixed'
+        ? 'min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-0'
+        : `px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] ${
+            compactLayout ? 'pt-0' : 'pt-5'
+          }`
 
   return (
     <div
@@ -284,17 +292,17 @@ export function BottomSheet({
   )
 }
 
-/** True when viewport uses mobile sheet layout (< sm). */
+/** True when viewport should use mobile sheet layout (narrow or short). */
 export function useMobileSheetLayout() {
-  const [isMobile, setIsMobile] = useState(false)
+  const [isCompact, setIsCompact] = useState(false)
 
   useEffect(() => {
-    const mq = window.matchMedia('(max-width: 639px)')
-    const update = () => setIsMobile(mq.matches)
+    const mq = window.matchMedia(COMPACT_SHEET_MEDIA_QUERY)
+    const update = () => setIsCompact(mq.matches)
     update()
     mq.addEventListener('change', update)
     return () => mq.removeEventListener('change', update)
   }, [])
 
-  return isMobile
+  return isCompact
 }

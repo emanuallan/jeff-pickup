@@ -209,7 +209,7 @@ export function ParticipantNotificationBell({
   )
 
   const desktopPanelClassName =
-    'absolute right-0 top-full z-50 mt-2 flex w-[min(100vw-2rem,22rem)] flex-col overflow-hidden rounded-xl border border-white/10 bg-zinc-950/95 shadow-xl shadow-black/40 backdrop-blur-md'
+    'absolute right-0 top-full z-50 mt-2 flex max-h-[min(24rem,calc(100dvh-5rem))] w-[min(100vw-2rem,22rem)] flex-col overflow-hidden rounded-xl border border-white/10 bg-zinc-950/95 shadow-xl shadow-black/40 backdrop-blur-md'
 
   return (
     <>
