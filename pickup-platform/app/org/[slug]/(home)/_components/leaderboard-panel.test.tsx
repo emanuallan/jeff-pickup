@@ -4,12 +4,6 @@ import { DEFAULT_ORG_SETTINGS } from '@/lib/org-features'
 import type { Org } from '@/lib/orgs'
 import { LeaderboardPanel } from './leaderboard-panel'
 
-vi.mock('./leaderboard-month-chips', () => ({
-  LeaderboardMonthChips: ({ activePeriodId }: { activePeriodId: string }) => (
-    <div data-testid="month-chips">{activePeriodId}</div>
-  ),
-}))
-
 function makeOrg(mvpVoting: boolean): Org {
   return {
     id: 'org-1',
@@ -52,21 +46,6 @@ const mvpRows = [
   { participant_id: 'p1', display_name: 'Alex', mvp_count: 1 },
 ]
 
-const chips = [
-  {
-    id: '2026-07',
-    monthLabel: 'Jul',
-    yearLabel: '2026',
-    ariaLabel: 'July 2026',
-  },
-  {
-    id: 'all',
-    monthLabel: 'All',
-    yearLabel: 'time',
-    ariaLabel: 'All time',
-  },
-]
-
 describe('LeaderboardPanel', () => {
   beforeEach(() => {
     vi.stubGlobal(
@@ -90,8 +69,6 @@ describe('LeaderboardPanel', () => {
         capsRows={capsRows}
         streakRows={streakRows}
         mvpRows={mvpRows}
-        chips={chips}
-        activePeriodId="all"
         showStreaks
       />,
     )
@@ -108,8 +85,6 @@ describe('LeaderboardPanel', () => {
         capsRows={capsRows}
         streakRows={streakRows}
         mvpRows={mvpRows}
-        chips={chips}
-        activePeriodId="all"
         showStreaks
       />,
     )
@@ -127,13 +102,10 @@ describe('LeaderboardPanel', () => {
         capsRows={capsRows}
         streakRows={streakRows}
         mvpRows={mvpRows}
-        chips={chips}
-        activePeriodId="2026-07"
         showStreaks={false}
       />,
     )
 
-    expect(screen.getByTestId('month-chips')).toHaveTextContent('2026-07')
     expect(screen.getByRole('heading', { name: 'Caps' })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Session MVPs' })).toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: 'Weekly streaks' })).not.toBeInTheDocument()
@@ -146,8 +118,6 @@ describe('LeaderboardPanel', () => {
         capsRows={capsRows}
         streakRows={streakRows}
         mvpRows={[]}
-        chips={chips}
-        activePeriodId="all"
         showStreaks
       />,
     )

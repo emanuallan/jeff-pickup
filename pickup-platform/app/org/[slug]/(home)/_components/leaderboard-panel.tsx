@@ -1,6 +1,5 @@
 import type { Org } from '@/lib/orgs'
 import type { CapsLeaderboardRow, MvpLeaderboardRow, StreakLeaderboardRow } from '@/lib/engagement'
-import type { LeaderboardMonthChip, LeaderboardPeriodId } from '@/lib/leaderboard-period'
 import { orgFeatures } from '@/lib/org-features'
 import {
   CapsLeaderboard,
@@ -8,25 +7,21 @@ import {
   MvpLeaderboard,
   StreakLeaderboard,
 } from '../../_components/leaderboard-ui'
-import { LeaderboardMonthChips } from './leaderboard-month-chips'
 
 type Props = {
   org: Org
   capsRows: CapsLeaderboardRow[]
   streakRows: StreakLeaderboardRow[]
   mvpRows?: MvpLeaderboardRow[]
-  chips: LeaderboardMonthChip[]
-  activePeriodId: LeaderboardPeriodId
   showStreaks: boolean
 }
 
+/** Caps / streaks / MVP boards for the selected period (chips live outside Suspense). */
 export function LeaderboardPanel({
   org,
   capsRows,
   streakRows,
   mvpRows = [],
-  chips,
-  activePeriodId,
   showStreaks,
 }: Props) {
   const accent = org.branding.accent_color
@@ -38,8 +33,6 @@ export function LeaderboardPanel({
 
   return (
     <div className="flex flex-col gap-5 [&>*]:!mt-0">
-      <LeaderboardMonthChips chips={chips} activePeriodId={activePeriodId} accent={accent} />
-
       <LeaderboardSummary
         playerCount={capsRows.length}
         topName={topCaps?.display_name ?? null}
@@ -60,6 +53,40 @@ export function LeaderboardPanel({
         <CapsLeaderboard rows={capsRows} accent={accent} />
         {showStreaks ? <StreakLeaderboard rows={streakRows} accent={accent} /> : null}
         {showMvp ? <MvpLeaderboard rows={mvpRows} accent={accent} /> : null}
+      </div>
+    </div>
+  )
+}
+
+/** Content-only skeleton while period boards load — month chips stay mounted above. */
+export function LeaderboardPanelSkeleton({
+  showStreaks,
+  showMvp,
+}: {
+  showStreaks: boolean
+  showMvp: boolean
+}) {
+  const boardCount = 1 + (showStreaks ? 1 : 0) + (showMvp ? 1 : 0)
+
+  return (
+    <div className="flex flex-col gap-5" role="status" aria-live="polite" aria-label="Loading leaderboard">
+      <div className="h-20 animate-pulse rounded-2xl border border-zinc-800 bg-zinc-900/50" />
+      <div
+        className={`grid gap-5 md:gap-6 ${
+          boardCount >= 3
+            ? 'md:grid-cols-2 xl:grid-cols-3'
+            : boardCount === 2
+              ? 'md:grid-cols-2'
+              : ''
+        }`}
+      >
+        <div className="h-72 animate-pulse rounded-3xl border border-zinc-800 bg-zinc-900/50" />
+        {showStreaks ? (
+          <div className="h-56 animate-pulse rounded-3xl border border-zinc-800 bg-zinc-900/50" />
+        ) : null}
+        {showMvp ? (
+          <div className="h-56 animate-pulse rounded-3xl border border-zinc-800 bg-zinc-900/50" />
+        ) : null}
       </div>
     </div>
   )

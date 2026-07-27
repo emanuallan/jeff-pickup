@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { notFound, redirect } from 'next/navigation'
 import { getPublicOrgBySlug, getPublicUpcomingEventsForOrg, getPublicOrgAndEvent, getPublicPreviousEventForOrg } from '@/lib/public-data'
-import { isLeaderboardUnlocked } from '@/lib/engagement'
+import { isLeaderboardUnlocked, resolveOrgLeaderboardPeriod } from '@/lib/engagement'
 import { orgFeatures } from '@/lib/org-features'
 import { formatEventTime, isEventCancelled, isEventEnded, pickFeaturedUpcomingEvent } from '@/lib/events'
 import { buildOrgMetadata } from '@/lib/og-metadata'
@@ -106,7 +106,8 @@ export default async function OrgHomePage({ params, searchParams }: Props) {
       redirect(orgPublicTabHref('/', 'sessions', eventRef))
     }
 
-    return <LeaderboardPanelSection org={org} periodParam={lb} />
+    const resolved = await resolveOrgLeaderboardPeriod(org.id, lb)
+    return <LeaderboardPanelSection org={org} resolved={resolved} />
   }
 
   if (tab === 'feed') {
