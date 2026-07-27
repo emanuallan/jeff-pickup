@@ -45,6 +45,7 @@ type JoinProps = {
   paidSession?: boolean
   isAuthenticated?: boolean
   accountLinked?: boolean
+  linkedAccountEmail?: string | null
 }
 
 type Props = JoinProps & {
@@ -306,6 +307,11 @@ export function ParticipationPanel(props: Props) {
       groupRulesText: rest.groupRulesText,
       groupRulesVersion: rest.groupRulesVersion,
       needsGroupRulesAcceptance: rest.needsGroupRulesAcceptance,
+      priceCents: rest.priceCents,
+      paidSession: rest.paidSession,
+      isAuthenticated: rest.isAuthenticated,
+      accountLinked: rest.accountLinked,
+      linkedAccountEmail: rest.linkedAccountEmail,
     }),
     [
       rest.orgSlug,
@@ -329,6 +335,11 @@ export function ParticipationPanel(props: Props) {
       rest.groupRulesText,
       rest.groupRulesVersion,
       rest.needsGroupRulesAcceptance,
+      rest.priceCents,
+      rest.paidSession,
+      rest.isAuthenticated,
+      rest.accountLinked,
+      rest.linkedAccountEmail,
     ],
   )
 

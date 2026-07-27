@@ -41,6 +41,8 @@ type Props = {
   guestsEnabled: boolean
   /** Returning soft-session persona or profile collected before the paid gate. */
   knownProfile?: KnownParticipantProfile | null
+  /** Email already linked to this soft-session persona (or current auth user). */
+  linkedAccountEmail?: string | null
 }
 
 function hasUsableProfile(profile: KnownParticipantProfile | null | undefined): boolean {
@@ -53,7 +55,8 @@ function hasUsableProfile(profile: KnownParticipantProfile | null | undefined): 
 }
 
 /**
- * Step-by-step paid join: email → OTP → profile (only if unknown) → pay.
+ * Step-by-step paid join: email (once) → OTP → profile (only if unknown) → pay.
+ * Returning linked accounts skip email entry; signed-in linked users go straight to pay.
  */
 export function PaidJoinSheet({
   open,
@@ -69,10 +72,13 @@ export function PaidJoinSheet({
   accountLinked,
   guestsEnabled,
   knownProfile = null,
+  linkedAccountEmail = null,
 }: Props) {
   const router = useRouter()
+  const lockedEmail = normalizeLoginEmail(linkedAccountEmail ?? '')
   const [step, setStep] = useState<Step>('email')
-  const [email, setEmail] = useState('')
+  const [email, setEmail] = useState(lockedEmail)
+  const [allowEmailEdit, setAllowEmailEdit] = useState(!lockedEmail)
   const [code, setCode] = useState('')
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
@@ -106,6 +112,24 @@ export function PaidJoinSheet({
       setBusy(false)
     },
     [],
+  )
+
+  const goToEmailStep = useCallback(
+    (options?: { unlockEdit?: boolean }) => {
+      if (lockedEmail && !options?.unlockEdit) {
+        setEmail(lockedEmail)
+        setAllowEmailEdit(false)
+      } else if (options?.unlockEdit) {
+        setAllowEmailEdit(true)
+      } else {
+        setAllowEmailEdit(true)
+      }
+      setStep('email')
+      setCode('')
+      setMessage(null)
+      verifyLockRef.current = false
+    },
+    [lockedEmail],
   )
 
   const resetToEntryStep = useCallback(async () => {
@@ -145,8 +169,16 @@ export function PaidJoinSheet({
     }
 
     setLinked(false)
-    setStep('email')
-  }, [accountLinked, applyKnownProfile, isAuthenticated, knownProfile, orgSlug, router])
+    goToEmailStep()
+  }, [
+    accountLinked,
+    applyKnownProfile,
+    goToEmailStep,
+    isAuthenticated,
+    knownProfile,
+    orgSlug,
+    router,
+  ])
 
   // Only initialize when the sheet opens. Re-running on auth/profile prop changes
   // (e.g. after OTP + router.refresh) was resetting users back to the email step.
@@ -168,6 +200,12 @@ export function PaidJoinSheet({
   useEffect(() => {
     applyKnownProfile(knownProfile)
   }, [applyKnownProfile, knownProfile])
+
+  useEffect(() => {
+    if (lockedEmail && !allowEmailEdit) {
+      setEmail(lockedEmail)
+    }
+  }, [allowEmailEdit, lockedEmail])
 
   useEffect(() => {
     if (resendIn <= 0) return
@@ -193,6 +231,7 @@ export function PaidJoinSheet({
         setMessage(mapOtpAuthError(error.message))
         return
       }
+      setEmail(normalizedEmail)
       setResendIn(RESEND_SECONDS)
       setStep('code')
       setCode('')
@@ -303,7 +342,7 @@ export function PaidJoinSheet({
       if (!res.ok || !payload.url) {
         if (payload.code === 'auth_required') {
           setLinked(false)
-          setStep('email')
+          goToEmailStep()
           setMessage('Sign in again to continue.')
         } else if (payload.code === 'profile_required') {
           setLinked(false)
@@ -330,9 +369,13 @@ export function PaidJoinSheet({
   const inputClass =
     'mt-1 w-full rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2.5 text-base outline-none transition-colors focus:border-transparent focus:ring-2 sm:text-sm'
 
+  const showLinkedEmailContinue = step === 'email' && Boolean(lockedEmail) && !allowEmailEdit
+
   const stepLabel =
     step === 'email'
-      ? 'Step 1 · Email'
+      ? showLinkedEmailContinue
+        ? 'Welcome back'
+        : 'Step 1 · Email'
       : step === 'code'
         ? 'Step 2 · Verification code'
         : step === 'profile'
@@ -355,7 +398,9 @@ export function PaidJoinSheet({
           </h2>
           <p className="mt-1 text-sm text-zinc-400">
             {step === 'email'
-              ? 'Sign in with email to pay securely.'
+              ? showLinkedEmailContinue
+                ? 'Continue with your linked email to pay securely.'
+                : 'Sign in with email to pay securely.'
               : step === 'code'
                 ? `Enter the ${OTP_LENGTH}-digit code we sent you.`
                 : step === 'profile'
@@ -366,7 +411,32 @@ export function PaidJoinSheet({
 
         {message ? <p className="text-sm text-red-400">{message}</p> : null}
 
-        {step === 'email' ? (
+        {step === 'email' && showLinkedEmailContinue ? (
+          <div className="space-y-3">
+            <p className="rounded-xl border border-zinc-800 bg-zinc-950/50 px-3 py-2 text-sm text-zinc-300">
+              {lockedEmail}
+            </p>
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => void sendCode()}
+              className="w-full rounded-xl px-4 py-3 text-sm font-semibold disabled:opacity-60"
+              style={{ backgroundColor: accent, color: accentText }}
+            >
+              {busy ? 'Sending…' : 'Send code & continue'}
+            </button>
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => goToEmailStep({ unlockEdit: true })}
+              className="w-full text-xs text-zinc-500 underline disabled:opacity-50"
+            >
+              Use a different email
+            </button>
+          </div>
+        ) : null}
+
+        {step === 'email' && !showLinkedEmailContinue ? (
           <form
             className="space-y-3"
             onSubmit={(event) => {
@@ -395,6 +465,16 @@ export function PaidJoinSheet({
             >
               {busy ? 'Sending…' : 'Continue'}
             </button>
+            {lockedEmail ? (
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => goToEmailStep()}
+                className="w-full text-xs text-zinc-500 underline disabled:opacity-50"
+              >
+                Back to linked email
+              </button>
+            ) : null}
           </form>
         ) : null}
 
@@ -443,15 +523,10 @@ export function PaidJoinSheet({
               <button
                 type="button"
                 disabled={busy}
-                onClick={() => {
-                  setStep('email')
-                  setCode('')
-                  setMessage(null)
-                  verifyLockRef.current = false
-                }}
+                onClick={() => goToEmailStep(lockedEmail ? undefined : { unlockEdit: true })}
                 className="text-zinc-500 underline disabled:opacity-50"
               >
-                Change email
+                {lockedEmail && !allowEmailEdit ? 'Back' : 'Change email'}
               </button>
               <button
                 type="button"

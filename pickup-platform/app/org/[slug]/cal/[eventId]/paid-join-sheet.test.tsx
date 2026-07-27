@@ -99,4 +99,41 @@ describe('PaidJoinSheet', () => {
     expect(screen.getByRole('button', { name: /pay \$5\.00 & join/i })).toBeInTheDocument()
     expect(screen.queryByLabelText(/email/i)).not.toBeInTheDocument()
   })
+
+  it('skips email typing for a soft-session linked account', async () => {
+    const user = userEvent.setup()
+    render(
+      <PaidJoinSheet
+        {...baseProps}
+        linkedAccountEmail="jeff@example.com"
+      />,
+    )
+
+    expect(screen.getByText('jeff@example.com')).toBeInTheDocument()
+    expect(screen.queryByLabelText(/^email$/i)).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /send code & continue/i })).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: /send code & continue/i }))
+
+    await waitFor(() => {
+      expect(screen.getByText(/code sent to jeff@example.com/i)).toBeInTheDocument()
+    })
+  })
+
+  it('goes straight to payment when already authenticated and linked', async () => {
+    render(
+      <PaidJoinSheet
+        {...baseProps}
+        isAuthenticated
+        accountLinked
+        linkedAccountEmail="jeff@example.com"
+      />,
+    )
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /pay \$5\.00 & join/i })).toBeInTheDocument()
+    })
+    expect(screen.queryByLabelText(/^email$/i)).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /send code/i })).not.toBeInTheDocument()
+  })
 })

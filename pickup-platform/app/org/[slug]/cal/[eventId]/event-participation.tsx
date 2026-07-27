@@ -6,7 +6,7 @@ import { getPublicRoster, getPublicWaitlist, rosterHeadcount } from '@/lib/signu
 import { getSessionToken } from '@/lib/participant-session'
 import { getSessionInfo } from '@/lib/participant'
 import { getAuthUser } from '@/lib/auth'
-import { getLinkedParticipantForOrg } from '@/lib/participant-account'
+import { getLinkedParticipantForOrg, getSessionLinkedEmail } from '@/lib/participant-account'
 import { getLiveEventPriceCents } from '@/lib/event-price'
 import { isPaidSession } from '@/lib/session-payment'
 import { CancelledCallout, isEventCancelled, eventName } from '../../_components/event-ui'
@@ -44,7 +44,7 @@ export async function EventParticipation({ slug, eventId, org, event }: Props) {
   const sessionToken = await getSessionToken()
 
   // Live fee via RPC — public event list is cached and PostgREST may lag new columns.
-  const [{ participant, mySignup }, roster, waitlist, groupRulesStatus, authUser, linkedParticipant, livePriceCents] =
+  const [{ participant, mySignup }, roster, waitlist, groupRulesStatus, authUser, linkedParticipant, livePriceCents, sessionLinkedEmail] =
     await Promise.all([
     getSessionInfo(sessionToken, org.id, event.id),
     isCancelled ? Promise.resolve([]) : getPublicRoster(event.id),
@@ -58,11 +58,15 @@ export async function EventParticipation({ slug, eventId, org, event }: Props) {
     getAuthUser(),
     getLinkedParticipantForOrg(org.id),
     getLiveEventPriceCents(org.id, eventId),
+    getSessionLinkedEmail(org.id, sessionToken),
   ])
 
   const priceCents = livePriceCents ?? event.price_cents
   const paidSession = isPaidSession(priceCents)
   const accountLinked = Boolean(linkedParticipant)
+  const linkedAccountEmail =
+    (authUser?.email ? String(authUser.email).trim().toLowerCase() : null) ||
+    sessionLinkedEmail
 
   const headcount = rosterHeadcount(roster)
   const isFull = waitlistEnabled && headcount >= event.capacity!
@@ -132,6 +136,7 @@ export async function EventParticipation({ slug, eventId, org, event }: Props) {
       paidSession={paidSession}
       isAuthenticated={Boolean(authUser)}
       accountLinked={accountLinked}
+      linkedAccountEmail={linkedAccountEmail}
       cancelledCallout={
         isCancelled ? <CancelledCallout hasSignup={!!mySignup} /> : undefined
       }

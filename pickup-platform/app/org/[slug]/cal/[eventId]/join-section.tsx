@@ -50,6 +50,8 @@ type Props = {
   paidSession?: boolean
   isAuthenticated?: boolean
   accountLinked?: boolean
+  /** Soft-session or auth email already linked — skip re-typing on paid join. */
+  linkedAccountEmail?: string | null
 }
 
 const inputClass =
@@ -182,6 +184,7 @@ function PaidJoinSection({
   guestsEnabled = true,
   autoOpenSheet = false,
   knownProfile = null,
+  linkedAccountEmail = null,
 }: Props & {
   priceLabel: string
   accountLinked: boolean
@@ -191,6 +194,7 @@ function PaidJoinSection({
 }) {
   const [sheetOpen, setSheetOpen] = useState(autoOpenSheet)
   const joiningWaitlist = isFull && waitlistEnabled
+  const alreadyLinked = accountLinked || Boolean(linkedAccountEmail)
 
   useEffect(() => {
     if (autoOpenSheet) {
@@ -205,7 +209,11 @@ function PaidJoinSection({
         <p className="mt-1 text-sm text-zinc-400">
           {joiningWaitlist
             ? `This session is full. Pay ${priceLabel} to join the waitlist.`
-            : `This session costs ${priceLabel}. Sign in with email, then pay to lock your spot.`}
+            : alreadyLinked
+              ? isAuthenticated && accountLinked
+                ? `This session costs ${priceLabel}. Confirm and pay to lock your spot.`
+                : `This session costs ${priceLabel}. Verify your linked email, then pay to lock your spot.`
+              : `This session costs ${priceLabel}. Sign in with email, then pay to lock your spot.`}
         </p>
       </div>
 
@@ -236,6 +244,7 @@ function PaidJoinSection({
         accountLinked={accountLinked}
         guestsEnabled={guestsEnabled}
         knownProfile={knownProfile}
+        linkedAccountEmail={linkedAccountEmail}
       />
     </div>
   )
@@ -353,6 +362,7 @@ export function JoinSection(props: Props) {
         isAuthenticated={props.isAuthenticated === true}
         autoOpenSheet={forcePaidJoin}
         knownProfile={knownProfile}
+        linkedAccountEmail={props.linkedAccountEmail ?? null}
       />
     )
   }

@@ -86,3 +86,23 @@ export const getLinkedParticipantForOrg = cache(
     return { participant_id: String(data.id), phone: String(data.phone) }
   },
 )
+
+/**
+ * If the soft-session persona is already linked to an auth account, return that email
+ * so paid join can skip re-typing it when the browser auth session expired.
+ */
+export const getSessionLinkedEmail = cache(
+  async (orgId: string, sessionToken: string | null): Promise<string | null> => {
+    if (!sessionToken) return null
+
+    const supabase = await createClient()
+    const { data, error } = await supabase.rpc('get_session_linked_email', {
+      p_session_token: sessionToken,
+      p_org_id: orgId,
+    })
+
+    if (error || data == null) return null
+    const email = String(data).trim().toLowerCase()
+    return email || null
+  },
+)
