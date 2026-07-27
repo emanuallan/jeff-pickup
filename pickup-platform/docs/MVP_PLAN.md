@@ -27,8 +27,9 @@ orgs**, done the right way (real identity, real tenancy, real authorization).
 **Scale target:** 10–20 orgs, ~100 participants each at launch; architecture must comfortably support **well above 100** per org (thousands of total participants, tens of thousands of signups/month) without redesign.
 
 **Explicitly out of scope for the MVP** (deferred, not deleted):
-- Subscriptions, billing, payments.
-- Custom domains per org (subdomains only for now).
+- Platform SaaS subscriptions for organizers.
+- Participant credits / wallets (follow-on after pay-per-session).
+- SMS phone verification for soft join.- Custom domains per org (subdomains only for now).
 - Native mobile apps.
 - The PoC experiments: `aura`, `omegaball`, WhatsApp `bot/`.
 
@@ -133,17 +134,20 @@ recurring-event generator (cron route) and the OTP/identity endpoints, and it sc
 
 Two distinct actor types, two friction levels.
 
-### 7.1 Participants (frictionless)
+### 7.1 Participants (hybrid)
 
-- **Identity key:** phone number, normalized to **E.164**. This is the dedup/collision key.
+- **Soft identity (free sessions):** phone number, normalized digits. Dedup key per org is
+  `(org_id, phone)`. Join issues a device session cookie (`hc_session` → `participant_sessions`).
+  Soft join stays for free sessions; it is **not** money-grade auth.
+- **Hard identity (optional anytime; required for paid):** Supabase Auth **email OTP** (same stack
+  as organizers). Sets `participants.user_id` so one global account can span many org personas.
+  Optional “Save your account” from a soft session; paid join forces email OTP first.
 - **Profile fields:** `first_name`, `last_name`, optional `display_name` (defaults to `First L.`).
-- **Join flow (first time):** enter name + phone → upsert a `participant` keyed by `(org_id, phone)` → issue a **device session token** (httpOnly cookie + mirror in `localStorage` for the SPA), so they're recognized on return without re-typing.
-- **Verification (scaffolded, dormant for MVP):** the schema (`phone_verified`) and an org-level
-  `require_phone_verification` flag exist, and the join UI leaves a seam for a "Verify your number"
-  SMS OTP step — but **it is not wired up**. No SMS provider is integrated yet. We turn it on only
-  when a real org asks for it. Until then, joining never requires OTP.
-- **What this solves vs the PoC:** no more name collisions (phone is unique), organizers can contact no-shows, and ownership of a signup is real (tied to participant + session), not a `localStorage` secret.
+- **Verification (SMS, dormant):** `phone_verified` + `require_phone_verification` remain scaffolded
+  but unwired. No SMS provider yet.
 - **Privacy:** public roster shows `display_name` only. Phone/last name are visible only to org admins.
+- **Cross-group home:** `/me` lists orgs where `participants.user_id = auth.uid()`, plus session
+  payment history.
 
 ### 7.2 Organizers / admins (real auth)
 
@@ -153,12 +157,23 @@ Two distinct actor types, two friction levels.
   - `admin` — manage schedules, events, locations, announcements, settings, see contact info.
   - (future) `coach`/`captain` — limited, post-MVP.
 - A single auth user can belong to multiple orgs (one person can run several communities).
+  The same user may also be a linked participant; console stays membership-gated.
 
 ### 7.3 Linking the two
 
-A participant who is also an organizer can have their `auth.user` linked to their participant
-record (same phone). MVP keeps them as separate concerns to avoid coupling friction — a logged-in
-organizer still "joins" sessions as a participant.
+- Soft user → email OTP → `link_participant_to_auth_user` (or `ensure_participant_for_auth_user`
+  when joining paid without a soft session).
+- Same email as an organizer is allowed; authorization is per surface (`org_members` vs linked
+  `participants`).
+- On organizer sign-in, `hc_session` is cleared; for paid participant actions prefer `sb-*` cookies.
+
+### 7.4 Pay-per-session (phase 1 billing)
+
+- `events.price_cents` — null/0 = free; `>0` requires auth + Stripe Connect Checkout.
+- Money path: Checkout on the org’s Connect account + platform `application_fee_amount`; webhook
+  (and return-URL sync backup) calls `complete_paid_event_join` → roster seat.
+- Mirror rows in `event_payments`. Soft `join_event` rejects paid sessions.
+- **Credits / wallets:** deferred (not in initial build).
 
 ---
 

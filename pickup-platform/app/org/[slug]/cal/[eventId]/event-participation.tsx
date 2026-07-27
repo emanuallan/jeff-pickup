@@ -5,6 +5,9 @@ import { readableTextColor } from '@/lib/colors'
 import { getPublicRoster, getPublicWaitlist, rosterHeadcount } from '@/lib/signups'
 import { getSessionToken } from '@/lib/participant-session'
 import { getSessionInfo } from '@/lib/participant'
+import { getAuthUser } from '@/lib/auth'
+import { getLinkedParticipantForOrg } from '@/lib/participant-account'
+import { isPaidSession } from '@/lib/session-payment'
 import { CancelledCallout, isEventCancelled, eventName } from '../../_components/event-ui'
 import { formatEventWhenLine } from '@/lib/events'
 import { orgFeatures } from '@/lib/org-features'
@@ -39,7 +42,8 @@ export async function EventParticipation({ slug, eventId, org, event }: Props) {
 
   const sessionToken = await getSessionToken()
 
-  const [{ participant, mySignup }, roster, waitlist, groupRulesStatus] = await Promise.all([
+  const [{ participant, mySignup }, roster, waitlist, groupRulesStatus, authUser, linkedParticipant] =
+    await Promise.all([
     getSessionInfo(sessionToken, org.id, event.id),
     isCancelled ? Promise.resolve([]) : getPublicRoster(event.id),
     isCancelled || !waitlistEnabled ? Promise.resolve([]) : getPublicWaitlist(event.id),
@@ -49,7 +53,12 @@ export async function EventParticipation({ slug, eventId, org, event }: Props) {
           active: false,
           needs_acceptance: false,
         } as Awaited<ReturnType<typeof getGroupRulesStatusForJoin>>),
+    getAuthUser(),
+    getLinkedParticipantForOrg(org.id),
   ])
+
+  const paidSession = isPaidSession(event.price_cents)
+  const accountLinked = Boolean(linkedParticipant)
 
   const headcount = rosterHeadcount(roster)
   const isFull = waitlistEnabled && headcount >= event.capacity!
@@ -115,6 +124,10 @@ export async function EventParticipation({ slug, eventId, org, event }: Props) {
       canUpdateStatus={canUpdateStatus}
       badgesByParticipantId={badgesByParticipantId}
       rosterHeading={isCancelled ? "Who's coming" : isEnded ? 'Who came' : "Who's coming"}
+      priceCents={event.price_cents}
+      paidSession={paidSession}
+      isAuthenticated={Boolean(authUser)}
+      accountLinked={accountLinked}
       cancelledCallout={
         isCancelled ? <CancelledCallout hasSignup={!!mySignup} /> : undefined
       }

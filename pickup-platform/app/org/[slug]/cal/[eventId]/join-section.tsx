@@ -18,6 +18,8 @@ import { useParticipationMotion } from './participation-motion'
 import { GuestCountSelect } from './guest-count-select'
 import { clampGuestCount } from '@/lib/guest-signups'
 import { clearParticipantDeviceSession } from '@/lib/participant-session-client'
+import { SaveParticipantAccountCard } from '../../_components/save-participant-account-card'
+import { formatPriceCents, isPaidSession } from '@/lib/session-payment'
 import { isValidPhoneDigits } from '@/lib/phone'
 
 export type { Participant, MySignup }
@@ -44,6 +46,10 @@ type Props = {
   groupRulesText?: string
   groupRulesVersion?: number
   needsGroupRulesAcceptance?: boolean
+  priceCents?: number | null
+  paidSession?: boolean
+  isAuthenticated?: boolean
+  accountLinked?: boolean
 }
 
 const inputClass =
@@ -162,6 +168,146 @@ function RecoverSession({
   )
 }
 
+function PaidJoinSection({
+  orgSlug,
+  orgId,
+  eventId,
+  accent,
+  accentText,
+  isFull,
+  waitlistEnabled,
+  priceLabel,
+  accountLinked,
+  isAuthenticated,
+  guestsEnabled = true,
+}: Props & {
+  priceLabel: string
+  accountLinked: boolean
+  isAuthenticated: boolean
+}) {
+  const router = useRouter()
+  const [error, setError] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [guestCount, setGuestCount] = useState(0)
+  const [firstName, setFirstName] = useState('')
+  const [lastName, setLastName] = useState('')
+  const [phone, setPhone] = useState('')
+  const joiningWaitlist = isFull && waitlistEnabled
+
+  async function startCheckout() {
+    setLoading(true)
+    setError(null)
+    try {
+      const res = await fetch('/api/session-payment/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          slug: orgSlug,
+          eventId,
+          guestCount: guestsEnabled ? guestCount : 0,
+          firstName,
+          lastName,
+          phone,
+        }),
+      })
+      const payload = (await res.json()) as { url?: string; error?: string; code?: string }
+      if (!res.ok || !payload.url) {
+        setError(payload.error ?? 'Could not start checkout.')
+        setLoading(false)
+        return
+      }
+      window.location.href = payload.url
+    } catch {
+      setError('Could not start checkout.')
+      setLoading(false)
+    }
+  }
+
+  const inputClass =
+    'mt-1 w-full rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2.5 text-base outline-none transition-colors focus:border-transparent focus:ring-2 sm:text-sm'
+
+  return (
+    <div className="space-y-4">
+      <div>
+        <h2 className="text-lg font-semibold text-zinc-100">Join this session</h2>
+        <p className="mt-1 text-sm text-zinc-400">
+          {joiningWaitlist
+            ? `This session is full. Pay ${priceLabel} to join the waitlist.`
+            : `This session costs ${priceLabel}. Sign in, then pay to lock your spot.`}
+        </p>
+      </div>
+
+      {error ? <p className="text-sm text-red-400">{error}</p> : null}
+
+      {!isAuthenticated ? (
+        <SaveParticipantAccountCard
+          orgId={orgId}
+          orgSlug={orgSlug}
+          accent={accent}
+          accentText={accentText}
+          nextPath={`/cal/${eventId}`}
+          onLinked={() => router.refresh()}
+        />
+      ) : (
+        <div className="space-y-3">
+          {!accountLinked ? (
+            <>
+              <div className="grid grid-cols-2 gap-3">
+                <label className="block text-xs text-zinc-500">
+                  First name
+                  <input
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    className={inputClass}
+                    required
+                  />
+                </label>
+                <label className="block text-xs text-zinc-500">
+                  Last name
+                  <input
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    className={inputClass}
+                    required
+                  />
+                </label>
+              </div>
+              <label className="block text-xs text-zinc-500">
+                Phone
+                <PhoneInput
+                  value={phone}
+                  onChange={setPhone}
+                  className={inputClass}
+                />
+              </label>
+            </>
+          ) : null}
+          {guestsEnabled ? (
+            <label className="block">
+              <span className="text-xs text-zinc-500">Guests</span>
+              <GuestCountSelect
+                value={guestCount}
+                onChange={setGuestCount}
+                accent={accent}
+                className="mt-1"
+              />
+            </label>
+          ) : null}
+          <button
+            type="button"
+            disabled={loading}
+            onClick={() => void startCheckout()}
+            className="w-full rounded-xl px-4 py-3 text-sm font-semibold disabled:opacity-60"
+            style={{ backgroundColor: accent, color: accentText }}
+          >
+            {loading ? 'Redirecting…' : `Pay ${priceLabel} & join`}
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}
+
 export function JoinSection(props: Props) {
   const router = useRouter()
   const motion = useParticipationMotion()
@@ -228,6 +374,20 @@ export function JoinSection(props: Props) {
   // below the attendee list), so the join card collapses for them.
   if (props.mySignup) {
     return null
+  }
+
+  const paidSession = props.paidSession === true || isPaidSession(props.priceCents)
+  const priceLabel = formatPriceCents(props.priceCents ?? 0)
+
+  if (paidSession) {
+    return (
+      <PaidJoinSection
+        {...props}
+        priceLabel={priceLabel}
+        accountLinked={props.accountLinked === true}
+        isAuthenticated={props.isAuthenticated === true}
+      />
+    )
   }
 
   const joiningWaitlist = props.isFull && props.waitlistEnabled
@@ -397,6 +557,20 @@ export function JoinSection(props: Props) {
           >
             {welcomeBack}
           </ReturningSignupModal>
+          {/* Optional free-path "Save your account" — hidden until we promote it.
+          {!props.accountLinked ? (
+            <div className="mt-4">
+              <SaveParticipantAccountCard
+                orgId={props.orgId}
+                orgSlug={props.orgSlug}
+                accent={props.accent}
+                accentText={props.accentText}
+                nextPath={`/?cal=${encodeURIComponent(props.eventId)}`}
+                onLinked={() => router.refresh()}
+              />
+            </div>
+          ) : null}
+          */}
           <GroupRulesSheet
             open={rulesSheetOpen}
             onClose={() => {
@@ -418,6 +592,20 @@ export function JoinSection(props: Props) {
     return (
       <>
         {welcomeBack}
+        {/* Optional free-path "Save your account" — hidden until we promote it.
+        {!props.accountLinked ? (
+          <div className="mt-4">
+            <SaveParticipantAccountCard
+              orgId={props.orgId}
+              orgSlug={props.orgSlug}
+              accent={props.accent}
+              accentText={props.accentText}
+              nextPath={`/?cal=${encodeURIComponent(props.eventId)}`}
+              onLinked={() => router.refresh()}
+            />
+          </div>
+        ) : null}
+        */}
         <GroupRulesSheet
           open={rulesSheetOpen}
           onClose={() => {

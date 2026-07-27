@@ -33,6 +33,29 @@ describe('parseSessionFormData', () => {
     expect(result.values.locationId).toBe('loc-1')
     expect(result.values.durationMin).toBe(90)
     expect(result.values.startsAtIso).toBe('2026-07-10T22:00:00.000Z')
+    expect(result.values.priceCents).toBeNull()
+  })
+
+  it('parses session fee dollars into cents', () => {
+    const result = parseSessionFormData(sessionFormData({ ...valid, price_cents: '12.50' }))
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+    expect(result.values.priceCents).toBe(1250)
+  })
+
+  it('treats zero fee as free (null)', () => {
+    const result = parseSessionFormData(sessionFormData({ ...valid, price_cents: '0' }))
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+    expect(result.values.priceCents).toBeNull()
+  })
+
+  it('rejects negative session fees', () => {
+    const result = parseSessionFormData(sessionFormData({ ...valid, price_cents: '-1' }))
+    expect(result).toEqual({
+      ok: false,
+      error: 'Session price must be a valid amount (0 or more).',
+    })
   })
 
   it('requires core fields', () => {

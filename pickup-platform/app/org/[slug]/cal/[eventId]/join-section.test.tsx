@@ -32,6 +32,10 @@ vi.mock('@/lib/participant-session-client', () => ({
   clearParticipantDeviceSession: vi.fn(),
 }))
 
+vi.mock('../../_components/save-participant-account-card', () => ({
+  SaveParticipantAccountCard: () => <div data-testid="save-account-card" />,
+}))
+
 vi.mock('./participation-motion', () => ({
   useParticipationMotion: () => ({
     reopenJoinPanel: reopenJoinPanelMock,
@@ -104,6 +108,19 @@ describe('JoinSection "Not you?" flow', () => {
     expect(screen.getByRole('heading', { name: /welcome back, jeff p\./i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /not you\?/i })).toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: /save your spot/i })).not.toBeInTheDocument()
+    // Optional free-path save-account card is intentionally hidden for now.
+    expect(screen.queryByTestId('save-account-card')).not.toBeInTheDocument()
+  })
+
+  it('routes paid sessions to the pay-to-join path', () => {
+    renderJoinSection({
+      participant: null,
+      paidSession: true,
+      priceCents: 1500,
+      isAuthenticated: false,
+    })
+    expect(screen.getByText(/this session costs \$15\.00/i)).toBeInTheDocument()
+    expect(screen.getByTestId('save-account-card')).toBeInTheDocument()
   })
 
   it('clears the device session and switches to the new-user signup form', async () => {

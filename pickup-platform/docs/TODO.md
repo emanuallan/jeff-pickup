@@ -62,8 +62,15 @@ Track deferred work and known simplifications. Prefer shipping simple, refine la
 - [ ] Reminders
 - [x] Post-session participant feedback + console feedback section (migration `047_session_feedback.sql`)
 - [ ] Custom domains
-- [ ] Billing / subscriptions
-- [ ] **Group sponsorships** (migration `052_group_sponsorships.sql`) — Stripe Connect + sponsor logos; run migration and configure Stripe env vars before enabling in prod
+- [ ] Billing / subscriptions (platform SaaS billing for organizers — separate from session fees)
+- [x] **Group sponsorships** (migration `052_group_sponsorships.sql`) — Stripe Connect + sponsor logos; run migration and configure Stripe env vars before enabling in prod
+
+## Hybrid participant auth + pay-per-session
+
+- [x] **Phase A** — Participant email OTP accounts; link `auth.users` ↔ per-org `participants`; optional “Save your account”; soft phone join remains for free sessions (migration `073_hybrid_auth_and_session_payments.sql`)
+- [x] **Phase B** — `events.price_cents` + console fee field; Connect Checkout pay-per-session; webhook + return-URL sync; soft `join_event` rejects paid sessions
+- [x] **Phase C** — Apex `/me` home (linked groups + payment history)
+- [ ] **Phase D (deferred)** — Per-org or universal credits / wallets — revisit after A–C are proven in production
 
 ## Known simplifications (intentional)
 

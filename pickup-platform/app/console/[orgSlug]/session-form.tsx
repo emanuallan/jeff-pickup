@@ -62,6 +62,9 @@ export function SessionForm({
   const [minPlayers, setMinPlayers] = useState(
     initial?.minPlayers != null ? String(initial.minPlayers) : '',
   )
+  const [priceDollars, setPriceDollars] = useState(
+    initial?.priceCents != null ? (initial.priceCents / 100).toFixed(2) : '',
+  )
   const [additionalInformation, setAdditionalInformation] = useState(
     initial?.additionalInformation ?? '',
   )
@@ -80,6 +83,7 @@ export function SessionForm({
       setLocationId(initial.locationId)
       setCapacity(initial.capacity != null ? String(initial.capacity) : '')
       setMinPlayers(initial.minPlayers != null ? String(initial.minPlayers) : '')
+      setPriceDollars(initial.priceCents != null ? (initial.priceCents / 100).toFixed(2) : '')
       setAdditionalInformation(initial.additionalInformation ?? '')
       setTimezone(initial.timezone)
       setStartsAtLocal(initial.startsAtLocal)
@@ -119,6 +123,7 @@ export function SessionForm({
     formData.set('ends_at', endsAtLocal)
     if (capacity.trim()) formData.set('capacity', capacity.trim())
     if (minPlayers.trim()) formData.set('min_players', minPlayers.trim())
+    if (priceDollars.trim()) formData.set('price_cents', priceDollars.trim())
     formData.set('additional_information', additionalInformation)
 
     const durationMin = durationMinFromLocalRange(startsAtLocal, endsAtLocal, tz)
@@ -235,6 +240,28 @@ export function SessionForm({
           />
         </label>
       </div>
+
+      <label className="block">
+        <span className={consoleLabel}>Session fee (optional)</span>
+        <div className="relative mt-1">
+          <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-sm text-zinc-500">
+            $
+          </span>
+          <input
+            name="price_cents"
+            type="number"
+            min={0}
+            step="0.01"
+            placeholder="Free"
+            value={priceDollars}
+            onChange={(event) => setPriceDollars(event.target.value)}
+            className={`${consoleInput} pl-7`}
+          />
+        </div>
+        <p className="mt-1 text-xs text-zinc-500">
+          Paid sessions require Stripe Connect and participant email sign-in.
+        </p>
+      </label>
 
       <CollapsibleAdditionalInformationField
         value={additionalInformation}

@@ -293,7 +293,7 @@ export async function createOneOffEvent(
   if (!parsed.ok) {
     return { error: parsed.error }
   }
-  const { title, locationId, startsAtIso, timezone, durationMin, capacity, minPlayers, additionalInformation } =
+  const { title, locationId, startsAtIso, timezone, durationMin, capacity, minPlayers, additionalInformation, priceCents } =
     parsed.values
 
   const locationCheck = await assertLocationInOrg(supabase, org.id, locationId)
@@ -312,6 +312,7 @@ export async function createOneOffEvent(
     capacity,
     min_players: minPlayers,
     additional_information: additionalInformation,
+    price_cents: priceCents,
     status: initialEventStatus(minPlayers),
   })
 
@@ -345,7 +346,7 @@ export async function updateEvent(
   if (!parsed.ok) {
     return { error: parsed.error }
   }
-  const { title, locationId, startsAtIso, timezone, durationMin, capacity, minPlayers, additionalInformation } =
+  const { title, locationId, startsAtIso, timezone, durationMin, capacity, minPlayers, additionalInformation, priceCents } =
     parsed.values
 
   const locationCheck = await assertLocationInOrg(supabase, org.id, locationId)
@@ -379,6 +380,7 @@ export async function updateEvent(
       capacity,
       min_players: minPlayers,
       additional_information: additionalInformation,
+      price_cents: priceCents,
     })
     .eq('id', event.id)
     .eq('org_id', org.id)

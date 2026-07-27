@@ -23,6 +23,7 @@ export type ParsedSessionFields = {
   capacity: number | null
   minPlayers: number | null
   additionalInformation: string
+  priceCents: number | null
 }
 
 export function parseSessionFormData(
@@ -38,6 +39,16 @@ export function parseSessionFormData(
   )
   const capacity = parseOptionalInt(formData.get('capacity'))
   const minParticipants = parseOptionalMinParticipants(formData.get('min_players'))
+  const priceCentsRaw = String(formData.get('price_cents') ?? '').trim()
+  let priceCents: number | null = null
+  if (priceCentsRaw) {
+    const dollars = Number.parseFloat(priceCentsRaw)
+    if (!Number.isFinite(dollars) || dollars < 0) {
+      return { ok: false, error: 'Session price must be a valid amount (0 or more).' }
+    }
+    priceCents = Math.round(dollars * 100)
+    if (priceCents === 0) priceCents = null
+  }
 
   const additionalInformation = normalizeAdditionalInformation(
     formData.get('additional_information'),
@@ -88,6 +99,7 @@ export function parseSessionFormData(
       capacity,
       minPlayers: minParticipants.value,
       additionalInformation,
+      priceCents,
     },
   }
 }

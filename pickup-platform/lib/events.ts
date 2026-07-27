@@ -34,6 +34,8 @@ export type Event = {
 	status: EventStatus;
 	announcement: string;
 	additional_information: string;
+	/** Null or 0 = free. Greater than 0 requires auth + Stripe Checkout. */
+	price_cents: number | null;
 };
 
 export type EventWithLocation = Event & {
@@ -110,6 +112,12 @@ export function mapEventRow(row: Record<string, unknown>): EventWithLocation {
 				? event.additional_information
 				: "",
 		timezone: String(event.timezone ?? "UTC"),
+		price_cents:
+			typeof event.price_cents === "number"
+				? event.price_cents
+				: event.price_cents != null && Number.isFinite(Number(event.price_cents))
+					? Number(event.price_cents)
+					: null,
 		title: overrides.title ?? schedule.title,
 		duration_min: overrides.duration_min ?? schedule.duration_min,
 		location_label: loc?.label ?? "Location",

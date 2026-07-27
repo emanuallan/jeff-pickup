@@ -17,10 +17,19 @@ import { MatchdayPanel } from './_components/matchday-panel'
 import { LeaderboardPanelSection } from './_components/leaderboard-panel-section'
 import { FeedPanelSection } from './_components/feed-panel-section'
 import { isOrgSessionFeedEnabled } from '@/lib/org-session-feed'
+import { syncSessionPaymentCheckoutForOrg } from '@/lib/session-payment'
+import { revalidatePath } from 'next/cache'
 
 type Props = {
   params: Promise<{ slug: string }>
-  searchParams: Promise<{ tab?: string; cal?: string; ev?: string; lb?: string }>
+  searchParams: Promise<{
+    tab?: string
+    cal?: string
+    ev?: string
+    lb?: string
+    paid?: string
+    session_id?: string
+  }>
 }
 
 export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {
@@ -82,11 +91,22 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
 
 export default async function OrgHomePage({ params, searchParams }: Props) {
   const { slug } = await params
-  const { tab, cal, ev, lb } = await searchParams
+  const { tab, cal, ev, lb, paid, session_id: sessionId } = await searchParams
   const org = await getPublicOrgBySlug(slug)
 
   if (!org || org.status !== 'active') {
     notFound()
+  }
+
+  if (paid === '1' && sessionId) {
+    try {
+      const synced = await syncSessionPaymentCheckoutForOrg(org.id, sessionId)
+      if (synced.ok) {
+        revalidatePath(`/org/${slug}`)
+      }
+    } catch (error) {
+      console.error('Session payment success sync failed', error)
+    }
   }
 
   const eventRef = resolveCalEventId(cal, ev)

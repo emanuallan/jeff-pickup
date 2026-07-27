@@ -41,6 +41,10 @@ type JoinProps = {
   groupRulesText?: string
   groupRulesVersion?: number
   needsGroupRulesAcceptance?: boolean
+  priceCents?: number | null
+  paidSession?: boolean
+  isAuthenticated?: boolean
+  accountLinked?: boolean
 }
 
 type Props = JoinProps & {

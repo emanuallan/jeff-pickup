@@ -37,7 +37,9 @@ const completeSession = {
 
 describe('buildSponsorshipCheckoutRpcPayload', () => {
   it('builds rpc payload from checkout metadata', () => {
-    const payload = buildSponsorshipCheckoutRpcPayload(completeSession)
+    const payload = buildSponsorshipCheckoutRpcPayload(
+      completeSession as unknown as import('stripe').Stripe.Checkout.Session,
+    )
     expect(payload).toMatchObject({
       p_org_id: 'org-1',
       p_tier_id: 'tier-1',

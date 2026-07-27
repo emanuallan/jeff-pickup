@@ -2,12 +2,24 @@ import { NextResponse } from 'next/server'
 import type Stripe from 'stripe'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { upsertSponsorshipFromCheckoutSession } from '@/lib/sponsorship-checkout'
+import { completePaidEventJoinFromCheckout } from '@/lib/session-payment'
 import { getStripe, stripeWebhookSecret } from '@/lib/stripe'
 import { stripeSubscriptionPeriodEndIso } from '@/lib/stripe-connect'
 
 export const runtime = 'nodejs'
 
 async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
+  if (session.metadata?.checkout_kind === 'session_payment') {
+    const paid = await completePaidEventJoinFromCheckout(session)
+    if (!paid.ok) {
+      console.warn('checkout.session.completed session payment failed', {
+        sessionId: session.id,
+        reason: paid.reason,
+      })
+    }
+    return
+  }
+
   const result = await upsertSponsorshipFromCheckoutSession(session)
   if (!result.ok) {
     console.warn('checkout.session.completed missing sponsorship metadata', {

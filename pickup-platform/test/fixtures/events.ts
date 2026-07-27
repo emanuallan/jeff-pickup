@@ -16,6 +16,7 @@ export function makeEvent(overrides: Partial<Event> = {}): Event {
     status: 'on',
     announcement: '',
     additional_information: '',
+    price_cents: null,
     ...overrides,
   }
 }
