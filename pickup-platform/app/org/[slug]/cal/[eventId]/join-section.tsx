@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useState, useTransition, type FormEvent } from 'react'
+import { useCallback, useEffect, useMemo, useState, useTransition, type FormEvent } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   joinEvent,
@@ -289,15 +289,20 @@ export function JoinSection(props: Props) {
     setLoading(false)
   }, [])
 
-  const knownProfile: KnownParticipantProfile | null =
-    capturedProfile ??
-    (props.participant
-      ? {
-          firstName: props.participant.first_name,
-          lastName: props.participant.last_name,
-          phone: props.participant.phone,
-        }
-      : null)
+  const knownProfile = useMemo<KnownParticipantProfile | null>(() => {
+    if (capturedProfile) return capturedProfile
+    if (!props.participant) return null
+    return {
+      firstName: props.participant.first_name,
+      lastName: props.participant.last_name,
+      phone: props.participant.phone,
+    }
+  }, [
+    capturedProfile,
+    props.participant?.first_name,
+    props.participant?.last_name,
+    props.participant?.phone,
+  ])
 
   useEffect(() => {
     if (!props.participant) {

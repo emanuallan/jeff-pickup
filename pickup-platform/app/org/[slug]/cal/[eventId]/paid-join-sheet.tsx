@@ -87,7 +87,7 @@ export function PaidJoinSheet({
 
   const applyKnownProfile = useCallback((profile: KnownParticipantProfile | null | undefined) => {
     if (!hasUsableProfile(profile)) {
-      setProfileKnown(false)
+      // Do not clear profileKnown — mid-flow OTP success may set it before props catch up.
       return false
     }
     setFirstName(profile!.firstName.trim())
@@ -148,14 +148,21 @@ export function PaidJoinSheet({
     setStep('email')
   }, [accountLinked, applyKnownProfile, isAuthenticated, knownProfile, orgSlug, router])
 
+  // Only initialize when the sheet opens. Re-running on auth/profile prop changes
+  // (e.g. after OTP + router.refresh) was resetting users back to the email step.
+  const initializedOpenRef = useRef(false)
   useEffect(() => {
-    if (open) {
-      void resetToEntryStep()
+    if (!open) {
+      initializedOpenRef.current = false
+      return
     }
+    if (initializedOpenRef.current) return
+    initializedOpenRef.current = true
+    void resetToEntryStep()
   }, [open, resetToEntryStep])
 
   useEffect(() => {
-    setLinked(accountLinked)
+    if (accountLinked) setLinked(true)
   }, [accountLinked])
 
   useEffect(() => {
