@@ -6,7 +6,11 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getStripe, getPlatformFeePercent } from '@/lib/stripe'
 import { orgBaseUrl } from '@/lib/site-url'
-import { isPaidSession } from '@/lib/session-payment'
+import {
+  isPaidSession,
+  paidSessionHeadcount,
+  sessionPaymentTotalCents,
+} from '@/lib/session-payment'
 import { getLinkedParticipantForOrg } from '@/lib/participant-account'
 import { resolveGuestCount } from '@/lib/guest-signups'
 import { orgFeatures } from '@/lib/org-features'
@@ -116,7 +120,13 @@ export async function POST(request: Request) {
     )
   }
 
-  const amountCents = event.price_cents ?? 0
+  const amountCentsPerPerson = event.price_cents ?? 0
+  if (amountCentsPerPerson <= 0) {
+    return NextResponse.json({ error: 'Invalid session price.' }, { status: 400 })
+  }
+
+  const headcount = paidSessionHeadcount(guestCount)
+  const amountCents = sessionPaymentTotalCents(amountCentsPerPerson, guestCount)
   if (amountCents <= 0) {
     return NextResponse.json({ error: 'Invalid session price.' }, { status: 400 })
   }
@@ -153,6 +163,7 @@ export async function POST(request: Request) {
   const stripe = getStripe()
   const baseUrl = orgBaseUrl(slug)
   const title = event.title?.trim() || 'Session'
+  const peopleLabel = headcount === 1 ? '1 person' : `${headcount} people`
 
   try {
     const session = await stripe.checkout.sessions.create(
@@ -160,13 +171,13 @@ export async function POST(request: Request) {
         mode: 'payment',
         line_items: [
           {
-            quantity: 1,
+            quantity: headcount,
             price_data: {
               currency: 'usd',
-              unit_amount: amountCents,
+              unit_amount: amountCentsPerPerson,
               product_data: {
                 name: `${org.name} · ${title}`,
-                description: 'Session signup',
+                description: `Session signup · ${peopleLabel}`,
               },
             },
           },
@@ -181,6 +192,8 @@ export async function POST(request: Request) {
           payment_id: payment.id,
           participant_id: linked.participant_id,
           user_id: user.id,
+          guest_count: String(guestCount),
+          headcount: String(headcount),
         },
         payment_intent_data: {
           application_fee_amount: applicationFeeAmount,
@@ -189,6 +202,8 @@ export async function POST(request: Request) {
             org_id: org.id,
             event_id: event.id,
             payment_id: payment.id,
+            guest_count: String(guestCount),
+            headcount: String(headcount),
           },
         },
       },

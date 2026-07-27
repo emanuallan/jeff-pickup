@@ -1,6 +1,7 @@
 import type Stripe from 'stripe'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getStripe } from '@/lib/stripe'
+import { clampGuestCount } from '@/lib/guest-signups'
 
 export async function completePaidEventJoinFromCheckout(
   session: Stripe.Checkout.Session,
@@ -80,4 +81,18 @@ export function formatPriceCents(cents: number, currency = 'usd'): string {
 
 export function isPaidSession(priceCents: number | null | undefined): boolean {
   return (priceCents ?? 0) > 0
+}
+
+/** Joiner + guests — paid sessions charge per person. */
+export function paidSessionHeadcount(guestCount: number): number {
+  return 1 + clampGuestCount(guestCount)
+}
+
+/** Total charge in cents: session fee × (you + guests). */
+export function sessionPaymentTotalCents(
+  priceCentsPerPerson: number,
+  guestCount: number,
+): number {
+  if (!Number.isFinite(priceCentsPerPerson) || priceCentsPerPerson <= 0) return 0
+  return Math.round(priceCentsPerPerson) * paidSessionHeadcount(guestCount)
 }

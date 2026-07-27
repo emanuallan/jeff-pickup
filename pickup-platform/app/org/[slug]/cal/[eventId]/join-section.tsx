@@ -179,6 +179,7 @@ function PaidJoinSection({
   isFull,
   waitlistEnabled,
   priceLabel,
+  priceCents,
   accountLinked,
   isAuthenticated,
   guestsEnabled = true,
@@ -187,6 +188,7 @@ function PaidJoinSection({
   linkedAccountEmail = null,
 }: Props & {
   priceLabel: string
+  priceCents: number
   accountLinked: boolean
   isAuthenticated: boolean
   autoOpenSheet?: boolean
@@ -211,9 +213,9 @@ function PaidJoinSection({
             ? `This session is full. Pay ${priceLabel} to join the waitlist.`
             : alreadyLinked
               ? isAuthenticated && accountLinked
-                ? `This session costs ${priceLabel}. Confirm and pay to lock your spot.`
-                : `This session costs ${priceLabel}. Verify your linked email, then pay to lock your spot.`
-              : `This session costs ${priceLabel}. Sign in with email, then pay to lock your spot.`}
+                ? `This session costs ${priceLabel} per person. Confirm and pay to lock your spot.`
+                : `This session costs ${priceLabel} per person. Verify your linked email, then pay to lock your spot.`
+              : `This session costs ${priceLabel} per person. Sign in with email, then pay to lock your spot.`}
         </p>
       </div>
 
@@ -239,6 +241,7 @@ function PaidJoinSection({
         accent={accent}
         accentText={accentText}
         priceLabel={priceLabel}
+        priceCents={priceCents}
         joiningWaitlist={joiningWaitlist}
         isAuthenticated={isAuthenticated}
         accountLinked={accountLinked}
@@ -356,7 +359,7 @@ export function JoinSection(props: Props) {
     return (
       <PaidJoinSection
         {...props}
-        priceCents={effectivePriceCents}
+        priceCents={effectivePriceCents ?? 0}
         priceLabel={priceLabel}
         accountLinked={props.accountLinked === true}
         isAuthenticated={props.isAuthenticated === true}

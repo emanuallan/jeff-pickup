@@ -37,6 +37,7 @@ const baseProps = {
   accent: '#2563eb',
   accentText: '#ffffff',
   priceLabel: '$5.00',
+  priceCents: 500,
   joiningWaitlist: false,
   isAuthenticated: false,
   accountLinked: false,
@@ -135,5 +136,26 @@ describe('PaidJoinSheet', () => {
     })
     expect(screen.queryByLabelText(/^email$/i)).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /send code/i })).not.toBeInTheDocument()
+  })
+
+  it('scales the pay subtotal by headcount when guests are selected', async () => {
+    const user = userEvent.setup()
+    render(
+      <PaidJoinSheet
+        {...baseProps}
+        isAuthenticated
+        accountLinked
+      />,
+    )
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /pay \$5\.00 & join/i })).toBeInTheDocument()
+    })
+
+    await user.selectOptions(screen.getByRole('combobox'), '2')
+
+    expect(screen.getByText(/subtotal/i)).toBeInTheDocument()
+    expect(screen.getByText(/\$5\.00 × 3 people/i)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /pay \$15\.00 & join/i })).toBeInTheDocument()
   })
 })

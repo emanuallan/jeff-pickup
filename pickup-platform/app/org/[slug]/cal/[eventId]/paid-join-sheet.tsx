@@ -15,6 +15,11 @@ import { BottomSheet } from '@/app/_components/bottom-sheet'
 import { GuestCountSelect } from './guest-count-select'
 import { saveParticipantAccount } from '../../participant-account-actions'
 import { isValidPhoneDigits } from '@/lib/phone'
+import {
+  formatPriceCents,
+  paidSessionHeadcount,
+  sessionPaymentTotalCents,
+} from '@/lib/session-payment'
 
 const RESEND_SECONDS = 60
 
@@ -35,6 +40,8 @@ type Props = {
   accent: string
   accentText: string
   priceLabel: string
+  /** Per-person session fee in cents — used for guest subtotals. */
+  priceCents: number
   joiningWaitlist: boolean
   isAuthenticated: boolean
   accountLinked: boolean
@@ -67,6 +74,7 @@ export function PaidJoinSheet({
   accent,
   accentText,
   priceLabel,
+  priceCents,
   joiningWaitlist,
   isAuthenticated,
   accountLinked,
@@ -90,6 +98,13 @@ export function PaidJoinSheet({
   const [linked, setLinked] = useState(accountLinked)
   const [profileKnown, setProfileKnown] = useState(hasUsableProfile(knownProfile))
   const verifyLockRef = useRef(false)
+
+  const payHeadcount = guestsEnabled ? paidSessionHeadcount(guestCount) : 1
+  const payTotalCents = sessionPaymentTotalCents(
+    priceCents,
+    guestsEnabled ? guestCount : 0,
+  )
+  const payTotalLabel = formatPriceCents(payTotalCents)
 
   const applyKnownProfile = useCallback((profile: KnownParticipantProfile | null | undefined) => {
     if (!hasUsableProfile(profile)) {
@@ -616,6 +631,15 @@ export function PaidJoinSheet({
                 />
               </label>
             ) : null}
+            {guestsEnabled && payHeadcount > 1 ? (
+              <p className="rounded-xl border border-zinc-800 bg-zinc-950/50 px-3 py-2 text-sm text-zinc-400">
+                Subtotal{' '}
+                <span className="font-medium text-zinc-200">{payTotalLabel}</span>
+                <span className="mt-0.5 block text-xs text-zinc-500">
+                  {priceLabel} × {payHeadcount} people
+                </span>
+              </p>
+            ) : null}
             <button
               type="button"
               disabled={busy}
@@ -623,7 +647,7 @@ export function PaidJoinSheet({
               className="w-full rounded-xl px-4 py-3 text-sm font-semibold disabled:opacity-60"
               style={{ backgroundColor: accent, color: accentText }}
             >
-              {busy ? 'Redirecting…' : `Pay ${priceLabel} & join`}
+              {busy ? 'Redirecting…' : `Pay ${payTotalLabel} & join`}
             </button>
           </div>
         ) : null}
