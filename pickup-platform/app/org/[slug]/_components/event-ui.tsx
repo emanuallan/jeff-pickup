@@ -17,6 +17,7 @@ import { orgPublicEventHref } from '@/lib/org-public-nav'
 import { safeExternalHref } from '@/lib/social-links'
 import { arrowNe, arrowRight } from '@/lib/text-arrows'
 import { accentOnDark, hexToRgba } from '@/lib/colors'
+import { formatPriceCents, isPaidSession } from '@/lib/session-payment'
 
 export { isEventCancelled }
 
@@ -436,13 +437,21 @@ export function SessionRow({
           <span className={`truncate text-sm font-medium ${classes.titleSm}`}>
             {eventName(event)}
           </span>
-          <StatusPill
-            status={event.status}
-            accent={accent}
-            live={live}
-            ended={ended}
-            compact
-          />
+          <div className="flex shrink-0 items-center gap-1.5">
+            <SessionPriceBadge
+              priceCents={event.price_cents}
+              accent={accent}
+              cancelled={cancelled}
+              compact
+            />
+            <StatusPill
+              status={event.status}
+              accent={accent}
+              live={live}
+              ended={ended}
+              compact
+            />
+          </div>
         </div>
         <div className="mt-0.5 flex min-w-0 flex-wrap items-center gap-x-1.5 text-xs text-zinc-600">
           <span className="shrink-0 tabular-nums">{formatEventTimeRange(event)}</span>
@@ -503,3 +512,65 @@ export function OnlineIcon({
     </svg>
   )
 }
+
+export function CashIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={`h-4 w-4 shrink-0${className ? ` ${className}` : ''}`}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <rect x="2" y="6" width="20" height="12" rx="2" />
+      <circle cx="12" cy="12" r="2" />
+      <path d="M6 12h.01M18 12h.01" />
+    </svg>
+  )
+}
+
+/** Paid-session badge for event cards — cash icon + fee. */
+export function SessionPriceBadge({
+  priceCents,
+  accent,
+  cancelled = false,
+  compact = false,
+  className,
+}: {
+  priceCents: number | null | undefined
+  accent: string
+  cancelled?: boolean
+  compact?: boolean
+  className?: string
+}) {
+  if (!isPaidSession(priceCents)) return null
+
+  const amount = formatPriceCents(priceCents ?? 0)
+  const color = cancelled ? undefined : accentOnDark(accent)
+  const pill = compact
+    ? 'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold'
+    : 'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold'
+
+  return (
+    <span
+      className={`${pill} ${cancelled ? 'bg-zinc-800/80 text-zinc-500' : ''} ${className ?? ''}`.trim()}
+      style={
+        cancelled
+          ? undefined
+          : {
+              backgroundColor: hexToRgba(accent, 0.15),
+              color,
+            }
+      }
+      title={`Session fee ${amount} per person`}
+    >
+      <CashIcon className={cancelled ? 'text-zinc-500' : undefined} />
+      <span>{amount}</span>
+      {compact ? null : <span className="font-medium opacity-70">per person</span>}
+    </span>
+  )
+}
+
