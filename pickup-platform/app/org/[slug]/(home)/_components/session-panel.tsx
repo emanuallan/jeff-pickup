@@ -18,7 +18,6 @@ import {
   EventLocationRow,
   EventTimingBadge,
   SessionPriceBadge,
-  CashIcon,
   eventName,
   isEventCancelled,
   cancelledEventClasses,
@@ -26,7 +25,7 @@ import {
 import { EventAnnouncementBanner } from '../../_components/event-announcement-banner'
 import { ORG_PUBLIC_DESKTOP_STICKY_CARD, ORG_PUBLIC_SESSION_PANEL_GRID } from '@/lib/org-public-layout'
 import { getLiveEventPriceCents } from '@/lib/event-price'
-import { formatPriceCents, isPaidSession } from '@/lib/session-payment'
+import { isPaidSession } from '@/lib/session-payment'
 
 type Props = {
   slug: string
@@ -65,21 +64,12 @@ export async function SessionPanel({ slug, org, event, eventId }: Props) {
         <div className="overflow-hidden rounded-3xl border border-zinc-800 bg-linear-to-b from-zinc-900 to-zinc-950 p-6 md:p-7">
           <div className="flex items-center justify-between gap-3">
             <EventTimingBadge event={event} accent={accent} cancelled={isCancelled} />
-            <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
-              {paidSession ? (
-                <SessionPriceBadge
-                  priceCents={priceCents}
-                  accent={accent}
-                  cancelled={isCancelled}
-                />
-              ) : null}
-              <StatusPill
-                status={event.status}
-                accent={accent}
-                live={isLive}
-                ended={isEnded}
-              />
-            </div>
+            <StatusPill
+              status={event.status}
+              accent={accent}
+              live={isLive}
+              ended={isEnded}
+            />
           </div>
 
           <h2
@@ -95,25 +85,6 @@ export async function SessionPanel({ slug, org, event, eventId }: Props) {
             className="mt-3 flex gap-2 text-sm text-zinc-400"
           />
 
-          {paidSession ? (
-            <p
-              className={`mt-3 flex items-center gap-2 text-sm ${
-                isCancelled ? 'text-zinc-500' : 'text-zinc-300'
-              }`}
-            >
-              <CashIcon className={isCancelled ? 'text-zinc-500' : 'text-zinc-400'} />
-              <span>
-                <span className={`font-semibold tabular-nums ${isCancelled ? 'text-zinc-500' : 'text-zinc-100'}`}>
-                  {formatPriceCents(priceCents ?? 0)}
-                </span>
-                <span className={isCancelled ? 'text-zinc-600' : 'text-zinc-400'}>
-                  {' '}
-                  per person · Paid session
-                </span>
-              </span>
-            </p>
-          ) : null}
-
           {event.additional_information ? (
             <p className="mt-4 rounded-xl border border-zinc-800 bg-black/30 px-3 py-2 text-sm text-zinc-300">
               {event.additional_information}
@@ -121,6 +92,13 @@ export async function SessionPanel({ slug, org, event, eventId }: Props) {
           ) : null}
 
           <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-zinc-800 pt-4 text-sm">
+            {paidSession ? (
+              <SessionPriceBadge
+                priceCents={priceCents}
+                accent={accent}
+                cancelled={isCancelled}
+              />
+            ) : null}
             <Suspense
               fallback={
                 <EventHeadcountFallback
