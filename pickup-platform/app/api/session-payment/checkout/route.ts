@@ -140,7 +140,14 @@ export async function POST(request: Request) {
     .single()
 
   if (paymentError || !payment) {
-    return NextResponse.json({ error: 'Could not start payment.' }, { status: 500 })
+    console.error('event_payments insert failed', paymentError)
+    return NextResponse.json(
+      {
+        error: 'Could not start payment.',
+        detail: paymentError?.message ?? 'Insert returned no row.',
+      },
+      { status: 500 },
+    )
   }
 
   const stripe = getStripe()

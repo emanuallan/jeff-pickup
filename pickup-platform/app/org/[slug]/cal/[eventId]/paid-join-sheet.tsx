@@ -294,7 +294,12 @@ export function PaidJoinSheet({
           phone,
         }),
       })
-      const payload = (await res.json()) as { url?: string; error?: string; code?: string }
+      const payload = (await res.json()) as {
+        url?: string
+        error?: string
+        code?: string
+        detail?: string
+      }
       if (!res.ok || !payload.url) {
         if (payload.code === 'auth_required') {
           setLinked(false)
@@ -306,7 +311,11 @@ export function PaidJoinSheet({
           setStep('profile')
           setMessage(payload.error ?? 'Enter your name and phone to continue.')
         } else {
-          setMessage(payload.error ?? 'Could not start checkout.')
+          const detail =
+            typeof payload.detail === 'string' && payload.detail.trim()
+              ? ` (${payload.detail.trim()})`
+              : ''
+          setMessage(`${payload.error ?? 'Could not start checkout.'}${detail}`)
         }
         setBusy(false)
         return
