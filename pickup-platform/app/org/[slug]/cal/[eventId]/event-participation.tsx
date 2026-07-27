@@ -1,6 +1,6 @@
 import type { Org } from '@/lib/orgs'
 import type { EventWithLocation } from '@/lib/events'
-import { canUpdateArrivalStatus, isEventEnded } from '@/lib/events'
+import { canUpdateArrivalStatus, getEventByRef, isEventEnded } from '@/lib/events'
 import { readableTextColor } from '@/lib/colors'
 import { getPublicRoster, getPublicWaitlist, rosterHeadcount } from '@/lib/signups'
 import { getSessionToken } from '@/lib/participant-session'
@@ -42,7 +42,8 @@ export async function EventParticipation({ slug, eventId, org, event }: Props) {
 
   const sessionToken = await getSessionToken()
 
-  const [{ participant, mySignup }, roster, waitlist, groupRulesStatus, authUser, linkedParticipant] =
+  // Live event row for join gating — public upcoming list is cached and can lag fee edits.
+  const [{ participant, mySignup }, roster, waitlist, groupRulesStatus, authUser, linkedParticipant, liveEvent] =
     await Promise.all([
     getSessionInfo(sessionToken, org.id, event.id),
     isCancelled ? Promise.resolve([]) : getPublicRoster(event.id),
@@ -55,9 +56,11 @@ export async function EventParticipation({ slug, eventId, org, event }: Props) {
         } as Awaited<ReturnType<typeof getGroupRulesStatusForJoin>>),
     getAuthUser(),
     getLinkedParticipantForOrg(org.id),
+    getEventByRef(eventId, org.id),
   ])
 
-  const paidSession = isPaidSession(event.price_cents)
+  const priceCents = liveEvent?.price_cents ?? event.price_cents
+  const paidSession = isPaidSession(priceCents)
   const accountLinked = Boolean(linkedParticipant)
 
   const headcount = rosterHeadcount(roster)
@@ -124,7 +127,7 @@ export async function EventParticipation({ slug, eventId, org, event }: Props) {
       canUpdateStatus={canUpdateStatus}
       badgesByParticipantId={badgesByParticipantId}
       rosterHeading={isCancelled ? "Who's coming" : isEnded ? 'Who came' : "Who's coming"}
-      priceCents={event.price_cents}
+      priceCents={priceCents}
       paidSession={paidSession}
       isAuthenticated={Boolean(authUser)}
       accountLinked={accountLinked}

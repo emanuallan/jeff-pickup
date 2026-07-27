@@ -107,7 +107,7 @@ async function fetchPublicOrgAndEvent(
 export const getPublicOrgAndEvent = cache(
   async (slug: string, eventRef: string): Promise<PublicOrgAndEvent | null> => {
     return withPublicCache(
-      ['public-org-event-v2', slug, eventRef],
+      ['public-org-event-v3', slug, eventRef],
       PUBLIC_EVENTS_REVALIDATE,
       [`org:${slug}`, `event:${slug}:${eventRef}`],
       () => fetchPublicOrgAndEvent(slug, eventRef),
@@ -195,7 +195,7 @@ export const getPublicUpcomingEventsForOrg = cache(
     includeCancelled = false,
   ): Promise<EventWithLocation[]> => {
     return withPublicCache(
-      ['public-upcoming-events', orgId, String(limit), String(includeCancelled)],
+      ['public-upcoming-events-v2', orgId, String(limit), String(includeCancelled)],
       PUBLIC_EVENTS_REVALIDATE,
       [`org-events:${orgId}`],
       () => fetchPublicUpcomingEvents(orgId, limit, includeCancelled),

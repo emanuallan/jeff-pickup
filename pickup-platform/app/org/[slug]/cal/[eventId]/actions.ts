@@ -11,6 +11,7 @@ import { normalizePhoneDigits, isValidPhoneDigits } from '@/lib/phone'
 import { validateDemoParticipantNames } from '@/lib/participant-name-moderation'
 import { orgFeatures } from '@/lib/org-features'
 import { resolveGuestCount } from '@/lib/guest-signups'
+import { isPaidSession } from '@/lib/session-payment'
 
 async function getOpenEvent(
   orgSlug: string,
@@ -63,7 +64,7 @@ export async function joinEvent(
   orgSlug: string,
   eventId: string,
   formData: FormData,
-): Promise<{ error?: string }> {
+): Promise<{ error?: string; code?: string }> {
   const supabase = await createClient()
 
   const phone = normalizePhoneDigits(String(formData.get('phone') ?? ''))
@@ -88,6 +89,13 @@ export async function joinEvent(
   const open = await getOpenEvent(orgSlug, eventId)
   if ('error' in open) {
     return { error: open.error }
+  }
+
+  if (isPaidSession(open.event.price_cents)) {
+    return {
+      error: 'This session requires payment. Refresh the page to continue with checkout.',
+      code: 'payment_required',
+    }
   }
 
   const org = await getPublicOrgBySlug(orgSlug)
@@ -169,7 +177,7 @@ export async function quickJoinEvent(
   eventId: string,
   guestCount = 0,
   arrivalStatus: ArrivalStatus = 'confirmed',
-): Promise<{ error?: string }> {
+): Promise<{ error?: string; code?: string }> {
   const token = await getSessionToken()
   if (!token) {
     return { error: 'No saved session' }
@@ -203,6 +211,13 @@ export async function quickJoinEvent(
   const open = await getOpenEvent(orgSlug, eventId)
   if ('error' in open) {
     return { error: open.error }
+  }
+
+  if (isPaidSession(open.event.price_cents)) {
+    return {
+      error: 'This session requires payment. Refresh the page to continue with checkout.',
+      code: 'payment_required',
+    }
   }
 
   const resolvedGuests = resolveGuestCount(guests, orgFeatures(org).guest_signups)

@@ -435,6 +435,13 @@ export function JoinSection(props: Props) {
           router.refresh()
         })
       } else if (
+        result.code === 'payment_required' ||
+        result.error.toLowerCase().includes('requires payment')
+      ) {
+        startTransition(() => {
+          router.refresh()
+        })
+      } else if (
         isNewUserJoinPath &&
         result.error.includes('group rules') &&
         !rulesSheetOpen
@@ -498,6 +505,13 @@ export function JoinSection(props: Props) {
               setLoading(false)
               if (!result.error) {
                 markReturningSignupPromptSeen(props.orgSlug, props.eventId)
+                startTransition(() => {
+                  router.refresh()
+                })
+              } else if (
+                result.code === 'payment_required' ||
+                result.error.toLowerCase().includes('requires payment')
+              ) {
                 startTransition(() => {
                   router.refresh()
                 })

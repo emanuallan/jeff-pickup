@@ -1,6 +1,6 @@
 'use server'
 
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, revalidateTag } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
@@ -38,6 +38,15 @@ import { parseLocationFormData } from '@/lib/console/parse-location-form'
 import { assertLocationInOrg } from '@/lib/console/location-ownership'
 import { syncOrgBrandingToStripeIfConnected } from '@/lib/stripe-connect'
 import { getOrgStripeAccount } from '@/lib/sponsorship.server'
+
+function revalidatePublicOrgEvents(orgSlug: string, orgId: string, eventShortId?: string) {
+  revalidatePath(`/org/${orgSlug}`)
+  revalidateTag(`org:${orgSlug}`)
+  revalidateTag(`org-events:${orgId}`)
+  if (eventShortId) {
+    revalidateTag(`event:${orgSlug}:${eventShortId}`)
+  }
+}
 
 async function requireOrgAdmin(slug: string) {
   const org = await getOrgForMember(slug)
@@ -344,7 +353,7 @@ export async function createOneOffEvent(
 
   revalidatePath(`/console/${orgSlug}`)
   revalidatePath(`/console/${orgSlug}/setup`)
-  revalidatePath(`/org/${orgSlug}`)
+  revalidatePublicOrgEvents(orgSlug, org.id)
   return { ok: true }
 }
 
@@ -426,8 +435,8 @@ export async function updateEvent(
 
   revalidatePath(`/console/${orgSlug}`)
   revalidatePath(`/console/${orgSlug}/sessions`)
-  revalidatePath(`/org/${orgSlug}`)
   revalidatePath(`/console/${orgSlug}/sessions/${eventId}`)
+  revalidatePublicOrgEvents(orgSlug, org.id, event.short_id)
   return { ok: true }
 }
 

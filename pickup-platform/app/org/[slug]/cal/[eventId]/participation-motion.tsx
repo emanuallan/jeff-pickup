@@ -17,7 +17,7 @@ import { PARTICIPATION_SECTION_MS } from './participation-motion-tokens'
 
 const CONTROLS_CLOSE_MS = PARTICIPATION_SECTION_MS
 
-type ParticipationAction = () => Promise<{ error?: string }>
+type ParticipationAction = () => Promise<{ error?: string; code?: string }>
 
 export type CelebrationPlacement = 'modal' | 'sheet'
 
@@ -48,12 +48,12 @@ type MotionContextValue = {
     action: ParticipationAction,
     accent: string,
     options?: SignupCelebrationOptions,
-  ) => Promise<{ error?: string }>
+  ) => Promise<{ error?: string; code?: string }>
   runLeaveCelebration: (
     action: ParticipationAction,
     accent: string,
     options?: LeaveCelebrationOptions,
-  ) => Promise<{ error?: string }>
+  ) => Promise<{ error?: string; code?: string }>
   dismissJoinPanel: () => void
   reopenJoinPanel: () => void
   dismissSignedInControls: () => void

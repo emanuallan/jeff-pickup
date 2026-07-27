@@ -184,6 +184,16 @@ export function ReturningSignupModal({
         setOpen(false)
         return
       }
+      if (
+        result.code === 'payment_required' ||
+        result.error.toLowerCase().includes('requires payment')
+      ) {
+        setOpen(false)
+        startTransition(() => {
+          router.refresh()
+        })
+        return
+      }
       setError(result.error)
     }
 
