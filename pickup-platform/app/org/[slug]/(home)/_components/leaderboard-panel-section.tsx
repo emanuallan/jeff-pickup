@@ -65,7 +65,7 @@ export function LeaderboardPanelSection({
   const accent = org.branding.accent_color
 
   return (
-    <div className="flex flex-col gap-5">
+    <>
       <LeaderboardMonthChips chips={chips} activePeriodId={periodId} accent={accent} />
       <Suspense
         fallback={<LeaderboardPanelSkeleton showStreaks={showStreaks} showMvp={showMvp} />}
@@ -78,6 +78,6 @@ export function LeaderboardPanelSection({
           showMvp={showMvp}
         />
       </Suspense>
-    </div>
+    </>
   )
 }
