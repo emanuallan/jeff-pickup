@@ -21,6 +21,7 @@ export function OrgHomeContentLoading({ variant = 'session' }: Props) {
           <div className="h-20 animate-pulse rounded-2xl border border-zinc-800 bg-zinc-900/50" />
           <div className="h-72 animate-pulse rounded-3xl border border-zinc-800 bg-zinc-900/50" />
           <div className="h-56 animate-pulse rounded-3xl border border-zinc-800 bg-zinc-900/50" />
+          <div className="h-56 animate-pulse rounded-3xl border border-zinc-800 bg-zinc-900/50" />
         </>
       ) : variant === 'feed' ? (
         <>

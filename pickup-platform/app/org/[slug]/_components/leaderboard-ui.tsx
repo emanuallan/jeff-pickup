@@ -1,6 +1,10 @@
-import type { CapsLeaderboardRow, StreakLeaderboardRow } from '@/lib/engagement'
+import type { CapsLeaderboardRow, MvpLeaderboardRow, StreakLeaderboardRow } from '@/lib/engagement'
 import { hexToRgba, readableTextColor } from '@/lib/colors'
 import { AnimatedPlayerCount } from './animated-player-count'
+
+export function formatMvpCountLabel(count: number): string {
+  return count === 1 ? 'MVP' : 'MVPs'
+}
 
 /** Dense rank: tied values share the same rank (1, 1, 1, 2, 2…). */
 export function denseRank<T>(rows: T[], valueFn: (row: T) => number): number[] {
@@ -110,13 +114,21 @@ function formatWeeks(weeks: number): string {
   return `${weeks} ${weeks === 1 ? 'week' : 'weeks'}`
 }
 
+function StarIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden>
+      <path d="M12 3.5 14.4 9l5.9.5-4.5 3.9 1.4 5.7L12 16.4 6.8 19.1l1.4-5.7L3.7 9.5 9.6 9 12 3.5Z" />
+    </svg>
+  )
+}
+
 function SectionHeader({
   icon,
   iconClassName,
   title,
   subtitle,
 }: {
-  icon: 'trophy' | 'streak'
+  icon: 'trophy' | 'streak' | 'mvp'
   iconClassName: string
   title: string
   subtitle: string
@@ -126,7 +138,13 @@ function SectionHeader({
       <span
         className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl text-lg ${iconClassName}`}
       >
-        {icon === 'trophy' ? <TrophyIcon className="h-5 w-5" /> : <span aria-hidden>🔥</span>}
+        {icon === 'trophy' ? (
+          <TrophyIcon className="h-5 w-5" />
+        ) : icon === 'mvp' ? (
+          <StarIcon className="h-5 w-5" />
+        ) : (
+          <span aria-hidden>🔥</span>
+        )}
       </span>
       <div className="min-w-0">
         <h2 className="text-base font-semibold tracking-tight text-zinc-100">{title}</h2>
@@ -609,6 +627,149 @@ export function StreakLeaderboard({
         <div className="mt-6 flex flex-col gap-5">
           {groups.map((group) => (
             <StreakGroup
+              key={group.rank}
+              rank={group.rank}
+              rows={group.rows}
+              accent={accent}
+              tied={group.rows.length > 1}
+              showHeader={showGroupHeaders}
+            />
+          ))}
+        </div>
+      )}
+    </section>
+  )
+}
+
+function MvpRow({
+  row,
+  rank,
+  accent,
+  isLeader,
+  tied,
+  grouped,
+}: {
+  row: MvpLeaderboardRow
+  rank: number
+  accent: string
+  isLeader?: boolean
+  tied?: boolean
+  grouped?: boolean
+}) {
+  const content = (
+    <div className="flex items-center gap-3 text-sm">
+      <RankBadge rank={rank} accent={accent} tied={tied} />
+      <span className="min-w-0 flex-1 truncate font-medium text-zinc-100">{row.display_name}</span>
+      <span className="shrink-0 tabular-nums">
+        <span className="font-semibold text-amber-100">{row.mvp_count}</span>
+        <span className="ml-1 text-xs text-zinc-500">{formatMvpCountLabel(row.mvp_count)}</span>
+      </span>
+    </div>
+  )
+
+  if (grouped) {
+    return content
+  }
+
+  return (
+    <li
+      className={`relative overflow-hidden rounded-2xl border px-3 py-2.5 ${
+        isLeader ? 'border-amber-500/25' : 'border-zinc-800/80'
+      }`}
+      style={
+        isLeader
+          ? {
+              background:
+                'linear-gradient(90deg, rgba(245, 158, 11, 0.1) 0%, rgba(0,0,0,0.2) 100%)',
+            }
+          : { backgroundColor: 'rgba(0,0,0,0.2)' }
+      }
+    >
+      {content}
+    </li>
+  )
+}
+
+function MvpGroup({
+  rank,
+  rows,
+  accent,
+  tied,
+  showHeader,
+}: {
+  rank: number
+  rows: MvpLeaderboardRow[]
+  accent: string
+  tied: boolean
+  showHeader: boolean
+}) {
+  const count = rows[0].mvp_count
+  const isLeader = rank === 1
+
+  return (
+    <div>
+      {showHeader ? (
+        <RankGroupHeader
+          rank={rank}
+          count={rows.length}
+          value={count}
+          valueLabel={formatMvpCountLabel(count)}
+        />
+      ) : null}
+      <div
+        className={`overflow-hidden rounded-2xl border ${
+          isLeader ? 'border-amber-500/25' : 'border-zinc-800/80'
+        }`}
+        style={
+          isLeader
+            ? {
+                background:
+                  'linear-gradient(180deg, rgba(245, 158, 11, 0.08) 0%, rgba(0,0,0,0.24) 100%)',
+              }
+            : { backgroundColor: 'rgba(0,0,0,0.2)' }
+        }
+      >
+        {rows.map((row, index) => (
+          <div
+            key={row.participant_id}
+            className={`px-3 py-2.5 ${index > 0 ? 'border-t border-zinc-800/70' : ''}`}
+          >
+            <MvpRow row={row} rank={rank} accent={accent} tied={tied} grouped />
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+export function MvpLeaderboard({
+  rows,
+  accent,
+}: {
+  rows: MvpLeaderboardRow[]
+  accent: string
+}) {
+  const ranks = denseRank(rows, (r) => r.mvp_count)
+  const groups = groupRowsByRank(rows, ranks)
+  const showGroupHeaders = groups.length > 1 || groups.some((group) => group.rows.length > 1)
+
+  return (
+    <section className="mt-5 overflow-hidden rounded-3xl border border-zinc-800 bg-zinc-900/50 p-6">
+      <SectionHeader
+        icon="mvp"
+        iconClassName="bg-amber-500/10 text-amber-300"
+        title="Session MVPs"
+        subtitle="Votes won after sessions"
+      />
+
+      {rows.length === 0 ? (
+        <p className="mt-6 rounded-2xl border border-dashed border-zinc-800 bg-zinc-900/30 px-4 py-8 text-center text-sm text-zinc-500">
+          No session MVPs yet. Win a post-session vote to get on the board.
+        </p>
+      ) : (
+        <div className="mt-6 flex flex-col gap-5">
+          {groups.map((group) => (
+            <MvpGroup
               key={group.rank}
               rank={group.rank}
               rows={group.rows}

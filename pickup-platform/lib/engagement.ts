@@ -16,6 +16,12 @@ export type StreakLeaderboardRow = {
   best_streak_weeks: number
 }
 
+export type MvpLeaderboardRow = {
+  participant_id: string
+  display_name: string
+  mvp_count: number
+}
+
 /** Sessions held before the leaderboard is worth showing (avoids empty/sparse boards). */
 export const LEADERBOARD_MIN_SESSIONS = 3
 
@@ -110,6 +116,24 @@ export const getOrgStreakLeaderboard = cache(
         best_streak_weeks: Number(row.best_streak_weeks),
       }))
       .filter((row) => row.current_streak_weeks >= LEADERBOARD_MIN_STREAK_WEEKS)
+  },
+)
+
+export const getOrgMvpLeaderboard = cache(
+  async (orgId: string, limit = 50): Promise<MvpLeaderboardRow[]> => {
+    const supabase = await createClient()
+
+    const { data, error } = await supabase.rpc('org_mvp_leaderboard', {
+      p_org_id: orgId,
+      p_limit: limit,
+    })
+
+    if (error || !data) return []
+
+    return (data as MvpLeaderboardRow[]).map((row) => ({
+      ...row,
+      mvp_count: Number(row.mvp_count),
+    }))
   },
 )
 
