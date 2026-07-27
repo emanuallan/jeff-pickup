@@ -117,18 +117,19 @@ describe('JoinSection "Not you?" flow', () => {
     expect(screen.queryByTestId('save-account-card')).not.toBeInTheDocument()
   })
 
-  it('routes paid sessions to the pay-to-join path', () => {
+  it('routes paid sessions to the detail form then pay sheet', () => {
     renderJoinSection({
       participant: null,
       paidSession: true,
       priceCents: 1500,
       isAuthenticated: false,
     })
-    expect(screen.getByText(/this session costs \$15\.00/i)).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /join · \$15\.00/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /save your spot/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /continue · \$15\.00/i })).toBeInTheDocument()
+    expect(screen.getByLabelText(/first name/i)).toBeInTheDocument()
   })
 
-  it('opens the paid join sheet from the continue CTA', async () => {
+  it('opens the paid join sheet after new users submit details', async () => {
     const user = userEvent.setup()
     renderJoinSection({
       participant: null,
@@ -138,7 +139,10 @@ describe('JoinSection "Not you?" flow', () => {
     })
 
     expect(screen.queryByTestId('paid-join-sheet')).not.toBeInTheDocument()
-    await user.click(screen.getByRole('button', { name: /join · \$15\.00/i }))
+    await user.type(screen.getByLabelText(/first name/i), 'Ada')
+    await user.type(screen.getByLabelText(/last name/i), 'Lovelace')
+    await user.type(screen.getByRole('textbox', { name: /phone number/i }), '2025550101')
+    await user.click(screen.getByRole('button', { name: /continue · \$15\.00/i }))
     expect(screen.getByTestId('paid-join-sheet')).toBeInTheDocument()
   })
 
@@ -152,7 +156,7 @@ describe('JoinSection "Not you?" flow', () => {
     expect(screen.getByRole('heading', { name: /welcome back, jeff p\./i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /join · \$15\.00/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /not you\?/i })).toBeInTheDocument()
-    expect(screen.queryByRole('heading', { name: /join this session/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: /save your spot/i })).not.toBeInTheDocument()
   })
 
   it('updates the paid join CTA total when guests change', async () => {
@@ -166,6 +170,20 @@ describe('JoinSection "Not you?" flow', () => {
     expect(screen.getByRole('button', { name: /join · \$5\.00/i })).toBeInTheDocument()
     await user.selectOptions(screen.getByRole('combobox'), '2')
     expect(screen.getByRole('button', { name: /join · \$15\.00/i })).toBeInTheDocument()
+  })
+
+  it('updates the new-user continue CTA total when guests change', async () => {
+    const user = userEvent.setup()
+    renderJoinSection({
+      participant: null,
+      paidSession: true,
+      priceCents: 500,
+      isAuthenticated: false,
+    })
+
+    expect(screen.getByRole('button', { name: /continue · \$5\.00/i })).toBeInTheDocument()
+    await user.selectOptions(screen.getByLabelText(/^guests$/i), '2')
+    expect(screen.getByRole('button', { name: /continue · \$15\.00/i })).toBeInTheDocument()
   })
 
   it('switches to paid join UI when soft join returns payment_required', async () => {

@@ -190,6 +190,10 @@ function PaidJoinSection({
   linkedAccountEmail = null,
   showReturning = false,
   onNotYou,
+  groupRulesEnabled,
+  groupRulesText,
+  groupRulesVersion,
+  needsGroupRulesAcceptance,
 }: Props & {
   priceLabel: string
   priceCents: number
@@ -202,19 +206,35 @@ function PaidJoinSection({
 }) {
   const [sheetOpen, setSheetOpen] = useState(autoOpenSheet)
   const [guestCount, setGuestCount] = useState(0)
+  const [firstName, setFirstName] = useState(knownProfile?.firstName ?? '')
+  const [lastName, setLastName] = useState(knownProfile?.lastName ?? '')
+  const [phone, setPhone] = useState(knownProfile?.phone ?? '')
+  const [localProfile, setLocalProfile] = useState<KnownParticipantProfile | null>(knownProfile)
+  const [formError, setFormError] = useState<string | null>(null)
+  const [rulesSheetOpen, setRulesSheetOpen] = useState(false)
+  const [rulesAcceptedLocally, setRulesAcceptedLocally] = useState(false)
+  const [pendingOpenSheet, setPendingOpenSheet] = useState(false)
   const joiningWaitlist = isFull && waitlistEnabled
-  const alreadyLinked = accountLinked || Boolean(linkedAccountEmail)
   const totalCents = sessionPaymentTotalCents(
     priceCents,
     guestsEnabled ? guestCount : 0,
   )
   const totalLabel = formatPriceCents(totalCents)
+  const sheetProfile = localProfile ?? knownProfile
 
   useEffect(() => {
     if (autoOpenSheet) {
       setSheetOpen(true)
     }
   }, [autoOpenSheet])
+
+  useEffect(() => {
+    if (!knownProfile) return
+    setLocalProfile(knownProfile)
+    setFirstName(knownProfile.firstName)
+    setLastName(knownProfile.lastName)
+    setPhone(knownProfile.phone)
+  }, [knownProfile])
 
   const sheet = (
     <PaidJoinSheet
@@ -231,12 +251,52 @@ function PaidJoinSection({
       isAuthenticated={isAuthenticated}
       accountLinked={accountLinked}
       guestsEnabled={guestsEnabled}
-      showGuestSelect={guestsEnabled && !showReturning}
-      knownProfile={knownProfile}
+      showGuestSelect={false}
+      knownProfile={sheetProfile}
       linkedAccountEmail={linkedAccountEmail}
       initialGuestCount={guestCount}
     />
   )
+
+  async function handleNewUserContinue(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    const trimmedFirst = firstName.trim()
+    const trimmedLast = lastName.trim()
+
+    if (!trimmedFirst || !trimmedLast) {
+      setFormError('Enter your first and last name.')
+      return
+    }
+    if (!isValidPhoneDigits(phone)) {
+      setFormError('Enter a valid phone number.')
+      return
+    }
+
+    setLocalProfile({
+      firstName: trimmedFirst,
+      lastName: trimmedLast,
+      phone,
+    })
+    setFormError(null)
+
+    const needsRules =
+      groupRulesEnabled === true &&
+      needsGroupRulesAcceptance === true &&
+      !rulesAcceptedLocally &&
+      !!groupRulesText &&
+      (groupRulesVersion ?? 0) > 0
+
+    if (needsRules) {
+      const status = await getGroupRulesJoinStatus(orgSlug, phone)
+      if (status.needs_acceptance === true) {
+        setPendingOpenSheet(true)
+        setRulesSheetOpen(true)
+        return
+      }
+    }
+
+    setSheetOpen(true)
+  }
 
   if (showReturning && participant) {
     return (
@@ -292,35 +352,120 @@ function PaidJoinSection({
   }
 
   return (
-    <div className="space-y-4">
-      <div>
-        <h2 className="text-lg font-semibold text-zinc-100">Join this session</h2>
-        <p className="mt-1 text-sm text-zinc-400">
-          {joiningWaitlist
-            ? `This session is full. Pay ${priceLabel} to join the waitlist.`
-            : alreadyLinked
-              ? isAuthenticated && accountLinked
-                ? `This session costs ${priceLabel} per person. Confirm and pay to lock your spot.`
-                : `This session costs ${priceLabel} per person. Verify your linked email, then pay to lock your spot.`
-              : `This session costs ${priceLabel} per person. Sign in with email, then pay to lock your spot.`}
-        </p>
+    <>
+      <div className="space-y-4">
+        <form
+          onSubmit={(event) => void handleNewUserContinue(event)}
+          className="space-y-4"
+        >
+          <div>
+            <h2 className="text-lg font-semibold text-zinc-100">
+              {joiningWaitlist ? 'Join the waitlist' : 'Save your spot'}
+            </h2>
+            <p className="mt-0.5 text-sm text-zinc-400">
+              {joiningWaitlist
+                ? `This session is full. Pay ${priceLabel} per person to join the waitlist.`
+                : spotsLeft != null && spotsLeft <= 5
+                  ? `Only ${spotsLeft} spot${spotsLeft === 1 ? '' : 's'} left. Add your name — ${priceLabel} per person.`
+                  : `Add your name so everyone knows you’re coming. ${priceLabel} per person.`}
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <label className="block">
+              <span className="text-xs text-zinc-500">First name</span>
+              <input
+                name="first_name"
+                required
+                autoComplete="given-name"
+                value={firstName}
+                onChange={(event) => setFirstName(event.target.value)}
+                className={inputClass}
+                style={{ '--tw-ring-color': accent } as React.CSSProperties}
+              />
+            </label>
+            <label className="block">
+              <span className="text-xs text-zinc-500">Last name</span>
+              <input
+                name="last_name"
+                required
+                autoComplete="family-name"
+                value={lastName}
+                onChange={(event) => setLastName(event.target.value)}
+                className={inputClass}
+                style={{ '--tw-ring-color': accent } as React.CSSProperties}
+              />
+            </label>
+          </div>
+
+          <label className="block">
+            <PhoneNumberWhy />
+            <PhoneInput
+              value={phone}
+              onChange={setPhone}
+              className={inputClass}
+              style={{ '--tw-ring-color': accent } as React.CSSProperties}
+            />
+          </label>
+
+          {guestsEnabled ? (
+            <label className="block">
+              <span className="text-xs text-zinc-500">Guests</span>
+              <GuestCountSelect
+                value={guestCount}
+                onChange={setGuestCount}
+                accent={accent}
+              />
+            </label>
+          ) : null}
+
+          {formError ? <p className="text-sm text-red-300">{formError}</p> : null}
+
+          <button
+            type="submit"
+            className="w-full rounded-xl px-4 py-3.5 text-sm font-semibold shadow-lg transition-opacity hover:opacity-90"
+            style={{
+              backgroundColor: accent,
+              color: accentText,
+              boxShadow: `0 10px 30px -12px ${accent}`,
+            }}
+          >
+            {`Continue · ${totalLabel}`}
+          </button>
+        </form>
+
+        <RecoverSession
+          orgSlug={orgSlug}
+          eventId={eventId}
+          accent={accent}
+          onRecovered={() => {}}
+        />
       </div>
 
-      <button
-        type="button"
-        onClick={() => setSheetOpen(true)}
-        className="w-full rounded-xl px-4 py-3.5 text-sm font-semibold shadow-lg transition-opacity hover:opacity-90"
-        style={{
-          backgroundColor: accent,
-          color: accentText,
-          boxShadow: `0 10px 30px -12px ${accent}`,
-        }}
-      >
-        {joiningWaitlist ? `Join waitlist · ${priceLabel}` : `Join · ${priceLabel}`}
-      </button>
-
       {sheet}
-    </div>
+
+      <GroupRulesSheet
+        open={rulesSheetOpen}
+        onClose={() => {
+          setRulesSheetOpen(false)
+          setPendingOpenSheet(false)
+        }}
+        orgSlug={orgSlug}
+        rulesText={groupRulesText ?? ''}
+        rulesVersion={groupRulesVersion ?? 0}
+        phone={phone}
+        accent={accent}
+        accentText={accentText}
+        onAccepted={() => {
+          setRulesAcceptedLocally(true)
+          setRulesSheetOpen(false)
+          if (pendingOpenSheet) {
+            setPendingOpenSheet(false)
+            setSheetOpen(true)
+          }
+        }}
+      />
+    </>
   )
 }
 
