@@ -60,7 +60,12 @@ export async function POST(request: NextRequest) {
     if (linkError) {
       console.warn('link_participant_to_auth_user failed after OTP', linkError.message)
       responsePayload.linkError = linkError.message || 'Could not link your group profile.'
+      responsePayload.linked = false
+    } else {
+      responsePayload.linked = true
     }
+  } else if (linkOrgId) {
+    responsePayload.linked = false
   }
 
   // Rebuild JSON body so linkError is included while keeping auth cookies on `response`.

@@ -20,7 +20,7 @@ import { clampGuestCount } from '@/lib/guest-signups'
 import { clearParticipantDeviceSession } from '@/lib/participant-session-client'
 import { formatPriceCents, isPaidSession } from '@/lib/session-payment'
 import { isValidPhoneDigits } from '@/lib/phone'
-import { PaidJoinSheet } from './paid-join-sheet'
+import { PaidJoinSheet, type KnownParticipantProfile } from './paid-join-sheet'
 
 export type { Participant, MySignup }
 
@@ -181,11 +181,13 @@ function PaidJoinSection({
   isAuthenticated,
   guestsEnabled = true,
   autoOpenSheet = false,
+  knownProfile = null,
 }: Props & {
   priceLabel: string
   accountLinked: boolean
   isAuthenticated: boolean
   autoOpenSheet?: boolean
+  knownProfile?: KnownParticipantProfile | null
 }) {
   const [sheetOpen, setSheetOpen] = useState(autoOpenSheet)
   const joiningWaitlist = isFull && waitlistEnabled
@@ -233,6 +235,7 @@ function PaidJoinSection({
         isAuthenticated={isAuthenticated}
         accountLinked={accountLinked}
         guestsEnabled={guestsEnabled}
+        knownProfile={knownProfile}
       />
     </div>
   )
@@ -252,6 +255,7 @@ export function JoinSection(props: Props) {
   const [pendingJoin, setPendingJoin] = useState<(() => Promise<void>) | null>(null)
   const [forcePaidJoin, setForcePaidJoin] = useState(false)
   const [forcedPriceCents, setForcedPriceCents] = useState<number | null>(null)
+  const [capturedProfile, setCapturedProfile] = useState<KnownParticipantProfile | null>(null)
 
   const requiresGroupRules =
     props.groupRulesEnabled === true &&
@@ -284,6 +288,16 @@ export function JoinSection(props: Props) {
     setError(null)
     setLoading(false)
   }, [])
+
+  const knownProfile: KnownParticipantProfile | null =
+    capturedProfile ??
+    (props.participant
+      ? {
+          firstName: props.participant.first_name,
+          lastName: props.participant.last_name,
+          phone: props.participant.phone,
+        }
+      : null)
 
   useEffect(() => {
     if (!props.participant) {
@@ -333,6 +347,7 @@ export function JoinSection(props: Props) {
         accountLinked={props.accountLinked === true}
         isAuthenticated={props.isAuthenticated === true}
         autoOpenSheet={forcePaidJoin}
+        knownProfile={knownProfile}
       />
     )
   }
@@ -359,6 +374,8 @@ export function JoinSection(props: Props) {
     const form = event.currentTarget
     const formData = new FormData(form)
     const phone = String(formData.get('phone') ?? '')
+    const firstName = String(formData.get('first_name') ?? '').trim()
+    const lastName = String(formData.get('last_name') ?? '').trim()
 
     if (!isValidPhoneDigits(phone)) {
       setError('Enter a valid phone number.')
@@ -385,6 +402,7 @@ export function JoinSection(props: Props) {
         result.code === 'payment_required' ||
         result.error.toLowerCase().includes('requires payment')
       ) {
+        setCapturedProfile({ firstName, lastName, phone })
         switchToPaidJoin(result.priceCents)
       } else if (
         isNewUserJoinPath &&

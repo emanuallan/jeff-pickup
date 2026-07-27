@@ -13,11 +13,18 @@ import { OtpInput } from '@/app/login/otp-input'
 import { PhoneInput } from '@/app/_components/phone-input'
 import { BottomSheet } from '@/app/_components/bottom-sheet'
 import { GuestCountSelect } from './guest-count-select'
+import { saveParticipantAccount } from '../../participant-account-actions'
 import { isValidPhoneDigits } from '@/lib/phone'
 
 const RESEND_SECONDS = 60
 
 type Step = 'email' | 'code' | 'profile' | 'pay'
+
+export type KnownParticipantProfile = {
+  firstName: string
+  lastName: string
+  phone: string
+}
 
 type Props = {
   open: boolean
@@ -32,10 +39,21 @@ type Props = {
   isAuthenticated: boolean
   accountLinked: boolean
   guestsEnabled: boolean
+  /** Returning soft-session persona or profile collected before the paid gate. */
+  knownProfile?: KnownParticipantProfile | null
+}
+
+function hasUsableProfile(profile: KnownParticipantProfile | null | undefined): boolean {
+  if (!profile) return false
+  return (
+    profile.firstName.trim().length > 0 &&
+    profile.lastName.trim().length > 0 &&
+    isValidPhoneDigits(profile.phone)
+  )
 }
 
 /**
- * Step-by-step paid join: email → OTP → profile (if needed) → pay.
+ * Step-by-step paid join: email → OTP → profile (only if unknown) → pay.
  */
 export function PaidJoinSheet({
   open,
@@ -50,6 +68,7 @@ export function PaidJoinSheet({
   isAuthenticated,
   accountLinked,
   guestsEnabled,
+  knownProfile = null,
 }: Props) {
   const router = useRouter()
   const [step, setStep] = useState<Step>('email')
@@ -63,36 +82,85 @@ export function PaidJoinSheet({
   const [resendIn, setResendIn] = useState(0)
   const [message, setMessage] = useState<string | null>(null)
   const [linked, setLinked] = useState(accountLinked)
+  const [profileKnown, setProfileKnown] = useState(hasUsableProfile(knownProfile))
   const verifyLockRef = useRef(false)
 
-  const resetToEntryStep = useCallback(() => {
+  const applyKnownProfile = useCallback((profile: KnownParticipantProfile | null | undefined) => {
+    if (!hasUsableProfile(profile)) {
+      setProfileKnown(false)
+      return false
+    }
+    setFirstName(profile!.firstName.trim())
+    setLastName(profile!.lastName.trim())
+    setPhone(profile!.phone)
+    setProfileKnown(true)
+    return true
+  }, [])
+
+  const goToPay = useCallback(
+    (options?: { linked?: boolean; keepProfileKnown?: boolean }) => {
+      if (options?.linked != null) setLinked(options.linked)
+      if (options?.keepProfileKnown) setProfileKnown(true)
+      setStep('pay')
+      setMessage(null)
+      setBusy(false)
+    },
+    [],
+  )
+
+  const resetToEntryStep = useCallback(async () => {
     verifyLockRef.current = false
     setMessage(null)
     setBusy(false)
     setCode('')
+    applyKnownProfile(knownProfile)
+
     if (isAuthenticated && accountLinked) {
       setLinked(true)
+      setProfileKnown(true)
       setStep('pay')
       return
     }
+
     if (isAuthenticated) {
-      setLinked(accountLinked)
-      setStep(accountLinked ? 'pay' : 'profile')
+      // Soft session may already exist — try linking before asking for profile.
+      setBusy(true)
+      const result = await saveParticipantAccount(orgSlug)
+      setBusy(false)
+      if (!('error' in result)) {
+        setLinked(true)
+        setProfileKnown(true)
+        setStep('pay')
+        router.refresh()
+        return
+      }
+      if (hasUsableProfile(knownProfile)) {
+        setLinked(false)
+        setStep('pay')
+        return
+      }
+      setLinked(false)
+      setStep('profile')
       return
     }
+
     setLinked(false)
     setStep('email')
-  }, [accountLinked, isAuthenticated])
+  }, [accountLinked, applyKnownProfile, isAuthenticated, knownProfile, orgSlug, router])
 
   useEffect(() => {
     if (open) {
-      resetToEntryStep()
+      void resetToEntryStep()
     }
   }, [open, resetToEntryStep])
 
   useEffect(() => {
     setLinked(accountLinked)
   }, [accountLinked])
+
+  useEffect(() => {
+    applyKnownProfile(knownProfile)
+  }, [applyKnownProfile, knownProfile])
 
   useEffect(() => {
     if (resendIn <= 0) return
@@ -154,6 +222,7 @@ export function PaidJoinSheet({
         const payload = (await res.json()) as {
           message?: string
           linkError?: string
+          linked?: boolean
         }
         if (!res.ok) {
           setMessage(payload.message ?? 'Invalid code.')
@@ -161,10 +230,20 @@ export function PaidJoinSheet({
           return
         }
 
-        // Always confirm profile after OTP for paid join (covers no soft session).
-        if (payload.linkError) {
-          setMessage(null)
+        if (payload.linked === true) {
+          goToPay({ linked: true, keepProfileKnown: true })
+          router.refresh()
+          return
         }
+
+        // Soft session missing or link failed — reuse known persona when we have it.
+        if (hasUsableProfile(knownProfile) || hasUsableProfile({ firstName, lastName, phone })) {
+          applyKnownProfile(knownProfile)
+          goToPay({ linked: false, keepProfileKnown: true })
+          router.refresh()
+          return
+        }
+
         setLinked(false)
         setStep('profile')
         setBusy(false)
@@ -176,11 +255,12 @@ export function PaidJoinSheet({
         setBusy(false)
       }
     },
-    [email, eventId, orgId, router],
+    [applyKnownProfile, email, eventId, firstName, goToPay, knownProfile, lastName, orgId, phone, router],
   )
 
   async function startCheckout() {
-    if (!linked) {
+    const canCheckoutWithoutForm = linked || profileKnown
+    if (!canCheckoutWithoutForm) {
       if (!firstName.trim() || !lastName.trim()) {
         setMessage('Enter your first and last name.')
         return
@@ -215,6 +295,7 @@ export function PaidJoinSheet({
           setMessage('Sign in again to continue.')
         } else if (payload.code === 'profile_required') {
           setLinked(false)
+          setProfileKnown(false)
           setStep('profile')
           setMessage(payload.error ?? 'Enter your name and phone to continue.')
         } else {
@@ -239,8 +320,8 @@ export function PaidJoinSheet({
       : step === 'code'
         ? 'Step 2 · Verification code'
         : step === 'profile'
-          ? 'Step 3 · Your details'
-          : 'Step 4 · Payment'
+          ? 'Your details'
+          : 'Payment'
 
   return (
     <BottomSheet
@@ -374,6 +455,7 @@ export function PaidJoinSheet({
             onSubmit={(event) => {
               event.preventDefault()
               setLinked(false)
+              setProfileKnown(true)
               setStep('pay')
               setMessage(null)
             }}
@@ -418,6 +500,15 @@ export function PaidJoinSheet({
 
         {step === 'pay' ? (
           <div className="space-y-3">
+            {profileKnown || linked ? (
+              <p className="rounded-xl border border-zinc-800 bg-zinc-950/50 px-3 py-2 text-sm text-zinc-400">
+                Joining as{' '}
+                <span className="font-medium text-zinc-200">
+                  {firstName.trim() || 'you'}
+                  {lastName.trim() ? ` ${lastName.trim()}` : ''}
+                </span>
+              </p>
+            ) : null}
             {guestsEnabled ? (
               <label className="block">
                 <span className="text-xs text-zinc-500">Guests</span>
@@ -438,19 +529,6 @@ export function PaidJoinSheet({
             >
               {busy ? 'Redirecting…' : `Pay ${priceLabel} & join`}
             </button>
-            {!linked ? (
-              <button
-                type="button"
-                disabled={busy}
-                onClick={() => {
-                  setStep('profile')
-                  setMessage(null)
-                }}
-                className="w-full text-xs text-zinc-500 underline"
-              >
-                Edit name or phone
-              </button>
-            ) : null}
           </div>
         ) : null}
       </div>
