@@ -50,6 +50,8 @@ type Props = {
   knownProfile?: KnownParticipantProfile | null
   /** Email already linked to this soft-session persona (or current auth user). */
   linkedAccountEmail?: string | null
+  /** Prefill guests chosen on the welcome-back card before opening the sheet. */
+  initialGuestCount?: number
 }
 
 function hasUsableProfile(profile: KnownParticipantProfile | null | undefined): boolean {
@@ -81,6 +83,7 @@ export function PaidJoinSheet({
   guestsEnabled,
   knownProfile = null,
   linkedAccountEmail = null,
+  initialGuestCount = 0,
 }: Props) {
   const router = useRouter()
   const lockedEmail = normalizeLoginEmail(linkedAccountEmail ?? '')
@@ -91,7 +94,7 @@ export function PaidJoinSheet({
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
   const [phone, setPhone] = useState('')
-  const [guestCount, setGuestCount] = useState(0)
+  const [guestCount, setGuestCount] = useState(initialGuestCount)
   const [busy, setBusy] = useState(false)
   const [resendIn, setResendIn] = useState(0)
   const [message, setMessage] = useState<string | null>(null)
@@ -152,6 +155,7 @@ export function PaidJoinSheet({
     setMessage(null)
     setBusy(false)
     setCode('')
+    setGuestCount(initialGuestCount)
     applyKnownProfile(knownProfile)
 
     if (isAuthenticated && accountLinked) {
@@ -189,6 +193,7 @@ export function PaidJoinSheet({
     accountLinked,
     applyKnownProfile,
     goToEmailStep,
+    initialGuestCount,
     isAuthenticated,
     knownProfile,
     orgSlug,

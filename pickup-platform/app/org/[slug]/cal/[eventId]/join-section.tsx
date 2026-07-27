@@ -178,6 +178,8 @@ function PaidJoinSection({
   accentText,
   isFull,
   waitlistEnabled,
+  spotsLeft,
+  participant,
   priceLabel,
   priceCents,
   accountLinked,
@@ -186,6 +188,8 @@ function PaidJoinSection({
   autoOpenSheet = false,
   knownProfile = null,
   linkedAccountEmail = null,
+  showReturning = false,
+  onNotYou,
 }: Props & {
   priceLabel: string
   priceCents: number
@@ -193,8 +197,11 @@ function PaidJoinSection({
   isAuthenticated: boolean
   autoOpenSheet?: boolean
   knownProfile?: KnownParticipantProfile | null
+  showReturning?: boolean
+  onNotYou?: () => void
 }) {
   const [sheetOpen, setSheetOpen] = useState(autoOpenSheet)
+  const [guestCount, setGuestCount] = useState(0)
   const joiningWaitlist = isFull && waitlistEnabled
   const alreadyLinked = accountLinked || Boolean(linkedAccountEmail)
 
@@ -203,6 +210,85 @@ function PaidJoinSection({
       setSheetOpen(true)
     }
   }, [autoOpenSheet])
+
+  const sheet = (
+    <PaidJoinSheet
+      open={sheetOpen}
+      onClose={() => setSheetOpen(false)}
+      orgId={orgId}
+      orgSlug={orgSlug}
+      eventId={eventId}
+      accent={accent}
+      accentText={accentText}
+      priceLabel={priceLabel}
+      priceCents={priceCents}
+      joiningWaitlist={joiningWaitlist}
+      isAuthenticated={isAuthenticated}
+      accountLinked={accountLinked}
+      guestsEnabled={guestsEnabled}
+      knownProfile={knownProfile}
+      linkedAccountEmail={linkedAccountEmail}
+      initialGuestCount={guestCount}
+    />
+  )
+
+  if (showReturning && participant) {
+    return (
+      <div className="space-y-3">
+        <div>
+          <h2 className="text-lg font-semibold text-zinc-100">
+            Welcome back, {participant.display_name}
+          </h2>
+          <p className="mt-0.5 text-sm text-zinc-400">
+            {joiningWaitlist
+              ? `This session is full. Pay ${priceLabel} per person to join the waitlist.`
+              : spotsLeft != null && spotsLeft <= 5
+                ? `Only ${spotsLeft} spot${spotsLeft === 1 ? '' : 's'} left — ${priceLabel} per person.`
+                : `Tap below to lock in your spot · ${priceLabel} per person.`}
+          </p>
+        </div>
+
+        {guestsEnabled ? (
+          <label className="block">
+            <span className="text-xs text-zinc-500">
+              Guests:{' '}
+              {guestCount === 0
+                ? 'None'
+                : `${guestCount} ${guestCount === 1 ? 'guest' : 'guests'}`}
+            </span>
+            <GuestCountSelect
+              value={guestCount}
+              onChange={setGuestCount}
+              accent={accent}
+            />
+          </label>
+        ) : null}
+
+        <button
+          type="button"
+          onClick={() => setSheetOpen(true)}
+          className="w-full rounded-xl px-4 py-3.5 text-sm font-semibold shadow-lg transition-opacity hover:opacity-90"
+          style={{
+            backgroundColor: accent,
+            color: accentText,
+            boxShadow: `0 10px 30px -12px ${accent}`,
+          }}
+        >
+          {joiningWaitlist ? `Join waitlist · ${priceLabel}` : `Join · ${priceLabel}`}
+        </button>
+        <div className="text-right">
+          <button
+            type="button"
+            onClick={() => onNotYou?.()}
+            className="text-xs text-zinc-600 transition-colors hover:text-zinc-500"
+          >
+            Not you?
+          </button>
+        </div>
+        {sheet}
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-4">
@@ -229,26 +315,10 @@ function PaidJoinSection({
           boxShadow: `0 10px 30px -12px ${accent}`,
         }}
       >
-        {joiningWaitlist ? `Join waitlist · ${priceLabel}` : `Continue · ${priceLabel}`}
+        {joiningWaitlist ? `Join waitlist · ${priceLabel}` : `Join · ${priceLabel}`}
       </button>
 
-      <PaidJoinSheet
-        open={sheetOpen}
-        onClose={() => setSheetOpen(false)}
-        orgId={orgId}
-        orgSlug={orgSlug}
-        eventId={eventId}
-        accent={accent}
-        accentText={accentText}
-        priceLabel={priceLabel}
-        priceCents={priceCents}
-        joiningWaitlist={joiningWaitlist}
-        isAuthenticated={isAuthenticated}
-        accountLinked={accountLinked}
-        guestsEnabled={guestsEnabled}
-        knownProfile={knownProfile}
-        linkedAccountEmail={linkedAccountEmail}
-      />
+      {sheet}
     </div>
   )
 }
@@ -366,6 +436,8 @@ export function JoinSection(props: Props) {
         autoOpenSheet={forcePaidJoin}
         knownProfile={knownProfile}
         linkedAccountEmail={props.linkedAccountEmail ?? null}
+        showReturning={Boolean(props.participant) && !optedOutOfReturningSession}
+        onNotYou={() => void handleNotYou()}
       />
     )
   }
