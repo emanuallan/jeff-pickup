@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation'
 import { getOrgForMember } from '@/lib/orgs'
 import { getLocationsForOrg } from '@/lib/locations'
 import { getUpcomingEventsForConsole } from '@/lib/events'
+import { getOrgStripeAccount } from '@/lib/sponsorship.server'
 import { createOneOffEvent } from '../../actions'
 import { AddOneOffButton } from '../add-one-off-button'
 import { SessionEventCard } from '../session-event-card'
@@ -19,12 +20,14 @@ export default async function SessionsPage({ params }: Props) {
     notFound()
   }
 
-  const [locations, upcomingEvents] = await Promise.all([
+  const [locations, upcomingEvents, stripeAccount] = await Promise.all([
     getLocationsForOrg(org.id),
     getUpcomingEventsForConsole(org.id),
+    getOrgStripeAccount(org.id),
   ])
 
   const hasLocation = locations.length > 0
+  const sessionFeesEnabled = Boolean(stripeAccount?.charges_enabled)
 
   return (
     <ConsolePage>
@@ -38,6 +41,7 @@ export default async function SessionsPage({ params }: Props) {
             <AddOneOffButton
               locations={locations}
               createOneOff={createOneOffEvent.bind(null, orgSlug)}
+              sessionFeesEnabled={sessionFeesEnabled}
             />
           ) : null
         }
@@ -49,7 +53,12 @@ export default async function SessionsPage({ params }: Props) {
             <ul className="space-y-2">
               {upcomingEvents.map((ev) => (
                 <li key={ev.id}>
-                  <SessionEventCard orgSlug={orgSlug} event={ev} locations={locations} />
+                  <SessionEventCard
+                    orgSlug={orgSlug}
+                    event={ev}
+                    locations={locations}
+                    sessionFeesEnabled={sessionFeesEnabled}
+                  />
                 </li>
               ))}
             </ul>

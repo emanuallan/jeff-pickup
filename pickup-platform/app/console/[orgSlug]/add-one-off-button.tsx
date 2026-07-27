@@ -11,10 +11,12 @@ export function AddOneOffButton({
   locations,
   createOneOff,
   className = btnAccent,
+  sessionFeesEnabled = false,
 }: {
   locations: Location[]
   createOneOff: (formData: FormData) => Promise<{ ok: true } | { error: string }>
   className?: string
+  sessionFeesEnabled?: boolean
 }) {
   const [open, setOpen] = useState(false)
   const router = useRouter()
@@ -36,6 +38,7 @@ export function AddOneOffButton({
           <SessionForm
             locations={locations}
             onSubmit={createOneOff}
+            sessionFeesEnabled={sessionFeesEnabled}
             onSuccess={() => {
               setOpen(false)
               router.refresh()

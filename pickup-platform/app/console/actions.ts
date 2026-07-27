@@ -37,6 +37,7 @@ import { parseScheduleFormData } from '@/lib/console/parse-schedule-form'
 import { parseLocationFormData } from '@/lib/console/parse-location-form'
 import { assertLocationInOrg } from '@/lib/console/location-ownership'
 import { syncOrgBrandingToStripeIfConnected } from '@/lib/stripe-connect'
+import { getOrgStripeAccount } from '@/lib/sponsorship.server'
 
 async function requireOrgAdmin(slug: string) {
   const org = await getOrgForMember(slug)
@@ -44,6 +45,20 @@ async function requireOrgAdmin(slug: string) {
     throw new Error('Not authorized')
   }
   return org
+}
+
+async function assertCanSetSessionFee(
+  orgId: string,
+  priceCents: number | null,
+): Promise<{ error: string } | null> {
+  if (priceCents == null || priceCents <= 0) return null
+  const stripeAccount = await getOrgStripeAccount(orgId)
+  if (!stripeAccount?.charges_enabled) {
+    return {
+      error: 'Connect Stripe (sponsorship setup) before setting a session fee.',
+    }
+  }
+  return null
 }
 
 export async function createOrg(formData: FormData) {
@@ -301,6 +316,13 @@ export async function createOneOffEvent(
     return { error: locationCheck.error }
   }
 
+  const priceFieldPresent = formData.has('price_cents')
+  const nextPriceCents = priceFieldPresent ? priceCents : null
+  const feeError = await assertCanSetSessionFee(org.id, nextPriceCents)
+  if (feeError) {
+    return feeError
+  }
+
   const { error } = await supabase.from('events').insert({
     org_id: org.id,
     schedule_id: null,
@@ -312,7 +334,7 @@ export async function createOneOffEvent(
     capacity,
     min_players: minPlayers,
     additional_information: additionalInformation,
-    price_cents: priceCents,
+    price_cents: nextPriceCents,
     status: initialEventStatus(minPlayers),
   })
 
@@ -354,6 +376,14 @@ export async function updateEvent(
     return { error: locationCheck.error }
   }
 
+  const priceFieldPresent = formData.has('price_cents')
+  if (priceFieldPresent) {
+    const feeError = await assertCanSetSessionFee(org.id, priceCents)
+    if (feeError) {
+      return feeError
+    }
+  }
+
   if (event.schedule_id && event.starts_at !== startsAtIso) {
     const { error: skipError } = await supabase.from('schedule_event_skips').upsert(
       {
@@ -380,7 +410,7 @@ export async function updateEvent(
       capacity,
       min_players: minPlayers,
       additional_information: additionalInformation,
-      price_cents: priceCents,
+      ...(priceFieldPresent ? { price_cents: priceCents } : {}),
     })
     .eq('id', event.id)
     .eq('org_id', org.id)

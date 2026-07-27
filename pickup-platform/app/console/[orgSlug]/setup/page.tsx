@@ -9,6 +9,7 @@ import { AddLocationButton } from '../add-location-button'
 import { AddScheduleButton } from '../add-schedule-button'
 import { AddOneOffButton } from '../add-one-off-button'
 import { ConsolePage, ConsoleSection, ConsoleCard, btnSecondary } from '../../_components/console-ui'
+import { getOrgStripeAccount } from '@/lib/sponsorship.server'
 
 type Props = {
   params: Promise<{ orgSlug: string }>
@@ -43,13 +44,15 @@ export default async function SetupPage({ params }: Props) {
     notFound()
   }
 
-  const [locations, counts] = await Promise.all([
+  const [locations, counts, stripeAccount] = await Promise.all([
     getLocationsForOrg(org.id),
     getOrgConsoleNavCounts(org.id),
+    getOrgStripeAccount(org.id),
   ])
 
   const hasLocation = counts.locationCount > 0
   const hasSessions = counts.scheduleCount > 0 || counts.oneOffEventCount > 0
+  const sessionFeesEnabled = Boolean(stripeAccount?.charges_enabled)
   const isComplete = isOrgConsoleSetupComplete({
     locationCount: counts.locationCount,
     scheduleCount: counts.scheduleCount,
@@ -136,6 +139,7 @@ export default async function SetupPage({ params }: Props) {
                   locations={locations}
                   createOneOff={createOneOff}
                   className={btnSecondary}
+                  sessionFeesEnabled={sessionFeesEnabled}
                 />
               </div>
             ) : !hasLocation ? (

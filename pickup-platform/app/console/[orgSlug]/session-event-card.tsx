@@ -21,11 +21,13 @@ export function SessionEventCard({
   event,
   locations,
   past,
+  sessionFeesEnabled = false,
 }: {
   orgSlug: string
   event: EventWithLocation
   locations: Location[]
   past?: boolean
+  sessionFeesEnabled?: boolean
 }) {
   const isLive = !past && isEventInProgress(event) && event.status === 'on'
 
@@ -62,6 +64,7 @@ export function SessionEventCard({
               event={event}
               locations={locations}
               updateSession={updateEvent}
+              sessionFeesEnabled={sessionFeesEnabled}
             />
           ) : null}
           <DeleteEventButton

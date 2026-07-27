@@ -31,6 +31,8 @@ type Props = {
   successMessage?: string
   /** When true (create flow), submit uses the browser timezone. Edit keeps the event timezone. */
   useBrowserTimezone?: boolean
+  /** Show session fee field — only when org Stripe Connect charges are enabled. */
+  sessionFeesEnabled?: boolean
 }
 
 function defaultFormTimes(timezone: string, initial?: SessionFormInitial) {
@@ -50,6 +52,7 @@ export function SessionForm({
   pendingLabel = 'Adding…',
   successMessage,
   useBrowserTimezone = true,
+  sessionFeesEnabled = false,
 }: Props) {
   const toast = useConsoleToast()
   const [title, setTitle] = useState(initial?.title ?? '')
@@ -123,7 +126,9 @@ export function SessionForm({
     formData.set('ends_at', endsAtLocal)
     if (capacity.trim()) formData.set('capacity', capacity.trim())
     if (minPlayers.trim()) formData.set('min_players', minPlayers.trim())
-    if (priceDollars.trim()) formData.set('price_cents', priceDollars.trim())
+    if (sessionFeesEnabled) {
+      formData.set('price_cents', priceDollars.trim())
+    }
     formData.set('additional_information', additionalInformation)
 
     const durationMin = durationMinFromLocalRange(startsAtLocal, endsAtLocal, tz)
@@ -241,27 +246,29 @@ export function SessionForm({
         </label>
       </div>
 
-      <label className="block">
-        <span className={consoleLabel}>Session fee (optional)</span>
-        <div className="relative mt-1">
-          <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-sm text-zinc-500">
-            $
-          </span>
-          <input
-            name="price_cents"
-            type="number"
-            min={0}
-            step="0.01"
-            placeholder="Free"
-            value={priceDollars}
-            onChange={(event) => setPriceDollars(event.target.value)}
-            className={`${consoleInput} pl-7`}
-          />
-        </div>
-        <p className="mt-1 text-xs text-zinc-500">
-          Paid sessions require Stripe Connect and participant email sign-in.
-        </p>
-      </label>
+      {sessionFeesEnabled ? (
+        <label className="block">
+          <span className={consoleLabel}>Session fee (optional)</span>
+          <div className="relative mt-1">
+            <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-sm text-zinc-500">
+              $
+            </span>
+            <input
+              name="price_cents"
+              type="number"
+              min={0}
+              step="0.01"
+              placeholder="Free"
+              value={priceDollars}
+              onChange={(event) => setPriceDollars(event.target.value)}
+              className={`${consoleInput} pl-7`}
+            />
+          </div>
+          <p className="mt-1 text-xs text-zinc-500">
+            Paid sessions require participant email sign-in before checkout.
+          </p>
+        </label>
+      ) : null}
 
       <CollapsibleAdditionalInformationField
         value={additionalInformation}
