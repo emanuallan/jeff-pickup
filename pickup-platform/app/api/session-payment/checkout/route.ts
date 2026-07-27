@@ -8,6 +8,7 @@ import { getStripe, getPlatformFeePercent } from '@/lib/stripe'
 import { orgBaseUrl } from '@/lib/site-url'
 import {
   isPaidSession,
+  linkedParticipantPhoneMismatch,
   paidSessionHeadcount,
   sessionPaymentTotalCents,
 } from '@/lib/session-payment'
@@ -67,7 +68,18 @@ export async function POST(request: Request) {
 
   let linked = await getLinkedParticipantForOrg(org.id)
 
-  if (!linked) {
+  if (linked) {
+    if (linkedParticipantPhoneMismatch(linked.phone, phone)) {
+      return NextResponse.json(
+        {
+          error:
+            'This account is linked to a different phone in this group. Tap Not you? to switch, or use the matching phone.',
+          code: 'phone_mismatch',
+        },
+        { status: 409 },
+      )
+    }
+  } else {
     if (!isValidPhoneDigits(phone) || !firstName || !lastName) {
       return NextResponse.json(
         {

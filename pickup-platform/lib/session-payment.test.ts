@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   formatPriceCents,
   isPaidSession,
+  linkedParticipantPhoneMismatch,
   paidSessionHeadcount,
   sessionPaymentTotalCents,
 } from './session-payment'
@@ -37,5 +38,20 @@ describe('sessionPaymentTotalCents', () => {
   it('returns 0 for invalid per-person fees', () => {
     expect(sessionPaymentTotalCents(0, 2)).toBe(0)
     expect(sessionPaymentTotalCents(-100, 1)).toBe(0)
+  })
+})
+
+describe('linkedParticipantPhoneMismatch', () => {
+  it('allows empty form phone (use linked row as-is)', () => {
+    expect(linkedParticipantPhoneMismatch('12025550101', '')).toBe(false)
+  })
+
+  it('allows matching phones after normalization', () => {
+    expect(linkedParticipantPhoneMismatch('12025550101', '2025550101')).toBe(false)
+    expect(linkedParticipantPhoneMismatch('+1 (202) 555-0101', '2025550101')).toBe(false)
+  })
+
+  it('rejects a different form phone', () => {
+    expect(linkedParticipantPhoneMismatch('12025550101', '2025559999')).toBe(true)
   })
 })

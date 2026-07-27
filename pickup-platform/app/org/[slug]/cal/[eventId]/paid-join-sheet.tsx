@@ -372,6 +372,11 @@ export function PaidJoinSheet({
           setProfileKnown(false)
           setStep('profile')
           setMessage(payload.error ?? 'Enter your name and phone to continue.')
+        } else if (payload.code === 'phone_mismatch') {
+          setMessage(
+            payload.error ??
+              'This account is linked to a different phone. Tap Not you? to switch accounts.',
+          )
         } else {
           const detail =
             typeof payload.detail === 'string' && payload.detail.trim()
