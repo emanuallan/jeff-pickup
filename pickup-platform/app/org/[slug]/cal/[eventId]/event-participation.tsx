@@ -1,12 +1,13 @@
 import type { Org } from '@/lib/orgs'
 import type { EventWithLocation } from '@/lib/events'
-import { canUpdateArrivalStatus, getEventByRef, isEventEnded } from '@/lib/events'
+import { canUpdateArrivalStatus, isEventEnded } from '@/lib/events'
 import { readableTextColor } from '@/lib/colors'
 import { getPublicRoster, getPublicWaitlist, rosterHeadcount } from '@/lib/signups'
 import { getSessionToken } from '@/lib/participant-session'
 import { getSessionInfo } from '@/lib/participant'
 import { getAuthUser } from '@/lib/auth'
 import { getLinkedParticipantForOrg } from '@/lib/participant-account'
+import { getLiveEventPriceCents } from '@/lib/event-price'
 import { isPaidSession } from '@/lib/session-payment'
 import { CancelledCallout, isEventCancelled, eventName } from '../../_components/event-ui'
 import { formatEventWhenLine } from '@/lib/events'
@@ -42,8 +43,8 @@ export async function EventParticipation({ slug, eventId, org, event }: Props) {
 
   const sessionToken = await getSessionToken()
 
-  // Live event row for join gating — public upcoming list is cached and can lag fee edits.
-  const [{ participant, mySignup }, roster, waitlist, groupRulesStatus, authUser, linkedParticipant, liveEvent] =
+  // Live fee via RPC — public event list is cached and PostgREST may lag new columns.
+  const [{ participant, mySignup }, roster, waitlist, groupRulesStatus, authUser, linkedParticipant, livePriceCents] =
     await Promise.all([
     getSessionInfo(sessionToken, org.id, event.id),
     isCancelled ? Promise.resolve([]) : getPublicRoster(event.id),
@@ -56,10 +57,10 @@ export async function EventParticipation({ slug, eventId, org, event }: Props) {
         } as Awaited<ReturnType<typeof getGroupRulesStatusForJoin>>),
     getAuthUser(),
     getLinkedParticipantForOrg(org.id),
-    getEventByRef(eventId, org.id),
+    getLiveEventPriceCents(org.id, eventId),
   ])
 
-  const priceCents = liveEvent?.price_cents ?? event.price_cents
+  const priceCents = livePriceCents ?? event.price_cents
   const paidSession = isPaidSession(priceCents)
   const accountLinked = Boolean(linkedParticipant)
 

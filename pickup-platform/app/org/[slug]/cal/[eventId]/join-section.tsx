@@ -320,6 +320,8 @@ export function JoinSection(props: Props) {
   const [rulesPhone, setRulesPhone] = useState<string | null>(null)
   const [rulesAcceptedLocally, setRulesAcceptedLocally] = useState(false)
   const [pendingJoin, setPendingJoin] = useState<(() => Promise<void>) | null>(null)
+  const [forcePaidJoin, setForcePaidJoin] = useState(false)
+  const [forcedPriceCents, setForcedPriceCents] = useState<number | null>(null)
 
   const requiresGroupRules =
     props.groupRulesEnabled === true &&
@@ -343,6 +345,15 @@ export function JoinSection(props: Props) {
       await join()
     }
   }
+
+  const switchToPaidJoin = useCallback((priceCents?: number | null) => {
+    if (priceCents != null && priceCents > 0) {
+      setForcedPriceCents(priceCents)
+    }
+    setForcePaidJoin(true)
+    setError(null)
+    setLoading(false)
+  }, [])
 
   useEffect(() => {
     if (!props.participant) {
@@ -376,13 +387,18 @@ export function JoinSection(props: Props) {
     return null
   }
 
-  const paidSession = props.paidSession === true || isPaidSession(props.priceCents)
-  const priceLabel = formatPriceCents(props.priceCents ?? 0)
+  const effectivePriceCents = forcedPriceCents ?? props.priceCents
+  const paidSession =
+    forcePaidJoin || props.paidSession === true || isPaidSession(effectivePriceCents)
+  const priceLabel = isPaidSession(effectivePriceCents)
+    ? formatPriceCents(effectivePriceCents ?? 0)
+    : 'the session fee'
 
   if (paidSession) {
     return (
       <PaidJoinSection
         {...props}
+        priceCents={effectivePriceCents}
         priceLabel={priceLabel}
         accountLinked={props.accountLinked === true}
         isAuthenticated={props.isAuthenticated === true}
@@ -438,9 +454,7 @@ export function JoinSection(props: Props) {
         result.code === 'payment_required' ||
         result.error.toLowerCase().includes('requires payment')
       ) {
-        startTransition(() => {
-          router.refresh()
-        })
+        switchToPaidJoin(result.priceCents)
       } else if (
         isNewUserJoinPath &&
         result.error.includes('group rules') &&
@@ -512,9 +526,7 @@ export function JoinSection(props: Props) {
                 result.code === 'payment_required' ||
                 result.error.toLowerCase().includes('requires payment')
               ) {
-                startTransition(() => {
-                  router.refresh()
-                })
+                switchToPaidJoin(result.priceCents)
               } else {
                 setError(result.error)
               }
@@ -568,6 +580,7 @@ export function JoinSection(props: Props) {
             groupRulesVersion={props.groupRulesVersion}
             needsGroupRulesAcceptance={props.needsGroupRulesAcceptance}
             onNotYou={() => void handleNotYou()}
+            onPaymentRequired={switchToPaidJoin}
           >
             {welcomeBack}
           </ReturningSignupModal>

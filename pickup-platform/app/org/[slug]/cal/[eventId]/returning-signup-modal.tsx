@@ -43,6 +43,7 @@ type Props = {
   groupRulesVersion?: number
   needsGroupRulesAcceptance?: boolean
   onNotYou?: () => void | Promise<void>
+  onPaymentRequired?: (priceCents?: number | null) => void
   children: ReactNode
 }
 
@@ -121,6 +122,7 @@ export function ReturningSignupModal({
   groupRulesVersion,
   needsGroupRulesAcceptance,
   onNotYou,
+  onPaymentRequired,
   children,
 }: Props) {
   const router = useRouter()
@@ -189,9 +191,7 @@ export function ReturningSignupModal({
         result.error.toLowerCase().includes('requires payment')
       ) {
         setOpen(false)
-        startTransition(() => {
-          router.refresh()
-        })
+        onPaymentRequired?.(result.priceCents)
         return
       }
       setError(result.error)

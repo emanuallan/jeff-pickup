@@ -11,6 +11,7 @@ import { normalizePhoneDigits, isValidPhoneDigits } from '@/lib/phone'
 import { validateDemoParticipantNames } from '@/lib/participant-name-moderation'
 import { orgFeatures } from '@/lib/org-features'
 import { resolveGuestCount } from '@/lib/guest-signups'
+import { getLiveEventPriceCents, paymentRequiredResult } from '@/lib/event-price'
 import { isPaidSession } from '@/lib/session-payment'
 
 async function getOpenEvent(
@@ -64,7 +65,7 @@ export async function joinEvent(
   orgSlug: string,
   eventId: string,
   formData: FormData,
-): Promise<{ error?: string; code?: string }> {
+): Promise<{ error?: string; code?: string; priceCents?: number }> {
   const supabase = await createClient()
 
   const phone = normalizePhoneDigits(String(formData.get('phone') ?? ''))
@@ -91,11 +92,10 @@ export async function joinEvent(
     return { error: open.error }
   }
 
-  if (isPaidSession(open.event.price_cents)) {
-    return {
-      error: 'This session requires payment. Refresh the page to continue with checkout.',
-      code: 'payment_required',
-    }
+  const livePrice =
+    (await getLiveEventPriceCents(open.orgId, eventId)) ?? open.event.price_cents
+  if (isPaidSession(livePrice)) {
+    return paymentRequiredResult(livePrice)
   }
 
   const org = await getPublicOrgBySlug(orgSlug)
@@ -116,6 +116,11 @@ export async function joinEvent(
   if (error) {
     if (error.message === 'GROUP_RULES_REQUIRED') {
       return { error: 'Please accept the group rules before signing up.' }
+    }
+    if (error.message.toLowerCase().includes('requires payment')) {
+      const price =
+        (await getLiveEventPriceCents(open.orgId, eventId)) ?? open.event.price_cents
+      return paymentRequiredResult(price)
     }
     return { error: error.message }
   }
@@ -177,7 +182,7 @@ export async function quickJoinEvent(
   eventId: string,
   guestCount = 0,
   arrivalStatus: ArrivalStatus = 'confirmed',
-): Promise<{ error?: string; code?: string }> {
+): Promise<{ error?: string; code?: string; priceCents?: number }> {
   const token = await getSessionToken()
   if (!token) {
     return { error: 'No saved session' }
@@ -213,11 +218,10 @@ export async function quickJoinEvent(
     return { error: open.error }
   }
 
-  if (isPaidSession(open.event.price_cents)) {
-    return {
-      error: 'This session requires payment. Refresh the page to continue with checkout.',
-      code: 'payment_required',
-    }
+  const livePrice =
+    (await getLiveEventPriceCents(open.orgId, eventId)) ?? open.event.price_cents
+  if (isPaidSession(livePrice)) {
+    return paymentRequiredResult(livePrice)
   }
 
   const resolvedGuests = resolveGuestCount(guests, orgFeatures(org).guest_signups)
@@ -234,6 +238,11 @@ export async function quickJoinEvent(
   if (error) {
     if (error.message === 'GROUP_RULES_REQUIRED') {
       return { error: 'Please accept the group rules before signing up.' }
+    }
+    if (error.message.toLowerCase().includes('requires payment')) {
+      const price =
+        (await getLiveEventPriceCents(open.orgId, eventId)) ?? open.event.price_cents
+      return paymentRequiredResult(price)
     }
     return { error: error.message }
   }

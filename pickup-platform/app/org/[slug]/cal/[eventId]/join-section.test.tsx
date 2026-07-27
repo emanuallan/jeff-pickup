@@ -123,6 +123,24 @@ describe('JoinSection "Not you?" flow', () => {
     expect(screen.getByTestId('save-account-card')).toBeInTheDocument()
   })
 
+  it('switches to paid join UI when soft join returns payment_required', async () => {
+    const user = userEvent.setup()
+    runSignupCelebrationMock.mockResolvedValue({
+      error: 'This session requires payment.',
+      code: 'payment_required',
+      priceCents: 2000,
+    })
+
+    renderJoinSection()
+
+    await user.click(screen.getByRole('button', { name: /count me in/i }))
+
+    await waitFor(() => {
+      expect(screen.getByText(/this session costs \$20\.00/i)).toBeInTheDocument()
+    })
+    expect(screen.getByTestId('save-account-card')).toBeInTheDocument()
+  })
+
   it('clears the device session and switches to the new-user signup form', async () => {
     const user = userEvent.setup()
     localStorage.setItem('returning-signup-seen:demo:event-1', '1')
