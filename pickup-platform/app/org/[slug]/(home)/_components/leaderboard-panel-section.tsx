@@ -42,6 +42,7 @@ async function LeaderboardPanelLoader({
       streakRows={streakRows}
       mvpRows={mvpRows}
       showStreaks={showStreaks}
+      monthScoped={range != null}
     />
   )
 }

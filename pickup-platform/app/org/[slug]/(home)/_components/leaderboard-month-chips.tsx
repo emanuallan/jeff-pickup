@@ -53,12 +53,19 @@ const MonthChipButton = memo(function MonthChipButton({
         {isAllTime ? 'All' : chip.yearLabel.slice(2)}
       </span>
       <span
-        className={`font-semibold leading-tight ${
+        className={`font-semibold tabular-nums leading-tight ${
           active ? 'text-lg' : 'text-sm text-zinc-300'
         }`}
         style={active ? { color: accentFg } : undefined}
       >
         {isAllTime ? 'time' : chip.monthLabel}
+      </span>
+      <span
+        className={`text-[9px] font-medium tabular-nums ${
+          active ? 'text-zinc-500' : 'text-zinc-600'
+        }`}
+      >
+        {isAllTime ? 'stats' : chip.yearLabel}
       </span>
     </button>
   )
@@ -146,7 +153,7 @@ export function LeaderboardMonthChips({ chips, activePeriodId, accent }: Props) 
   const accentFg = accentOnDark(accent)
 
   return (
-    <div className="relative -mx-5 mb-1 sm:-mx-6 md:mx-0">
+    <div className="relative -mx-5 mb-4 sm:-mx-6 md:mx-0 md:mb-6">
       {fadeLeft ? (
         <div
           aria-hidden

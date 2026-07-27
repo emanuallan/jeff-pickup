@@ -458,12 +458,14 @@ export function LeaderboardSummary({
   topCaps,
   leadersCount = 1,
   accent,
+  monthScoped = false,
 }: {
   playerCount: number
   topName: string | null
   topCaps: number
   leadersCount?: number
   accent: string
+  monthScoped?: boolean
 }) {
   if (playerCount === 0) return null
 
@@ -478,7 +480,9 @@ export function LeaderboardSummary({
     >
       <div className="flex items-center justify-between gap-4">
         <div className="min-w-0">
-          <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">Have attended</p>
+          <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">
+            {monthScoped ? 'Attended this month' : 'Have attended'}
+          </p>
           <AnimatedPlayerCount value={playerCount} accent={accent} />
         </div>
         {topName && topCaps > 0 ? (
@@ -555,9 +559,12 @@ function CapsRankedList({
 export function CapsLeaderboard({
   rows,
   accent,
+  monthScoped = false,
 }: {
   rows: CapsLeaderboardRow[]
   accent: string
+  /** When true, counts are for one calendar month only (not cumulative). */
+  monthScoped?: boolean
 }) {
   const ranks = denseRank(rows, (r) => r.caps)
   const showPodium =
@@ -574,12 +581,16 @@ export function CapsLeaderboard({
         icon="trophy"
         iconClassName="bg-amber-500/10 text-amber-400"
         title="Caps"
-        subtitle="Distinct sessions attended"
+        subtitle={
+          monthScoped ? 'Sessions attended this month only' : 'Distinct sessions attended'
+        }
       />
 
       {rows.length === 0 ? (
         <p className="mt-6 rounded-2xl border border-dashed border-zinc-800 bg-zinc-900/30 px-4 py-8 text-center text-sm text-zinc-500">
-          No sessions attended yet. Join a session to start climbing.
+          {monthScoped
+            ? 'No sessions attended this month.'
+            : 'No sessions attended yet. Join a session to start climbing.'}
         </p>
       ) : (
         <>
@@ -745,9 +756,12 @@ function MvpGroup({
 export function MvpLeaderboard({
   rows,
   accent,
+  monthScoped = false,
 }: {
   rows: MvpLeaderboardRow[]
   accent: string
+  /** When true, counts are for one calendar month only (not cumulative). */
+  monthScoped?: boolean
 }) {
   const ranks = denseRank(rows, (r) => r.mvp_count)
   const groups = groupRowsByRank(rows, ranks)
@@ -759,12 +773,16 @@ export function MvpLeaderboard({
         icon="mvp"
         iconClassName="bg-amber-500/10 text-amber-300"
         title="Session MVPs"
-        subtitle="Votes won after sessions"
+        subtitle={
+          monthScoped ? 'MVP awards this month only' : 'Votes won after sessions'
+        }
       />
 
       {rows.length === 0 ? (
         <p className="mt-6 rounded-2xl border border-dashed border-zinc-800 bg-zinc-900/30 px-4 py-8 text-center text-sm text-zinc-500">
-          No session MVPs yet. Win a post-session vote to get on the board.
+          {monthScoped
+            ? 'No session MVPs this month.'
+            : 'No session MVPs yet. Win a post-session vote to get on the board.'}
         </p>
       ) : (
         <div className="mt-6 flex flex-col gap-5">

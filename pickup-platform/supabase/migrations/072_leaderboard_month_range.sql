@@ -1,5 +1,6 @@
 -- Optional time range for caps + MVP leaderboards (month chips on the public board).
--- Null range = all-time. Streaks stay all-time only (no range filter).
+-- Null range = all-time. When set, counts ONLY events with starts_at in [start, end)
+-- (that calendar month) — not cumulative "up to" the month. Streaks stay all-time only.
 
 drop function if exists public.org_caps_leaderboard(uuid, timestamptz, int);
 

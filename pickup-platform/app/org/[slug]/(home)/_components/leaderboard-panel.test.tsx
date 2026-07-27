@@ -95,6 +95,38 @@ describe('LeaderboardPanel', () => {
     expect(screen.getByText('MVP')).toBeInTheDocument()
   })
 
+  it('orders boards as MVP, caps, then streaks', () => {
+    render(
+      <LeaderboardPanel
+        org={makeOrg(true)}
+        capsRows={capsRows}
+        streakRows={streakRows}
+        mvpRows={mvpRows}
+        showStreaks
+      />,
+    )
+
+    const headings = screen.getAllByRole('heading').map((el) => el.textContent)
+    expect(headings).toEqual(['Session MVPs', 'Caps', 'Weekly streaks'])
+  })
+
+  it('labels month-scoped boards as that month only', () => {
+    render(
+      <LeaderboardPanel
+        org={makeOrg(true)}
+        capsRows={capsRows}
+        streakRows={[]}
+        mvpRows={mvpRows}
+        showStreaks={false}
+        monthScoped
+      />,
+    )
+
+    expect(screen.getByText('Attended this month')).toBeInTheDocument()
+    expect(screen.getByText('MVP awards this month only')).toBeInTheDocument()
+    expect(screen.getByText('Sessions attended this month only')).toBeInTheDocument()
+  })
+
   it('hides streaks for a selected month', () => {
     render(
       <LeaderboardPanel

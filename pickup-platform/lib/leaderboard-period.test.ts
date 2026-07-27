@@ -62,10 +62,31 @@ describe('parseLeaderboardPeriodParam', () => {
 })
 
 describe('monthKeyToUtcRange', () => {
-  it('returns a half-open UTC range for the local month', () => {
+  it('returns a half-open UTC range for that month only (not cumulative)', () => {
     const range = monthKeyToUtcRange('2026-07', 'UTC')
     expect(range.startIso).toBe('2026-07-01T00:00:00.000Z')
     expect(range.endIso).toBe('2026-08-01T00:00:00.000Z')
+
+    // June sessions fall before the window; August sessions fall on/after end.
+    expect(new Date('2026-06-30T23:59:59.000Z').getTime()).toBeLessThan(
+      new Date(range.startIso).getTime(),
+    )
+    expect(new Date('2026-07-15T12:00:00.000Z').getTime()).toBeGreaterThanOrEqual(
+      new Date(range.startIso).getTime(),
+    )
+    expect(new Date('2026-07-15T12:00:00.000Z').getTime()).toBeLessThan(
+      new Date(range.endIso).getTime(),
+    )
+    expect(new Date('2026-08-01T00:00:00.000Z').getTime()).toBeGreaterThanOrEqual(
+      new Date(range.endIso).getTime(),
+    )
+  })
+
+  it('uses org-local midnight boundaries so the window is that calendar month', () => {
+    const range = monthKeyToUtcRange('2026-07', 'America/Los_Angeles')
+    // PDT (UTC-7): Jul 1 00:00 local → Jul 1 07:00 UTC; Aug 1 00:00 → Aug 1 07:00 UTC
+    expect(range.startIso).toBe('2026-07-01T07:00:00.000Z')
+    expect(range.endIso).toBe('2026-08-01T07:00:00.000Z')
   })
 })
 

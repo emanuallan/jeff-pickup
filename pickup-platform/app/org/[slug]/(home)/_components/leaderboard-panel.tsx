@@ -14,15 +14,18 @@ type Props = {
   streakRows: StreakLeaderboardRow[]
   mvpRows?: MvpLeaderboardRow[]
   showStreaks: boolean
+  /** Month boards count only events inside that month (not cumulative to date). */
+  monthScoped?: boolean
 }
 
-/** Caps / streaks / MVP boards for the selected period (chips live outside Suspense). */
+/** MVP / caps / streaks boards for the selected period (chips live outside Suspense). */
 export function LeaderboardPanel({
   org,
   capsRows,
   streakRows,
   mvpRows = [],
   showStreaks,
+  monthScoped = false,
 }: Props) {
   const accent = org.branding.accent_color
   const showMvp = orgFeatures(org).session_mvp_voting
@@ -39,6 +42,7 @@ export function LeaderboardPanel({
         topCaps={topCapsValue}
         leadersCount={leadersCount}
         accent={accent}
+        monthScoped={monthScoped}
       />
 
       <div
@@ -50,9 +54,11 @@ export function LeaderboardPanel({
               : ''
         }`}
       >
-        <CapsLeaderboard rows={capsRows} accent={accent} />
+        {showMvp ? (
+          <MvpLeaderboard rows={mvpRows} accent={accent} monthScoped={monthScoped} />
+        ) : null}
+        <CapsLeaderboard rows={capsRows} accent={accent} monthScoped={monthScoped} />
         {showStreaks ? <StreakLeaderboard rows={streakRows} accent={accent} /> : null}
-        {showMvp ? <MvpLeaderboard rows={mvpRows} accent={accent} /> : null}
       </div>
     </div>
   )
@@ -80,11 +86,11 @@ export function LeaderboardPanelSkeleton({
               : ''
         }`}
       >
-        <div className="h-72 animate-pulse rounded-3xl border border-zinc-800 bg-zinc-900/50" />
-        {showStreaks ? (
+        {showMvp ? (
           <div className="h-56 animate-pulse rounded-3xl border border-zinc-800 bg-zinc-900/50" />
         ) : null}
-        {showMvp ? (
+        <div className="h-72 animate-pulse rounded-3xl border border-zinc-800 bg-zinc-900/50" />
+        {showStreaks ? (
           <div className="h-56 animate-pulse rounded-3xl border border-zinc-800 bg-zinc-900/50" />
         ) : null}
       </div>
