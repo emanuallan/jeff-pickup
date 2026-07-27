@@ -36,6 +36,11 @@ vi.mock('../../_components/save-participant-account-card', () => ({
   SaveParticipantAccountCard: () => <div data-testid="save-account-card" />,
 }))
 
+vi.mock('./paid-join-sheet', () => ({
+  PaidJoinSheet: ({ open }: { open: boolean }) =>
+    open ? <div data-testid="paid-join-sheet">Paid join sheet</div> : null,
+}))
+
 vi.mock('./participation-motion', () => ({
   useParticipationMotion: () => ({
     reopenJoinPanel: reopenJoinPanelMock,
@@ -120,7 +125,21 @@ describe('JoinSection "Not you?" flow', () => {
       isAuthenticated: false,
     })
     expect(screen.getByText(/this session costs \$15\.00/i)).toBeInTheDocument()
-    expect(screen.getByTestId('save-account-card')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /continue · \$15\.00/i })).toBeInTheDocument()
+  })
+
+  it('opens the paid join sheet from the continue CTA', async () => {
+    const user = userEvent.setup()
+    renderJoinSection({
+      participant: null,
+      paidSession: true,
+      priceCents: 1500,
+      isAuthenticated: false,
+    })
+
+    expect(screen.queryByTestId('paid-join-sheet')).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: /continue · \$15\.00/i }))
+    expect(screen.getByTestId('paid-join-sheet')).toBeInTheDocument()
   })
 
   it('switches to paid join UI when soft join returns payment_required', async () => {
@@ -138,7 +157,7 @@ describe('JoinSection "Not you?" flow', () => {
     await waitFor(() => {
       expect(screen.getByText(/this session costs \$20\.00/i)).toBeInTheDocument()
     })
-    expect(screen.getByTestId('save-account-card')).toBeInTheDocument()
+    expect(screen.getByTestId('paid-join-sheet')).toBeInTheDocument()
   })
 
   it('clears the device session and switches to the new-user signup form', async () => {
