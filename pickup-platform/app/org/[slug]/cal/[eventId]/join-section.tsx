@@ -190,6 +190,7 @@ function PaidJoinSection({
   linkedAccountEmail = null,
   showReturning = false,
   onNotYou,
+  onSessionRecovered,
   groupRulesEnabled,
   groupRulesText,
   groupRulesVersion,
@@ -203,6 +204,7 @@ function PaidJoinSection({
   knownProfile?: KnownParticipantProfile | null
   showReturning?: boolean
   onNotYou?: () => void
+  onSessionRecovered?: () => void
 }) {
   const [sheetOpen, setSheetOpen] = useState(autoOpenSheet)
   const [guestCount, setGuestCount] = useState(0)
@@ -229,7 +231,13 @@ function PaidJoinSection({
   }, [autoOpenSheet])
 
   useEffect(() => {
-    if (!knownProfile) return
+    if (!knownProfile) {
+      setLocalProfile(null)
+      setFirstName('')
+      setLastName('')
+      setPhone('')
+      return
+    }
     setLocalProfile(knownProfile)
     setFirstName(knownProfile.firstName)
     setLastName(knownProfile.lastName)
@@ -438,7 +446,7 @@ function PaidJoinSection({
           orgSlug={orgSlug}
           eventId={eventId}
           accent={accent}
-          onRecovered={() => {}}
+          onRecovered={() => onSessionRecovered?.()}
         />
       </div>
 
@@ -519,7 +527,7 @@ export function JoinSection(props: Props) {
 
   const knownProfile = useMemo<KnownParticipantProfile | null>(() => {
     if (capturedProfile) return capturedProfile
-    if (!props.participant) return null
+    if (optedOutOfReturningSession || !props.participant) return null
     return {
       firstName: props.participant.first_name,
       lastName: props.participant.last_name,
@@ -527,6 +535,7 @@ export function JoinSection(props: Props) {
     }
   }, [
     capturedProfile,
+    optedOutOfReturningSession,
     props.participant?.first_name,
     props.participant?.last_name,
     props.participant?.phone,
@@ -540,6 +549,7 @@ export function JoinSection(props: Props) {
 
   const handleNotYou = useCallback(async () => {
     setOptedOutOfReturningSession(true)
+    setCapturedProfile(null)
     setRulesAcceptedLocally(false)
     setError(null)
     clearReturningSignupSeen(props.orgSlug, props.eventId)
@@ -553,10 +563,9 @@ export function JoinSection(props: Props) {
     }
 
     await clearParticipantSession(props.orgSlug, props.eventId)
-    startTransition(() => {
-      router.refresh()
-    })
-  }, [motion, props.eventId, props.orgSlug, router, startTransition])
+    // Hard reload so the cleared cookie + revoked DB session are reflected.
+    window.location.reload()
+  }, [motion, props.eventId, props.orgSlug])
 
   // Signed-up users are handled in the roster (highlighted row + status picker
   // below the attendee list), so the join card collapses for them.
@@ -584,6 +593,10 @@ export function JoinSection(props: Props) {
         linkedAccountEmail={props.linkedAccountEmail ?? null}
         showReturning={Boolean(props.participant) && !optedOutOfReturningSession}
         onNotYou={() => void handleNotYou()}
+        onSessionRecovered={() => {
+          setOptedOutOfReturningSession(false)
+          motion?.reopenJoinPanel()
+        }}
       />
     )
   }

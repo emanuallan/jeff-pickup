@@ -64,10 +64,12 @@ export function clearParticipantSession(store: WritableCookies) {
   }
 }
 
-/** Clear participant session on the incoming request store and the outgoing response. */
+/**
+ * Clear hc_session on the outgoing response only.
+ * Mutating `cookies()` alongside `response.cookies` in Route Handlers can race
+ * and leave the browser cookie intact.
+ */
 export async function applyParticipantSessionClear(response: NextResponse) {
-  const cookieStore = await cookies()
-  clearParticipantSession(cookieStore)
   clearParticipantSession(response.cookies)
 }
 

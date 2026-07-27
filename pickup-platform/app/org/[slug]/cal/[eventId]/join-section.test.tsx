@@ -7,6 +7,7 @@ import { clearParticipantSession, recoverSession } from './actions'
 import { clearParticipantDeviceSession } from '@/lib/participant-session-client'
 
 const refreshMock = vi.fn()
+const reloadMock = vi.fn()
 const reopenJoinPanelMock = vi.fn()
 const runSignupCelebrationMock = vi.fn()
 
@@ -86,6 +87,7 @@ function renderJoinSection(overrides: Partial<ComponentProps<typeof JoinSection>
 describe('JoinSection "Not you?" flow', () => {
   beforeEach(() => {
     refreshMock.mockReset()
+    reloadMock.mockReset()
     reopenJoinPanelMock.mockReset()
     clearParticipantSessionMock.mockReset()
     recoverSessionMock.mockReset()
@@ -93,6 +95,10 @@ describe('JoinSection "Not you?" flow', () => {
     clearParticipantDeviceSessionMock.mockResolvedValue({ ok: true })
     clearParticipantSessionMock.mockResolvedValue({})
     localStorage.clear()
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      value: { ...window.location, reload: reloadMock },
+    })
     vi.stubGlobal(
       'matchMedia',
       vi.fn().mockImplementation(() => ({
@@ -205,7 +211,7 @@ describe('JoinSection "Not you?" flow', () => {
     expect(screen.getByTestId('paid-join-sheet')).toBeInTheDocument()
   })
 
-  it('clears the device session and switches to the new-user signup form', async () => {
+  it('clears the device session and reloads the page', async () => {
     const user = userEvent.setup()
     localStorage.setItem('returning-signup-seen:demo:event-1', '1')
 
@@ -218,10 +224,8 @@ describe('JoinSection "Not you?" flow', () => {
     })
     expect(clearParticipantSessionMock).toHaveBeenCalledWith('demo', 'event-1')
     expect(reopenJoinPanelMock).toHaveBeenCalledOnce()
-    expect(refreshMock).toHaveBeenCalledOnce()
+    expect(reloadMock).toHaveBeenCalledOnce()
     expect(localStorage.getItem('returning-signup-seen:demo:event-1')).toBeNull()
-    expect(screen.getByRole('heading', { name: /save your spot/i })).toBeInTheDocument()
-    expect(screen.queryByRole('heading', { name: /welcome back/i })).not.toBeInTheDocument()
   })
 
   it('stays on welcome back and shows an error when device session clear fails', async () => {
@@ -238,7 +242,7 @@ describe('JoinSection "Not you?" flow', () => {
       expect(screen.getByText(/could not clear your session/i)).toBeInTheDocument()
     })
     expect(clearParticipantSessionMock).not.toHaveBeenCalled()
-    expect(refreshMock).not.toHaveBeenCalled()
+    expect(reloadMock).not.toHaveBeenCalled()
     expect(screen.getByRole('heading', { name: /welcome back, jeff p\./i })).toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: /save your spot/i })).not.toBeInTheDocument()
   })
@@ -261,8 +265,7 @@ describe('JoinSection "Not you?" flow', () => {
       expect(clearParticipantDeviceSessionMock).toHaveBeenCalledOnce()
     })
     expect(clearParticipantSessionMock).toHaveBeenCalledWith('demo', 'event-1')
-    expect(refreshMock).toHaveBeenCalledOnce()
-    expect(screen.getByRole('heading', { name: /save your spot/i })).toBeInTheDocument()
+    expect(reloadMock).toHaveBeenCalledOnce()
   }, 10_000)
 })
 
