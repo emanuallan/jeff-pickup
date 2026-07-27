@@ -18,7 +18,7 @@ import { useParticipationMotion } from './participation-motion'
 import { GuestCountSelect } from './guest-count-select'
 import { clampGuestCount } from '@/lib/guest-signups'
 import { clearParticipantDeviceSession } from '@/lib/participant-session-client'
-import { formatPriceCents, isPaidSession } from '@/lib/session-payment'
+import { formatPriceCents, isPaidSession, sessionPaymentTotalCents } from '@/lib/session-payment'
 import { isValidPhoneDigits } from '@/lib/phone'
 import { PaidJoinSheet, type KnownParticipantProfile } from './paid-join-sheet'
 
@@ -204,6 +204,11 @@ function PaidJoinSection({
   const [guestCount, setGuestCount] = useState(0)
   const joiningWaitlist = isFull && waitlistEnabled
   const alreadyLinked = accountLinked || Boolean(linkedAccountEmail)
+  const totalCents = sessionPaymentTotalCents(
+    priceCents,
+    guestsEnabled ? guestCount : 0,
+  )
+  const totalLabel = formatPriceCents(totalCents)
 
   useEffect(() => {
     if (autoOpenSheet) {
@@ -270,7 +275,7 @@ function PaidJoinSection({
             boxShadow: `0 10px 30px -12px ${accent}`,
           }}
         >
-          {joiningWaitlist ? `Join waitlist · ${priceLabel}` : `Join · ${priceLabel}`}
+          {joiningWaitlist ? `Join waitlist · ${totalLabel}` : `Join · ${totalLabel}`}
         </button>
         <div className="text-right">
           <button

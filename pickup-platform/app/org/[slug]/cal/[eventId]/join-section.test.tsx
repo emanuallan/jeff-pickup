@@ -155,6 +155,19 @@ describe('JoinSection "Not you?" flow', () => {
     expect(screen.queryByRole('heading', { name: /join this session/i })).not.toBeInTheDocument()
   })
 
+  it('updates the paid join CTA total when guests change', async () => {
+    const user = userEvent.setup()
+    renderJoinSection({
+      paidSession: true,
+      priceCents: 500,
+      isAuthenticated: false,
+    })
+
+    expect(screen.getByRole('button', { name: /join · \$5\.00/i })).toBeInTheDocument()
+    await user.selectOptions(screen.getByRole('combobox'), '2')
+    expect(screen.getByRole('button', { name: /join · \$15\.00/i })).toBeInTheDocument()
+  })
+
   it('switches to paid join UI when soft join returns payment_required', async () => {
     const user = userEvent.setup()
     runSignupCelebrationMock.mockResolvedValue({
