@@ -208,6 +208,15 @@ export async function POST(request: Request) {
   } catch (err) {
     console.error('session payment checkout failed', err)
     await admin.from('event_payments').update({ status: 'failed' }).eq('id', payment.id)
-    return NextResponse.json({ error: 'Could not start checkout.' }, { status: 500 })
+    const detail =
+      err && typeof err === 'object' && 'message' in err && typeof err.message === 'string'
+        ? err.message
+        : err instanceof Error
+          ? err.message
+          : 'Stripe checkout failed.'
+    return NextResponse.json(
+      { error: 'Could not start checkout.', detail },
+      { status: 500 },
+    )
   }
 }
