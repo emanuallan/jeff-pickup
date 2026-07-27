@@ -20,7 +20,7 @@ import { isOrgSessionFeedEnabled } from '@/lib/org-session-feed'
 
 type Props = {
   params: Promise<{ slug: string }>
-  searchParams: Promise<{ tab?: string; cal?: string; ev?: string }>
+  searchParams: Promise<{ tab?: string; cal?: string; ev?: string; lb?: string }>
 }
 
 export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {
@@ -82,7 +82,7 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
 
 export default async function OrgHomePage({ params, searchParams }: Props) {
   const { slug } = await params
-  const { tab, cal, ev } = await searchParams
+  const { tab, cal, ev, lb } = await searchParams
   const org = await getPublicOrgBySlug(slug)
 
   if (!org || org.status !== 'active') {
@@ -106,7 +106,7 @@ export default async function OrgHomePage({ params, searchParams }: Props) {
       redirect(orgPublicTabHref('/', 'sessions', eventRef))
     }
 
-    return <LeaderboardPanelSection org={org} />
+    return <LeaderboardPanelSection org={org} periodParam={lb} />
   }
 
   if (tab === 'feed') {

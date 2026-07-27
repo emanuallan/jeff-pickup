@@ -2,6 +2,16 @@ import { cache } from 'react'
 import { createClient } from '@/lib/supabase/server'
 import type { EngagementStats } from '@/lib/badges'
 import { getOrgSessionCounts } from '@/lib/events'
+import {
+  buildLeaderboardMonthKeys,
+  buildLeaderboardPeriodChips,
+  leaderboardPeriodId,
+  monthKeyInZone,
+  monthKeyToUtcRange,
+  parseLeaderboardPeriodParam,
+  type LeaderboardMonthChip,
+  type LeaderboardPeriod,
+} from '@/lib/leaderboard-period'
 
 export type CapsLeaderboardRow = {
   participant_id: string
@@ -22,13 +32,18 @@ export type MvpLeaderboardRow = {
   mvp_count: number
 }
 
+export type LeaderboardTimeRange = {
+  startIso: string
+  endIso: string
+} | null
+
 /** Sessions held before the leaderboard is worth showing (avoids empty/sparse boards). */
 export const LEADERBOARD_MIN_SESSIONS = 3
 
 /** Minimum consecutive weeks to appear on the public streak leaderboard. */
 export const LEADERBOARD_MIN_STREAK_WEEKS = 2
 
-async function getOrgReferenceTimezone(orgId: string): Promise<string> {
+export const getOrgReferenceTimezone = cache(async (orgId: string): Promise<string> => {
   const supabase = await createClient()
   const { data } = await supabase
     .from('schedules')
@@ -38,7 +53,7 @@ async function getOrgReferenceTimezone(orgId: string): Promise<string> {
     .maybeSingle()
 
   return data?.timezone ?? 'UTC'
-}
+})
 
 function localDateInZone(timeZone: string, date = new Date()): string {
   return date.toLocaleDateString('en-CA', { timeZone })
@@ -76,14 +91,74 @@ export const isOrgInauguralSession = cache(async (orgId: string, eventId: string
   return data.id === eventId
 })
 
+const getOrgEarliestPastSessionStartsAt = cache(async (orgId: string): Promise<string | null> => {
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from('events')
+    .select('starts_at')
+    .eq('org_id', orgId)
+    .neq('status', 'cancelled')
+    .lt('starts_at', new Date().toISOString())
+    .order('starts_at', { ascending: true })
+    .limit(1)
+    .maybeSingle()
+
+  if (error || !data?.starts_at) return null
+  return String(data.starts_at)
+})
+
+export const getOrgLeaderboardMonthKeys = cache(async (orgId: string): Promise<string[]> => {
+  const [timeZone, earliest] = await Promise.all([
+    getOrgReferenceTimezone(orgId),
+    getOrgEarliestPastSessionStartsAt(orgId),
+  ])
+  return buildLeaderboardMonthKeys(earliest, timeZone)
+})
+
+export const resolveOrgLeaderboardPeriod = cache(
+  async (
+    orgId: string,
+    rawParam: string | null | undefined,
+  ): Promise<{
+    period: LeaderboardPeriod
+    periodId: string
+    chips: LeaderboardMonthChip[]
+    range: LeaderboardTimeRange
+    timeZone: string
+  }> => {
+    const [timeZone, monthKeys] = await Promise.all([
+      getOrgReferenceTimezone(orgId),
+      getOrgLeaderboardMonthKeys(orgId),
+    ])
+    const currentMonthKey = monthKeyInZone(new Date(), timeZone)
+    const period = parseLeaderboardPeriodParam(rawParam, monthKeys, currentMonthKey)
+    const range =
+      period.kind === 'month' ? monthKeyToUtcRange(period.monthKey, timeZone) : null
+
+    return {
+      period,
+      periodId: leaderboardPeriodId(period),
+      chips: buildLeaderboardPeriodChips(monthKeys),
+      range,
+      timeZone,
+    }
+  },
+)
+
 export const getOrgCapsLeaderboard = cache(
-  async (orgId: string, limit = 50): Promise<CapsLeaderboardRow[]> => {
+  async (
+    orgId: string,
+    limit = 50,
+    range: LeaderboardTimeRange = null,
+  ): Promise<CapsLeaderboardRow[]> => {
     const supabase = await createClient()
 
     const { data, error } = await supabase.rpc('org_caps_leaderboard', {
       p_org_id: orgId,
       p_as_of: new Date().toISOString(),
       p_limit: limit,
+      p_range_start: range?.startIso ?? null,
+      p_range_end: range?.endIso ?? null,
     })
 
     if (error || !data) return []
@@ -120,12 +195,18 @@ export const getOrgStreakLeaderboard = cache(
 )
 
 export const getOrgMvpLeaderboard = cache(
-  async (orgId: string, limit = 50): Promise<MvpLeaderboardRow[]> => {
+  async (
+    orgId: string,
+    limit = 50,
+    range: LeaderboardTimeRange = null,
+  ): Promise<MvpLeaderboardRow[]> => {
     const supabase = await createClient()
 
     const { data, error } = await supabase.rpc('org_mvp_leaderboard', {
       p_org_id: orgId,
       p_limit: limit,
+      p_range_start: range?.startIso ?? null,
+      p_range_end: range?.endIso ?? null,
     })
 
     if (error || !data) return []
