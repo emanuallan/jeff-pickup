@@ -143,7 +143,7 @@ describe('LeaderboardPanel', () => {
     expect(screen.queryByRole('heading', { name: 'Weekly streaks' })).not.toBeInTheDocument()
   })
 
-  it('shows an empty MVP state when voting is on but nobody has awards', () => {
+  it('hides the MVP board when there are no awards', () => {
     render(
       <LeaderboardPanel
         org={makeOrg(true)}
@@ -154,6 +154,8 @@ describe('LeaderboardPanel', () => {
       />,
     )
 
-    expect(screen.getByText(/no session mvps yet/i)).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Caps' })).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Session MVPs' })).not.toBeInTheDocument()
+    expect(screen.queryByText(/no session mvps/i)).not.toBeInTheDocument()
   })
 })

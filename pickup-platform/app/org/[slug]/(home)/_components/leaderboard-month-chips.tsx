@@ -45,27 +45,29 @@ const MonthChipButton = memo(function MonthChipButton({
           : 'border-zinc-800/90 bg-zinc-900/40 hover:border-zinc-700 hover:bg-zinc-900/65'
       } [-webkit-tap-highlight-color:transparent]`}
     >
-      <span
-        className={`text-[10px] font-medium uppercase tracking-wide ${
-          active ? 'text-zinc-500' : 'text-zinc-600'
-        }`}
-      >
-        {isAllTime ? 'All' : chip.yearLabel.slice(2)}
-      </span>
+      {isAllTime ? (
+        <span
+          className={`text-[10px] font-medium uppercase tracking-wide ${
+            active ? 'text-zinc-500' : 'text-zinc-600'
+          }`}
+        >
+          All
+        </span>
+      ) : null}
       <span
         className={`font-semibold tabular-nums leading-tight ${
           active ? 'text-lg' : 'text-sm text-zinc-300'
         }`}
         style={active ? { color: accentFg } : undefined}
       >
-        {isAllTime ? 'time' : chip.monthLabel}
+        {isAllTime ? 'Time' : chip.monthLabel}
       </span>
       <span
         className={`text-[9px] font-medium tabular-nums ${
           active ? 'text-zinc-500' : 'text-zinc-600'
         }`}
       >
-        {isAllTime ? 'stats' : chip.yearLabel}
+        {isAllTime ? 'Stats' : chip.yearLabel}
       </span>
     </button>
   )

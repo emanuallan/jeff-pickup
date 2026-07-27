@@ -147,8 +147,8 @@ export function buildLeaderboardPeriodChips(monthKeys: string[]): LeaderboardMon
     ...monthChips,
     {
       id: LEADERBOARD_PERIOD_ALL,
-      monthLabel: 'All',
-      yearLabel: 'time',
+      monthLabel: 'Time',
+      yearLabel: 'Stats',
       ariaLabel: 'All time',
     },
   ]

@@ -28,7 +28,7 @@ export function LeaderboardPanel({
   monthScoped = false,
 }: Props) {
   const accent = org.branding.accent_color
-  const showMvp = orgFeatures(org).session_mvp_voting
+  const showMvp = orgFeatures(org).session_mvp_voting && mvpRows.length > 0
   const topCaps = capsRows[0]
   const topCapsValue = topCaps?.caps ?? 0
   const leadersCount = capsRows.filter((row) => row.caps === topCapsValue).length
