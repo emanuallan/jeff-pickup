@@ -46,6 +46,8 @@ type Props = {
   isAuthenticated: boolean
   accountLinked: boolean
   guestsEnabled: boolean
+  /** When false, guests were already chosen outside the sheet (returning welcome card). */
+  showGuestSelect?: boolean
   /** Returning soft-session persona or profile collected before the paid gate. */
   knownProfile?: KnownParticipantProfile | null
   /** Email already linked to this soft-session persona (or current auth user). */
@@ -81,6 +83,7 @@ export function PaidJoinSheet({
   isAuthenticated,
   accountLinked,
   guestsEnabled,
+  showGuestSelect = guestsEnabled,
   knownProfile = null,
   linkedAccountEmail = null,
   initialGuestCount = 0,
@@ -620,14 +623,9 @@ export function PaidJoinSheet({
                 </span>
               </p>
             ) : null}
-            {guestsEnabled ? (
+            {showGuestSelect ? (
               <label className="block">
-                <span className="text-xs text-zinc-500">
-                  Guests:{' '}
-                  {guestCount === 0
-                    ? 'None'
-                    : `${guestCount} ${guestCount === 1 ? 'guest' : 'guests'}`}
-                </span>
+                <span className="text-xs text-zinc-500">Guests</span>
                 <GuestCountSelect
                   value={guestCount}
                   onChange={setGuestCount}

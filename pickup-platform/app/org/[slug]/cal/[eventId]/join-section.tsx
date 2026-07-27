@@ -226,6 +226,7 @@ function PaidJoinSection({
       isAuthenticated={isAuthenticated}
       accountLinked={accountLinked}
       guestsEnabled={guestsEnabled}
+      showGuestSelect={guestsEnabled && !showReturning}
       knownProfile={knownProfile}
       linkedAccountEmail={linkedAccountEmail}
       initialGuestCount={guestCount}
@@ -250,12 +251,7 @@ function PaidJoinSection({
 
         {guestsEnabled ? (
           <label className="block">
-            <span className="text-xs text-zinc-500">
-              Guests:{' '}
-              {guestCount === 0
-                ? 'None'
-                : `${guestCount} ${guestCount === 1 ? 'guest' : 'guests'}`}
-            </span>
+            <span className="text-xs text-zinc-500">Guests</span>
             <GuestCountSelect
               value={guestCount}
               onChange={setGuestCount}
