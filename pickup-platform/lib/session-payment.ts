@@ -1,6 +1,7 @@
 import type Stripe from 'stripe'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getStripe } from '@/lib/stripe'
+import { refundSessionPayment } from '@/lib/stripe-connect'
 import { clampGuestCount } from '@/lib/guest-signups'
 import {
   DEFAULT_PLATFORM_FEE_PERCENT,
@@ -32,6 +33,39 @@ export async function completePaidEventJoinFromCheckout(
 
   if (error) {
     console.error('complete_paid_event_join failed', error.message)
+
+    if (error.message.includes('Paid session is full') && paymentIntentId) {
+      const orgId = session.metadata?.org_id
+      if (orgId) {
+        const { data: stripeAccount } = await admin
+          .from('org_stripe_accounts')
+          .select('stripe_account_id')
+          .eq('org_id', orgId)
+          .maybeSingle()
+
+        if (stripeAccount?.stripe_account_id) {
+          try {
+            await refundSessionPayment({
+              paymentIntentId,
+              stripeAccountId: stripeAccount.stripe_account_id,
+              policy: 'full',
+              idempotencyKey: `paid-session-full-${checkoutSessionId}`,
+            })
+            await admin
+              .from('event_payments')
+              .update({
+                status: 'refunded',
+                stripe_payment_intent_id: paymentIntentId,
+              })
+              .eq('stripe_checkout_session_id', checkoutSessionId)
+            return { ok: false, reason: 'session_full_refunded' }
+          } catch (refundError) {
+            console.error('Paid session full auto-refund failed', refundError)
+          }
+        }
+      }
+    }
+
     return { ok: false, reason: error.message }
   }
 
@@ -99,6 +133,18 @@ export function sessionPaymentTotalCents(
 ): number {
   if (!Number.isFinite(priceCentsPerPerson) || priceCentsPerPerson <= 0) return 0
   return Math.round(priceCentsPerPerson) * paidSessionHeadcount(guestCount)
+}
+
+/** Paid sessions do not use the waitlist; the entire booking must fit. */
+export function paidCheckoutFitsCapacity(
+  capacity: number | null | undefined,
+  currentHeadcount: number,
+  guestCount: number,
+): boolean {
+  if (capacity == null) return true
+  const normalizedCapacity = Math.max(0, Math.floor(capacity))
+  const normalizedHeadcount = Math.max(0, Math.floor(currentHeadcount))
+  return normalizedHeadcount + paidSessionHeadcount(guestCount) <= normalizedCapacity
 }
 
 /** Platform cut taken from the connected account via Stripe application_fee_amount. */
@@ -225,10 +271,13 @@ export type AbandonedCheckoutPerson = {
 export function buildAbandonedCheckouts(
   payments: AbandonedCheckoutInput[],
 ): AbandonedCheckoutPerson[] {
-  const completedParticipantIds = new Set<string>()
+  const checkedOutParticipantIds = new Set<string>()
   for (const payment of payments) {
-    if (payment.status === 'completed' && payment.participant_id) {
-      completedParticipantIds.add(payment.participant_id)
+    if (
+      (payment.status === 'completed' || payment.status === 'refunded') &&
+      payment.participant_id
+    ) {
+      checkedOutParticipantIds.add(payment.participant_id)
     }
   }
 
@@ -237,7 +286,7 @@ export function buildAbandonedCheckouts(
 
   for (const payment of payments) {
     if (payment.status !== 'pending') continue
-    if (payment.participant_id && completedParticipantIds.has(payment.participant_id)) {
+    if (payment.participant_id && checkedOutParticipantIds.has(payment.participant_id)) {
       continue
     }
 
@@ -277,8 +326,9 @@ export function sessionFeeOrganizerPayoutHint(
   platformFeePercent = DEFAULT_PLATFORM_FEE_PERCENT,
 ): string {
   const feeLabel = formatPlatformFeePercent(platformFeePercent)
+  const waitlistNote = 'Paid sessions do not use a waitlist — when full, players check back if a spot opens.'
   if (priceCents == null || priceCents <= 0) {
-    return `Leave blank for free. For paid sessions, players pay the fee you set. Organizr keeps ${feeLabel}% from each payment; Stripe also deducts card processing fees from your payout.`
+    return `Leave blank for free. For paid sessions, players pay the fee you set. Organizr keeps ${feeLabel}% from each payment; Stripe also deducts card processing fees from your payout. ${waitlistNote}`
   }
 
   const charge = formatPriceCents(priceCents)
@@ -288,5 +338,5 @@ export function sessionFeeOrganizerPayoutHint(
   const share = formatPriceCents(
     sessionPaymentOrganizerShareCents(priceCents, platformFeePercent),
   )
-  return `Players pay ${charge}. Organizr keeps ${feeLabel}% (${platformFee}), so about ${share} reaches your Stripe balance before Stripe deducts card processing fees.`
+  return `Players pay ${charge}. Organizr keeps ${feeLabel}% (${platformFee}), so about ${share} reaches your Stripe balance before Stripe deducts card processing fees. ${waitlistNote}`
 }

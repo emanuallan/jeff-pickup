@@ -142,6 +142,19 @@ describe('JoinSection "Not you?" flow', () => {
     expect(screen.getByLabelText(/first name/i)).toBeInTheDocument()
   })
 
+  it('does not offer a waitlist when a paid session is full', () => {
+    renderJoinSection({
+      participant: null,
+      paidSession: true,
+      priceCents: 1500,
+      isFull: true,
+      waitlistEnabled: false,
+    })
+
+    expect(screen.getByRole('heading', { name: /this session is full/i })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /continue|join waitlist/i })).not.toBeInTheDocument()
+  })
+
   it('shows a one-shot payment-cancelled banner and strips paid from the URL', async () => {
     useSearchParamsMock.mockReturnValue(new URLSearchParams('cal=event-1&paid=0'))
 

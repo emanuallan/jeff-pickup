@@ -578,6 +578,90 @@ export type RefundAndCancelSponsorshipResult = {
 }
 
 export type SponsorshipRefundPolicy = 'retain_fees' | 'full'
+export type SessionRefundPolicy = SponsorshipRefundPolicy
+
+export async function refundSessionPayment(input: {
+  paymentIntentId: string
+  stripeAccountId: string
+  policy: SessionRefundPolicy
+  idempotencyKey?: string
+}): Promise<{ refunded: boolean; refundAmountCents: number }> {
+  const stripe = getStripe()
+  const connectOpts: ConnectRequestOptions = { stripeAccount: input.stripeAccountId }
+  const paymentIntent = await stripe.paymentIntents.retrieve(
+    input.paymentIntentId,
+    { expand: ['latest_charge.balance_transaction'] },
+    connectOpts,
+  )
+
+  if (paymentIntent.status !== 'succeeded') {
+    throw new Error(`Session payment is not refundable (status: ${paymentIntent.status}).`)
+  }
+
+  const latestCharge =
+    paymentIntent.latest_charge && typeof paymentIntent.latest_charge !== 'string'
+      ? paymentIntent.latest_charge
+      : null
+  const chargeId =
+    typeof paymentIntent.latest_charge === 'string'
+      ? paymentIntent.latest_charge
+      : latestCharge?.id ?? null
+
+  if (latestCharge?.refunded === true) {
+    return { refunded: true, refundAmountCents: 0 }
+  }
+
+  const amountRefundedCents = latestCharge?.amount_refunded ?? 0
+  const remainingCents = Math.max(paymentIntent.amount - amountRefundedCents, 0)
+  let refundAmountCents = remainingCents
+  let refundApplicationFee = input.policy === 'full'
+
+  if (input.policy === 'retain_fees') {
+    const resolved = resolveSponsorRefundAmountCents({
+      grossAmountCents: paymentIntent.amount,
+      amountRefundedCents,
+      reportedApplicationFeeCents: reportedApplicationFeeCents(paymentIntent, latestCharge),
+      reportedStripeProcessingFeeCents: reportedStripeProcessingFeeCents(latestCharge),
+      reportedTotalFeeCents: reportedTotalFeeCents(latestCharge),
+      platformFeePercent: getPlatformFeePercent(),
+    })
+    refundAmountCents = resolved.refundAmountCents
+    refundApplicationFee = false
+    if (resolved.alreadyRefundedSponsorPortion) {
+      return { refunded: true, refundAmountCents: 0 }
+    }
+  }
+
+  if (refundAmountCents <= 0) {
+    return { refunded: true, refundAmountCents: 0 }
+  }
+
+  try {
+    await stripe.refunds.create(
+      chargeId
+        ? {
+            charge: chargeId,
+            amount: refundAmountCents,
+            refund_application_fee: refundApplicationFee,
+          }
+        : {
+            payment_intent: input.paymentIntentId,
+            amount: refundAmountCents,
+            refund_application_fee: refundApplicationFee,
+          },
+      {
+        stripeAccount: input.stripeAccountId,
+        ...(input.idempotencyKey ? { idempotencyKey: input.idempotencyKey } : {}),
+      },
+    )
+  } catch (error) {
+    if (!isStripeAlreadyRefunded(error)) {
+      throw error
+    }
+  }
+
+  return { refunded: true, refundAmountCents }
+}
 
 async function resolveSponsorshipRefund(
   subscriptionId: string,

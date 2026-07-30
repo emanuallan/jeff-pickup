@@ -36,8 +36,9 @@ import { EventFeedbackSection } from './event-feedback-section'
 import { EventDebriefSection, shouldShowEventDebriefSection } from './event-debrief-section'
 import {
   SessionPaymentsSection,
-  completedPaymentForSignup,
+  paymentForSignup,
 } from './session-payments-section'
+import { SessionPaymentBadge } from './session-payment-badge'
 
 type Props = {
   params: Promise<{ orgSlug: string; eventId: string }>
@@ -206,7 +207,7 @@ export default async function ConsoleEventAnalyticsPage({ params }: Props) {
             <ul className="space-y-2">
               {roster.map((e) => {
                 const payment = paidSession
-                  ? completedPaymentForSignup(payments, e.id, e.participant_id)
+                  ? paymentForSignup(payments, e.id, e.participant_id)
                   : null
                 return (
                   <ConsoleCard key={e.id} className="min-w-0 text-sm">
@@ -222,9 +223,15 @@ export default async function ConsoleEventAnalyticsPage({ params }: Props) {
                         </div>
                       </div>
                       {payment ? (
-                        <span className="shrink-0 rounded-md bg-emerald-500/10 px-2 py-1 text-[11px] font-medium text-emerald-300 ring-1 ring-inset ring-emerald-500/20">
-                          Paid {formatPriceCents(payment.amount_cents)}
-                        </span>
+                        <SessionPaymentBadge
+                          orgSlug={orgSlug}
+                          eventRef={eventId}
+                          paymentId={payment.id}
+                          signupId={e.id}
+                          participantName={e.display_name}
+                          amountCents={payment.amount_cents}
+                          status={payment.status}
+                        />
                       ) : null}
                     </div>
                   </ConsoleCard>

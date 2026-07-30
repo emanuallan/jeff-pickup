@@ -61,7 +61,7 @@ export function SessionPaymentsSection({
   return (
     <ConsoleSection
       title="Payments"
-      description="Checkout totals for this session. Bank payouts live in Stripe."
+      description="Checkout totals for this session. Paid sessions do not use a waitlist. Bank payouts live in Stripe."
       action={
         stripeReady ? (
           <a
@@ -125,20 +125,24 @@ export function SessionPaymentsSection({
   )
 }
 
-/** Completed payment amount for a roster signup, if any. */
-export function completedPaymentForSignup(
+/** Latest completed/refunded payment for a roster signup, if any. */
+export function paymentForSignup(
   payments: EventPaymentRow[],
   signupId: string,
   participantId: string,
 ): EventPaymentRow | null {
   const bySignup = payments.find(
-    (payment) => payment.status === 'completed' && payment.signup_id === signupId,
+    (payment) =>
+      (payment.status === 'completed' || payment.status === 'refunded') &&
+      payment.signup_id === signupId,
   )
   if (bySignup) return bySignup
 
   return (
     payments.find(
-      (payment) => payment.status === 'completed' && payment.participant_id === participantId,
+      (payment) =>
+        (payment.status === 'completed' || payment.status === 'refunded') &&
+        payment.participant_id === participantId,
     ) ?? null
   )
 }

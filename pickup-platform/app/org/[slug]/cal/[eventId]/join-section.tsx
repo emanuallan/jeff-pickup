@@ -239,6 +239,14 @@ function PaidJoinSection({
     setPhone(knownProfile.phone)
   }, [knownProfile])
 
+  if (isFull && !waitlistEnabled) {
+    return (
+      <div className="rounded-xl border border-white/10 bg-zinc-950/35 px-4 py-4">
+        <h2 className="text-lg font-semibold text-zinc-100">This session is full</h2>
+      </div>
+    )
+  }
+
   const sheet =
     sheetProfile != null ? (
       <PaidJoinSheet

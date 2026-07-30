@@ -34,7 +34,7 @@ export async function EventParticipation({ slug, eventId, org, event }: Props) {
   const canUpdateStatus = canUpdateArrivalStatus(event)
   const accent = org.branding.accent_color
   const accentText = readableTextColor(accent)
-  const waitlistEnabled = event.capacity != null
+  const capacityEnabled = event.capacity != null
   const features = orgFeatures(org)
   const groupRules = orgGroupRules(org.settings)
   const groupRulesEnabled = groupRulesActive(features.group_rules, groupRules)
@@ -46,7 +46,7 @@ export async function EventParticipation({ slug, eventId, org, event }: Props) {
     await Promise.all([
     getSessionInfo(sessionToken, org.id, event.id),
     isCancelled ? Promise.resolve([]) : getPublicRoster(event.id),
-    isCancelled || !waitlistEnabled ? Promise.resolve([]) : getPublicWaitlist(event.id),
+    isCancelled || !capacityEnabled ? Promise.resolve([]) : getPublicWaitlist(event.id),
     groupRulesEnabled
       ? getGroupRulesStatusForJoin(org.id, { sessionToken })
       : Promise.resolve({
@@ -58,10 +58,11 @@ export async function EventParticipation({ slug, eventId, org, event }: Props) {
 
   const priceCents = livePriceCents ?? event.price_cents
   const paidSession = isPaidSession(priceCents)
+  const waitlistEnabled = capacityEnabled && !paidSession
 
   const headcount = rosterHeadcount(roster)
-  const isFull = waitlistEnabled && headcount >= event.capacity!
-  const spotsLeft = waitlistEnabled ? Math.max(0, event.capacity! - headcount) : null
+  const isFull = capacityEnabled && headcount >= event.capacity!
+  const spotsLeft = capacityEnabled ? Math.max(0, event.capacity! - headcount) : null
   const isWaitlisted = mySignup?.list_status === 'waitlisted'
   const confirmedMySignupId = isWaitlisted ? null : mySignup?.signup_id ?? null
   const waitlistMySignupId = isWaitlisted ? mySignup?.signup_id ?? null : null

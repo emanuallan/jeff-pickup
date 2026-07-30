@@ -7,6 +7,7 @@ import { getStripe, getPlatformFeePercent } from '@/lib/stripe'
 import { orgBaseUrl } from '@/lib/site-url'
 import {
   isPaidSession,
+  paidCheckoutFitsCapacity,
   paidSessionHeadcount,
   sessionPaymentTotalCents,
 } from '@/lib/session-payment'
@@ -78,6 +79,36 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'This session is free — join without payment.' }, { status: 400 })
   }
 
+  const guestsEnabled = orgFeatures(org).guest_signups
+  const guestCount = resolveGuestCount(guestCountRaw, guestsEnabled)
+  const admin = createAdminClient()
+
+  if (event.capacity != null) {
+    const { data: confirmed, error: capacityError } = await admin
+      .from('signups')
+      .select('guest_count')
+      .eq('event_id', event.id)
+      .eq('list_status', 'confirmed')
+
+    if (capacityError) {
+      return NextResponse.json({ error: 'Could not check session capacity.' }, { status: 500 })
+    }
+
+    const headcount = (confirmed ?? []).reduce(
+      (total, signup) => total + 1 + Number(signup.guest_count ?? 0),
+      0,
+    )
+    if (!paidCheckoutFitsCapacity(event.capacity, headcount, guestCount)) {
+      return NextResponse.json(
+        {
+          error: 'This session is full.',
+          code: 'session_full',
+        },
+        { status: 409 },
+      )
+    }
+  }
+
   const supabase = await createClient()
   const { data: prepared, error: prepareError } = await supabase.rpc(
     'prepare_paid_checkout_participant',
@@ -105,10 +136,6 @@ export async function POST(request: Request) {
   const participantId = String(row.participant_id)
   const sessionToken = String(row.session_token)
 
-  const guestsEnabled = orgFeatures(org).guest_signups
-  const guestCount = resolveGuestCount(guestCountRaw, guestsEnabled)
-
-  const admin = createAdminClient()
   const { data: stripeAccount } = await admin
     .from('org_stripe_accounts')
     .select('stripe_account_id, charges_enabled')

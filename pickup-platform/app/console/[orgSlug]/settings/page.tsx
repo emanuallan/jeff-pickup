@@ -77,7 +77,7 @@ export default async function OrgSettingsPage({ params }: Props) {
 
         <ConsoleSection
           title="Waitlist"
-          description="When a session hits capacity, extra sign-ups go on a waitlist. Choose how spots are filled when someone leaves."
+          description="When a free session hits capacity, extra sign-ups go on a waitlist. Paid sessions do not use a waitlist. Choose how spots are filled when someone leaves a free session."
         >
           <WaitlistSettingsForm orgSlug={orgSlug} waitlist={orgWaitlistSettings(org)} />
         </ConsoleSection>

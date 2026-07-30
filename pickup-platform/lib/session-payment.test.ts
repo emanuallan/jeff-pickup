@@ -4,6 +4,7 @@ import {
   buildSessionPaymentOverview,
   formatPriceCents,
   isPaidSession,
+  paidCheckoutFitsCapacity,
   paidSessionHeadcount,
   sessionFeeOrganizerPayoutHint,
   sessionPaymentOrganizerShareCents,
@@ -46,6 +47,18 @@ describe('sessionPaymentTotalCents', () => {
   })
 })
 
+describe('paidCheckoutFitsCapacity', () => {
+  it('allows unlimited sessions and bookings that fully fit', () => {
+    expect(paidCheckoutFitsCapacity(null, 100, 5)).toBe(true)
+    expect(paidCheckoutFitsCapacity(10, 7, 2)).toBe(true)
+  })
+
+  it('rejects bookings that would overflow a paid session', () => {
+    expect(paidCheckoutFitsCapacity(10, 10, 0)).toBe(false)
+    expect(paidCheckoutFitsCapacity(10, 9, 1)).toBe(false)
+  })
+})
+
 describe('session payment organizer payout', () => {
   it('takes the platform fee from the charged amount', () => {
     expect(sessionPaymentPlatformFeeCents(1000, 5)).toBe(50)
@@ -56,12 +69,14 @@ describe('session payment organizer payout', () => {
     expect(sessionFeeOrganizerPayoutHint(null)).toMatch(/leave blank for free/i)
     expect(sessionFeeOrganizerPayoutHint(null)).toMatch(/organizr keeps 5%/i)
     expect(sessionFeeOrganizerPayoutHint(null)).toMatch(/stripe also deducts card processing fees/i)
+    expect(sessionFeeOrganizerPayoutHint(null)).toMatch(/paid sessions do not use a waitlist/i)
 
     const paid = sessionFeeOrganizerPayoutHint(1000)
     expect(paid).toMatch(/players pay \$10\.00/i)
     expect(paid).toMatch(/organizr keeps 5% \(\$0\.50\)/i)
     expect(paid).toMatch(/about \$9\.50 reaches your stripe balance/i)
     expect(paid).toMatch(/before stripe deducts card processing fees/i)
+    expect(paid).toMatch(/paid sessions do not use a waitlist/i)
     expect(STRIPE_PROCESSING_FEES_URL).toBe('https://stripe.com/pricing')
   })
 })
@@ -161,6 +176,27 @@ describe('buildAbandonedCheckouts', () => {
 
     expect(people).toHaveLength(1)
     expect(people[0]?.participantId).toBe('part-2')
+  })
+
+  it('continues excluding people after their completed checkout is refunded', () => {
+    const people = buildAbandonedCheckouts([
+      {
+        ...base,
+        id: 'p1',
+        status: 'pending',
+        participant_id: 'part-1',
+        created_at: '2026-07-30T10:00:00.000Z',
+      },
+      {
+        ...base,
+        id: 'p2',
+        status: 'refunded',
+        participant_id: 'part-1',
+        created_at: '2026-07-30T10:05:00.000Z',
+      },
+    ])
+
+    expect(people).toEqual([])
   })
 
   it('dedupes multiple pending attempts for the same person', () => {

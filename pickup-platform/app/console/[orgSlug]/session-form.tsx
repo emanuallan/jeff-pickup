@@ -239,6 +239,7 @@ export function SessionForm({
             value={capacity}
             onChange={(event) => setCapacity(event.target.value)}
             className={`mt-1 ${consoleInput}`}
+            aria-describedby={sessionFeesEnabled ? 'session-capacity-waitlist-hint' : undefined}
           />
         </label>
         <label className="block">
@@ -255,6 +256,12 @@ export function SessionForm({
           />
         </label>
       </div>
+      {sessionFeesEnabled ? (
+        <p id="session-capacity-waitlist-hint" className="-mt-1 text-xs leading-relaxed text-zinc-500">
+          Free sessions can use a waitlist when full. Paid sessions cannot — once capacity is
+          reached, players wait until a spot opens.
+        </p>
+      ) : null}
 
       {sessionFeesEnabled ? (
         <div className="block">
