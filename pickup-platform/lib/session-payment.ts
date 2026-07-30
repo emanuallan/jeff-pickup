@@ -2,6 +2,10 @@ import type Stripe from 'stripe'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getStripe } from '@/lib/stripe'
 import { clampGuestCount } from '@/lib/guest-signups'
+import {
+  DEFAULT_PLATFORM_FEE_PERCENT,
+  formatPlatformFeePercent,
+} from '@/lib/sponsorship'
 
 export async function completePaidEventJoinFromCheckout(
   session: Stripe.Checkout.Session,
@@ -95,4 +99,45 @@ export function sessionPaymentTotalCents(
 ): number {
   if (!Number.isFinite(priceCentsPerPerson) || priceCentsPerPerson <= 0) return 0
   return Math.round(priceCentsPerPerson) * paidSessionHeadcount(guestCount)
+}
+
+/** Platform cut taken from the connected account via Stripe application_fee_amount. */
+export function sessionPaymentPlatformFeeCents(
+  amountCents: number,
+  platformFeePercent = DEFAULT_PLATFORM_FEE_PERCENT,
+): number {
+  if (!Number.isFinite(amountCents) || amountCents <= 0) return 0
+  const pct = Number.isFinite(platformFeePercent)
+    ? platformFeePercent
+    : DEFAULT_PLATFORM_FEE_PERCENT
+  return Math.max(0, Math.round((amountCents * pct) / 100))
+}
+
+/** What the group keeps after the platform fee (before Stripe card processing). */
+export function sessionPaymentOrganizerShareCents(
+  amountCents: number,
+  platformFeePercent = DEFAULT_PLATFORM_FEE_PERCENT,
+): number {
+  if (!Number.isFinite(amountCents) || amountCents <= 0) return 0
+  return Math.max(
+    0,
+    Math.round(amountCents) - sessionPaymentPlatformFeeCents(amountCents, platformFeePercent),
+  )
+}
+
+/** Console copy for organizers setting a per-person session fee. */
+export function sessionFeeOrganizerPayoutHint(
+  priceCents: number | null,
+  platformFeePercent = DEFAULT_PLATFORM_FEE_PERCENT,
+): string {
+  const feeLabel = formatPlatformFeePercent(platformFeePercent)
+  if (priceCents == null || priceCents <= 0) {
+    return `Leave blank for free. Players pay the fee you set — Organizr keeps ${feeLabel}%, and Stripe card fees also come out of your payout.`
+  }
+
+  const charge = formatPriceCents(priceCents)
+  const share = formatPriceCents(
+    sessionPaymentOrganizerShareCents(priceCents, platformFeePercent),
+  )
+  return `Players pay ${charge}. Your group receives about ${share} per person before Stripe card fees (Organizr ${feeLabel}%).`
 }

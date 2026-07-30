@@ -3,6 +3,9 @@ import {
   formatPriceCents,
   isPaidSession,
   paidSessionHeadcount,
+  sessionFeeOrganizerPayoutHint,
+  sessionPaymentOrganizerShareCents,
+  sessionPaymentPlatformFeeCents,
   sessionPaymentTotalCents,
 } from './session-payment'
 
@@ -37,5 +40,23 @@ describe('sessionPaymentTotalCents', () => {
   it('returns 0 for invalid per-person fees', () => {
     expect(sessionPaymentTotalCents(0, 2)).toBe(0)
     expect(sessionPaymentTotalCents(-100, 1)).toBe(0)
+  })
+})
+
+describe('session payment organizer payout', () => {
+  it('takes the platform fee from the charged amount', () => {
+    expect(sessionPaymentPlatformFeeCents(1000, 5)).toBe(50)
+    expect(sessionPaymentOrganizerShareCents(1000, 5)).toBe(950)
+  })
+
+  it('explains free vs paid payout clearly', () => {
+    expect(sessionFeeOrganizerPayoutHint(null)).toMatch(/leave blank for free/i)
+    expect(sessionFeeOrganizerPayoutHint(null)).toMatch(/organizr keeps 5%/i)
+    expect(sessionFeeOrganizerPayoutHint(null)).toMatch(/stripe card fees/i)
+
+    const paid = sessionFeeOrganizerPayoutHint(1000)
+    expect(paid).toMatch(/players pay \$10\.00/i)
+    expect(paid).toMatch(/about \$9\.50 per person/i)
+    expect(paid).toMatch(/before stripe card fees/i)
   })
 })

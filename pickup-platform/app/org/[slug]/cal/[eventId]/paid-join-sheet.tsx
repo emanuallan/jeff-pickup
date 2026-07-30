@@ -6,11 +6,7 @@ import { GuestCountSelect } from './guest-count-select'
 import { isValidPhoneDigits } from '@/lib/phone'
 import { isValidEmail, normalizeLoginEmail } from '@/lib/login-otp'
 import { accentOnDark, hexToRgba } from '@/lib/colors'
-import {
-  formatPriceCents,
-  paidSessionHeadcount,
-  sessionPaymentTotalCents,
-} from '@/lib/session-payment'
+import { formatPriceCents, sessionPaymentTotalCents } from '@/lib/session-payment'
 
 export type KnownParticipantProfile = {
   firstName: string
@@ -50,23 +46,6 @@ function LockIcon({ className }: { className?: string }) {
       <path
         fillRule="evenodd"
         d="M10 1a4 4 0 0 0-4 4v2H5.5A1.5 1.5 0 0 0 4 8.5v8A1.5 1.5 0 0 0 5.5 18h9a1.5 1.5 0 0 0 1.5-1.5v-8A1.5 1.5 0 0 0 14.5 7H14V5a4 4 0 0 0-4-4Zm2.5 6V5a2.5 2.5 0 0 0-5 0v2h5Z"
-        clipRule="evenodd"
-      />
-    </svg>
-  )
-}
-
-function InfoIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      className={className ?? 'size-4'}
-      viewBox="0 0 20 20"
-      fill="currentColor"
-      aria-hidden
-    >
-      <path
-        fillRule="evenodd"
-        d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Zm-9-3.5a1 1 0 1 1 2 0 1 1 0 0 1-2 0ZM9.25 9a.75.75 0 0 0 0 1.5h.25v3h-.5a.75.75 0 0 0 0 1.5h2.5a.75.75 0 0 0 0-1.5H11V9.75A.75.75 0 0 0 10.25 9h-1Z"
         clipRule="evenodd"
       />
     </svg>
@@ -120,8 +99,6 @@ export function PaidJoinSheet({
   const effectiveGuests = guestsEnabled ? guestCount : 0
   const totalCents = sessionPaymentTotalCents(priceCents, effectiveGuests)
   const totalLabel = formatPriceCents(totalCents)
-  const headcount = paidSessionHeadcount(effectiveGuests)
-  const peopleLabel = headcount === 1 ? '1 person' : `${headcount} people`
   const accentTextOnDark = accentOnDark(accent)
 
   async function startCheckout() {
@@ -193,24 +170,9 @@ export function PaidJoinSheet({
       }}
     >
       <div className="pb-2">
-        <div className="flex items-center justify-between gap-3">
-          <span
-            className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium tracking-wide uppercase"
-            style={{
-              color: accentTextOnDark,
-              backgroundColor: hexToRgba(accent, 0.12),
-              border: `1px solid ${hexToRgba(accent, 0.28)}`,
-            }}
-          >
-            <LockIcon />
-            Secure checkout
-          </span>
-          <span className="text-[11px] text-zinc-600">Powered by Stripe</span>
-        </div>
-
         <h2
           id="paid-join-title"
-          className="mt-3 text-xl font-semibold tracking-tight text-zinc-50"
+          className="text-xl font-semibold tracking-tight text-zinc-50"
         >
           {joiningWaitlist ? 'Reserve your waitlist spot' : 'Confirm your spot'}
         </h2>
@@ -223,14 +185,12 @@ export function PaidJoinSheet({
             background: `linear-gradient(155deg, ${hexToRgba(accent, 0.09)}, rgba(9, 9, 11, 0.65) 62%)`,
           }}
         >
-          <dl className="space-y-2 text-sm">
-            <div className="flex items-baseline justify-between gap-3">
-              <dt className="text-zinc-400">
-                {joiningWaitlist ? 'Your waitlist spot' : 'Your spot'}
-              </dt>
-              <dd className="tabular-nums text-zinc-200">{priceLabel}</dd>
-            </div>
-            {effectiveGuests > 0 ? (
+          {effectiveGuests > 0 ? (
+            <dl className="mb-3 space-y-2 border-b border-white/10 pb-3 text-sm">
+              <div className="flex items-baseline justify-between gap-3">
+                <dt className="text-zinc-400">You</dt>
+                <dd className="tabular-nums text-zinc-200">{priceLabel}</dd>
+              </div>
               <div className="flex items-baseline justify-between gap-3">
                 <dt className="text-zinc-400">
                   {effectiveGuests === 1 ? '1 guest' : `${effectiveGuests} guests`}
@@ -240,15 +200,15 @@ export function PaidJoinSheet({
                   {formatPriceCents(priceCents * effectiveGuests)}
                 </dd>
               </div>
-            ) : null}
-          </dl>
+            </dl>
+          ) : null}
 
-          <div className="mt-3 flex items-end justify-between gap-3 border-t border-white/10 pt-3">
+          <div className="flex items-end justify-between gap-3">
             <div>
               <p className="text-[11px] font-medium tracking-wide text-zinc-500 uppercase">
                 Total
               </p>
-              <p className="mt-0.5 text-xs text-zinc-500">{peopleLabel} · one-time charge</p>
+              <p className="mt-0.5 text-xs text-zinc-500">Charged once at checkout</p>
             </div>
             <p
               className="text-2xl font-semibold tracking-tight tabular-nums"
@@ -272,47 +232,15 @@ export function PaidJoinSheet({
             >
               {initialsFor(knownProfile.firstName, knownProfile.lastName)}
             </span>
-            <div className="min-w-0">
-              <p className="text-[11px] font-medium tracking-wide text-zinc-500 uppercase">
-                Signing up as
-              </p>
+            <div className="min-w-0 flex-1">
               <p className="truncate text-sm text-zinc-100">
                 {knownProfile.firstName} {knownProfile.lastName}
               </p>
+              {editingEmail ? null : (
+                <p className="truncate text-xs text-zinc-500">{email}</p>
+              )}
             </div>
-          </div>
-
-          {editingEmail ? (
-            <div className="px-4 py-3">
-              <label className="block">
-                <span className="text-[11px] font-medium tracking-wide text-zinc-500 uppercase">
-                  Email
-                </span>
-                <input
-                  type="email"
-                  name="email"
-                  autoComplete="email"
-                  aria-label="Email"
-                  required
-                  value={email}
-                  onChange={(event) => setEmail(event.target.value)}
-                  placeholder="you@example.com"
-                  className="mt-1.5 w-full rounded-xl border border-white/10 bg-zinc-950/70 px-3.5 py-3 text-base text-zinc-100 outline-none transition-colors placeholder:text-zinc-600 focus:border-transparent focus:ring-2 sm:text-sm"
-                  style={{ '--tw-ring-color': accent } as React.CSSProperties}
-                />
-                <span className="mt-1.5 block text-xs text-zinc-500">
-                  Receipt goes here, and we’ll prefill it next time.
-                </span>
-              </label>
-            </div>
-          ) : (
-            <div className="flex items-center justify-between gap-3 px-4 py-3">
-              <div className="min-w-0">
-                <p className="text-[11px] font-medium tracking-wide text-zinc-500 uppercase">
-                  Receipt to
-                </p>
-                <p className="truncate text-sm text-zinc-100">{email}</p>
-              </div>
+            {editingEmail ? null : (
               <button
                 type="button"
                 onClick={() => setEditingEmail(true)}
@@ -321,8 +249,25 @@ export function PaidJoinSheet({
               >
                 Change
               </button>
+            )}
+          </div>
+
+          {editingEmail ? (
+            <div className="px-4 py-3">
+              <input
+                type="email"
+                name="email"
+                autoComplete="email"
+                aria-label="Email"
+                required
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                placeholder="Email for your receipt"
+                className="w-full rounded-xl border border-white/10 bg-zinc-950/70 px-3.5 py-3 text-base text-zinc-100 outline-none transition-colors placeholder:text-zinc-600 focus:border-transparent focus:ring-2 sm:text-sm"
+                style={{ '--tw-ring-color': accent } as React.CSSProperties}
+              />
             </div>
-          )}
+          ) : null}
 
           {showGuestSelect && guestsEnabled ? (
             <div className="px-4 py-3">
@@ -338,14 +283,6 @@ export function PaidJoinSheet({
               </label>
             </div>
           ) : null}
-        </div>
-
-        <div className="mt-3 flex items-start gap-2.5 rounded-xl border border-white/5 bg-zinc-950/40 px-3.5 py-3">
-          <InfoIcon className="mt-px size-4 shrink-0 text-zinc-500" />
-          <p className="text-xs leading-relaxed text-zinc-400">
-            Refunds are handled by the group — message an admin directly if your plans
-            change.
-          </p>
         </div>
 
         {message ? (
@@ -375,8 +312,8 @@ export function PaidJoinSheet({
           )}
         </button>
 
-        <p className="mt-3 text-center text-[11px] text-zinc-600">
-          You’ll finish on Stripe’s secure checkout. Card details never touch this site.
+        <p className="mt-3 text-center text-[11px] leading-relaxed text-zinc-600">
+          Secure checkout by Stripe. Refunds are handled by the group admin.
         </p>
       </div>
     </BottomSheet>

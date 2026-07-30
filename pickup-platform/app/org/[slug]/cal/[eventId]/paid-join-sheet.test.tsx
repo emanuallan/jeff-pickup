@@ -96,7 +96,6 @@ describe('PaidJoinSheet', () => {
       />,
     )
 
-    expect(screen.getByText(/receipt to/i)).toBeInTheDocument()
     expect(screen.getByText('ada@example.com')).toBeInTheDocument()
     expect(screen.queryByLabelText(/^email$/i)).not.toBeInTheDocument()
 
@@ -137,8 +136,9 @@ describe('PaidJoinSheet', () => {
     expect(screen.getByText(/2 guests/i)).toBeInTheDocument()
     expect(screen.getByText('$20.00')).toBeInTheDocument()
     expect(screen.getByText('$30.00')).toBeInTheDocument()
-    expect(screen.getByText(/3 people/i)).toBeInTheDocument()
-    expect(screen.getByText(/refunds are handled by the group/i)).toBeInTheDocument()
+    expect(screen.getByText(/^total$/i)).toBeInTheDocument()
+    expect(screen.getByText(/charged once at checkout/i)).toBeInTheDocument()
+    expect(screen.getByText(/refunds are handled by the group admin/i)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /pay · \$30\.00/i })).toBeInTheDocument()
   })
 
