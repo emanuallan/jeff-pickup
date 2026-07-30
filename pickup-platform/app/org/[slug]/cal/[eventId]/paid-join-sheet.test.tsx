@@ -68,7 +68,7 @@ describe('PaidJoinSheet', () => {
     })
   })
 
-  it('prefills a known email and requires a valid address', async () => {
+  it('shows a stored email as a receipt row until the user edits it', async () => {
     const user = userEvent.setup()
     fetchMock.mockResolvedValue({
       ok: true,
@@ -96,6 +96,11 @@ describe('PaidJoinSheet', () => {
       />,
     )
 
+    expect(screen.getByText(/receipt to/i)).toBeInTheDocument()
+    expect(screen.getByText('ada@example.com')).toBeInTheDocument()
+    expect(screen.queryByLabelText(/^email$/i)).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: /change/i }))
     expect(screen.getByLabelText(/^email$/i)).toHaveValue('ada@example.com')
 
     await user.clear(screen.getByLabelText(/^email$/i))
@@ -104,6 +109,37 @@ describe('PaidJoinSheet', () => {
 
     expect(await screen.findByText(/enter a valid email address/i)).toBeInTheDocument()
     expect(fetchMock).not.toHaveBeenCalled()
+  })
+
+  it('breaks down guest pricing and explains the refund path', () => {
+    render(
+      <PaidJoinSheet
+        open
+        onClose={() => {}}
+        orgSlug="demo"
+        eventId="event-1"
+        accent="#2563eb"
+        accentText="#fff"
+        priceLabel="$10.00"
+        priceCents={1000}
+        joiningWaitlist={false}
+        guestsEnabled
+        initialGuestCount={2}
+        knownProfile={{
+          firstName: 'Ada',
+          lastName: 'Lovelace',
+          phone: '12025550101',
+          email: 'ada@example.com',
+        }}
+      />,
+    )
+
+    expect(screen.getByText(/2 guests/i)).toBeInTheDocument()
+    expect(screen.getByText('$20.00')).toBeInTheDocument()
+    expect(screen.getByText('$30.00')).toBeInTheDocument()
+    expect(screen.getByText(/3 people/i)).toBeInTheDocument()
+    expect(screen.getByText(/refunds are handled by the group/i)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /pay · \$30\.00/i })).toBeInTheDocument()
   })
 
   it('shows checkout errors from the API', async () => {

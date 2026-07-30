@@ -177,6 +177,8 @@ function PaidJoinSection({
   participant,
   priceLabel,
   priceCents,
+  eventTitle,
+  eventWhen,
   guestsEnabled = true,
   autoOpenSheet = false,
   knownProfile = null,
@@ -250,6 +252,8 @@ function PaidJoinSection({
         showGuestSelect={false}
         knownProfile={sheetProfile}
         initialGuestCount={guestCount}
+        eventTitle={eventTitle}
+        eventWhen={eventWhen}
       />
     ) : null
 
