@@ -11,6 +11,9 @@ import { arrivalStatusEmoji } from '@/lib/arrival-status'
 import { orgBaseUrl } from '@/lib/og-metadata'
 import { orgPublicEventHref } from '@/lib/org-public-nav'
 import { arrowNe } from '@/lib/text-arrows'
+import { formatPriceCents, isPaidSession } from '@/lib/session-payment'
+import { getEventPaymentsForEvent } from '@/lib/session-payment.server'
+import { getOrgStripeAccount } from '@/lib/sponsorship.server'
 import {
   ConsolePage,
   ConsoleHeader,
@@ -31,6 +34,10 @@ import {
 } from './event-analytics-stat-cards'
 import { EventFeedbackSection } from './event-feedback-section'
 import { EventDebriefSection, shouldShowEventDebriefSection } from './event-debrief-section'
+import {
+  SessionPaymentsSection,
+  completedPaymentForSignup,
+} from './session-payments-section'
 
 type Props = {
   params: Promise<{ orgSlug: string; eventId: string }>
@@ -49,9 +56,12 @@ export default async function ConsoleEventAnalyticsPage({ params }: Props) {
     notFound()
   }
 
-  const [allRoster, dbAnalytics] = await Promise.all([
+  const paidSession = isPaidSession(event.price_cents)
+  const [allRoster, dbAnalytics, payments, stripeAccount] = await Promise.all([
     getRosterWithContact(event.id),
     fetchEventAnalyticsDb(event.id),
+    paidSession ? getEventPaymentsForEvent(event.id) : Promise.resolve([]),
+    paidSession ? getOrgStripeAccount(org.id) : Promise.resolve(null),
   ])
   const { confirmed: roster, waitlisted } = splitRosterByStatus(allRoster)
   const analytics = buildRosterAnalytics(roster, event.capacity, dbAnalytics)
@@ -63,6 +73,7 @@ export default async function ConsoleEventAnalyticsPage({ params }: Props) {
     shouldShowEventDebriefSection(org, isEventEnded(event)) && !isEventCancelled(event.status)
   const hasSignupActivity = analytics.uniqueSignups > 0 || analytics.uniqueLeft > 0
   const hasTraffic = analytics.uniqueVisitors > 0 || analytics.uniqueSignups > 0
+  const priceLabel = paidSession ? formatPriceCents(event.price_cents ?? 0) : null
 
   return (
     <ConsolePage width="max-w-2xl">
@@ -88,6 +99,7 @@ export default async function ConsoleEventAnalyticsPage({ params }: Props) {
         {statusLabel(event.status)} · {analytics.headcount}
         {event.capacity != null ? ` / ${event.capacity}` : ''} coming
         {event.min_players != null ? ` · min ${event.min_players} participants` : ''}
+        {priceLabel ? ` · ${priceLabel}/person` : ''}
       </p>
 
       <div className="mt-8 space-y-6">
@@ -165,6 +177,16 @@ export default async function ConsoleEventAnalyticsPage({ params }: Props) {
           </div>
         </ConsoleSection>
 
+        {paidSession && event.price_cents != null ? (
+          <SessionPaymentsSection
+            priceCents={event.price_cents}
+            payments={payments}
+            orgSlug={orgSlug}
+            stripeReady={Boolean(stripeAccount?.charges_enabled)}
+            timezone={event.timezone}
+          />
+        ) : null}
+
         <ConsoleSection
           title={`Roster (${roster.length})`}
           action={
@@ -182,22 +204,32 @@ export default async function ConsoleEventAnalyticsPage({ params }: Props) {
             <p className="text-sm text-zinc-500">No sign-ups yet.</p>
           ) : (
             <ul className="space-y-2">
-              {roster.map((e) => (
-                <ConsoleCard key={e.id} className="min-w-0 text-sm">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0">
-                      <div className="break-words font-medium text-zinc-100">
-                        {arrivalStatusEmoji(e.arrival_status, event.location_is_online)}{' '}
-                        {e.display_name}
-                        {formatGuestSuffix(e.guest_count)}
+              {roster.map((e) => {
+                const payment = paidSession
+                  ? completedPaymentForSignup(payments, e.id, e.participant_id)
+                  : null
+                return (
+                  <ConsoleCard key={e.id} className="min-w-0 text-sm">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <div className="break-words font-medium text-zinc-100">
+                          {arrivalStatusEmoji(e.arrival_status, event.location_is_online)}{' '}
+                          {e.display_name}
+                          {formatGuestSuffix(e.guest_count)}
+                        </div>
+                        <div className="mt-0.5 text-xs text-zinc-500">
+                          {e.first_name} {e.last_name} · {e.phone}
+                        </div>
                       </div>
-                      <div className="mt-0.5 text-xs text-zinc-500">
-                        {e.first_name} {e.last_name} · {e.phone}
-                      </div>
+                      {payment ? (
+                        <span className="shrink-0 rounded-md bg-emerald-500/10 px-2 py-1 text-[11px] font-medium text-emerald-300 ring-1 ring-inset ring-emerald-500/20">
+                          Paid {formatPriceCents(payment.amount_cents)}
+                        </span>
+                      ) : null}
                     </div>
-                  </div>
-                </ConsoleCard>
-              ))}
+                  </ConsoleCard>
+                )
+              })}
             </ul>
           )}
 

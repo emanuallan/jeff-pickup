@@ -128,6 +128,149 @@ export function sessionPaymentOrganizerShareCents(
 /** Official Stripe pricing page — fees vary by country and payment method. */
 export const STRIPE_PROCESSING_FEES_URL = 'https://stripe.com/pricing'
 
+export type EventPaymentOverviewInput = {
+  amount_cents: number
+  status: string
+  guest_count: number
+  signup_id?: string | null
+  participant_id?: string | null
+}
+
+export type SessionPaymentOverview = {
+  completedCount: number
+  pendingCount: number
+  failedCount: number
+  refundedCount: number
+  collectedCents: number
+  platformFeeCents: number
+  organizerShareCents: number
+  /** People covered by completed payments (payer + guests). */
+  paidHeadcount: number
+}
+
+/** Quick-glance console stats from event_payments rows (not a Stripe ledger). */
+export function buildSessionPaymentOverview(
+  payments: EventPaymentOverviewInput[],
+  platformFeePercent = DEFAULT_PLATFORM_FEE_PERCENT,
+): SessionPaymentOverview {
+  let completedCount = 0
+  let pendingCount = 0
+  let failedCount = 0
+  let refundedCount = 0
+  let collectedCents = 0
+  let paidHeadcount = 0
+
+  for (const payment of payments) {
+    switch (payment.status) {
+      case 'completed':
+        completedCount += 1
+        collectedCents += Math.max(0, Math.round(payment.amount_cents))
+        paidHeadcount += paidSessionHeadcount(payment.guest_count)
+        break
+      case 'pending':
+        pendingCount += 1
+        break
+      case 'failed':
+        failedCount += 1
+        break
+      case 'refunded':
+        refundedCount += 1
+        break
+      default:
+        break
+    }
+  }
+
+  return {
+    completedCount,
+    pendingCount,
+    failedCount,
+    refundedCount,
+    collectedCents,
+    platformFeeCents: sessionPaymentPlatformFeeCents(collectedCents, platformFeePercent),
+    organizerShareCents: sessionPaymentOrganizerShareCents(collectedCents, platformFeePercent),
+    paidHeadcount,
+  }
+}
+
+export type AbandonedCheckoutInput = {
+  id: string
+  status: string
+  participant_id: string | null
+  guest_count: number
+  amount_cents: number
+  created_at: string
+  display_name: string | null
+  first_name: string | null
+  last_name: string | null
+  phone: string | null
+}
+
+export type AbandonedCheckoutPerson = {
+  paymentId: string
+  participantId: string | null
+  displayName: string
+  firstName: string
+  lastName: string
+  phone: string
+  guestCount: number
+  amountCents: number
+  abandonedAt: string
+}
+
+/**
+ * Pending checkouts for people who never completed payment on this session.
+ * Dedupes by participant (latest pending wins). Excludes anyone with a completed payment.
+ */
+export function buildAbandonedCheckouts(
+  payments: AbandonedCheckoutInput[],
+): AbandonedCheckoutPerson[] {
+  const completedParticipantIds = new Set<string>()
+  for (const payment of payments) {
+    if (payment.status === 'completed' && payment.participant_id) {
+      completedParticipantIds.add(payment.participant_id)
+    }
+  }
+
+  const latestByKey = new Map<string, AbandonedCheckoutInput>()
+  let anonymousIndex = 0
+
+  for (const payment of payments) {
+    if (payment.status !== 'pending') continue
+    if (payment.participant_id && completedParticipantIds.has(payment.participant_id)) {
+      continue
+    }
+
+    const key = payment.participant_id ?? `anon:${payment.id}:${anonymousIndex++}`
+    const existing = latestByKey.get(key)
+    if (!existing || payment.created_at > existing.created_at) {
+      latestByKey.set(key, payment)
+    }
+  }
+
+  return [...latestByKey.values()]
+    .map((payment) => {
+      const firstName = (payment.first_name ?? '').trim()
+      const lastName = (payment.last_name ?? '').trim()
+      const displayName =
+        (payment.display_name ?? '').trim() ||
+        [firstName, lastName].filter(Boolean).join(' ') ||
+        'Unknown'
+      return {
+        paymentId: payment.id,
+        participantId: payment.participant_id,
+        displayName,
+        firstName,
+        lastName,
+        phone: (payment.phone ?? '').trim(),
+        guestCount: payment.guest_count,
+        amountCents: payment.amount_cents,
+        abandonedAt: payment.created_at,
+      }
+    })
+    .sort((a, b) => b.abandonedAt.localeCompare(a.abandonedAt))
+}
+
 /** Console copy for organizers setting a per-person session fee (link Stripe fees in UI). */
 export function sessionFeeOrganizerPayoutHint(
   priceCents: number | null,
