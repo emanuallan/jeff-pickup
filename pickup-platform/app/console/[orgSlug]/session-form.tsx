@@ -14,7 +14,10 @@ import {
   defaultOneOffStartsAtLocal,
   durationMinFromLocalRange,
 } from '@/lib/one-off-datetime'
-import { sessionFeeOrganizerPayoutHint } from '@/lib/session-payment'
+import {
+  sessionFeeOrganizerPayoutHint,
+  STRIPE_PROCESSING_FEES_URL,
+} from '@/lib/session-payment'
 import { consoleInput, consoleLabel, btnSecondary } from '../_components/console-ui'
 import { CollapsibleAdditionalInformationField } from '../_components/collapsible-additional-information-field'
 import { ConsoleSubmitButton } from '../_components/console-submit-button'
@@ -275,7 +278,16 @@ export function SessionForm({
             </div>
           </label>
           <p id="session-fee-payout-hint" className="mt-1.5 text-xs leading-relaxed text-zinc-500">
-            {sessionFeeOrganizerPayoutHint(priceCentsFromDollarsInput(priceDollars))}
+            {sessionFeeOrganizerPayoutHint(priceCentsFromDollarsInput(priceDollars))}{' '}
+            <a
+              href={STRIPE_PROCESSING_FEES_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-zinc-400 underline decoration-zinc-600 underline-offset-2 transition-colors hover:text-zinc-300"
+            >
+              See Stripe fees
+            </a>
+            .
           </p>
         </div>
       ) : null}

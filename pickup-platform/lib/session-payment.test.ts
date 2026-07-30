@@ -7,6 +7,7 @@ import {
   sessionPaymentOrganizerShareCents,
   sessionPaymentPlatformFeeCents,
   sessionPaymentTotalCents,
+  STRIPE_PROCESSING_FEES_URL,
 } from './session-payment'
 
 describe('isPaidSession', () => {
@@ -52,11 +53,13 @@ describe('session payment organizer payout', () => {
   it('explains free vs paid payout clearly', () => {
     expect(sessionFeeOrganizerPayoutHint(null)).toMatch(/leave blank for free/i)
     expect(sessionFeeOrganizerPayoutHint(null)).toMatch(/organizr keeps 5%/i)
-    expect(sessionFeeOrganizerPayoutHint(null)).toMatch(/stripe card fees/i)
+    expect(sessionFeeOrganizerPayoutHint(null)).toMatch(/stripe also deducts card processing fees/i)
 
     const paid = sessionFeeOrganizerPayoutHint(1000)
     expect(paid).toMatch(/players pay \$10\.00/i)
-    expect(paid).toMatch(/about \$9\.50 per person/i)
-    expect(paid).toMatch(/before stripe card fees/i)
+    expect(paid).toMatch(/organizr keeps 5% \(\$0\.50\)/i)
+    expect(paid).toMatch(/about \$9\.50 reaches your stripe balance/i)
+    expect(paid).toMatch(/before stripe deducts card processing fees/i)
+    expect(STRIPE_PROCESSING_FEES_URL).toBe('https://stripe.com/pricing')
   })
 })

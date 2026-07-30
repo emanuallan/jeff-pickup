@@ -125,19 +125,25 @@ export function sessionPaymentOrganizerShareCents(
   )
 }
 
-/** Console copy for organizers setting a per-person session fee. */
+/** Official Stripe pricing page — fees vary by country and payment method. */
+export const STRIPE_PROCESSING_FEES_URL = 'https://stripe.com/pricing'
+
+/** Console copy for organizers setting a per-person session fee (link Stripe fees in UI). */
 export function sessionFeeOrganizerPayoutHint(
   priceCents: number | null,
   platformFeePercent = DEFAULT_PLATFORM_FEE_PERCENT,
 ): string {
   const feeLabel = formatPlatformFeePercent(platformFeePercent)
   if (priceCents == null || priceCents <= 0) {
-    return `Leave blank for free. Players pay the fee you set — Organizr keeps ${feeLabel}%, and Stripe card fees also come out of your payout.`
+    return `Leave blank for free. For paid sessions, players pay the fee you set. Organizr keeps ${feeLabel}% from each payment; Stripe also deducts card processing fees from your payout.`
   }
 
   const charge = formatPriceCents(priceCents)
+  const platformFee = formatPriceCents(
+    sessionPaymentPlatformFeeCents(priceCents, platformFeePercent),
+  )
   const share = formatPriceCents(
     sessionPaymentOrganizerShareCents(priceCents, platformFeePercent),
   )
-  return `Players pay ${charge}. Your group receives about ${share} per person before Stripe card fees (Organizr ${feeLabel}%).`
+  return `Players pay ${charge}. Organizr keeps ${feeLabel}% (${platformFee}), so about ${share} reaches your Stripe balance before Stripe deducts card processing fees.`
 }
