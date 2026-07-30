@@ -29,9 +29,9 @@ import {
   extensionForMime,
   parseOurBucketLogoPath,
   publicLogoUrl,
-  validateLogoFile,
   validateLogoFileContent,
 } from '@/lib/org-logo'
+import { initialOrgBranding, normalizeAccentColor } from '@/lib/org-branding'
 import { parseSessionFormData } from '@/lib/console/parse-session-form'
 import { parseScheduleFormData } from '@/lib/console/parse-schedule-form'
 import { parseLocationFormData } from '@/lib/console/parse-location-form'
@@ -81,6 +81,7 @@ export async function createOrg(formData: FormData) {
   const description = String(formData.get('description') ?? '').trim()
   const slug = normalizeSlug(String(formData.get('slug') ?? ''))
   const defaultLocale = String(formData.get('default_locale') ?? 'en')
+  const branding = initialOrgBranding(String(formData.get('accent_color') ?? ''))
 
   if (!name || !slug) {
     return { error: 'Name and slug are required.' }
@@ -89,19 +90,52 @@ export async function createOrg(formData: FormData) {
     return { error: 'Slug must be 3–32 characters, lowercase letters, numbers, and hyphens only.' }
   }
 
-  const { error } = await supabase.from('orgs').insert({
-    slug,
-    name,
-    description,
-    default_locale: defaultLocale === 'es' ? 'es' : 'en',
-    created_by: user.id,
-  })
+  const { data: created, error } = await supabase
+    .from('orgs')
+    .insert({
+      slug,
+      name,
+      description,
+      default_locale: defaultLocale === 'es' ? 'es' : 'en',
+      created_by: user.id,
+      branding,
+    })
+    .select('id')
+    .single()
 
   if (error) {
     if (error.code === '23505') {
       return { error: 'That slug is already taken.' }
     }
     return { error: error.message }
+  }
+
+  const logo = formData.get('logo')
+  if (created?.id && logo instanceof File && logo.size > 0) {
+    try {
+      const admin = createAdminClient()
+      const stored = await storeOrgLogoFile(admin, created.id, name, logo)
+      if ('error' in stored) {
+        console.error('createOrg logo upload failed:', stored.error)
+      } else {
+        const { error: logoUpdateError } = await supabase
+          .from('orgs')
+          .update({
+            branding: {
+              ...branding,
+              logo_url: stored.logoUrl,
+            },
+          })
+          .eq('id', created.id)
+
+        if (logoUpdateError) {
+          console.error('createOrg logo URL update failed:', logoUpdateError.message)
+          await admin.storage.from(ORG_LOGO_BUCKET).remove([stored.storagePath])
+        }
+      }
+    } catch (err) {
+      console.error('createOrg logo upload failed:', err)
+    }
   }
 
   revalidatePath('/console')
@@ -855,6 +889,35 @@ function friendlyLogoStorageError(message: string): string {
   return message
 }
 
+async function storeOrgLogoFile(
+  admin: ReturnType<typeof createAdminClient>,
+  orgId: string,
+  orgName: string,
+  file: File,
+): Promise<{ ok: true; logoUrl: string; storagePath: string } | { error: string }> {
+  const validation = await validateLogoFileContent(file)
+  if (!validation.ok) {
+    return { error: validation.error }
+  }
+
+  const ext = extensionForMime(validation.mime)
+  const storagePath = buildOrgLogoPath(orgId, orgName, ext)
+
+  try {
+    const { error: uploadError } = await admin.storage
+      .from(ORG_LOGO_BUCKET)
+      .upload(storagePath, file, { contentType: validation.mime })
+
+    if (uploadError) {
+      return { error: friendlyLogoStorageError(uploadError.message) }
+    }
+
+    return { ok: true, logoUrl: publicLogoUrl(storagePath), storagePath }
+  } catch {
+    return { error: 'Upload failed. Try again.' }
+  }
+}
+
 export async function uploadOrgLogo(orgSlug: string, formData: FormData) {
   let org
   try {
@@ -871,42 +934,26 @@ export async function uploadOrgLogo(orgSlug: string, formData: FormData) {
     return { error: 'Choose an image to upload.' }
   }
 
-  const validation = await validateLogoFileContent(file)
-  if (!validation.ok) {
-    return { error: validation.error }
-  }
-
-  const ext = extensionForMime(validation.mime)
-  const storagePath = buildOrgLogoPath(org.id, org.name, ext)
   const previousPath = parseOurBucketLogoPath(org.branding.logo_url)
-
-  try {
-    const { error: uploadError } = await admin.storage
-      .from(ORG_LOGO_BUCKET)
-      .upload(storagePath, file, { contentType: validation.mime })
-
-    if (uploadError) {
-      return { error: friendlyLogoStorageError(uploadError.message) }
-    }
-
-    const logoUrl = publicLogoUrl(storagePath)
-    const updateResult = await updateOrgLogoUrl(orgSlug, logoUrl)
-    if ('error' in updateResult) {
-      // Roll back the new object when the DB update fails (safe when path changed).
-      if (previousPath !== storagePath) {
-        await admin.storage.from(ORG_LOGO_BUCKET).remove([storagePath])
-      }
-      return updateResult
-    }
-
-    if (previousPath && previousPath !== storagePath) {
-      await admin.storage.from(ORG_LOGO_BUCKET).remove([previousPath])
-    }
-
-    return { ok: true as const, logoUrl }
-  } catch {
-    return { error: 'Upload failed. Try again.' }
+  const stored = await storeOrgLogoFile(admin, org.id, org.name, file)
+  if ('error' in stored) {
+    return { error: stored.error }
   }
+
+  const updateResult = await updateOrgLogoUrl(orgSlug, stored.logoUrl)
+  if ('error' in updateResult) {
+    // Roll back the new object when the DB update fails (safe when path changed).
+    if (previousPath !== stored.storagePath) {
+      await admin.storage.from(ORG_LOGO_BUCKET).remove([stored.storagePath])
+    }
+    return updateResult
+  }
+
+  if (previousPath && previousPath !== stored.storagePath) {
+    await admin.storage.from(ORG_LOGO_BUCKET).remove([previousPath])
+  }
+
+  return { ok: true as const, logoUrl: stored.logoUrl }
 }
 
 export async function removeOrgLogo(orgSlug: string) {
@@ -943,8 +990,7 @@ export async function updateBranding(orgSlug: string, formData: FormData) {
   const org = await requireOrgAdmin(orgSlug)
   const supabase = await createClient()
 
-  const accentColor = String(formData.get('accent_color') ?? '').trim()
-  const accent = /^#[0-9a-fA-F]{6}$/.test(accentColor) ? accentColor : '#2563eb'
+  const accent = normalizeAccentColor(String(formData.get('accent_color') ?? ''))
 
   const { error } = await supabase
     .from('orgs')
