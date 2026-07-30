@@ -587,9 +587,10 @@ export function JoinSection(props: Props) {
     }
 
     await clearParticipantSession(props.orgSlug, props.eventId)
-    // Hard reload so the cleared cookie + revoked DB session are reflected.
-    window.location.reload()
-  }, [motion, props.eventId, props.orgSlug])
+    startTransition(() => {
+      router.refresh()
+    })
+  }, [motion, props.eventId, props.orgSlug, router, startTransition])
 
   // Signed-up users are handled in the roster (highlighted row + status picker
   // below the attendee list), so the join card collapses for them.
