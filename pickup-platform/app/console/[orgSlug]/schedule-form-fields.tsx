@@ -1,5 +1,9 @@
 import type { Location } from "@/lib/locations";
 import type { Schedule } from "@/lib/schedules";
+import {
+	MAX_SESSION_TEAM_COUNT,
+	MIN_SESSION_TEAM_COUNT,
+} from "@/lib/session-team";
 import { CollapsibleAdditionalInformationField } from "../_components/collapsible-additional-information-field";
 import { consoleInput } from "../_components/console-ui";
 
@@ -21,9 +25,15 @@ type Props = {
 	locations: Location[];
 	schedule?: Schedule;
 	timezone: string;
+	teamSelectionEnabled?: boolean;
 };
 
-export function ScheduleFormFields({ locations, schedule, timezone }: Props) {
+export function ScheduleFormFields({
+	locations,
+	schedule,
+	timezone,
+	teamSelectionEnabled = false,
+}: Props) {
 	const selectedDays = schedule?.byweekday ?? [];
 
 	return (
@@ -142,6 +152,36 @@ export function ScheduleFormFields({ locations, schedule, timezone }: Props) {
 					/>
 				</label>
 			</div>
+
+			{teamSelectionEnabled ? (
+				<label className="block">
+					<span className="text-xs text-zinc-500">Teams (optional)</span>
+					<select
+						name="team_count"
+						defaultValue={
+							schedule?.team_count != null ? String(schedule.team_count) : ""
+						}
+						className={`mt-1 ${consoleInput}`}
+						aria-describedby="schedule-team-count-hint"
+					>
+						<option value="">No teams</option>
+						{Array.from(
+							{ length: MAX_SESSION_TEAM_COUNT - MIN_SESSION_TEAM_COUNT + 1 },
+							(_, i) => MIN_SESSION_TEAM_COUNT + i,
+						).map((n) => (
+							<option key={n} value={n}>
+								{n} teams
+							</option>
+						))}
+					</select>
+					<p
+						id="schedule-team-count-hint"
+						className="mt-1.5 text-xs leading-relaxed text-zinc-500"
+					>
+						When set, players are assigned to a balanced team when they join.
+					</p>
+				</label>
+			) : null}
 
 			<CollapsibleAdditionalInformationField
 				defaultValue={schedule?.additional_information}

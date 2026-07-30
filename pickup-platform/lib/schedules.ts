@@ -11,6 +11,8 @@ export type Schedule = {
   duration_min: number
   capacity: number | null
   min_players: number | null
+  /** Null = no teams. 2–8 = players are assigned / can switch teams. */
+  team_count: number | null
   interval_weeks: number
   anchor_date: string
   timezone: string
@@ -54,6 +56,7 @@ export type ScheduleFormValues = {
   timezone: string
   capacity: number | null
   minPlayers: number | null
+  teamCount: number | null
   durationMin: number
   intervalWeeks: number
   byweekday: number[]

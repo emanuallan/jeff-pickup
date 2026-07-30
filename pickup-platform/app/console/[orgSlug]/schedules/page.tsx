@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation'
 import { getOrgForMember } from '@/lib/orgs'
+import { orgFeatures } from '@/lib/org-features'
 import { getLocationsForOrg } from '@/lib/locations'
 import { getSchedulesForOrg, formatWeekdays, formatTime, formatIntervalWeeks, getScheduleDeleteImpact } from '@/lib/schedules'
 import { createSchedule } from '../../actions'
@@ -20,6 +21,7 @@ export default async function SchedulesPage({ params }: Props) {
     notFound()
   }
 
+  const teamSelectionEnabled = orgFeatures(org).team_selection
   const [locations, schedules] = await Promise.all([
     getLocationsForOrg(org.id),
     getSchedulesForOrg(org.id),
@@ -49,6 +51,7 @@ export default async function SchedulesPage({ params }: Props) {
               orgSlug={orgSlug}
               locations={locations}
               createSchedule={createSchedule}
+              teamSelectionEnabled={teamSelectionEnabled}
             />
           ) : null
         }
@@ -72,10 +75,18 @@ export default async function SchedulesPage({ params }: Props) {
                         <div className="mt-0.5 text-xs text-zinc-500">
                           {s.capacity ? `Capacity ${s.capacity}` : 'No capacity limit'}
                           {s.min_players != null ? ` · min ${s.min_players} participants` : ''}
+                          {teamSelectionEnabled && s.team_count != null
+                            ? ` · ${s.team_count} teams`
+                            : ''}
                         </div>
                       </div>
                       <div className="flex shrink-0 flex-wrap gap-1 sm:justify-end">
-                        <EditScheduleButton orgSlug={orgSlug} schedule={s} locations={locations} />
+                        <EditScheduleButton
+                          orgSlug={orgSlug}
+                          schedule={s}
+                          locations={locations}
+                          teamSelectionEnabled={teamSelectionEnabled}
+                        />
                         <DeleteScheduleButton
                           orgSlug={orgSlug}
                           scheduleId={s.id}

@@ -292,6 +292,7 @@ export async function createSchedule(orgSlug: string, formData: FormData) {
     timezone,
     capacity,
     minPlayers,
+    teamCount,
     durationMin,
     intervalWeeks,
     byweekday,
@@ -302,6 +303,8 @@ export async function createSchedule(orgSlug: string, formData: FormData) {
   if ('error' in locationCheck) {
     return { error: locationCheck.error }
   }
+
+  const nextTeamCount = orgFeatures(org).team_selection ? teamCount : null
 
   const anchorDate = new Date().toLocaleDateString('en-CA', { timeZone: timezone || 'UTC' })
 
@@ -318,6 +321,7 @@ export async function createSchedule(orgSlug: string, formData: FormData) {
     interval_weeks: intervalWeeks,
     anchor_date: anchorDate,
     additional_information: additionalInformation,
+    ...(nextTeamCount != null ? { team_count: nextTeamCount } : {}),
   })
 
   if (error) {
@@ -691,6 +695,7 @@ export async function updateSchedule(
 
   const before = existing as Schedule
   const values = parsed.values
+  const nextTeamCount = orgFeatures(org).team_selection ? values.teamCount : null
 
   const locationCheck = await assertLocationInOrg(supabase, org.id, values.locationId)
   if ('error' in locationCheck) {
@@ -715,6 +720,9 @@ export async function updateSchedule(
       interval_weeks: values.intervalWeeks,
       anchor_date: anchorDate,
       additional_information: values.additionalInformation,
+      ...(orgFeatures(org).team_selection || before.team_count != null
+        ? { team_count: nextTeamCount }
+        : {}),
     })
     .eq('id', scheduleId)
     .eq('org_id', org.id)
@@ -753,6 +761,9 @@ export async function updateSchedule(
           min_players: values.minPlayers,
           timezone: values.timezone,
           additional_information: values.additionalInformation,
+          ...(orgFeatures(org).team_selection || before.team_count != null
+            ? { team_count: nextTeamCount }
+            : {}),
         })
         .eq('schedule_id', scheduleId)
         .eq('org_id', org.id)
@@ -760,6 +771,38 @@ export async function updateSchedule(
 
       if (patchEventsError) {
         return { error: patchEventsError.message }
+      }
+
+      if (nextTeamCount != null) {
+        if (nextTeamCount < (before.team_count ?? nextTeamCount)) {
+          const { data: upcoming } = await supabase
+            .from('events')
+            .select('id')
+            .eq('schedule_id', scheduleId)
+            .eq('org_id', org.id)
+            .gte('starts_at', now)
+
+          const eventIds = (upcoming ?? []).map((e) => e.id)
+          if (eventIds.length > 0) {
+            await supabase
+              .from('signups')
+              .update({ team: null })
+              .in('event_id', eventIds)
+              .not('team', 'is', null)
+              .gt('team', nextTeamCount)
+          }
+        }
+
+        const { data: upcomingForAssign } = await supabase
+          .from('events')
+          .select('id')
+          .eq('schedule_id', scheduleId)
+          .eq('org_id', org.id)
+          .gte('starts_at', now)
+
+        for (const event of upcomingForAssign ?? []) {
+          await supabase.rpc('assign_missing_teams', { p_event_id: event.id })
+        }
       }
     }
   }

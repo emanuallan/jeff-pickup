@@ -65,4 +65,29 @@ describe('parseScheduleFormData', () => {
       error: 'Min participants cannot exceed capacity.',
     })
   })
+
+  it('parses an optional team count', () => {
+    const result = parseScheduleFormData(
+      scheduleFormData({ ...valid, team_count: '3' }),
+    )
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+    expect(result.values.teamCount).toBe(3)
+  })
+
+  it('treats empty team count as no teams', () => {
+    const result = parseScheduleFormData(scheduleFormData(valid))
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+    expect(result.values.teamCount).toBeNull()
+  })
+
+  it('rejects an out-of-range team count', () => {
+    const result = parseScheduleFormData(
+      scheduleFormData({ ...valid, team_count: '1' }),
+    )
+    expect(result.ok).toBe(false)
+    if (result.ok) return
+    expect(result.error).toContain('Teams must be between')
+  })
 })

@@ -15,10 +15,17 @@ type Props = {
     orgSlug: string,
     formData: FormData,
   ) => Promise<{ error?: string; ok?: boolean }>
+  teamSelectionEnabled?: boolean
   onSuccess?: () => void
 }
 
-export function ScheduleForm({ orgSlug, locations, createSchedule, onSuccess }: Props) {
+export function ScheduleForm({
+  orgSlug,
+  locations,
+  createSchedule,
+  teamSelectionEnabled = false,
+  onSuccess,
+}: Props) {
   const toast = useConsoleToast()
   const [timezone, setTimezone] = useState('UTC')
   const [pending, setPending] = useState(false)
@@ -42,7 +49,11 @@ export function ScheduleForm({ orgSlug, locations, createSchedule, onSuccess }: 
 
   return (
     <form action={handleSubmit} className="space-y-3">
-      <ScheduleFormFields locations={locations} timezone={timezone} />
+      <ScheduleFormFields
+        locations={locations}
+        timezone={timezone}
+        teamSelectionEnabled={teamSelectionEnabled}
+      />
 
       <ConsoleSubmitButton
         pending={pending}

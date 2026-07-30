@@ -136,6 +136,7 @@ export default async function SetupPage({ params }: Props) {
                   orgSlug={orgSlug}
                   locations={locations}
                   createSchedule={createSchedule}
+                  teamSelectionEnabled={teamSelectionEnabled}
                 />
                 <AddOneOffButton
                   locations={locations}

@@ -9,6 +9,11 @@ import {
   validateCapacityVsMin,
 } from './form-fields'
 import { DEFAULT_EVENT_DURATION_MIN } from '@/lib/event-duration'
+import {
+  MAX_SESSION_TEAM_COUNT,
+  MIN_SESSION_TEAM_COUNT,
+  parseSessionTeamCount,
+} from '@/lib/session-team'
 
 export function parseScheduleFormData(
   formData: FormData,
@@ -52,6 +57,19 @@ export function parseScheduleFormData(
     return { ok: false, error: 'Frequency must be between every 1 and 52 weeks.' }
   }
 
+  const teamCountRaw = String(formData.get('team_count') ?? '').trim()
+  let teamCount: number | null = null
+  if (teamCountRaw) {
+    const parsedTeams = parseSessionTeamCount(teamCountRaw)
+    if (parsedTeams == null) {
+      return {
+        ok: false,
+        error: `Teams must be between ${MIN_SESSION_TEAM_COUNT} and ${MAX_SESSION_TEAM_COUNT}, or left empty.`,
+      }
+    }
+    teamCount = parsedTeams
+  }
+
   const additionalInformation = normalizeAdditionalInformation(
     formData.get('additional_information'),
   )
@@ -71,6 +89,7 @@ export function parseScheduleFormData(
       timezone,
       capacity,
       minPlayers: minParticipants.value,
+      teamCount,
       durationMin,
       intervalWeeks,
       byweekday,
