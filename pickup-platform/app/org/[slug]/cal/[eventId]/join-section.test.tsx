@@ -3,8 +3,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { JoinSection } from './join-section'
-import { clearParticipantSession, ensureSoftParticipant, recoverSession } from './actions'
-import { clearParticipantDeviceSession } from '@/lib/participant-session-client'
+import { clearParticipantSession, recoverSession } from './actions'
+import {
+  clearParticipantDeviceSession,
+  saveParticipantProfile,
+} from '@/lib/participant-session-client'
 
 const refreshMock = vi.fn()
 const reloadMock = vi.fn()
@@ -30,11 +33,11 @@ vi.mock('./actions', () => ({
   quickJoinEvent: vi.fn(),
   recoverSession: vi.fn(),
   clearParticipantSession: vi.fn(),
-  ensureSoftParticipant: vi.fn(),
 }))
 
 vi.mock('@/lib/participant-session-client', () => ({
   clearParticipantDeviceSession: vi.fn(),
+  saveParticipantProfile: vi.fn(),
 }))
 
 vi.mock('./paid-join-sheet', () => ({
@@ -52,7 +55,7 @@ vi.mock('./participation-motion', () => ({
 const clearParticipantSessionMock = vi.mocked(clearParticipantSession)
 const recoverSessionMock = vi.mocked(recoverSession)
 const clearParticipantDeviceSessionMock = vi.mocked(clearParticipantDeviceSession)
-const ensureSoftParticipantMock = vi.mocked(ensureSoftParticipant)
+const saveParticipantProfileMock = vi.mocked(saveParticipantProfile)
 
 const participant = {
   first_name: 'Jeff',
@@ -96,8 +99,8 @@ describe('JoinSection "Not you?" flow', () => {
     clearParticipantDeviceSessionMock.mockReset()
     clearParticipantDeviceSessionMock.mockResolvedValue({ ok: true })
     clearParticipantSessionMock.mockResolvedValue({})
-    ensureSoftParticipantMock.mockReset()
-    ensureSoftParticipantMock.mockResolvedValue({})
+    saveParticipantProfileMock.mockReset()
+    saveParticipantProfileMock.mockResolvedValue({ ok: true })
     useSearchParamsMock.mockReset()
     useSearchParamsMock.mockReturnValue(new URLSearchParams())
     localStorage.clear()
@@ -171,16 +174,18 @@ describe('JoinSection "Not you?" flow', () => {
     await user.type(screen.getByRole('textbox', { name: /phone number/i }), '2025550101')
     await user.click(screen.getByRole('button', { name: /continue · \$15\.00/i }))
     expect(screen.getByTestId('paid-join-sheet')).toBeInTheDocument()
-    expect(ensureSoftParticipantMock).toHaveBeenCalledWith('demo', {
+    expect(saveParticipantProfileMock).toHaveBeenCalledWith({
+      slug: 'demo',
       firstName: 'Ada',
       lastName: 'Lovelace',
       phone: expect.stringMatching(/12025550101|2025550101/),
     })
+    expect(refreshMock).not.toHaveBeenCalled()
   })
 
   it('blocks paid continue when soft participant save fails', async () => {
     const user = userEvent.setup()
-    ensureSoftParticipantMock.mockResolvedValue({ error: 'Could not save your profile.' })
+    saveParticipantProfileMock.mockResolvedValue({ error: 'Could not save your profile.' })
 
     renderJoinSection({
       participant: null,

@@ -7,7 +7,6 @@ import {
   quickJoinEvent,
   recoverSession,
   clearParticipantSession,
-  ensureSoftParticipant,
 } from './actions'
 import { arrowRight } from '@/lib/text-arrows'
 import { PhoneInput } from '@/app/_components/phone-input'
@@ -18,7 +17,10 @@ import { getGroupRulesJoinStatus } from './group-rules-actions'
 import { useParticipationMotion } from './participation-motion'
 import { GuestCountSelect } from './guest-count-select'
 import { clampGuestCount } from '@/lib/guest-signups'
-import { clearParticipantDeviceSession } from '@/lib/participant-session-client'
+import {
+  clearParticipantDeviceSession,
+  saveParticipantProfile,
+} from '@/lib/participant-session-client'
 import { formatPriceCents, isPaidSession, sessionPaymentTotalCents } from '@/lib/session-payment'
 import { isValidPhoneDigits } from '@/lib/phone'
 import { PaidJoinSheet, type KnownParticipantProfile } from './paid-join-sheet'
@@ -274,12 +276,13 @@ function PaidJoinSection({
 
     setFormError(null)
 
-    const saved = await ensureSoftParticipant(orgSlug, {
+    const saved = await saveParticipantProfile({
+      slug: orgSlug,
       firstName: trimmedFirst,
       lastName: trimmedLast,
       phone,
     })
-    if (saved.error) {
+    if ('error' in saved) {
       setFormError(saved.error)
       return
     }
