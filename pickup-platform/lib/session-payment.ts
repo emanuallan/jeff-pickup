@@ -2,7 +2,6 @@ import type Stripe from 'stripe'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getStripe } from '@/lib/stripe'
 import { clampGuestCount } from '@/lib/guest-signups'
-import { normalizePhoneDigits } from '@/lib/phone'
 
 export async function completePaidEventJoinFromCheckout(
   session: Stripe.Checkout.Session,
@@ -96,17 +95,4 @@ export function sessionPaymentTotalCents(
 ): number {
   if (!Number.isFinite(priceCentsPerPerson) || priceCentsPerPerson <= 0) return 0
   return Math.round(priceCentsPerPerson) * paidSessionHeadcount(guestCount)
-}
-
-/**
- * True when the checkout form sent a phone that does not match the linked
- * participant. Empty form phone is not a mismatch (use the linked row as-is).
- */
-export function linkedParticipantPhoneMismatch(
-  linkedPhone: string,
-  formPhone: string,
-): boolean {
-  const form = normalizePhoneDigits(formPhone)
-  if (!form) return false
-  return normalizePhoneDigits(linkedPhone) !== form
 }

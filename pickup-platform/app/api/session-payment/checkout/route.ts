@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server'
-import { getAuthUser } from '@/lib/auth'
 import { getPublicOrgBySlug } from '@/lib/public-data'
 import { getEventByRef, canUpdateArrivalStatus, isEventCancelled } from '@/lib/events'
 import { createClient } from '@/lib/supabase/server'
@@ -8,14 +7,14 @@ import { getStripe, getPlatformFeePercent } from '@/lib/stripe'
 import { orgBaseUrl } from '@/lib/site-url'
 import {
   isPaidSession,
-  linkedParticipantPhoneMismatch,
   paidSessionHeadcount,
   sessionPaymentTotalCents,
 } from '@/lib/session-payment'
-import { getLinkedParticipantForOrg } from '@/lib/participant-account'
 import { resolveGuestCount } from '@/lib/guest-signups'
 import { orgFeatures } from '@/lib/org-features'
 import { normalizePhoneDigits, isValidPhoneDigits } from '@/lib/phone'
+import { getParticipantCookieOptions } from '@/lib/auth-cookies'
+import { SESSION_COOKIE } from '@/lib/participant-session'
 
 export async function POST(request: Request) {
   let body: Record<string, unknown>
@@ -36,11 +35,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Missing session details.' }, { status: 400 })
   }
 
-  const user = await getAuthUser()
-  if (!user) {
+  if (!isValidPhoneDigits(phone) || !firstName || !lastName) {
     return NextResponse.json(
-      { error: 'Sign in to join a paid session.', code: 'auth_required' },
-      { status: 401 },
+      { error: 'Enter your name and phone to continue.', code: 'profile_required' },
+      { status: 400 },
     )
   }
 
@@ -66,54 +64,31 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'This session is free — join without payment.' }, { status: 400 })
   }
 
-  let linked = await getLinkedParticipantForOrg(org.id)
+  const supabase = await createClient()
+  const { data: prepared, error: prepareError } = await supabase.rpc(
+    'prepare_paid_checkout_participant',
+    {
+      p_org_id: org.id,
+      p_phone: phone,
+      p_first_name: firstName,
+      p_last_name: lastName,
+    },
+  )
 
-  if (linked) {
-    if (linkedParticipantPhoneMismatch(linked.phone, phone)) {
-      return NextResponse.json(
-        {
-          error:
-            'This account is linked to a different phone in this group. Tap Not you? to switch, or use the matching phone.',
-          code: 'phone_mismatch',
-        },
-        { status: 409 },
-      )
-    }
-  } else {
-    if (!isValidPhoneDigits(phone) || !firstName || !lastName) {
-      return NextResponse.json(
-        {
-          error: 'Enter your name and phone to continue.',
-          code: 'profile_required',
-        },
-        { status: 400 },
-      )
-    }
-
-    const supabase = await createClient()
-    const { data: ensured, error: ensureError } = await supabase.rpc(
-      'ensure_participant_for_auth_user',
-      {
-        p_org_id: org.id,
-        p_phone: phone,
-        p_first_name: firstName,
-        p_last_name: lastName,
-      },
+  if (prepareError || !prepared) {
+    return NextResponse.json(
+      { error: prepareError?.message || 'Could not save your profile.' },
+      { status: 400 },
     )
-
-    if (ensureError || !ensured) {
-      return NextResponse.json(
-        { error: ensureError?.message || 'Could not save your profile.' },
-        { status: 400 },
-      )
-    }
-
-    const row = ensured as { participant_id?: string; phone?: string }
-    if (!row.participant_id) {
-      return NextResponse.json({ error: 'Could not save your profile.' }, { status: 400 })
-    }
-    linked = { participant_id: String(row.participant_id), phone: String(row.phone ?? phone) }
   }
+
+  const row = prepared as { participant_id?: string; session_token?: string; phone?: string }
+  if (!row.participant_id || !row.session_token) {
+    return NextResponse.json({ error: 'Could not save your profile.' }, { status: 400 })
+  }
+
+  const participantId = String(row.participant_id)
+  const sessionToken = String(row.session_token)
 
   const guestsEnabled = orgFeatures(org).guest_signups
   const guestCount = resolveGuestCount(guestCountRaw, guestsEnabled)
@@ -151,8 +126,8 @@ export async function POST(request: Request) {
     .insert({
       org_id: org.id,
       event_id: event.id,
-      participant_id: linked.participant_id,
-      user_id: user.id,
+      participant_id: participantId,
+      user_id: null,
       amount_cents: amountCents,
       currency: 'usd',
       status: 'pending',
@@ -196,14 +171,12 @@ export async function POST(request: Request) {
         ],
         success_url: `${baseUrl}/?cal=${encodeURIComponent(event.short_id)}&paid=1&session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${baseUrl}/?cal=${encodeURIComponent(event.short_id)}&paid=0`,
-        customer_email: user.email ?? undefined,
         metadata: {
           checkout_kind: 'session_payment',
           org_id: org.id,
           event_id: event.id,
           payment_id: payment.id,
-          participant_id: linked.participant_id,
-          user_id: user.id,
+          participant_id: participantId,
           guest_count: String(guestCount),
           headcount: String(headcount),
         },
@@ -231,7 +204,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Could not create checkout.' }, { status: 500 })
     }
 
-    return NextResponse.json({ url: session.url })
+    const response = NextResponse.json({ url: session.url })
+    response.cookies.set(SESSION_COOKIE, sessionToken, getParticipantCookieOptions())
+    return response
   } catch (err) {
     console.error('session payment checkout failed', err)
     await admin.from('event_payments').update({ status: 'failed' }).eq('id', payment.id)

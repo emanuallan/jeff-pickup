@@ -20,6 +20,7 @@ vi.mock('next/navigation', () => ({
     forward: vi.fn(),
     prefetch: vi.fn(),
   }),
+  useSearchParams: () => new URLSearchParams(),
 }))
 
 vi.mock('./actions', () => ({
@@ -31,10 +32,6 @@ vi.mock('./actions', () => ({
 
 vi.mock('@/lib/participant-session-client', () => ({
   clearParticipantDeviceSession: vi.fn(),
-}))
-
-vi.mock('../../_components/save-participant-account-card', () => ({
-  SaveParticipantAccountCard: () => <div data-testid="save-account-card" />,
 }))
 
 vi.mock('./paid-join-sheet', () => ({
@@ -119,7 +116,6 @@ describe('JoinSection "Not you?" flow', () => {
     expect(screen.getByRole('heading', { name: /welcome back, jeff p\./i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /not you\?/i })).toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: /save your spot/i })).not.toBeInTheDocument()
-    // Optional free-path save-account card is intentionally hidden for now.
     expect(screen.queryByTestId('save-account-card')).not.toBeInTheDocument()
   })
 
@@ -128,7 +124,6 @@ describe('JoinSection "Not you?" flow', () => {
       participant: null,
       paidSession: true,
       priceCents: 1500,
-      isAuthenticated: false,
     })
     expect(screen.getByRole('heading', { name: /save your spot/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /continue · \$15\.00/i })).toBeInTheDocument()
@@ -141,7 +136,6 @@ describe('JoinSection "Not you?" flow', () => {
       participant: null,
       paidSession: true,
       priceCents: 1500,
-      isAuthenticated: false,
     })
 
     expect(screen.queryByTestId('paid-join-sheet')).not.toBeInTheDocument()
@@ -156,7 +150,6 @@ describe('JoinSection "Not you?" flow', () => {
     renderJoinSection({
       paidSession: true,
       priceCents: 1500,
-      isAuthenticated: false,
     })
 
     expect(screen.getByRole('heading', { name: /welcome back, jeff p\./i })).toBeInTheDocument()
@@ -170,7 +163,6 @@ describe('JoinSection "Not you?" flow', () => {
     renderJoinSection({
       paidSession: true,
       priceCents: 500,
-      isAuthenticated: false,
     })
 
     expect(screen.getByRole('button', { name: /join · \$5\.00/i })).toBeInTheDocument()
@@ -184,7 +176,6 @@ describe('JoinSection "Not you?" flow', () => {
       participant: null,
       paidSession: true,
       priceCents: 500,
-      isAuthenticated: false,
     })
 
     expect(screen.getByRole('button', { name: /continue · \$5\.00/i })).toBeInTheDocument()

@@ -134,46 +134,34 @@ recurring-event generator (cron route) and the OTP/identity endpoints, and it sc
 
 Two distinct actor types, two friction levels.
 
-### 7.1 Participants (hybrid)
+### 7.1 Participants
 
-- **Soft identity (free sessions):** phone number, normalized digits. Dedup key per org is
+- **Soft identity (all sessions):** phone number, normalized digits. Dedup key per org is
   `(org_id, phone)`. Join issues a device session cookie (`hc_session` → `participant_sessions`).
-  Soft join stays for free sessions; it is **not** money-grade auth.
-- **Hard identity (optional anytime; required for paid):** Supabase Auth **email OTP** (same stack
-  as organizers). Sets `participants.user_id` so one global account can span many org personas.
-  Optional “Save your account” from a soft session; paid join forces email OTP first.
 - **Profile fields:** `first_name`, `last_name`, optional `display_name` (defaults to `First L.`).
 - **Verification (SMS, dormant):** `phone_verified` + `require_phone_verification` remain scaffolded
   but unwired. No SMS provider yet.
 - **Privacy:** public roster shows `display_name` only. Phone/last name are visible only to org admins.
-- **Cross-group home:** `/me` lists orgs where `participants.user_id = auth.uid()`, plus session
-  payment history.
+- **No participant email OTP / auth pairing.** Email auth is organizers-only. `participants.user_id`
+  remains nullable legacy and is not written by product flows.
 
 ### 7.2 Organizers / admins (real auth)
 
-- **Auth:** Supabase Auth — **email OTP** (6-digit code, passwordless) for MVP. Phone OTP for organizers is supported by Supabase but left dormant alongside participant OTP.
+- **Auth:** Supabase Auth — **email OTP** (6-digit code, passwordless) for MVP. Phone OTP for organizers is supported by Supabase but left dormant.
 - **Roles (`org_members.role`):**
   - `owner` — created the org; full control, can transfer/delete.
   - `admin` — manage schedules, events, locations, announcements, settings, see contact info.
   - (future) `coach`/`captain` — limited, post-MVP.
 - A single auth user can belong to multiple orgs (one person can run several communities).
-  The same user may also be a linked participant; console stays membership-gated.
+- On organizer sign-in, `hc_session` is cleared so console and soft participant personas do not mix.
 
-### 7.3 Linking the two
+### 7.3 Pay-per-session (phase 1 billing)
 
-- Soft user → email OTP → `link_participant_to_auth_user` (or `ensure_participant_for_auth_user`
-  when joining paid without a soft session).
-- Same email as an organizer is allowed; authorization is per surface (`org_members` vs linked
-  `participants`).
-- On organizer sign-in, `hc_session` is cleared; for paid participant actions prefer `sb-*` cookies.
-
-### 7.4 Pay-per-session (phase 1 billing)
-
-- `events.price_cents` — null/0 = free; `>0` requires auth + Stripe Connect Checkout.
-- Money path: Checkout on the org’s Connect account + platform `application_fee_amount`; webhook
-  (and return-URL sync backup) calls `complete_paid_event_join` → roster seat.
-- Mirror rows in `event_payments`. Soft `join_event` rejects paid sessions.
-- **Credits / wallets:** deferred (not in initial build).
+- `events.price_cents` — null/0 = free; `>0` requires Stripe Connect Checkout (soft phone identity).
+- Money path: soft persona + Checkout on the org’s Connect account + platform `application_fee_amount`;
+  webhook (and return-URL sync backup) calls `complete_paid_event_join` → roster seat.
+- Mirror rows in `event_payments` (`user_id` nullable). Soft `join_event` rejects paid sessions.
+- **Credits / wallets / Customer Portal:** deferred.
 
 ---
 

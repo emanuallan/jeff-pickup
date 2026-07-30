@@ -3,61 +3,12 @@ import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { PaidJoinSheet } from './paid-join-sheet'
 
-const refreshMock = vi.fn()
-
-vi.mock('next/navigation', () => ({
-  useRouter: () => ({
-    push: vi.fn(),
-    replace: vi.fn(),
-    refresh: refreshMock,
-    back: vi.fn(),
-    forward: vi.fn(),
-    prefetch: vi.fn(),
-  }),
-}))
-
-vi.mock('../../participant-account-actions', () => ({
-  saveParticipantAccount: vi.fn(async () => ({ error: 'not linked' })),
-}))
-
-vi.mock('@/lib/supabase/client', () => ({
-  createClient: () => ({
-    auth: {
-      signInWithOtp: vi.fn(async () => ({ error: null })),
-    },
-  }),
-}))
-
-const baseProps = {
-  open: true,
-  onClose: vi.fn(),
-  orgId: 'org-1',
-  orgSlug: 'demo',
-  eventId: 'event-1',
-  accent: '#2563eb',
-  accentText: '#ffffff',
-  priceLabel: '$5.00',
-  priceCents: 500,
-  joiningWaitlist: false,
-  isAuthenticated: false,
-  accountLinked: false,
-  guestsEnabled: true,
-  knownProfile: {
-    firstName: 'Jeff',
-    lastName: 'Pickup',
-    phone: '12025550101',
-  },
-}
-
 describe('PaidJoinSheet', () => {
+  const fetchMock = vi.fn()
+
   beforeEach(() => {
-    refreshMock.mockReset()
-    vi.stubGlobal(
-      'fetch',
-      vi.fn(async () =>
-        Response.json({ ok: true, linked: true }, { status: 200 }),
-      ),
-    )
+    fetchMock.mockReset()
+    vi.stubGlobal('fetch', fetchMock)
   })
 
   afterEach(() => {
@@ -65,97 +16,93 @@ describe('PaidJoinSheet', () => {
     vi.unstubAllGlobals()
   })
 
-  it('stays on payment after OTP when auth props update from refresh', async () => {
+  it('starts checkout with soft profile details', async () => {
     const user = userEvent.setup()
-    const { rerender } = render(<PaidJoinSheet {...baseProps} />)
-
-    await user.type(screen.getByLabelText(/email/i), 'jeff@example.com')
-    await user.click(screen.getByRole('button', { name: /continue/i }))
-
-    await waitFor(() => {
-      expect(screen.getByText(/verification code/i)).toBeInTheDocument()
+    fetchMock.mockResolvedValue({
+      ok: true,
+      json: async () => ({ url: 'https://checkout.stripe.test/session' }),
+    })
+    const assignMock = vi.fn()
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      value: { ...window.location, href: '', assign: assignMock },
     })
 
-    await user.type(screen.getByRole('textbox'), '123456')
-    await user.click(screen.getByRole('button', { name: /verify & continue/i }))
-
-    await waitFor(() => {
-      expect(screen.getByRole('button', { name: /pay \$5\.00 & join/i })).toBeInTheDocument()
-    })
-
-    // Simulate parent re-render after router.refresh() with new auth + new knownProfile identity.
-    rerender(
+    render(
       <PaidJoinSheet
-        {...baseProps}
-        isAuthenticated
-        accountLinked
+        open
+        onClose={() => {}}
+        orgSlug="demo"
+        eventId="event-1"
+        accent="#2563eb"
+        accentText="#fff"
+        priceLabel="$15.00"
+        priceCents={1500}
+        joiningWaitlist={false}
+        guestsEnabled
         knownProfile={{
-          firstName: 'Jeff',
-          lastName: 'Pickup',
+          firstName: 'Ada',
+          lastName: 'Lovelace',
           phone: '12025550101',
         }}
       />,
     )
 
-    expect(screen.getByRole('button', { name: /pay \$5\.00 & join/i })).toBeInTheDocument()
-    expect(screen.queryByLabelText(/email/i)).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: /pay · \$15\.00/i }))
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        '/api/session-payment/checkout',
+        expect.objectContaining({
+          method: 'POST',
+        }),
+      )
+    })
+
+    const body = JSON.parse(
+      String((fetchMock.mock.calls[0]?.[1] as { body?: string })?.body ?? '{}'),
+    ) as Record<string, unknown>
+    expect(body).toMatchObject({
+      slug: 'demo',
+      eventId: 'event-1',
+      firstName: 'Ada',
+      lastName: 'Lovelace',
+      phone: '12025550101',
+    })
   })
 
-  it('skips email typing for a soft-session linked account', async () => {
+  it('shows checkout errors from the API', async () => {
     const user = userEvent.setup()
+    fetchMock.mockResolvedValue({
+      ok: false,
+      json: async () => ({ error: 'Could not start checkout.', detail: 'Connect offline' }),
+    })
+
     render(
       <PaidJoinSheet
-        {...baseProps}
-        linkedAccountEmail="jeff@example.com"
+        open
+        onClose={() => {}}
+        orgSlug="demo"
+        eventId="event-1"
+        accent="#2563eb"
+        accentText="#fff"
+        priceLabel="$5.00"
+        priceCents={500}
+        joiningWaitlist={false}
+        guestsEnabled={false}
+        knownProfile={{
+          firstName: 'Ada',
+          lastName: 'Lovelace',
+          phone: '12025550101',
+        }}
       />,
     )
 
-    expect(screen.getByText('jeff@example.com')).toBeInTheDocument()
-    expect(screen.queryByLabelText(/^email$/i)).not.toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /send code & continue/i })).toBeInTheDocument()
-
-    await user.click(screen.getByRole('button', { name: /send code & continue/i }))
+    await user.click(screen.getByRole('button', { name: /pay · \$5\.00/i }))
 
     await waitFor(() => {
-      expect(screen.getByText(/code sent to jeff@example.com/i)).toBeInTheDocument()
+      expect(screen.getByText(/could not start checkout/i)).toBeInTheDocument()
     })
-  })
-
-  it('goes straight to payment when already authenticated and linked', async () => {
-    render(
-      <PaidJoinSheet
-        {...baseProps}
-        isAuthenticated
-        accountLinked
-        linkedAccountEmail="jeff@example.com"
-      />,
-    )
-
-    await waitFor(() => {
-      expect(screen.getByRole('button', { name: /pay \$5\.00 & join/i })).toBeInTheDocument()
-    })
-    expect(screen.queryByLabelText(/^email$/i)).not.toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: /send code/i })).not.toBeInTheDocument()
-  })
-
-  it('scales the pay subtotal by headcount when guests are selected', async () => {
-    const user = userEvent.setup()
-    render(
-      <PaidJoinSheet
-        {...baseProps}
-        isAuthenticated
-        accountLinked
-      />,
-    )
-
-    await waitFor(() => {
-      expect(screen.getByRole('button', { name: /pay \$5\.00 & join/i })).toBeInTheDocument()
-    })
-
-    await user.selectOptions(screen.getByRole('combobox'), '2')
-
-    expect(screen.getByText(/subtotal/i)).toBeInTheDocument()
-    expect(screen.getByText(/\$5\.00 × 3 people/i)).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /pay \$15\.00 & join/i })).toBeInTheDocument()
+    expect(screen.getByText(/connect offline/i)).toBeInTheDocument()
   })
 })

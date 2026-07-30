@@ -44,24 +44,24 @@ jeffsoccer.organizr.co). Copy is generic ("session", "who's coming"); each org s
   See pickup-platform/.env.example.
 
 ## Key directories (under pickup-platform/)
-- app/page.tsx, login/, me/ — apex marketing + auth + participant cross-group home (`/me`)
+- app/page.tsx, login/, me/ — apex marketing + organizer auth (`/me` redirects; soft sessions are org-local)
 - app/console/ — organizer console (create org, branding, locations, schedules, generate sessions,
   one-off events, rosters with contact + CSV export, session fees, sponsorships)
 - app/org/[slug]/ — PUBLIC tenant pages: page.tsx redirects to the soonest upcoming event (or
   /events if none); events/ (list), events/[eventId]/ (detail + join/roster), leaderboard/
 - app/api/ — cron/materialize, console roster, session-payment/checkout, Stripe webhooks
-- app/auth/ — signout, verify-otp (organizer + participant link)
+- app/auth/ — signout, verify-otp (organizer email OTP)
 - lib/ — supabase/{client,server,middleware,admin}, tenancy/, events, schedules, locations,
-  signups, engagement, badges, participant-account, session-payment, weather (Open-Meteo),
+  signups, engagement, badges, session-payment, weather (Open-Meteo),
   geocode (Nominatim), datetime, og-image.tsx + og-metadata.ts (OG/social previews)
 
 ## Domain model (Postgres, all tenant rows carry org_id, isolated by RLS)
 orgs → org_members (owner/admin) → locations → schedules → events → participants/signups/
 participant_sessions. Events are materialized from recurring schedules into a rolling 30-day window
 by a security-definer RPC (materialize_events) called via the service-role key. Participants are
-phone-keyed per org with device session tokens (httpOnly cookie) for free joins. Optional email OTP
-accounts link via participants.user_id (migration 073). Paid sessions use events.price_cents +
-event_payments + Connect Checkout; soft join_event rejects price_cents > 0. Post-session feedback
+phone-keyed per org with device session tokens (httpOnly cookie `hc_session`) for free and paid
+joins. Paid sessions use events.price_cents + event_payments + Connect Checkout (soft persona via
+prepare_paid_checkout_participant); soft join_event rejects price_cents > 0. Post-session feedback
 uses participant_notifications + session_feedback (migration 047). Leaderboards (caps +
 weekly streaks) and badges are computed from signups/events.
 

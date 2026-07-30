@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useState, useTransition, type FormEvent } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import {
   joinEvent,
   quickJoinEvent,
@@ -48,10 +48,6 @@ type Props = {
   needsGroupRulesAcceptance?: boolean
   priceCents?: number | null
   paidSession?: boolean
-  isAuthenticated?: boolean
-  accountLinked?: boolean
-  /** Soft-session or auth email already linked — skip re-typing on paid join. */
-  linkedAccountEmail?: string | null
 }
 
 const inputClass =
@@ -172,7 +168,6 @@ function RecoverSession({
 
 function PaidJoinSection({
   orgSlug,
-  orgId,
   eventId,
   accent,
   accentText,
@@ -182,12 +177,9 @@ function PaidJoinSection({
   participant,
   priceLabel,
   priceCents,
-  accountLinked,
-  isAuthenticated,
   guestsEnabled = true,
   autoOpenSheet = false,
   knownProfile = null,
-  linkedAccountEmail = null,
   showReturning = false,
   onNotYou,
   onSessionRecovered,
@@ -198,8 +190,6 @@ function PaidJoinSection({
 }: Props & {
   priceLabel: string
   priceCents: number
-  accountLinked: boolean
-  isAuthenticated: boolean
   autoOpenSheet?: boolean
   knownProfile?: KnownParticipantProfile | null
   showReturning?: boolean
@@ -244,27 +234,24 @@ function PaidJoinSection({
     setPhone(knownProfile.phone)
   }, [knownProfile])
 
-  const sheet = (
-    <PaidJoinSheet
-      open={sheetOpen}
-      onClose={() => setSheetOpen(false)}
-      orgId={orgId}
-      orgSlug={orgSlug}
-      eventId={eventId}
-      accent={accent}
-      accentText={accentText}
-      priceLabel={priceLabel}
-      priceCents={priceCents}
-      joiningWaitlist={joiningWaitlist}
-      isAuthenticated={isAuthenticated}
-      accountLinked={accountLinked}
-      guestsEnabled={guestsEnabled}
-      showGuestSelect={false}
-      knownProfile={sheetProfile}
-      linkedAccountEmail={linkedAccountEmail}
-      initialGuestCount={guestCount}
-    />
-  )
+  const sheet =
+    sheetProfile != null ? (
+      <PaidJoinSheet
+        open={sheetOpen}
+        onClose={() => setSheetOpen(false)}
+        orgSlug={orgSlug}
+        eventId={eventId}
+        accent={accent}
+        accentText={accentText}
+        priceLabel={priceLabel}
+        priceCents={priceCents}
+        joiningWaitlist={joiningWaitlist}
+        guestsEnabled={guestsEnabled}
+        showGuestSelect={false}
+        knownProfile={sheetProfile}
+        initialGuestCount={guestCount}
+      />
+    ) : null
 
   async function handleNewUserContinue(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -479,6 +466,8 @@ function PaidJoinSection({
 
 export function JoinSection(props: Props) {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const paymentCancelled = searchParams.get('paid') === '0'
   const motion = useParticipationMotion()
   const [, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
@@ -582,22 +571,26 @@ export function JoinSection(props: Props) {
 
   if (paidSession) {
     return (
-      <PaidJoinSection
-        {...props}
-        priceCents={effectivePriceCents ?? 0}
-        priceLabel={priceLabel}
-        accountLinked={props.accountLinked === true}
-        isAuthenticated={props.isAuthenticated === true}
-        autoOpenSheet={forcePaidJoin}
-        knownProfile={knownProfile}
-        linkedAccountEmail={props.linkedAccountEmail ?? null}
-        showReturning={Boolean(props.participant) && !optedOutOfReturningSession}
-        onNotYou={() => void handleNotYou()}
-        onSessionRecovered={() => {
-          setOptedOutOfReturningSession(false)
-          motion?.reopenJoinPanel()
-        }}
-      />
+      <>
+        {paymentCancelled ? (
+          <p className="mb-3 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-100/90">
+            Payment was not completed. You can try again when you’re ready.
+          </p>
+        ) : null}
+        <PaidJoinSection
+          {...props}
+          priceCents={effectivePriceCents ?? 0}
+          priceLabel={priceLabel}
+          autoOpenSheet={forcePaidJoin}
+          knownProfile={knownProfile}
+          showReturning={Boolean(props.participant) && !optedOutOfReturningSession}
+          onNotYou={() => void handleNotYou()}
+          onSessionRecovered={() => {
+            setOptedOutOfReturningSession(false)
+            motion?.reopenJoinPanel()
+          }}
+        />
+      </>
     )
   }
 
@@ -782,20 +775,6 @@ export function JoinSection(props: Props) {
           >
             {welcomeBack}
           </ReturningSignupModal>
-          {/* Optional free-path "Save your account" — hidden until we promote it.
-          {!props.accountLinked ? (
-            <div className="mt-4">
-              <SaveParticipantAccountCard
-                orgId={props.orgId}
-                orgSlug={props.orgSlug}
-                accent={props.accent}
-                accentText={props.accentText}
-                nextPath={`/?cal=${encodeURIComponent(props.eventId)}`}
-                onLinked={() => router.refresh()}
-              />
-            </div>
-          ) : null}
-          */}
           <GroupRulesSheet
             open={rulesSheetOpen}
             onClose={() => {
@@ -817,20 +796,6 @@ export function JoinSection(props: Props) {
     return (
       <>
         {welcomeBack}
-        {/* Optional free-path "Save your account" — hidden until we promote it.
-        {!props.accountLinked ? (
-          <div className="mt-4">
-            <SaveParticipantAccountCard
-              orgId={props.orgId}
-              orgSlug={props.orgSlug}
-              accent={props.accent}
-              accentText={props.accentText}
-              nextPath={`/?cal=${encodeURIComponent(props.eventId)}`}
-              onLinked={() => router.refresh()}
-            />
-          </div>
-        ) : null}
-        */}
         <GroupRulesSheet
           open={rulesSheetOpen}
           onClose={() => {
