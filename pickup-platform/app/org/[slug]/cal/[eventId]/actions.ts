@@ -13,7 +13,6 @@ import { orgFeatures } from '@/lib/org-features'
 import { resolveGuestCount } from '@/lib/guest-signups'
 import { getLiveEventPriceCents, paymentRequiredResult } from '@/lib/event-price'
 import { isPaidSession } from '@/lib/session-payment'
-import { isSessionTeamChoice, normalizeTeamChoice, type SessionTeamChoice } from '@/lib/session-team'
 
 async function getOpenEvent(
   orgSlug: string,
@@ -359,52 +358,6 @@ export async function updateArrivalStatus(
     p_signup_id: signupId,
     p_session_token: token,
     p_status: status,
-  })
-
-  if (error) {
-    return { error: error.message }
-  }
-
-  revalidatePublicEvent(orgSlug, eventId, open.event.id, open.orgId)
-  return {}
-}
-
-export async function updateSignupTeam(
-  orgSlug: string,
-  eventId: string,
-  signupId: string,
-  team: SessionTeamChoice,
-): Promise<{ error?: string }> {
-  const token = await getSessionToken()
-  if (!token) {
-    return { error: 'Not signed in' }
-  }
-
-  const open = await getOpenEvent(orgSlug, eventId)
-  if ('error' in open) {
-    return { error: open.error }
-  }
-
-  const org = await getPublicOrgBySlug(orgSlug)
-  if (!org || !orgFeatures(org).team_selection) {
-    return { error: 'Teams are not enabled for this group.' }
-  }
-
-  const teamCount = open.event.team_count
-  if (teamCount == null) {
-    return { error: 'Teams are not enabled for this session.' }
-  }
-
-  const choice = normalizeTeamChoice(team)
-  if (!isSessionTeamChoice(choice, teamCount)) {
-    return { error: 'Invalid team' }
-  }
-
-  const supabase = await createClient()
-  const { error } = await supabase.rpc('update_signup_team', {
-    p_signup_id: signupId,
-    p_session_token: token,
-    p_team: choice === 'random' ? 'random' : String(choice),
   })
 
   if (error) {

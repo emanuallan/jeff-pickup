@@ -10,7 +10,6 @@ import { isPaidSession } from '@/lib/session-payment'
 import { CancelledCallout, isEventCancelled, eventName } from '../../_components/event-ui'
 import { formatEventWhenLine } from '@/lib/events'
 import { orgFeatures } from '@/lib/org-features'
-import { sessionTeamsEnabled } from '@/lib/session-team'
 import { groupRulesActive, orgGroupRules } from '@/lib/group-rules'
 import { getGroupRulesStatusForJoin } from '@/lib/group-rules.server'
 import {
@@ -111,8 +110,6 @@ export async function EventParticipation({ slug, eventId, org, event }: Props) {
       returningSignupModalEnabled={features.returning_signup_modal}
       publicRosterEnabled={features.public_roster}
       guestsEnabled={features.guest_signups}
-      teamSelectionEnabled={sessionTeamsEnabled(features.team_selection, event.team_count)}
-      teamCount={event.team_count}
       groupRulesEnabled={groupRulesEnabled}
       groupRulesText={groupRulesStatus.rules_text ?? groupRules?.text ?? ''}
       groupRulesVersion={groupRulesStatus.rules_version ?? groupRules?.version ?? 0}

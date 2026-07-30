@@ -15,7 +15,7 @@ import { type EventStatus, initialEventStatus, getEventByRef, isEventEnded } fro
 import { getOrgForMember } from '@/lib/orgs'
 import { isValidSlug, normalizeSlug } from '@/lib/tenancy/reserved-slugs'
 import { MAX_ORG_LINKS, normalizeLinkUrl } from '@/lib/social-links'
-import { orgFeatures, orgSettings, orgWaitlistSettings, type OrgFeatures, type OrgWaitlistSettings } from '@/lib/org-features'
+import { orgSettings, orgWaitlistSettings, type OrgFeatures, type OrgWaitlistSettings } from '@/lib/org-features'
 import {
   buildNextGroupRulesOnSave,
   orgGroupRules,
@@ -351,7 +351,7 @@ export async function createOneOffEvent(
   if (!parsed.ok) {
     return { error: parsed.error }
   }
-  const { title, locationId, startsAtIso, timezone, durationMin, capacity, minPlayers, additionalInformation, priceCents, teamCount } =
+  const { title, locationId, startsAtIso, timezone, durationMin, capacity, minPlayers, additionalInformation, priceCents } =
     parsed.values
 
   const locationCheck = await assertLocationInOrg(supabase, org.id, locationId)
@@ -366,8 +366,6 @@ export async function createOneOffEvent(
     return feeError
   }
 
-  const nextTeamCount = orgFeatures(org).team_selection ? teamCount : null
-
   const { error } = await supabase.from('events').insert({
     org_id: org.id,
     schedule_id: null,
@@ -380,7 +378,6 @@ export async function createOneOffEvent(
     min_players: minPlayers,
     additional_information: additionalInformation,
     price_cents: nextPriceCents,
-    team_count: nextTeamCount,
     status: initialEventStatus(minPlayers),
   })
 
@@ -414,7 +411,7 @@ export async function updateEvent(
   if (!parsed.ok) {
     return { error: parsed.error }
   }
-  const { title, locationId, startsAtIso, timezone, durationMin, capacity, minPlayers, additionalInformation, priceCents, teamCount } =
+  const { title, locationId, startsAtIso, timezone, durationMin, capacity, minPlayers, additionalInformation, priceCents } =
     parsed.values
 
   const locationCheck = await assertLocationInOrg(supabase, org.id, locationId)
@@ -429,13 +426,6 @@ export async function updateEvent(
       return feeError
     }
   }
-
-  const teamFieldPresent = formData.has('team_count')
-  const nextTeamCount = orgFeatures(org).team_selection
-    ? teamFieldPresent
-      ? teamCount
-      : event.team_count
-    : null
 
   if (event.schedule_id && event.starts_at !== startsAtIso) {
     const { error: skipError } = await supabase.from('schedule_event_skips').upsert(
@@ -464,9 +454,6 @@ export async function updateEvent(
       min_players: minPlayers,
       additional_information: additionalInformation,
       ...(priceFieldPresent ? { price_cents: priceCents } : {}),
-      ...(orgFeatures(org).team_selection || event.team_count != null
-        ? { team_count: nextTeamCount }
-        : {}),
     })
     .eq('id', event.id)
     .eq('org_id', org.id)
@@ -476,17 +463,6 @@ export async function updateEvent(
       return { error: 'Another session from this schedule already exists at that time.' }
     }
     return { error: error.message }
-  }
-
-  if (nextTeamCount == null) {
-    // Leave existing team values; UI hides them when teams are off.
-  } else if (event.team_count == null || nextTeamCount < event.team_count) {
-    await supabase
-      .from('signups')
-      .update({ team: null })
-      .eq('event_id', event.id)
-      .not('team', 'is', null)
-      .gt('team', nextTeamCount)
   }
 
   await supabase.rpc('maybe_promote_event', { p_event_id: event.id })
@@ -1087,7 +1063,6 @@ export async function updateOrgFeatures(orgSlug: string, formData: FormData) {
     session_player_stats: formData.get('session_player_stats') === 'on',
     group_rules: current.features.group_rules,
     group_sponsorships: current.features.group_sponsorships,
-    team_selection: formData.get('team_selection') === 'on',
   }
 
   const { error } = await supabase

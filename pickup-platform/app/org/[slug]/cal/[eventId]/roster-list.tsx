@@ -15,12 +15,6 @@ import { formatGuestSuffix } from '@/lib/format-guest-suffix'
 import type { RosterBadgeInfo } from '@/lib/badges'
 import { useParticipationMotion } from './participation-motion'
 import { scrollToMyRosterRowAfterJoinCollapse } from './scroll-to-my-roster'
-import {
-  sessionTeamLabel,
-  splitRosterByTeam,
-  teamHeadcount,
-  type SessionTeamOrUnassigned,
-} from '@/lib/session-team'
 
 function TooltipBadge({
   tip,
@@ -146,7 +140,6 @@ type RosterEntryView = {
   display_name: string
   guest_count: number
   arrival_status: string
-  team?: SessionTeamOrUnassigned
 }
 
 export function RosterList(props: {
@@ -159,10 +152,7 @@ export function RosterList(props: {
   eventId?: string
   accent?: string
   variant?: 'confirmed' | 'waitlist'
-  teamSelection?: boolean
-  teamCount?: number
   onOpenStatusSheet?: () => void
-  onOpenTeamSheet?: () => void
 }) {
   const router = useRouter()
   const [, startTransition] = useTransition()
@@ -173,8 +163,6 @@ export function RosterList(props: {
   const accent = props.accent ?? '#2563eb'
   const accentFg = accentOnDark(accent)
   const isWaitlist = props.variant === 'waitlist'
-  const teamCount = props.teamCount ?? 0
-  const showTeams = Boolean(props.teamSelection) && teamCount >= 2 && !isWaitlist
 
   useEffect(() => {
     knownIdsRef.current = new Set(props.entries.map((entry) => entry.id))
@@ -189,136 +177,6 @@ export function RosterList(props: {
     scrollToMyRosterRowAfterJoinCollapse(signupId, motion.clearPendingRosterScroll)
   }, [motion?.pendingRosterScroll, motion?.clearPendingRosterScroll, props.mySignupId])
 
-  function renderRows(entries: RosterEntryView[], options?: { hideWaitlistPosition?: boolean }) {
-    return entries.map((e, index) => {
-      const isMe = props.mySignupId != null && e.id === props.mySignupId
-      const position = index + 1
-      const isNew = !knownIdsRef.current.has(e.id)
-      const rowClass = [
-        'roster-row flex items-center justify-between gap-2 rounded-xl border text-sm',
-        isMe
-          ? 'px-3 py-2.5 text-zinc-100'
-          : 'border-zinc-800 bg-black/20 px-3 py-2 text-sm',
-        isNew ? 'roster-row-enter' : '',
-      ]
-        .filter(Boolean)
-        .join(' ')
-
-      if (isMe) {
-        return (
-          <li
-            key={e.id}
-            id={`roster-signup-${e.id}`}
-            className={rowClass}
-            style={{
-              backgroundImage: `linear-gradient(135deg, ${hexToRgba(accent, 0.18)}, ${hexToRgba(accent, 0.04)})`,
-              borderColor: hexToRgba(accentFg, 0.45),
-            }}
-          >
-            <span className="inline-flex min-w-0 flex-1 flex-wrap items-center gap-x-1 gap-y-0.5 font-semibold">
-              {isWaitlist ? (
-                <span className="mr-1 text-zinc-500">#{position}</span>
-              ) : (
-                <ArrivalStatusIcon
-                  status={e.arrival_status}
-                  isOnline={props.isOnline}
-                  onPress={props.onOpenStatusSheet}
-                />
-              )}
-              <span>{e.display_name}</span>
-              <span className="text-zinc-400">
-                (you)
-                {isWaitlist && !options?.hideWaitlistPosition
-                  ? ` · #${position} on waitlist`
-                  : ''}
-              </span>
-              {e.guest_count > 0 ? (
-                <span className="text-zinc-400">{formatGuestSuffix(e.guest_count)}</span>
-              ) : null}
-              {showTeams && props.onOpenTeamSheet ? (
-                <button
-                  type="button"
-                  onClick={props.onOpenTeamSheet}
-                  className="ml-0.5 rounded-md border border-zinc-700 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-zinc-300 transition-colors hover:bg-white/5"
-                >
-                  {sessionTeamLabel(e.team ?? null)}
-                </button>
-              ) : null}
-            </span>
-            <span className="inline-flex shrink-0 items-center gap-1.5">
-              {!isWaitlist ? (
-                <RosterBadges badges={props.badgesByParticipantId?.[e.participant_id]} />
-              ) : null}
-              {props.canLeave && props.orgSlug && props.eventId ? (
-                <button
-                  type="button"
-                  disabled={leaving}
-                  aria-label="Leave this session"
-                  title="Leave this session"
-                  onClick={async () => {
-                    if (!motion?.runLeaveCelebration || !props.orgSlug || !props.eventId) {
-                      return
-                    }
-                    setLeaving(true)
-                    setError(null)
-                    const result = await motion.runLeaveCelebration(
-                      async () => {
-                        const r = await leaveEvent(props.orgSlug!, props.eventId!, e.id)
-                        if (!r.error) {
-                          startTransition(() => {
-                            router.refresh()
-                          })
-                        }
-                        return r
-                      },
-                      accent,
-                      { guestCount: e.guest_count },
-                    )
-                    setLeaving(false)
-                    if (result.error) setError(result.error)
-                  }}
-                  className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white/5 text-zinc-400 transition-colors hover:bg-white/10 hover:text-zinc-200 disabled:opacity-50"
-                >
-                  <svg
-                    className="h-4 w-4"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    aria-hidden
-                  >
-                    <path d="M18 6 6 18M6 6l12 12" />
-                  </svg>
-                </button>
-              ) : null}
-            </span>
-          </li>
-        )
-      }
-
-      return (
-        <li key={e.id} className={rowClass}>
-          <span className="inline-flex min-w-0 flex-1 flex-wrap items-center gap-x-1 gap-y-0.5">
-            {isWaitlist ? (
-              <span className="mr-1 text-zinc-600">#{position}</span>
-            ) : (
-              <ArrivalStatusIcon status={e.arrival_status} isOnline={props.isOnline} />
-            )}
-            <span>{e.display_name}</span>
-            {e.guest_count > 0 ? (
-              <span className="text-zinc-500">{formatGuestSuffix(e.guest_count)}</span>
-            ) : null}
-          </span>
-          {!isWaitlist ? (
-            <RosterBadges badges={props.badgesByParticipantId?.[e.participant_id]} />
-          ) : null}
-        </li>
-      )
-    })
-  }
-
   if (props.entries.length === 0) {
     return (
       <p className="text-sm text-zinc-500">
@@ -327,55 +185,125 @@ export function RosterList(props: {
     )
   }
 
-  if (showTeams) {
-    const { teams, unassigned } = splitRosterByTeam(props.entries, teamCount)
-    const gridClass =
-      teamCount <= 2
-        ? 'grid gap-4 sm:grid-cols-2'
-        : teamCount === 3
-          ? 'grid gap-4 sm:grid-cols-3'
-          : 'grid gap-4 sm:grid-cols-2 lg:grid-cols-4'
-
-    return (
-      <div className="space-y-4">
-        <div className={gridClass}>
-          {teams.map((teamEntries, index) => (
-            <div key={index + 1}>
-              <h3 className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
-                Team {index + 1}{' '}
-                <span className="tabular-nums text-zinc-600">
-                  ({teamHeadcount(teamEntries)})
-                </span>
-              </h3>
-              <ul className="mt-2 space-y-2">
-                {teamEntries.length > 0 ? (
-                  renderRows(teamEntries)
-                ) : (
-                  <li className="rounded-xl border border-dashed border-zinc-800 px-3 py-2 text-sm text-zinc-600">
-                    Empty
-                  </li>
-                )}
-              </ul>
-            </div>
-          ))}
-        </div>
-        {unassigned.length > 0 ? (
-          <div>
-            <h3 className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
-              Unassigned{' '}
-              <span className="tabular-nums text-zinc-600">({teamHeadcount(unassigned)})</span>
-            </h3>
-            <ul className="mt-2 space-y-2">{renderRows(unassigned)}</ul>
-          </div>
-        ) : null}
-        {error ? <p className="text-sm text-red-300">{error}</p> : null}
-      </div>
-    )
-  }
-
   return (
     <div>
-      <ul className="space-y-2">{renderRows(props.entries)}</ul>
+      <ul className="space-y-2">
+        {props.entries.map((e, index) => {
+          const isMe = props.mySignupId != null && e.id === props.mySignupId
+          const position = index + 1
+          const isNew = !knownIdsRef.current.has(e.id)
+          const rowClass = [
+            'roster-row flex items-center justify-between gap-2 rounded-xl border text-sm',
+            isMe
+              ? 'px-3 py-2.5 text-zinc-100'
+              : 'border-zinc-800 bg-black/20 px-3 py-2 text-sm',
+            isNew ? 'roster-row-enter' : '',
+          ]
+            .filter(Boolean)
+            .join(' ')
+
+          if (isMe) {
+            return (
+              <li
+                key={e.id}
+                id={`roster-signup-${e.id}`}
+                className={rowClass}
+                style={{
+                  backgroundImage: `linear-gradient(135deg, ${hexToRgba(accent, 0.18)}, ${hexToRgba(accent, 0.04)})`,
+                  borderColor: hexToRgba(accentFg, 0.45),
+                }}
+              >
+                <span className="inline-flex min-w-0 flex-1 flex-wrap items-center gap-x-1 gap-y-0.5 font-semibold">
+                  {isWaitlist ? (
+                    <span className="mr-1 text-zinc-500">#{position}</span>
+                  ) : (
+                    <ArrivalStatusIcon
+                      status={e.arrival_status}
+                      isOnline={props.isOnline}
+                      onPress={props.onOpenStatusSheet}
+                    />
+                  )}
+                  <span>{e.display_name}</span>
+                  <span className="text-zinc-400">
+                    (you){isWaitlist ? ` · #${position} on waitlist` : ''}
+                  </span>
+                  {e.guest_count > 0 ? (
+                    <span className="text-zinc-400">{formatGuestSuffix(e.guest_count)}</span>
+                  ) : null}
+                </span>
+                <span className="inline-flex shrink-0 items-center gap-1.5">
+                  {!isWaitlist ? (
+                    <RosterBadges badges={props.badgesByParticipantId?.[e.participant_id]} />
+                  ) : null}
+                  {props.canLeave && props.orgSlug && props.eventId ? (
+                    <button
+                      type="button"
+                      disabled={leaving}
+                      aria-label="Leave this session"
+                      title="Leave this session"
+                      onClick={async () => {
+                        if (!motion?.runLeaveCelebration || !props.orgSlug || !props.eventId) {
+                          return
+                        }
+                        setLeaving(true)
+                        setError(null)
+                        const result = await motion.runLeaveCelebration(
+                          async () => {
+                            const r = await leaveEvent(props.orgSlug!, props.eventId!, e.id)
+                            if (!r.error) {
+                              startTransition(() => {
+                                router.refresh()
+                              })
+                            }
+                            return r
+                          },
+                          accent,
+                          { guestCount: e.guest_count },
+                        )
+                        setLeaving(false)
+                        if (result.error) setError(result.error)
+                      }}
+                      className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white/5 text-zinc-400 transition-colors hover:bg-white/10 hover:text-zinc-200 disabled:opacity-50"
+                    >
+                      <svg
+                        className="h-4 w-4"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        aria-hidden
+                      >
+                        <path d="M18 6 6 18M6 6l12 12" />
+                      </svg>
+                    </button>
+                  ) : null}
+                </span>
+              </li>
+            )
+          }
+
+          return (
+            <li key={e.id} className={rowClass}>
+              <span className="inline-flex min-w-0 flex-1 flex-wrap items-center gap-x-1 gap-y-0.5">
+                {isWaitlist ? (
+                  <span className="mr-1 text-zinc-600">#{position}</span>
+                ) : (
+                  <ArrivalStatusIcon status={e.arrival_status} isOnline={props.isOnline} />
+                )}
+                <span>{e.display_name}</span>
+                {e.guest_count > 0 ? (
+                  <span className="text-zinc-500">{formatGuestSuffix(e.guest_count)}</span>
+                ) : null}
+              </span>
+              {!isWaitlist ? (
+                <RosterBadges badges={props.badgesByParticipantId?.[e.participant_id]} />
+              ) : null}
+            </li>
+          )
+        })}
+      </ul>
       {error ? <p className="mt-2 text-sm text-red-300">{error}</p> : null}
     </div>
   )

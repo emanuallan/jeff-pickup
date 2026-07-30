@@ -83,19 +83,4 @@ describe('parseSessionFormData', () => {
       error: 'Min participants cannot exceed capacity.',
     })
   })
-
-  it('parses team_count and rejects out of range', () => {
-    const ok = parseSessionFormData(sessionFormData({ ...valid, team_count: '4' }))
-    expect(ok.ok).toBe(true)
-    if (!ok.ok) return
-    expect(ok.values.teamCount).toBe(4)
-
-    const empty = parseSessionFormData(sessionFormData(valid))
-    expect(empty.ok).toBe(true)
-    if (!empty.ok) return
-    expect(empty.values.teamCount).toBeNull()
-
-    const bad = parseSessionFormData(sessionFormData({ ...valid, team_count: '1' }))
-    expect(bad.ok).toBe(false)
-  })
 })

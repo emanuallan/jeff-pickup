@@ -22,7 +22,6 @@ describe('org-features', () => {
       expect(parseOrgSettings(null).features.group_rules).toBe(false)
       expect(parseOrgSettings(null).features.session_mvp_voting).toBe(false)
       expect(parseOrgSettings(null).features.session_player_stats).toBe(false)
-      expect(parseOrgSettings(null).features.team_selection).toBe(false)
     })
 
     it('keeps features true when undefined in stored settings', () => {
@@ -44,17 +43,11 @@ describe('org-features', () => {
 
     it('enables opt-in features only when explicitly true', () => {
       const settings = parseOrgSettings({
-        features: {
-          group_rules: true,
-          session_mvp_voting: true,
-          session_player_stats: true,
-          team_selection: true,
-        },
+        features: { group_rules: true, session_mvp_voting: true, session_player_stats: true },
       })
       expect(settings.features.group_rules).toBe(true)
       expect(settings.features.session_mvp_voting).toBe(true)
       expect(settings.features.session_player_stats).toBe(true)
-      expect(settings.features.team_selection).toBe(true)
     })
   })
 

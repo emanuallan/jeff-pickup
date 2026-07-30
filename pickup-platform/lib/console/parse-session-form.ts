@@ -13,11 +13,6 @@ import {
   MAX_EVENT_DURATION_MIN,
   MIN_EVENT_DURATION_MIN,
 } from '@/lib/event-duration'
-import {
-  MAX_SESSION_TEAM_COUNT,
-  MIN_SESSION_TEAM_COUNT,
-  parseSessionTeamCount,
-} from '@/lib/session-team'
 
 export type ParsedSessionFields = {
   title: string
@@ -29,8 +24,6 @@ export type ParsedSessionFields = {
   minPlayers: number | null
   additionalInformation: string
   priceCents: number | null
-  /** Null = no teams for this session. Only meaningful when org team_selection is on. */
-  teamCount: number | null
 }
 
 export function parseSessionFormData(
@@ -46,18 +39,6 @@ export function parseSessionFormData(
   )
   const capacity = parseOptionalInt(formData.get('capacity'))
   const minParticipants = parseOptionalMinParticipants(formData.get('min_players'))
-  const teamCountRaw = String(formData.get('team_count') ?? '').trim()
-  let teamCount: number | null = null
-  if (teamCountRaw) {
-    const parsedTeams = parseSessionTeamCount(teamCountRaw)
-    if (parsedTeams == null) {
-      return {
-        ok: false,
-        error: `Teams must be between ${MIN_SESSION_TEAM_COUNT} and ${MAX_SESSION_TEAM_COUNT}, or left empty.`,
-      }
-    }
-    teamCount = parsedTeams
-  }
   const priceCentsRaw = String(formData.get('price_cents') ?? '').trim()
   let priceCents: number | null = null
   if (priceCentsRaw) {
@@ -119,7 +100,6 @@ export function parseSessionFormData(
       minPlayers: minParticipants.value,
       additionalInformation,
       priceCents,
-      teamCount,
     },
   }
 }

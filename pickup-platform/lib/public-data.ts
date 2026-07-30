@@ -208,7 +208,7 @@ async function fetchPublicRoster(eventId: string): Promise<RosterEntry[]> {
 
   const { data, error } = await supabase
     .from('event_roster_public')
-    .select('id, event_id, participant_id, display_name, guest_count, arrival_status, team, created_at')
+    .select('id, event_id, participant_id, display_name, guest_count, arrival_status, created_at')
     .eq('event_id', eventId)
     .order('created_at', { ascending: true })
 
@@ -216,10 +216,7 @@ async function fetchPublicRoster(eventId: string): Promise<RosterEntry[]> {
     return []
   }
 
-  return (data as RosterEntry[]).map((row) => ({
-    ...row,
-    team: typeof row.team === 'number' ? row.team : row.team != null ? Number(row.team) : null,
-  }))
+  return data as RosterEntry[]
 }
 
 /** Always fresh — roster changes on every join/leave and must not use unstable_cache. */
@@ -232,7 +229,7 @@ async function fetchPublicWaitlist(eventId: string): Promise<RosterEntry[]> {
 
   const { data, error } = await supabase
     .from('event_waitlist_public')
-    .select('id, event_id, participant_id, display_name, guest_count, arrival_status, team, created_at')
+    .select('id, event_id, participant_id, display_name, guest_count, arrival_status, created_at')
     .eq('event_id', eventId)
     .order('created_at', { ascending: true })
 
@@ -242,7 +239,6 @@ async function fetchPublicWaitlist(eventId: string): Promise<RosterEntry[]> {
 
   return (data as RosterEntry[]).map((row) => ({
     ...row,
-    team: typeof row.team === 'number' ? row.team : row.team != null ? Number(row.team) : null,
     list_status: 'waitlisted' as const,
   }))
 }

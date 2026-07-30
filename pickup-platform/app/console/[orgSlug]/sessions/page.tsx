@@ -3,7 +3,6 @@ import { getOrgForMember } from '@/lib/orgs'
 import { getLocationsForOrg } from '@/lib/locations'
 import { getUpcomingEventsForConsole } from '@/lib/events'
 import { getOrgStripeAccount } from '@/lib/sponsorship.server'
-import { orgFeatures } from '@/lib/org-features'
 import { createOneOffEvent } from '../../actions'
 import { AddOneOffButton } from '../add-one-off-button'
 import { SessionEventCard } from '../session-event-card'
@@ -29,7 +28,6 @@ export default async function SessionsPage({ params }: Props) {
 
   const hasLocation = locations.length > 0
   const sessionFeesEnabled = Boolean(stripeAccount?.charges_enabled)
-  const teamSelectionEnabled = orgFeatures(org).team_selection
 
   return (
     <ConsolePage>
@@ -44,7 +42,6 @@ export default async function SessionsPage({ params }: Props) {
               locations={locations}
               createOneOff={createOneOffEvent.bind(null, orgSlug)}
               sessionFeesEnabled={sessionFeesEnabled}
-              teamSelectionEnabled={teamSelectionEnabled}
             />
           ) : null
         }
@@ -61,7 +58,6 @@ export default async function SessionsPage({ params }: Props) {
                     event={ev}
                     locations={locations}
                     sessionFeesEnabled={sessionFeesEnabled}
-                    teamSelectionEnabled={teamSelectionEnabled}
                   />
                 </li>
               ))}

@@ -14,7 +14,6 @@ export function EditSessionButton({
   locations,
   updateSession,
   sessionFeesEnabled = false,
-  teamSelectionEnabled = false,
 }: {
   orgSlug: string
   event: EventWithLocation
@@ -25,7 +24,6 @@ export function EditSessionButton({
     formData: FormData,
   ) => Promise<{ ok: true } | { error: string }>
   sessionFeesEnabled?: boolean
-  teamSelectionEnabled?: boolean
 }) {
   const [open, setOpen] = useState(false)
   const boundUpdate = updateSession.bind(null, orgSlug, event.short_id)
@@ -60,7 +58,6 @@ export function EditSessionButton({
             initial={sessionFormInitialFromEvent(event)}
             onSubmit={boundUpdate}
             sessionFeesEnabled={sessionFeesEnabled}
-            teamSelectionEnabled={teamSelectionEnabled}
             onSuccess={() => setOpen(false)}
             submitLabel="Save changes"
             pendingLabel="Saving…"
