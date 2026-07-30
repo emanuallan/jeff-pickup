@@ -22,6 +22,8 @@ export type OrgFeatures = {
   group_rules: boolean
   /** When true, public sponsorship page and sponsor footer are available. */
   group_sponsorships: boolean
+  /** When true, confirmed rosters split into Team 1 / Team 2 after joining. */
+  team_selection: boolean
 }
 
 export type WaitlistPromotionMode = 'strict_fifo' | 'skip_ahead'
@@ -48,6 +50,7 @@ export const DEFAULT_ORG_FEATURES: OrgFeatures = {
   session_player_stats: false,
   group_rules: false,
   group_sponsorships: false,
+  team_selection: false,
 }
 
 export const DEFAULT_ORG_WAITLIST_SETTINGS: OrgWaitlistSettings = {
@@ -85,6 +88,7 @@ export function parseOrgSettings(raw: unknown): OrgSettings {
       // Opt-in: missing key = false. Others use opt-out (!== false).
       group_rules: features?.group_rules === true,
       group_sponsorships: features?.group_sponsorships === true,
+      team_selection: features?.team_selection === true,
     },
     waitlist: parseWaitlistSettings(settings?.waitlist),
     group_rules: parseOrgGroupRules(settings?.group_rules),
@@ -190,6 +194,12 @@ export const ORG_FEATURE_DEFINITIONS: OrgFeatureDefinition[] = [
     description:
       'Let visitors sponsor your group with monthly contributions. Sponsors appear as logos on your public pages after you approve them.',
   },
+  {
+    key: 'team_selection',
+    label: 'Teams',
+    description:
+      'Let organizers set a team count per session. Players pick a team (or Random) after joining.',
+  },
 ]
 
 /** Settings form layout — features not listed here are managed in other sections. */
@@ -204,7 +214,7 @@ export const ORG_FEATURE_GROUPS: OrgFeatureGroupDefinition[] = [
     id: 'roster_recognition',
     title: 'Roster & recognition',
     description: 'What shows on public session and leaderboard pages.',
-    features: ['public_roster', 'leaderboard'],
+    features: ['public_roster', 'leaderboard', 'team_selection'],
   },
   {
     id: 'after_sessions',

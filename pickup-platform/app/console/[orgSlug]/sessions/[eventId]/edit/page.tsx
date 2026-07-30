@@ -5,6 +5,7 @@ import { getEventByRef, formatEventTime, statusLabel } from '@/lib/events'
 import { orgFeatures } from '@/lib/org-features'
 import { getParticipantHistoryForOrg } from '@/lib/participants'
 import { getRosterWithContact, rosterHeadcount, splitRosterByStatus } from '@/lib/signups'
+import { sessionTeamsEnabled } from '@/lib/session-team'
 import {
   ConsolePage,
   ConsoleHeader,
@@ -39,6 +40,7 @@ export default async function EditSessionRosterPage({ params }: Props) {
   const availableParticipants = participants.filter(
     (participant) => !rosterParticipantIds.has(participant.id),
   )
+  const teamsOnSession = sessionTeamsEnabled(features.team_selection, event.team_count)
 
   return (
     <ConsolePage width="max-w-2xl">
@@ -61,6 +63,8 @@ export default async function EditSessionRosterPage({ params }: Props) {
         eventRef={eventId}
         guestsEnabled={features.guest_signups}
         waitlistEnabled={event.capacity != null}
+        teamSelectionEnabled={teamsOnSession}
+        teamCount={event.team_count}
         capacity={event.capacity}
         headcount={rosterHeadcount(confirmed)}
         confirmed={confirmed}

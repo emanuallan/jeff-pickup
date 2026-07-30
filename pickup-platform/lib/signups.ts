@@ -2,6 +2,8 @@ import { cache } from 'react'
 import { getPublicRosterLive, getPublicWaitlistLive } from '@/lib/public-data'
 import { createClient } from '@/lib/supabase/server'
 import type { ArrivalStatus } from '@/lib/arrival-status'
+import { parseSignupTeam, type SessionTeamOrUnassigned } from '@/lib/session-team'
+import { isMissingColumnError } from '@/lib/supabase/missing-column'
 
 export type SignupListStatus = 'confirmed' | 'waitlisted'
 
@@ -12,6 +14,7 @@ export type RosterEntry = {
   display_name: string
   guest_count: number
   arrival_status: ArrivalStatus
+  team?: SessionTeamOrUnassigned
   created_at: string
   list_status?: SignupListStatus
 }
@@ -33,20 +36,33 @@ export const getPublicWaitlist = cache(async (eventId: string): Promise<RosterEn
   return getPublicWaitlistLive(eventId)
 })
 
+const SIGNUP_CONTACT_COLUMNS =
+  'id, event_id, participant_id, guest_count, arrival_status, list_status, created_at, participants(first_name, last_name, phone, display_name)'
+
 export async function getRosterWithContact(eventId: string): Promise<SignupWithContact[]> {
   const supabase = await createClient()
 
-  const { data, error } = await supabase
-    .from('signups')
-    .select('id, event_id, participant_id, guest_count, arrival_status, list_status, created_at, participants(first_name, last_name, phone, display_name)')
-    .eq('event_id', eventId)
-    .order('created_at', { ascending: true })
+  const run = (columns: string) =>
+    supabase
+      .from('signups')
+      .select(columns)
+      .eq('event_id', eventId)
+      .order('created_at', { ascending: true })
 
-  if (error || !data) {
+  let result = await run(`${SIGNUP_CONTACT_COLUMNS}, team`)
+
+  if (result.error && isMissingColumnError(result.error)) {
+    result = await run(SIGNUP_CONTACT_COLUMNS)
+  }
+
+  if (result.error || !result.data) {
+    console.error('getRosterWithContact failed:', result.error?.message)
     return []
   }
 
-  return data.map((row) => {
+  const rows = result.data as unknown as Array<Record<string, unknown>>
+
+  return rows.map((row) => {
     const raw = row.participants
     const p = (Array.isArray(raw) ? raw[0] : raw) as {
       first_name: string
@@ -55,13 +71,14 @@ export async function getRosterWithContact(eventId: string): Promise<SignupWithC
       display_name: string
     } | null
     return {
-      id: row.id,
-      event_id: row.event_id,
-      participant_id: row.participant_id,
-      guest_count: row.guest_count,
+      id: row.id as string,
+      event_id: row.event_id as string,
+      participant_id: row.participant_id as string,
+      guest_count: row.guest_count as number,
       arrival_status: row.arrival_status as ArrivalStatus,
+      team: parseSignupTeam(row.team),
       list_status: (row.list_status as SignupListStatus) ?? 'confirmed',
-      created_at: row.created_at,
+      created_at: row.created_at as string,
       display_name: p?.display_name ?? 'Unknown',
       first_name: p?.first_name ?? '',
       last_name: p?.last_name ?? '',

@@ -187,3 +187,32 @@ export async function updateSessionRosterGuestCount(
   revalidateSessionRoster(orgSlug, eventRef, session.org.id)
   return { ok: true }
 }
+
+export async function updateSessionRosterTeam(
+  orgSlug: string,
+  eventRef: string,
+  signupId: string,
+  team: number | null,
+): Promise<ActionResult> {
+  const session = await requireSession(orgSlug, eventRef)
+  if (!session) {
+    return { error: 'Session not found.' }
+  }
+
+  if (!orgFeatures(session.org).team_selection || session.event.team_count == null) {
+    return { error: 'Teams are not enabled for this session.' }
+  }
+
+  const supabase = await createClient()
+  const { error } = await supabase.rpc('organizer_update_session_signup_team', {
+    p_signup_id: signupId,
+    p_team: team == null ? null : String(team),
+  })
+
+  if (error) {
+    return { error: rpcErrorMessage(error) }
+  }
+
+  revalidateSessionRoster(orgSlug, eventRef, session.org.id)
+  return { ok: true }
+}

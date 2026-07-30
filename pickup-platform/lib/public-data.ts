@@ -13,6 +13,8 @@ import {
   type EventWithLocation,
 } from '@/lib/events'
 import type { RosterEntry } from '@/lib/signups'
+import { parseSignupTeam } from '@/lib/session-team'
+import { isMissingColumnError } from '@/lib/supabase/missing-column'
 
 const LOCATION_SELECT =
   '*, locations(label, address, lat, lon, maps_url, is_online, meeting_url), schedules!events_schedule_id_fkey(title, duration_min)'
@@ -203,20 +205,41 @@ export const getPublicUpcomingEventsForOrg = cache(
   },
 )
 
-async function fetchPublicRoster(eventId: string): Promise<RosterEntry[]> {
+const PUBLIC_ROSTER_COLUMNS =
+  'id, event_id, participant_id, display_name, guest_count, arrival_status, created_at'
+
+async function fetchPublicRosterRows(
+  view: 'event_roster_public' | 'event_waitlist_public',
+  eventId: string,
+): Promise<RosterEntry[]> {
   const supabase = createPublicClient()
 
-  const { data, error } = await supabase
-    .from('event_roster_public')
-    .select('id, event_id, participant_id, display_name, guest_count, arrival_status, created_at')
-    .eq('event_id', eventId)
-    .order('created_at', { ascending: true })
+  const run = (columns: string) =>
+    supabase
+      .from(view)
+      .select(columns)
+      .eq('event_id', eventId)
+      .order('created_at', { ascending: true })
 
-  if (error || !data) {
+  let result = await run(`${PUBLIC_ROSTER_COLUMNS}, team`)
+
+  if (result.error && isMissingColumnError(result.error)) {
+    result = await run(PUBLIC_ROSTER_COLUMNS)
+  }
+
+  if (result.error || !result.data) {
+    console.error(`${view} query failed:`, result.error?.message)
     return []
   }
 
-  return data as RosterEntry[]
+  return (result.data as unknown as RosterEntry[]).map((row) => ({
+    ...row,
+    team: parseSignupTeam(row.team),
+  }))
+}
+
+async function fetchPublicRoster(eventId: string): Promise<RosterEntry[]> {
+  return fetchPublicRosterRows('event_roster_public', eventId)
 }
 
 /** Always fresh — roster changes on every join/leave and must not use unstable_cache. */
@@ -225,19 +248,9 @@ export async function getPublicRosterLive(eventId: string): Promise<RosterEntry[
 }
 
 async function fetchPublicWaitlist(eventId: string): Promise<RosterEntry[]> {
-  const supabase = createPublicClient()
+  const rows = await fetchPublicRosterRows('event_waitlist_public', eventId)
 
-  const { data, error } = await supabase
-    .from('event_waitlist_public')
-    .select('id, event_id, participant_id, display_name, guest_count, arrival_status, created_at')
-    .eq('event_id', eventId)
-    .order('created_at', { ascending: true })
-
-  if (error || !data) {
-    return []
-  }
-
-  return (data as RosterEntry[]).map((row) => ({
+  return rows.map((row) => ({
     ...row,
     list_status: 'waitlisted' as const,
   }))

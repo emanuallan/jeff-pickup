@@ -36,6 +36,8 @@ export type Event = {
 	additional_information: string;
 	/** Null or 0 = free. Greater than 0 requires auth + Stripe Checkout. */
 	price_cents: number | null;
+	/** Null = no teams. 2–8 = players pick a team after joining (when org feature on). */
+	team_count: number | null;
 };
 
 export type EventWithLocation = Event & {
@@ -117,6 +119,12 @@ export function mapEventRow(row: Record<string, unknown>): EventWithLocation {
 				? event.price_cents
 				: event.price_cents != null && Number.isFinite(Number(event.price_cents))
 					? Number(event.price_cents)
+					: null,
+		team_count:
+			typeof event.team_count === "number"
+				? event.team_count
+				: event.team_count != null && Number.isFinite(Number(event.team_count))
+					? Number(event.team_count)
 					: null,
 		title: overrides.title ?? schedule.title,
 		duration_min: overrides.duration_min ?? schedule.duration_min,
