@@ -345,16 +345,26 @@ export function RosterList(props: {
     const { teams, unassigned } = splitRosterByTeam(props.entries, teamCount)
     const gridClass =
       teamCount <= 2
-        ? 'grid gap-4 sm:grid-cols-2'
+        ? 'grid gap-5 sm:grid-cols-2 sm:gap-0'
         : teamCount === 3
-          ? 'grid gap-4 sm:grid-cols-3'
-          : 'grid gap-4 sm:grid-cols-2 lg:grid-cols-4'
+          ? 'grid gap-5 sm:grid-cols-3 sm:gap-0'
+          : 'grid gap-6 sm:grid-cols-2 lg:grid-cols-4'
 
     return (
-      <div className="space-y-4">
+      <div className="space-y-5">
         <div className={gridClass}>
-          {teams.map((teamEntries, index) => (
-            <div key={index + 1}>
+          {teams.map((teamEntries, index) => {
+            const divided = teamCount <= 3
+            const columnClass = !divided
+              ? index > 0
+                ? 'border-t border-zinc-800 pt-5 sm:border-t-0 sm:pt-0'
+                : undefined
+              : index === 0
+                ? 'sm:pr-5'
+                : 'border-t border-zinc-800 pt-5 sm:border-t-0 sm:border-l sm:px-5 sm:pt-0'
+
+            return (
+            <div key={index + 1} className={columnClass}>
               <div className="flex items-center justify-between gap-2">
                 <h3 className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
                   Team {index + 1}{' '}
@@ -385,7 +395,8 @@ export function RosterList(props: {
                 )}
               </ul>
             </div>
-          ))}
+            )
+          })}
         </div>
         {unassigned.length > 0 ? (
           <div>
