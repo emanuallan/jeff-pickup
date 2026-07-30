@@ -8,19 +8,21 @@ import { clearParticipantDeviceSession } from '@/lib/participant-session-client'
 
 const refreshMock = vi.fn()
 const reloadMock = vi.fn()
+const replaceMock = vi.fn()
 const reopenJoinPanelMock = vi.fn()
 const runSignupCelebrationMock = vi.fn()
+const useSearchParamsMock = vi.fn(() => new URLSearchParams())
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({
     push: vi.fn(),
-    replace: vi.fn(),
+    replace: replaceMock,
     refresh: refreshMock,
     back: vi.fn(),
     forward: vi.fn(),
     prefetch: vi.fn(),
   }),
-  useSearchParams: () => new URLSearchParams(),
+  useSearchParams: () => useSearchParamsMock(),
 }))
 
 vi.mock('./actions', () => ({
@@ -85,12 +87,15 @@ describe('JoinSection "Not you?" flow', () => {
   beforeEach(() => {
     refreshMock.mockReset()
     reloadMock.mockReset()
+    replaceMock.mockReset()
     reopenJoinPanelMock.mockReset()
     clearParticipantSessionMock.mockReset()
     recoverSessionMock.mockReset()
     clearParticipantDeviceSessionMock.mockReset()
     clearParticipantDeviceSessionMock.mockResolvedValue({ ok: true })
     clearParticipantSessionMock.mockResolvedValue({})
+    useSearchParamsMock.mockReset()
+    useSearchParamsMock.mockReturnValue(new URLSearchParams())
     localStorage.clear()
     Object.defineProperty(window, 'location', {
       configurable: true,
@@ -128,6 +133,24 @@ describe('JoinSection "Not you?" flow', () => {
     expect(screen.getByRole('heading', { name: /save your spot/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /continue · \$15\.00/i })).toBeInTheDocument()
     expect(screen.getByLabelText(/first name/i)).toBeInTheDocument()
+  })
+
+  it('shows a one-shot payment-cancelled banner and strips paid from the URL', async () => {
+    useSearchParamsMock.mockReturnValue(new URLSearchParams('cal=event-1&paid=0'))
+
+    renderJoinSection({
+      participant: null,
+      paidSession: true,
+      priceCents: 1500,
+    })
+
+    expect(
+      screen.getByText(/payment was not completed\. you can try again when you’re ready\./i),
+    ).toBeInTheDocument()
+
+    await waitFor(() => {
+      expect(replaceMock).toHaveBeenCalledWith('/?cal=event-1', { scroll: false })
+    })
   })
 
   it('opens the paid join sheet after new users submit details', async () => {

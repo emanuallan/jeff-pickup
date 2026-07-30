@@ -5,6 +5,7 @@ import { MatchdayDateChips } from './matchday-date-chips'
 import type { MatchdayChipDisplay } from '@/lib/matchday-chip-display'
 
 const replaceMock = vi.fn()
+const useSearchParamsMock = vi.fn(() => new URLSearchParams('cal=evt-a'))
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({
@@ -15,7 +16,7 @@ vi.mock('next/navigation', () => ({
     forward: vi.fn(),
     prefetch: vi.fn(),
   }),
-  useSearchParams: () => new URLSearchParams('cal=evt-a'),
+  useSearchParams: () => useSearchParamsMock(),
   usePathname: () => '/',
 }))
 
@@ -45,6 +46,8 @@ const chips: MatchdayChipDisplay[] = [
 describe('MatchdayDateChips', () => {
   beforeEach(() => {
     replaceMock.mockReset()
+    useSearchParamsMock.mockReset()
+    useSearchParamsMock.mockReturnValue(new URLSearchParams('cal=evt-a'))
     vi.stubGlobal(
       'matchMedia',
       vi.fn().mockImplementation(() => ({
@@ -61,6 +64,19 @@ describe('MatchdayDateChips', () => {
 
   it('updates the URL when a different chip is selected', async () => {
     const user = userEvent.setup()
+
+    render(<MatchdayDateChips chips={chips} activeEventId="evt-a" accent="#22c55e" />)
+
+    await user.click(screen.getByRole('button', { name: 'Jul 12, Sat' }))
+
+    expect(replaceMock).toHaveBeenCalledWith('/?cal=evt-b', { scroll: false })
+  })
+
+  it('drops paid checkout flags when switching dates', async () => {
+    const user = userEvent.setup()
+    useSearchParamsMock.mockReturnValue(
+      new URLSearchParams('cal=evt-a&paid=0&session_id=cs_test'),
+    )
 
     render(<MatchdayDateChips chips={chips} activeEventId="evt-a" accent="#22c55e" />)
 

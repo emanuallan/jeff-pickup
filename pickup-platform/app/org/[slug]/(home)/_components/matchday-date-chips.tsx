@@ -257,6 +257,8 @@ export function MatchdayDateChips({ chips, activeEventId, accent }: Props) {
       params.set('cal', shortId)
       params.delete('past')
       params.delete('view')
+      params.delete('paid')
+      params.delete('session_id')
       const query = params.toString()
 
       startTransition(() => {

@@ -471,7 +471,7 @@ function PaidJoinSection({
 export function JoinSection(props: Props) {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const paymentCancelled = searchParams.get('paid') === '0'
+  const paidParam = searchParams.get('paid')
   const motion = useParticipationMotion()
   const [, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
@@ -485,6 +485,23 @@ export function JoinSection(props: Props) {
   const [forcePaidJoin, setForcePaidJoin] = useState(false)
   const [forcedPriceCents, setForcedPriceCents] = useState<number | null>(null)
   const [capturedProfile, setCapturedProfile] = useState<KnownParticipantProfile | null>(null)
+  const [paymentCancelled, setPaymentCancelled] = useState(false)
+
+  // One-shot cancel banner: show once, then strip paid/session_id so date chips
+  // (which preserve other query params) don't keep resurfacing it.
+  useEffect(() => {
+    if (paidParam == null && !searchParams.has('session_id')) return
+
+    if (paidParam === '0') {
+      setPaymentCancelled(true)
+    }
+
+    const params = new URLSearchParams(searchParams.toString())
+    params.delete('paid')
+    params.delete('session_id')
+    const query = params.toString()
+    router.replace(query ? `/?${query}` : '/', { scroll: false })
+  }, [paidParam, router, searchParams])
 
   const requiresGroupRules =
     props.groupRulesEnabled === true &&
