@@ -2,6 +2,7 @@ import { cache } from 'react'
 import { getPublicRosterLive, getPublicWaitlistLive } from '@/lib/public-data'
 import { createClient } from '@/lib/supabase/server'
 import type { ArrivalStatus } from '@/lib/arrival-status'
+import type { SessionTeamOrUnassigned } from '@/lib/session-team'
 
 export type SignupListStatus = 'confirmed' | 'waitlisted'
 
@@ -12,6 +13,7 @@ export type RosterEntry = {
   display_name: string
   guest_count: number
   arrival_status: ArrivalStatus
+  team?: SessionTeamOrUnassigned
   created_at: string
   list_status?: SignupListStatus
 }
@@ -38,7 +40,7 @@ export async function getRosterWithContact(eventId: string): Promise<SignupWithC
 
   const { data, error } = await supabase
     .from('signups')
-    .select('id, event_id, participant_id, guest_count, arrival_status, list_status, created_at, participants(first_name, last_name, phone, display_name)')
+    .select('id, event_id, participant_id, guest_count, arrival_status, team, list_status, created_at, participants(first_name, last_name, phone, display_name)')
     .eq('event_id', eventId)
     .order('created_at', { ascending: true })
 
@@ -60,6 +62,7 @@ export async function getRosterWithContact(eventId: string): Promise<SignupWithC
       participant_id: row.participant_id,
       guest_count: row.guest_count,
       arrival_status: row.arrival_status as ArrivalStatus,
+      team: (row.team as SessionTeamOrUnassigned | undefined) ?? null,
       list_status: (row.list_status as SignupListStatus) ?? 'confirmed',
       created_at: row.created_at,
       display_name: p?.display_name ?? 'Unknown',

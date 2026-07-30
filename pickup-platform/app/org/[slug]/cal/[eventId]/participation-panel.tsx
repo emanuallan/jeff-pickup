@@ -11,6 +11,8 @@ import { RosterListLazy } from './roster-list-lazy'
 import { WaitlistSection } from './waitlist-section'
 import { SignedInStatusSheet } from './signed-in-status-sheet'
 import { SignedInGuestSection } from './signed-in-guest-section'
+import { SignedInTeamSection } from './signed-in-team-section'
+import { SignedInTeamSheet } from './signed-in-team-sheet'
 import { SignupConfirmationCard } from './signup-confirmation-card'
 import { AnimatedPresenceSection } from './animated-presence-section'
 import { ParticipationMotionProvider, useParticipationMotion } from './participation-motion'
@@ -61,6 +63,8 @@ type Props = JoinProps & {
   cancelledCallout?: ReactNode
   publicRosterEnabled?: boolean
   guestsEnabled?: boolean
+  teamSelectionEnabled?: boolean
+  teamCount?: number | null
 }
 
 function ParticipationPanelBody({
@@ -79,6 +83,8 @@ function ParticipationPanelBody({
   cancelledCallout,
   publicRosterEnabled = true,
   guestsEnabled = true,
+  teamSelectionEnabled = false,
+  teamCount = null,
   showJoin,
   joinProps,
 }: Props & { showJoin: boolean; joinProps: JoinProps }) {
@@ -86,6 +92,7 @@ function ParticipationPanelBody({
   const joinClosing = motion?.joinClosing ?? false
   const controlsClosing = motion?.controlsClosing ?? false
   const [statusSheetOpen, setStatusSheetOpen] = useState(false)
+  const [teamSheetOpen, setTeamSheetOpen] = useState(false)
   const showControls = Boolean(mySignup && canUpdateStatus)
   const lastControlsSignupRef = useRef<MySignup | null>(null)
 
@@ -109,11 +116,21 @@ function ParticipationPanelBody({
   const closeStatusSheet = useCallback(() => {
     setStatusSheetOpen(false)
   }, [])
+  const openTeamSheet = useCallback(() => {
+    setTeamSheetOpen(true)
+  }, [])
+  const closeTeamSheet = useCallback(() => {
+    setTeamSheetOpen(false)
+  }, [])
   const statusSheetHandler =
     showControls && !isWaitlisted ? openStatusSheet : undefined
+  const teamSheetHandler =
+    showControls && !isWaitlisted && teamSelectionEnabled ? openTeamSheet : undefined
   const showConfirmation = Boolean(mySignup && !isCancelled && !isEnded)
   const showRoster = publicRosterEnabled && !isCancelled
   const showJoinPanel = (showJoin || joinClosing) && !(controlsClosing && !mySignup)
+  const showTeamControls = teamSelectionEnabled && teamCount != null && !isWaitlisted
+  const effectiveTeamCount = teamCount ?? 0
 
   useEffect(() => {
     if (mySignup && joinClosing) {
@@ -124,6 +141,7 @@ function ParticipationPanelBody({
   useEffect(() => {
     if (!mySignup || !canUpdateStatus) {
       setStatusSheetOpen(false)
+      setTeamSheetOpen(false)
     }
   }, [mySignup, canUpdateStatus])
 
@@ -163,6 +181,9 @@ function ParticipationPanelBody({
             showAccountActions={!showRoster}
             listStatus={mySignup.list_status as SignupListStatus}
             guestsEnabled={guestsEnabled}
+            teamSelectionEnabled={teamSelectionEnabled}
+            teamCount={effectiveTeamCount}
+            onOpenTeamSheet={teamSheetHandler}
           />
         ) : null}
 
@@ -184,7 +205,10 @@ function ParticipationPanelBody({
             orgSlug={joinProps.orgSlug}
             eventId={joinProps.eventId}
             accent={joinProps.accent}
+            teamSelection={teamSelectionEnabled}
+            teamCount={effectiveTeamCount}
             onOpenStatusSheet={statusSheetHandler}
+            onOpenTeamSheet={teamSheetHandler}
           />
         </div>
 
@@ -202,15 +226,27 @@ function ParticipationPanelBody({
 
         {showControlsSection && controlsSignup ? (
           <AnimatedPresenceSection show={showControls} closing={controlsClosing}>
-            <SignedInGuestSection
-              orgSlug={joinProps.orgSlug}
-              eventId={joinProps.eventId}
-              signupId={controlsSignup.signup_id}
-              guestCount={controlsSignup.guest_count}
-              listStatus={controlsSignup.list_status as SignupListStatus}
-              accent={joinProps.accent}
-              guestsEnabled={guestsEnabled}
-            />
+            <>
+              <SignedInGuestSection
+                orgSlug={joinProps.orgSlug}
+                eventId={joinProps.eventId}
+                signupId={controlsSignup.signup_id}
+                guestCount={controlsSignup.guest_count}
+                listStatus={controlsSignup.list_status as SignupListStatus}
+                accent={joinProps.accent}
+                guestsEnabled={guestsEnabled}
+              />
+              {showTeamControls ? (
+                <SignedInTeamSection
+                  orgSlug={joinProps.orgSlug}
+                  eventId={joinProps.eventId}
+                  signupId={controlsSignup.signup_id}
+                  teamCount={effectiveTeamCount}
+                  team={controlsSignup.team ?? null}
+                  accent={joinProps.accent}
+                />
+              ) : null}
+            </>
           </AnimatedPresenceSection>
         ) : null}
         </section>
@@ -225,6 +261,19 @@ function ParticipationPanelBody({
             signupId={mySignup.signup_id}
             arrivalStatus={mySignup.arrival_status as ArrivalStatus}
             isOnline={joinProps.isOnline}
+            accent={joinProps.accent}
+          />
+        ) : null}
+
+        {showControls && mySignup && showTeamControls ? (
+          <SignedInTeamSheet
+            open={teamSheetOpen}
+            onClose={closeTeamSheet}
+            orgSlug={joinProps.orgSlug}
+            eventId={joinProps.eventId}
+            signupId={mySignup.signup_id}
+            teamCount={effectiveTeamCount}
+            team={mySignup.team ?? null}
             accent={joinProps.accent}
           />
         ) : null}

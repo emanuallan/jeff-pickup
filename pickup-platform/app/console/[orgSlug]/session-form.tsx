@@ -18,6 +18,10 @@ import {
   sessionFeeOrganizerPayoutHint,
   STRIPE_PROCESSING_FEES_URL,
 } from '@/lib/session-payment'
+import {
+  MAX_SESSION_TEAM_COUNT,
+  MIN_SESSION_TEAM_COUNT,
+} from '@/lib/session-team'
 import { consoleInput, consoleLabel, btnSecondary } from '../_components/console-ui'
 import { CollapsibleAdditionalInformationField } from '../_components/collapsible-additional-information-field'
 import { ConsoleSubmitButton } from '../_components/console-submit-button'
@@ -37,6 +41,8 @@ type Props = {
   useBrowserTimezone?: boolean
   /** Show session fee field — only when org Stripe Connect charges are enabled. */
   sessionFeesEnabled?: boolean
+  /** Show per-session team count — when org team_selection feature is on. */
+  teamSelectionEnabled?: boolean
 }
 
 function defaultFormTimes(timezone: string, initial?: SessionFormInitial) {
@@ -63,6 +69,7 @@ export function SessionForm({
   successMessage,
   useBrowserTimezone = true,
   sessionFeesEnabled = false,
+  teamSelectionEnabled = false,
 }: Props) {
   const toast = useConsoleToast()
   const [title, setTitle] = useState(initial?.title ?? '')
@@ -74,6 +81,9 @@ export function SessionForm({
   )
   const [minPlayers, setMinPlayers] = useState(
     initial?.minPlayers != null ? String(initial.minPlayers) : '',
+  )
+  const [teamCount, setTeamCount] = useState(
+    initial?.teamCount != null ? String(initial.teamCount) : '',
   )
   const [priceDollars, setPriceDollars] = useState(
     initial?.priceCents != null ? (initial.priceCents / 100).toFixed(2) : '',
@@ -96,6 +106,7 @@ export function SessionForm({
       setLocationId(initial.locationId)
       setCapacity(initial.capacity != null ? String(initial.capacity) : '')
       setMinPlayers(initial.minPlayers != null ? String(initial.minPlayers) : '')
+      setTeamCount(initial.teamCount != null ? String(initial.teamCount) : '')
       setPriceDollars(initial.priceCents != null ? (initial.priceCents / 100).toFixed(2) : '')
       setAdditionalInformation(initial.additionalInformation ?? '')
       setTimezone(initial.timezone)
@@ -136,6 +147,9 @@ export function SessionForm({
     formData.set('ends_at', endsAtLocal)
     if (capacity.trim()) formData.set('capacity', capacity.trim())
     if (minPlayers.trim()) formData.set('min_players', minPlayers.trim())
+    if (teamSelectionEnabled) {
+      formData.set('team_count', teamCount.trim())
+    }
     if (sessionFeesEnabled) {
       formData.set('price_cents', priceDollars.trim())
     }
@@ -256,6 +270,33 @@ export function SessionForm({
           />
         </label>
       </div>
+
+      {teamSelectionEnabled ? (
+        <label className="block">
+          <span className={consoleLabel}>Teams (optional)</span>
+          <select
+            name="team_count"
+            value={teamCount}
+            onChange={(event) => setTeamCount(event.target.value)}
+            className={`mt-1 ${consoleInput}`}
+            aria-describedby="session-team-count-hint"
+          >
+            <option value="">No teams</option>
+            {Array.from(
+              { length: MAX_SESSION_TEAM_COUNT - MIN_SESSION_TEAM_COUNT + 1 },
+              (_, i) => MIN_SESSION_TEAM_COUNT + i,
+            ).map((n) => (
+              <option key={n} value={n}>
+                {n} teams
+              </option>
+            ))}
+          </select>
+          <p id="session-team-count-hint" className="mt-1.5 text-xs leading-relaxed text-zinc-500">
+            When set, players pick a team (or Random) after joining.
+          </p>
+        </label>
+      ) : null}
+
       {sessionFeesEnabled ? (
         <p id="session-capacity-waitlist-hint" className="-mt-1 text-xs leading-relaxed text-zinc-500">
           Free sessions can use a waitlist when full. Paid sessions cannot — once capacity is

@@ -6,6 +6,7 @@ import { getEventByRef, formatEventTime, formatInstantInZone, statusLabel, isEve
 import { orgFeatures } from '@/lib/org-features'
 import { getRosterWithContact, splitRosterByStatus } from '@/lib/signups'
 import { formatGuestSuffix } from '@/lib/format-guest-suffix'
+import { sessionTeamLabel, sessionTeamsEnabled, splitRosterByTeam } from '@/lib/session-team'
 import { buildRosterAnalytics, fetchEventAnalyticsDb } from '@/lib/event-analytics'
 import { arrivalStatusEmoji } from '@/lib/arrival-status'
 import { orgBaseUrl } from '@/lib/og-metadata'
@@ -68,8 +69,13 @@ export default async function ConsoleEventAnalyticsPage({ params }: Props) {
   const analytics = buildRosterAnalytics(roster, event.capacity, dbAnalytics)
   const publicEventUrl = `${orgBaseUrl(orgSlug)}${orgPublicEventHref(event.short_id)}`
   const isLive = isEventInProgress(event) && event.status === 'on'
+  const features = orgFeatures(org)
+  const teamsOnSession = sessionTeamsEnabled(features.team_selection, event.team_count)
+  const teamSplit = teamsOnSession
+    ? splitRosterByTeam(roster, event.team_count!)
+    : null
   const showFeedback =
-    orgFeatures(org).session_feedback && isEventEnded(event) && !isEventCancelled(event.status)
+    features.session_feedback && isEventEnded(event) && !isEventCancelled(event.status)
   const showDebrief =
     shouldShowEventDebriefSection(org, isEventEnded(event)) && !isEventCancelled(event.status)
   const hasSignupActivity = analytics.uniqueSignups > 0 || analytics.uniqueLeft > 0
@@ -203,6 +209,95 @@ export default async function ConsoleEventAnalyticsPage({ params }: Props) {
         >
           {roster.length === 0 ? (
             <p className="text-sm text-zinc-500">No sign-ups yet.</p>
+          ) : teamSplit ? (
+            <div className="space-y-4">
+              {teamSplit.teams.map((teamEntries, index) => (
+                <div key={index + 1}>
+                  <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-500">
+                    {sessionTeamLabel(index + 1)} ({teamEntries.length})
+                  </p>
+                  {teamEntries.length === 0 ? (
+                    <p className="text-sm text-zinc-600">Empty</p>
+                  ) : (
+                    <ul className="space-y-2">
+                      {teamEntries.map((e) => {
+                        const payment = paidSession
+                          ? paymentForSignup(payments, e.id, e.participant_id)
+                          : null
+                        return (
+                          <ConsoleCard key={e.id} className="min-w-0 text-sm">
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="min-w-0">
+                                <div className="break-words font-medium text-zinc-100">
+                                  {arrivalStatusEmoji(e.arrival_status, event.location_is_online)}{' '}
+                                  {e.display_name}
+                                  {formatGuestSuffix(e.guest_count)}
+                                </div>
+                                <div className="mt-0.5 text-xs text-zinc-500">
+                                  {e.first_name} {e.last_name} · {e.phone}
+                                </div>
+                              </div>
+                              {payment ? (
+                                <SessionPaymentBadge
+                                  orgSlug={orgSlug}
+                                  eventRef={eventId}
+                                  paymentId={payment.id}
+                                  signupId={e.id}
+                                  participantName={e.display_name}
+                                  amountCents={payment.amount_cents}
+                                  status={payment.status}
+                                />
+                              ) : null}
+                            </div>
+                          </ConsoleCard>
+                        )
+                      })}
+                    </ul>
+                  )}
+                </div>
+              ))}
+              {teamSplit.unassigned.length > 0 ? (
+                <div>
+                  <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-500">
+                    Unassigned ({teamSplit.unassigned.length})
+                  </p>
+                  <ul className="space-y-2">
+                    {teamSplit.unassigned.map((e) => {
+                      const payment = paidSession
+                        ? paymentForSignup(payments, e.id, e.participant_id)
+                        : null
+                      return (
+                        <ConsoleCard key={e.id} className="min-w-0 text-sm">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="min-w-0">
+                              <div className="break-words font-medium text-zinc-100">
+                                {arrivalStatusEmoji(e.arrival_status, event.location_is_online)}{' '}
+                                {e.display_name}
+                                {formatGuestSuffix(e.guest_count)}
+                              </div>
+                              <div className="mt-0.5 text-xs text-zinc-500">
+                                {e.first_name} {e.last_name} · {e.phone}
+                              </div>
+                            </div>
+                            {payment ? (
+                              <SessionPaymentBadge
+                                orgSlug={orgSlug}
+                                eventRef={eventId}
+                                paymentId={payment.id}
+                                signupId={e.id}
+                                participantName={e.display_name}
+                                amountCents={payment.amount_cents}
+                                status={payment.status}
+                              />
+                            ) : null}
+                          </div>
+                        </ConsoleCard>
+                      )
+                    })}
+                  </ul>
+                </div>
+              ) : null}
+            </div>
           ) : (
             <ul className="space-y-2">
               {roster.map((e) => {

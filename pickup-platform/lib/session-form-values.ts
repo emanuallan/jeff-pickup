@@ -12,6 +12,7 @@ export type SessionFormInitial = {
   minPlayers: number | null
   additionalInformation: string
   priceCents: number | null
+  teamCount: number | null
 }
 
 type SessionFormEvent = {
@@ -24,6 +25,7 @@ type SessionFormEvent = {
   min_players: number | null
   additional_information: string
   price_cents?: number | null
+  team_count?: number | null
 }
 
 export function sessionFormInitialFromEvent(event: SessionFormEvent): SessionFormInitial {
@@ -43,5 +45,6 @@ export function sessionFormInitialFromEvent(event: SessionFormEvent): SessionFor
     minPlayers: event.min_players,
     additionalInformation: event.additional_information,
     priceCents: event.price_cents ?? null,
+    teamCount: event.team_count ?? null,
   }
 }

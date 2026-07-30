@@ -27,13 +27,17 @@ import {
   promoteSessionWaitlistSignup,
   removeSessionRosterSignup,
   updateSessionRosterGuestCount,
+  updateSessionRosterTeam,
 } from './roster-actions'
+import { sessionTeamLabel, sessionTeamOptions } from '@/lib/session-team'
 
 type Props = {
   orgSlug: string
   eventRef: string
   guestsEnabled: boolean
   waitlistEnabled: boolean
+  teamSelectionEnabled: boolean
+  teamCount: number | null
   capacity: number | null
   headcount: number
   confirmed: SignupWithContact[]
@@ -44,20 +48,25 @@ type Props = {
 function RosterRow({
   entry,
   guestsEnabled,
+  teamCount,
   waitlistPosition,
   onRemove,
   onPromote,
   onGuestCountChange,
+  onTeamChange,
 }: {
   entry: SignupWithContact
   guestsEnabled: boolean
+  teamCount: number | null
   waitlistPosition?: number
   onRemove: () => Promise<void>
   onPromote?: () => Promise<void>
   onGuestCountChange?: (count: number) => Promise<void>
+  onTeamChange?: (team: number | null) => Promise<void>
 }) {
   const [pending, setPending] = useState(false)
   const [guestPending, setGuestPending] = useState(false)
+  const [teamPending, setTeamPending] = useState(false)
 
   async function handleRemove() {
     const label = entry.display_name
@@ -93,6 +102,29 @@ function RosterRow({
         </div>
 
         <div className="flex flex-wrap items-center gap-1.5">
+          {teamCount != null && onTeamChange ? (
+            <label className="flex items-center gap-2">
+              <span className="text-xs text-zinc-500">Team</span>
+              <select
+                value={entry.team ?? ''}
+                disabled={teamPending || pending}
+                onChange={(event) => {
+                  const raw = event.target.value
+                  const next = raw === '' ? null : Number.parseInt(raw, 10)
+                  setTeamPending(true)
+                  void onTeamChange(next).finally(() => setTeamPending(false))
+                }}
+                className="rounded-lg border border-white/10 bg-zinc-950/60 px-2 py-1.5 text-xs text-zinc-100 outline-none focus:border-indigo-500/50 focus:ring-2 focus:ring-indigo-500/25"
+              >
+                <option value="">Unassigned</option>
+                {sessionTeamOptions(teamCount).map((n) => (
+                  <option key={n} value={n}>
+                    {sessionTeamLabel(n)}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : null}
           {guestsEnabled && onGuestCountChange ? (
             <label className="flex items-center gap-2">
               <span className="text-xs text-zinc-500">Guests</span>
@@ -143,6 +175,8 @@ export function RosterEditPanel({
   eventRef,
   guestsEnabled,
   waitlistEnabled,
+  teamSelectionEnabled,
+  teamCount,
   capacity,
   headcount,
   confirmed,
@@ -221,6 +255,7 @@ export function RosterEditPanel({
                 <RosterRow
                   entry={entry}
                   guestsEnabled={guestsEnabled}
+                  teamCount={teamSelectionEnabled ? teamCount : null}
                   onRemove={async () => {
                     await runAction(
                       () => removeSessionRosterSignup(orgSlug, eventRef, entry.id),
@@ -233,6 +268,16 @@ export function RosterEditPanel({
                       'Guest count updated.',
                     )
                   }}
+                  onTeamChange={
+                    teamSelectionEnabled && teamCount != null
+                      ? async (team) => {
+                          await runAction(
+                            () => updateSessionRosterTeam(orgSlug, eventRef, entry.id, team),
+                            'Team updated.',
+                          )
+                        }
+                      : undefined
+                  }
                 />
               </li>
             ))}
@@ -251,6 +296,7 @@ export function RosterEditPanel({
                   <RosterRow
                     entry={entry}
                     guestsEnabled={guestsEnabled}
+                    teamCount={null}
                     waitlistPosition={index + 1}
                     onPromote={async () => {
                       await runAction(

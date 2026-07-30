@@ -17,6 +17,7 @@ export function makeEvent(overrides: Partial<Event> = {}): Event {
     announcement: '',
     additional_information: '',
     price_cents: null,
+    team_count: null,
     ...overrides,
   }
 }

@@ -10,6 +10,7 @@ import { AddScheduleButton } from '../add-schedule-button'
 import { AddOneOffButton } from '../add-one-off-button'
 import { ConsolePage, ConsoleSection, ConsoleCard, btnSecondary } from '../../_components/console-ui'
 import { getOrgStripeAccount } from '@/lib/sponsorship.server'
+import { orgFeatures } from '@/lib/org-features'
 
 type Props = {
   params: Promise<{ orgSlug: string }>
@@ -53,6 +54,7 @@ export default async function SetupPage({ params }: Props) {
   const hasLocation = counts.locationCount > 0
   const hasSessions = counts.scheduleCount > 0 || counts.oneOffEventCount > 0
   const sessionFeesEnabled = Boolean(stripeAccount?.charges_enabled)
+  const teamSelectionEnabled = orgFeatures(org).team_selection
   const isComplete = isOrgConsoleSetupComplete({
     locationCount: counts.locationCount,
     scheduleCount: counts.scheduleCount,
@@ -140,6 +142,7 @@ export default async function SetupPage({ params }: Props) {
                   createOneOff={createOneOff}
                   className={btnSecondary}
                   sessionFeesEnabled={sessionFeesEnabled}
+                  teamSelectionEnabled={teamSelectionEnabled}
                 />
               </div>
             ) : !hasLocation ? (
