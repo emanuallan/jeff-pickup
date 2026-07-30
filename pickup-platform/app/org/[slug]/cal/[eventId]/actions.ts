@@ -143,6 +143,65 @@ export async function clearParticipantSession(
   return {}
 }
 
+/**
+ * Persist a soft participant + device session without joining the event.
+ * Used when a new user continues into paid checkout so abandoning Stripe still
+ * leaves them recognized on return.
+ */
+export async function ensureSoftParticipant(
+  orgSlug: string,
+  profile: {
+    firstName: string
+    lastName: string
+    phone: string
+    email?: string | null
+  },
+): Promise<{ error?: string }> {
+  const org = await getPublicOrgBySlug(orgSlug)
+  if (!org) {
+    return { error: 'Organization not found.' }
+  }
+
+  const phone = normalizePhoneDigits(profile.phone)
+  const firstName = profile.firstName.trim()
+  const lastName = profile.lastName.trim()
+
+  if (!isValidPhoneDigits(phone) || !firstName || !lastName) {
+    return { error: 'Enter your name and phone to continue.' }
+  }
+
+  const nameError = validateDemoParticipantNames(orgSlug, {
+    firstName,
+    lastName,
+    displayName: null,
+  })
+  if (nameError) {
+    return { error: nameError }
+  }
+
+  const supabase = await createClient()
+  const { data, error } = await supabase.rpc('ensure_soft_participant', {
+    p_org_id: org.id,
+    p_phone: phone,
+    p_first_name: firstName,
+    p_last_name: lastName,
+    p_email: profile.email?.trim() ? profile.email.trim() : null,
+  })
+
+  if (error || !data) {
+    return { error: error?.message || 'Could not save your profile.' }
+  }
+
+  const result = data as { session_token?: string } | null
+  if (!result?.session_token) {
+    return { error: 'Could not save your profile.' }
+  }
+
+  await setSessionToken(String(result.session_token))
+  revalidatePath(`/org/${orgSlug}`)
+  return {}
+}
+
 export async function recoverSession(
   orgSlug: string,
   eventId: string,

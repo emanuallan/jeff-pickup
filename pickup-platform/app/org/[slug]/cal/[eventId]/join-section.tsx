@@ -7,6 +7,7 @@ import {
   quickJoinEvent,
   recoverSession,
   clearParticipantSession,
+  ensureSoftParticipant,
 } from './actions'
 import { arrowRight } from '@/lib/text-arrows'
 import { PhoneInput } from '@/app/_components/phone-input'
@@ -271,12 +272,23 @@ function PaidJoinSection({
       return
     }
 
+    setFormError(null)
+
+    const saved = await ensureSoftParticipant(orgSlug, {
+      firstName: trimmedFirst,
+      lastName: trimmedLast,
+      phone,
+    })
+    if (saved.error) {
+      setFormError(saved.error)
+      return
+    }
+
     setLocalProfile({
       firstName: trimmedFirst,
       lastName: trimmedLast,
       phone,
     })
-    setFormError(null)
 
     const needsRules =
       groupRulesEnabled === true &&

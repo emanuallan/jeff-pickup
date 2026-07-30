@@ -17,6 +17,11 @@ import { isValidEmail, normalizeLoginEmail } from '@/lib/login-otp'
 import { getParticipantCookieOptions } from '@/lib/auth-cookies'
 import { SESSION_COOKIE } from '@/lib/participant-session'
 
+function withSoftSessionCookie(response: NextResponse, sessionToken: string) {
+  response.cookies.set(SESSION_COOKIE, sessionToken, getParticipantCookieOptions())
+  return response
+}
+
 export async function POST(request: Request) {
   let body: Record<string, unknown>
   try {
@@ -111,21 +116,30 @@ export async function POST(request: Request) {
     .maybeSingle()
 
   if (!stripeAccount?.charges_enabled || !stripeAccount.stripe_account_id) {
-    return NextResponse.json(
-      { error: 'This group is not set up to accept payments yet.' },
-      { status: 400 },
+    return withSoftSessionCookie(
+      NextResponse.json(
+        { error: 'This group is not set up to accept payments yet.' },
+        { status: 400 },
+      ),
+      sessionToken,
     )
   }
 
   const amountCentsPerPerson = event.price_cents ?? 0
   if (amountCentsPerPerson <= 0) {
-    return NextResponse.json({ error: 'Invalid session price.' }, { status: 400 })
+    return withSoftSessionCookie(
+      NextResponse.json({ error: 'Invalid session price.' }, { status: 400 }),
+      sessionToken,
+    )
   }
 
   const headcount = paidSessionHeadcount(guestCount)
   const amountCents = sessionPaymentTotalCents(amountCentsPerPerson, guestCount)
   if (amountCents <= 0) {
-    return NextResponse.json({ error: 'Invalid session price.' }, { status: 400 })
+    return withSoftSessionCookie(
+      NextResponse.json({ error: 'Invalid session price.' }, { status: 400 }),
+      sessionToken,
+    )
   }
 
   const feePercent = getPlatformFeePercent()
@@ -148,12 +162,15 @@ export async function POST(request: Request) {
 
   if (paymentError || !payment) {
     console.error('event_payments insert failed', paymentError)
-    return NextResponse.json(
-      {
-        error: 'Could not start payment.',
-        detail: paymentError?.message ?? 'Insert returned no row.',
-      },
-      { status: 500 },
+    return withSoftSessionCookie(
+      NextResponse.json(
+        {
+          error: 'Could not start payment.',
+          detail: paymentError?.message ?? 'Insert returned no row.',
+        },
+        { status: 500 },
+      ),
+      sessionToken,
     )
   }
 
@@ -212,12 +229,13 @@ export async function POST(request: Request) {
       .eq('id', payment.id)
 
     if (!session.url) {
-      return NextResponse.json({ error: 'Could not create checkout.' }, { status: 500 })
+      return withSoftSessionCookie(
+        NextResponse.json({ error: 'Could not create checkout.' }, { status: 500 }),
+        sessionToken,
+      )
     }
 
-    const response = NextResponse.json({ url: session.url })
-    response.cookies.set(SESSION_COOKIE, sessionToken, getParticipantCookieOptions())
-    return response
+    return withSoftSessionCookie(NextResponse.json({ url: session.url }), sessionToken)
   } catch (err) {
     console.error('session payment checkout failed', err)
     await admin.from('event_payments').update({ status: 'failed' }).eq('id', payment.id)
@@ -227,9 +245,9 @@ export async function POST(request: Request) {
         : err instanceof Error
           ? err.message
           : 'Stripe checkout failed.'
-    return NextResponse.json(
-      { error: 'Could not start checkout.', detail },
-      { status: 500 },
+    return withSoftSessionCookie(
+      NextResponse.json({ error: 'Could not start checkout.', detail }, { status: 500 }),
+      sessionToken,
     )
   }
 }
