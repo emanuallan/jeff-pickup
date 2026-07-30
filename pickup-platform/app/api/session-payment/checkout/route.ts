@@ -13,6 +13,7 @@ import {
 import { resolveGuestCount } from '@/lib/guest-signups'
 import { orgFeatures } from '@/lib/org-features'
 import { normalizePhoneDigits, isValidPhoneDigits } from '@/lib/phone'
+import { isValidEmail, normalizeLoginEmail } from '@/lib/login-otp'
 import { getParticipantCookieOptions } from '@/lib/auth-cookies'
 import { SESSION_COOKIE } from '@/lib/participant-session'
 
@@ -30,6 +31,7 @@ export async function POST(request: Request) {
   const phone = normalizePhoneDigits(String(body.phone ?? ''))
   const firstName = String(body.firstName ?? '').trim()
   const lastName = String(body.lastName ?? '').trim()
+  const email = normalizeLoginEmail(String(body.email ?? ''))
 
   if (!slug || !eventRef) {
     return NextResponse.json({ error: 'Missing session details.' }, { status: 400 })
@@ -38,6 +40,13 @@ export async function POST(request: Request) {
   if (!isValidPhoneDigits(phone) || !firstName || !lastName) {
     return NextResponse.json(
       { error: 'Enter your name and phone to continue.', code: 'profile_required' },
+      { status: 400 },
+    )
+  }
+
+  if (!isValidEmail(email)) {
+    return NextResponse.json(
+      { error: 'Enter a valid email address.', code: 'email_required' },
       { status: 400 },
     )
   }
@@ -72,6 +81,7 @@ export async function POST(request: Request) {
       p_phone: phone,
       p_first_name: firstName,
       p_last_name: lastName,
+      p_email: email,
     },
   )
 
@@ -171,6 +181,7 @@ export async function POST(request: Request) {
         ],
         success_url: `${baseUrl}/?cal=${encodeURIComponent(event.short_id)}&paid=1&session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${baseUrl}/?cal=${encodeURIComponent(event.short_id)}&paid=0`,
+        customer_email: email,
         metadata: {
           checkout_kind: 'session_payment',
           org_id: org.id,

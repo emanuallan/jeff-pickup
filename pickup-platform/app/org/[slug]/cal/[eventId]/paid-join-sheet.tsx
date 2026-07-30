@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { BottomSheet } from '@/app/_components/bottom-sheet'
 import { GuestCountSelect } from './guest-count-select'
 import { isValidPhoneDigits } from '@/lib/phone'
+import { isValidEmail, normalizeLoginEmail } from '@/lib/login-otp'
 import {
   formatPriceCents,
   paidSessionHeadcount,
@@ -14,6 +15,7 @@ export type KnownParticipantProfile = {
   firstName: string
   lastName: string
   phone: string
+  email?: string | null
 }
 
 type Props = {
@@ -35,7 +37,8 @@ type Props = {
 }
 
 /**
- * Confirm + pay for a paid session using soft phone identity (no email OTP).
+ * Confirm + pay for a paid session using soft phone identity.
+ * Collects email once for receipts / Stripe Checkout prefill.
  */
 export function PaidJoinSheet({
   open,
@@ -53,15 +56,17 @@ export function PaidJoinSheet({
   initialGuestCount = 0,
 }: Props) {
   const [guestCount, setGuestCount] = useState(initialGuestCount)
+  const [email, setEmail] = useState(normalizeLoginEmail(knownProfile.email ?? ''))
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
 
   useEffect(() => {
     if (!open) return
     setGuestCount(initialGuestCount)
+    setEmail(normalizeLoginEmail(knownProfile.email ?? ''))
     setBusy(false)
     setMessage(null)
-  }, [open, initialGuestCount])
+  }, [open, initialGuestCount, knownProfile.email])
 
   const totalCents = sessionPaymentTotalCents(
     priceCents,
@@ -81,6 +86,12 @@ export function PaidJoinSheet({
       return
     }
 
+    const normalizedEmail = normalizeLoginEmail(email)
+    if (!isValidEmail(normalizedEmail)) {
+      setMessage('Enter a valid email address.')
+      return
+    }
+
     setBusy(true)
     setMessage(null)
     try {
@@ -95,6 +106,7 @@ export function PaidJoinSheet({
           firstName: knownProfile.firstName.trim(),
           lastName: knownProfile.lastName.trim(),
           phone: knownProfile.phone,
+          email: normalizedEmail,
         }),
       })
       const payload = (await res.json()) as {
@@ -117,6 +129,9 @@ export function PaidJoinSheet({
       setBusy(false)
     }
   }
+
+  const inputClass =
+    'mt-1 w-full rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2.5 text-base outline-none transition-colors focus:border-transparent focus:ring-2 sm:text-sm'
 
   return (
     <BottomSheet
@@ -141,6 +156,25 @@ export function PaidJoinSheet({
             {knownProfile.firstName} {knownProfile.lastName}
           </p>
         </div>
+
+        <label className="block">
+          <span className="text-xs text-zinc-500">Email</span>
+          <input
+            type="email"
+            name="email"
+            autoComplete="email"
+            aria-label="Email"
+            required
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            placeholder="you@example.com"
+            className={inputClass}
+            style={{ '--tw-ring-color': accent } as React.CSSProperties}
+          />
+          <span className="mt-1 block text-xs text-zinc-500">
+            Used for your receipt and to speed up checkout next time.
+          </span>
+        </label>
 
         {showGuestSelect && guestsEnabled ? (
           <label className="block">

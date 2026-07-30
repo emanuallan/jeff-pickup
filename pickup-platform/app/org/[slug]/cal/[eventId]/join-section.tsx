@@ -521,6 +521,7 @@ export function JoinSection(props: Props) {
       firstName: props.participant.first_name,
       lastName: props.participant.last_name,
       phone: props.participant.phone,
+      email: props.participant.email ?? null,
     }
   }, [
     capturedProfile,
@@ -528,6 +529,7 @@ export function JoinSection(props: Props) {
     props.participant?.first_name,
     props.participant?.last_name,
     props.participant?.phone,
+    props.participant?.email,
   ])
 
   useEffect(() => {

@@ -16,16 +16,11 @@ describe('PaidJoinSheet', () => {
     vi.unstubAllGlobals()
   })
 
-  it('starts checkout with soft profile details', async () => {
+  it('starts checkout with soft profile details and email', async () => {
     const user = userEvent.setup()
     fetchMock.mockResolvedValue({
       ok: true,
       json: async () => ({ url: 'https://checkout.stripe.test/session' }),
-    })
-    const assignMock = vi.fn()
-    Object.defineProperty(window, 'location', {
-      configurable: true,
-      value: { ...window.location, href: '', assign: assignMock },
     })
 
     render(
@@ -48,6 +43,7 @@ describe('PaidJoinSheet', () => {
       />,
     )
 
+    await user.type(screen.getByLabelText(/^email$/i), 'ada@example.com')
     await user.click(screen.getByRole('button', { name: /pay · \$15\.00/i }))
 
     await waitFor(() => {
@@ -68,7 +64,46 @@ describe('PaidJoinSheet', () => {
       firstName: 'Ada',
       lastName: 'Lovelace',
       phone: '12025550101',
+      email: 'ada@example.com',
     })
+  })
+
+  it('prefills a known email and requires a valid address', async () => {
+    const user = userEvent.setup()
+    fetchMock.mockResolvedValue({
+      ok: true,
+      json: async () => ({ url: 'https://checkout.stripe.test/session' }),
+    })
+
+    render(
+      <PaidJoinSheet
+        open
+        onClose={() => {}}
+        orgSlug="demo"
+        eventId="event-1"
+        accent="#2563eb"
+        accentText="#fff"
+        priceLabel="$5.00"
+        priceCents={500}
+        joiningWaitlist={false}
+        guestsEnabled={false}
+        knownProfile={{
+          firstName: 'Ada',
+          lastName: 'Lovelace',
+          phone: '12025550101',
+          email: 'ada@example.com',
+        }}
+      />,
+    )
+
+    expect(screen.getByLabelText(/^email$/i)).toHaveValue('ada@example.com')
+
+    await user.clear(screen.getByLabelText(/^email$/i))
+    await user.type(screen.getByLabelText(/^email$/i), 'not-an-email')
+    await user.click(screen.getByRole('button', { name: /pay · \$5\.00/i }))
+
+    expect(await screen.findByText(/enter a valid email address/i)).toBeInTheDocument()
+    expect(fetchMock).not.toHaveBeenCalled()
   })
 
   it('shows checkout errors from the API', async () => {
@@ -94,6 +129,7 @@ describe('PaidJoinSheet', () => {
           firstName: 'Ada',
           lastName: 'Lovelace',
           phone: '12025550101',
+          email: 'ada@example.com',
         }}
       />,
     )

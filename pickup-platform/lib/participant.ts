@@ -8,6 +8,7 @@ export type Participant = {
   last_name: string
   display_name: string
   phone: string
+  email?: string | null
 }
 
 export type MySignup = {

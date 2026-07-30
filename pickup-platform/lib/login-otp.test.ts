@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   isCompleteOtp,
+  isValidEmail,
   normalizeLoginEmail,
   normalizeOtpInput,
   OTP_LENGTH,
@@ -9,6 +10,13 @@ import {
 describe('login-otp', () => {
   it('normalizes email', () => {
     expect(normalizeLoginEmail('  User@Example.COM ')).toBe('user@example.com')
+  })
+
+  it('validates email format', () => {
+    expect(isValidEmail('ada@example.com')).toBe(true)
+    expect(isValidEmail('  Ada@Example.COM ')).toBe(true)
+    expect(isValidEmail('not-an-email')).toBe(false)
+    expect(isValidEmail('')).toBe(false)
   })
 
   it('strips non-digits from OTP input', () => {
