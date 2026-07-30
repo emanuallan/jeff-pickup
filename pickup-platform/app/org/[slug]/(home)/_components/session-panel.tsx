@@ -18,6 +18,7 @@ import {
   EventLocationRow,
   EventTimingBadge,
   SessionPriceBadge,
+  SessionTeamsBadge,
   eventName,
   isEventCancelled,
   cancelledEventClasses,
@@ -26,6 +27,8 @@ import { EventAnnouncementBanner } from '../../_components/event-announcement-ba
 import { ORG_PUBLIC_DESKTOP_STICKY_CARD, ORG_PUBLIC_SESSION_PANEL_GRID } from '@/lib/org-public-layout'
 import { getLiveEventPriceCents } from '@/lib/event-price'
 import { isPaidSession } from '@/lib/session-payment'
+import { orgFeatures } from '@/lib/org-features'
+import { sessionTeamsEnabled } from '@/lib/session-team'
 
 type Props = {
   slug: string
@@ -54,6 +57,7 @@ export async function SessionPanel({ slug, org, event, eventId }: Props) {
   const livePriceCents = await getLiveEventPriceCents(org.id, eventId)
   const priceCents = livePriceCents ?? event.price_cents
   const paidSession = isPaidSession(priceCents)
+  const teamsOnSession = sessionTeamsEnabled(orgFeatures(org).team_selection, event.team_count)
 
   return (
     <>
@@ -122,6 +126,9 @@ export async function SessionPanel({ slug, org, event, eventId }: Props) {
                 cancelled={isCancelled}
               />
             </Suspense>
+            {teamsOnSession ? (
+              <SessionTeamsBadge teamCount={event.team_count} cancelled={isCancelled} />
+            ) : null}
             <Suspense fallback={null}>
               <WeatherPill
                 lat={event.location_lat}

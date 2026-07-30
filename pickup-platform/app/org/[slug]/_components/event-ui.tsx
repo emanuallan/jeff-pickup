@@ -574,3 +574,27 @@ export function SessionPriceBadge({
   )
 }
 
+/** Teams badge for sessions with a team_count set — matches the session meta chips. */
+export function SessionTeamsBadge({
+  teamCount,
+  cancelled = false,
+  className,
+}: {
+  teamCount: number | null | undefined
+  cancelled?: boolean
+  className?: string
+}) {
+  if (teamCount == null || teamCount < 2) return null
+
+  return (
+    <span
+      className={`rounded-lg bg-zinc-800/60 px-2.5 py-1 ${
+        cancelled ? 'text-zinc-500' : 'text-zinc-300'
+      }${className ? ` ${className}` : ''}`}
+      title={`This session splits into ${teamCount} teams`}
+    >
+      {teamCount} teams
+    </span>
+  )
+}
+
