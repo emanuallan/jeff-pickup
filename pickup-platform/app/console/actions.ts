@@ -480,13 +480,17 @@ export async function updateEvent(
 
   if (nextTeamCount == null) {
     // Leave existing team values; UI hides them when teams are off.
-  } else if (event.team_count == null || nextTeamCount < event.team_count) {
-    await supabase
-      .from('signups')
-      .update({ team: null })
-      .eq('event_id', event.id)
-      .not('team', 'is', null)
-      .gt('team', nextTeamCount)
+  } else {
+    if (nextTeamCount < (event.team_count ?? nextTeamCount)) {
+      await supabase
+        .from('signups')
+        .update({ team: null })
+        .eq('event_id', event.id)
+        .not('team', 'is', null)
+        .gt('team', nextTeamCount)
+    }
+    // Covers turning teams on mid-session and re-placing anyone a shrink cleared.
+    await supabase.rpc('assign_missing_teams', { p_event_id: event.id })
   }
 
   await supabase.rpc('maybe_promote_event', { p_event_id: event.id })

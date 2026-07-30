@@ -1,8 +1,8 @@
 'use client'
 
-import { useRef, useState, useEffect, useTransition } from 'react'
+import { useRef, useState, useEffect, useTransition, type ReactNode } from 'react'
 import { useRouter } from 'next/navigation'
-import { leaveEvent, updateArrivalStatus, updateGuestCount } from './actions'
+import { leaveEvent, updateArrivalStatus, updateGuestCount, updateSignupTeam } from './actions'
 import { GuestCountSelect } from './guest-count-select'
 import {
   arrivalStatuses,
@@ -161,8 +161,9 @@ export function RosterList(props: {
   variant?: 'confirmed' | 'waitlist'
   teamSelection?: boolean
   teamCount?: number
+  /** Lets you move yourself between teams straight from the column headers. */
+  canPickTeam?: boolean
   onOpenStatusSheet?: () => void
-  onOpenTeamSheet?: () => void
 }) {
   const router = useRouter()
   const [, startTransition] = useTransition()
@@ -175,6 +176,28 @@ export function RosterList(props: {
   const isWaitlist = props.variant === 'waitlist'
   const teamCount = props.teamCount ?? 0
   const showTeams = Boolean(props.teamSelection) && teamCount >= 2 && !isWaitlist
+  const [switchingTeam, setSwitchingTeam] = useState<number | null>(null)
+  const myTeam = props.entries.find((e) => e.id === props.mySignupId)?.team ?? null
+  const canSwitchTeams = Boolean(
+    showTeams && props.canPickTeam && props.mySignupId && props.orgSlug && props.eventId,
+  )
+
+  async function switchTeam(team: number) {
+    if (!props.orgSlug || !props.eventId || !props.mySignupId) return
+
+    setSwitchingTeam(team)
+    setError(null)
+    const result = await updateSignupTeam(props.orgSlug, props.eventId, props.mySignupId, team)
+    setSwitchingTeam(null)
+
+    if (result.error) {
+      setError(result.error)
+      return
+    }
+    startTransition(() => {
+      router.refresh()
+    })
+  }
 
   useEffect(() => {
     knownIdsRef.current = new Set(props.entries.map((entry) => entry.id))
@@ -234,15 +257,6 @@ export function RosterList(props: {
               </span>
               {e.guest_count > 0 ? (
                 <span className="text-zinc-400">{formatGuestSuffix(e.guest_count)}</span>
-              ) : null}
-              {showTeams && props.onOpenTeamSheet ? (
-                <button
-                  type="button"
-                  onClick={props.onOpenTeamSheet}
-                  className="ml-0.5 rounded-md border border-zinc-700 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-zinc-300 transition-colors hover:bg-white/5"
-                >
-                  {sessionTeamLabel(e.team ?? null)}
-                </button>
               ) : null}
             </span>
             <span className="inline-flex shrink-0 items-center gap-1.5">
@@ -341,12 +355,26 @@ export function RosterList(props: {
         <div className={gridClass}>
           {teams.map((teamEntries, index) => (
             <div key={index + 1}>
-              <h3 className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
-                Team {index + 1}{' '}
-                <span className="tabular-nums text-zinc-600">
-                  ({teamHeadcount(teamEntries)})
-                </span>
-              </h3>
+              <div className="flex items-center justify-between gap-2">
+                <h3 className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
+                  Team {index + 1}{' '}
+                  <span className="tabular-nums text-zinc-600">
+                    ({teamHeadcount(teamEntries)})
+                  </span>
+                </h3>
+                {canSwitchTeams && myTeam !== index + 1 ? (
+                  <button
+                    type="button"
+                    aria-label={`Join Team ${index + 1}`}
+                    disabled={switchingTeam != null}
+                    onClick={() => switchTeam(index + 1)}
+                    className="rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide transition-colors hover:bg-white/5 disabled:opacity-40"
+                    style={{ borderColor: hexToRgba(accentFg, 0.4), color: accentFg }}
+                  >
+                    Join
+                  </button>
+                ) : null}
+              </div>
               <ul className="mt-2 space-y-2">
                 {teamEntries.length > 0 ? (
                   renderRows(teamEntries)

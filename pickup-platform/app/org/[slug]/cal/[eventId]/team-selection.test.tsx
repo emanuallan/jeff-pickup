@@ -3,7 +3,6 @@ import { cleanup, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { makeRosterEntry } from '@/test/fixtures/events'
 import { RosterList } from './roster-list'
-import { TeamPicker } from './team-picker'
 
 afterEach(() => {
   cleanup()
@@ -79,27 +78,55 @@ describe('team selection UI', () => {
     expect(screen.queryByText('Unassigned')).not.toBeInTheDocument()
   })
 
-  it('TeamPicker offers Team 1..N and Random', async () => {
+  it('offers Join on every team except the one you are already on', () => {
+    render(
+      <RosterList
+        entries={[makeRosterEntry({ id: 'a', display_name: 'Ada', team: 2 })]}
+        mySignupId="a"
+        canPickTeam
+        orgSlug="demo"
+        eventId="evt"
+        teamSelection
+        teamCount={3}
+      />,
+    )
+
+    expect(screen.getByRole('button', { name: 'Join Team 1' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Join Team 2' })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Join Team 3' })).toBeInTheDocument()
+  })
+
+  it('switches you to the team whose column you clicked', async () => {
     const user = userEvent.setup()
     updateSignupTeam.mockClear()
 
     render(
-      <TeamPicker
+      <RosterList
+        entries={[makeRosterEntry({ id: 'a', display_name: 'Ada', team: 1 })]}
+        mySignupId="a"
+        canPickTeam
         orgSlug="demo"
         eventId="evt"
-        signupId="signup-1"
-        teamCount={3}
-        currentTeam={null}
-        accent="#2563eb"
+        teamSelection
+        teamCount={2}
       />,
     )
 
-    expect(screen.getByRole('button', { name: 'Team 1' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Team 2' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Team 3' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Random' })).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Join Team 2' }))
+    expect(updateSignupTeam).toHaveBeenCalledWith('demo', 'evt', 'a', 2)
+  })
 
-    await user.click(screen.getByRole('button', { name: 'Team 2' }))
-    expect(updateSignupTeam).toHaveBeenCalledWith('demo', 'evt', 'signup-1', 2)
+  it('hides Join for onlookers who cannot pick a team', () => {
+    render(
+      <RosterList
+        entries={[makeRosterEntry({ id: 'a', display_name: 'Ada', team: 1 })]}
+        orgSlug="demo"
+        eventId="evt"
+        teamSelection
+        teamCount={2}
+      />,
+    )
+
+    expect(screen.queryByRole('button', { name: 'Join Team 2' })).not.toBeInTheDocument()
   })
 })

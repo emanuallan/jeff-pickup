@@ -11,7 +11,6 @@ import { leaveEvent } from './actions'
 import { useParticipationMotion } from './participation-motion'
 import { SIGNUP_CONFIRMATION_ID } from './scroll-to-my-roster'
 import { SignedInGuestSection } from './signed-in-guest-section'
-import { SignedInTeamSection } from './signed-in-team-section'
 import type { SignupListStatus } from '@/lib/signups'
 
 type Props = {
@@ -25,12 +24,10 @@ type Props = {
   canLeave: boolean
   canUpdateStatus: boolean
   onOpenStatusSheet?: () => void
-  onOpenTeamSheet?: () => void
   showAccountActions: boolean
   listStatus: SignupListStatus
   guestsEnabled?: boolean
   teamSelectionEnabled?: boolean
-  teamCount?: number
 }
 
 export function SignupConfirmationCard({
@@ -44,12 +41,10 @@ export function SignupConfirmationCard({
   canLeave,
   canUpdateStatus,
   onOpenStatusSheet,
-  onOpenTeamSheet,
   showAccountActions,
   listStatus,
   guestsEnabled = true,
   teamSelectionEnabled = false,
-  teamCount = 0,
 }: Props) {
   const router = useRouter()
   const [, startTransition] = useTransition()
@@ -122,40 +117,13 @@ export function SignupConfirmationCard({
             </div>
           ) : null}
 
-          {showTeam && canUpdateStatus ? (
-            onOpenTeamSheet ? (
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">
-                    Your team
-                  </p>
-                  <p className="mt-1 text-sm text-zinc-300">
-                    {sessionTeamLabel(mySignup.team ?? null)}
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={onOpenTeamSheet}
-                  className="rounded-full border px-3.5 py-2 text-xs font-medium transition-colors hover:bg-white/5"
-                  style={{
-                    borderColor: hexToRgba(accent, 0.35),
-                    color: accentOnDark(accent),
-                  }}
-                >
-                  {mySignup.team ? 'Change team' : 'Pick team'}
-                </button>
-              </div>
-            ) : (
-              <SignedInTeamSection
-                orgSlug={orgSlug}
-                eventId={eventId}
-                signupId={mySignup.signup_id}
-                teamCount={teamCount}
-                team={mySignup.team ?? null}
-                accent={accent}
-                embedded
-              />
-            )
+          {showTeam && mySignup.team != null ? (
+            <p className="text-sm text-zinc-400">
+              You&rsquo;re on{' '}
+              <span className="font-semibold" style={{ color: accentOnDark(accent) }}>
+                {sessionTeamLabel(mySignup.team)}
+              </span>
+            </p>
           ) : null}
 
           <SignedInGuestSection

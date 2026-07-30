@@ -1,4 +1,5 @@
 import type { ArrivalStatus } from '@/lib/arrival-status'
+import { parseSignupTeam } from '@/lib/session-team'
 import type { RosterEntry, SignupListStatus } from '@/lib/signups'
 
 export const LIVE_SESSION_POLL_MS = 20_000
@@ -44,6 +45,7 @@ function parseRosterEntry(value: unknown, listStatus?: SignupListStatus): Roster
     display_name: value.display_name,
     guest_count: value.guest_count,
     arrival_status: parseArrivalStatus(value.arrival_status),
+    team: parseSignupTeam(value.team),
     created_at: value.created_at,
     list_status: listStatus ?? (value.list_status === 'waitlisted' ? 'waitlisted' : 'confirmed'),
   }

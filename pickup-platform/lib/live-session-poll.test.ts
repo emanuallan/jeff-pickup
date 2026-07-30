@@ -33,9 +33,23 @@ describe('live-session-poll', () => {
     ).toEqual({
       headcount: 2,
       status: 'on',
-      roster: [{ ...roster[0], list_status: 'confirmed' }],
-      waitlist: [{ ...waitlist[0], list_status: 'waitlisted' }],
+      roster: [{ ...roster[0], list_status: 'confirmed', team: null }],
+      waitlist: [{ ...waitlist[0], list_status: 'waitlisted', team: null }],
     })
+  })
+
+  it('keeps team assignments so polling does not reset players to unassigned', () => {
+    const payload = parseLiveSessionPayload({
+      headcount: 2,
+      roster: [
+        makeRosterEntry({ id: 's1', display_name: 'Alex', team: 2 }),
+        makeRosterEntry({ id: 's2', display_name: 'Sam', team: null }),
+      ],
+      waitlist: [],
+    })
+
+    expect(payload?.roster[0]?.team).toBe(2)
+    expect(payload?.roster[1]?.team).toBeNull()
   })
 
   it('rejects payloads without a numeric headcount', () => {
