@@ -44,7 +44,7 @@ describe('PaidJoinSheet', () => {
     )
 
     await user.type(screen.getByLabelText(/^email$/i), 'ada@example.com')
-    await user.click(screen.getByRole('button', { name: /pay · \$15\.00/i }))
+    await user.click(screen.getByRole('button', { name: /checkout · \$15\.00/i }))
 
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledWith(
@@ -101,7 +101,7 @@ describe('PaidJoinSheet', () => {
     expect(screen.queryByLabelText(/^email$/i)).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /change/i })).not.toBeInTheDocument()
 
-    await user.click(screen.getByRole('button', { name: /pay · \$5\.00/i }))
+    await user.click(screen.getByRole('button', { name: /checkout · \$5\.00/i }))
 
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledOnce()
@@ -142,7 +142,7 @@ describe('PaidJoinSheet', () => {
     expect(screen.getByText(/^total$/i)).toBeInTheDocument()
     expect(screen.getByText(/charged once at checkout/i)).toBeInTheDocument()
     expect(screen.getByText(/refunds are handled by the group admin/i)).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /pay · \$30\.00/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /checkout · \$30\.00/i })).toBeInTheDocument()
   })
 
   it('shows a generic message when checkout fails to start', async () => {
@@ -176,7 +176,7 @@ describe('PaidJoinSheet', () => {
       />,
     )
 
-    await user.click(screen.getByRole('button', { name: /pay · \$5\.00/i }))
+    await user.click(screen.getByRole('button', { name: /checkout · \$5\.00/i }))
 
     await waitFor(() => {
       expect(

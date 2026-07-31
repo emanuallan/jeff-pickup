@@ -282,7 +282,7 @@ export function PaidJoinSheet({
           ) : (
             <>
               <LockIcon className="size-4" />
-              {`Pay · ${totalLabel}`}
+              {`Checkout · ${totalLabel}`}
             </>
           )}
         </button>
