@@ -29,6 +29,7 @@ import { SponsorshipFeatureToggle } from './sponsorship-feature-toggle'
 import { SponsorshipIntroForm } from './sponsorship-intro-form'
 import { SponsorshipTiersSection } from './sponsorship-tiers-section'
 import { SponsorshipRequestsSection } from './sponsorship-requests-section'
+import { ComplimentarySponsorForm } from './complimentary-sponsor-form'
 import { SponsorshipOverviewStats } from './sponsorship-overview-stats'
 import { SponsorshipPayoutsPanel } from './sponsorship-payouts-panel'
 
@@ -163,6 +164,16 @@ export default async function SponsorshipConsolePage({ params, searchParams }: P
 
         <div className="space-y-3">
           <ConsoleGroupLabel>Sponsors</ConsoleGroupLabel>
+          <ComplimentarySponsorForm
+            orgSlug={orgSlug}
+            tiers={tiers.map((tier) => ({
+              id: tier.id,
+              name: tier.name,
+              price_cents: tier.price_cents,
+              currency: tier.currency,
+              sort_order: tier.sort_order,
+            }))}
+          />
           <SponsorshipRequestsSection
             orgSlug={orgSlug}
             pending={pending}

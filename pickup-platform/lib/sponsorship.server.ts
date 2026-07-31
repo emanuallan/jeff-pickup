@@ -30,6 +30,7 @@ export type SponsorshipRow = {
   monthly_amount_cents: number
   currency: string
   subscription_status: string | null
+  stripe_subscription_id?: string | null
   created_at: string
   updated_at?: string | null
   approved_at: string | null

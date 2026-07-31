@@ -14,6 +14,7 @@ import { useConsoleToast } from '../../_components/console-toast'
 import {
   formatSponsorshipConsoleDate,
   formatTierPrice,
+  isComplimentarySponsorship,
   type SponsorshipCancelMode,
   sponsorshipHistoryDateIso,
   sponsorshipHistoryStatusLabel,
@@ -116,8 +117,12 @@ export function SponsorshipRequestsSection({
   async function handleCancel(id: string, mode: SponsorshipCancelMode) {
     if (busy) return
 
-    const confirmed =
-      mode === 'end_of_period'
+    const target = activeRows.find((row) => row.id === id)
+    const complimentary = target ? isComplimentarySponsorship(target) : false
+
+    const confirmed = complimentary
+      ? window.confirm('Remove this complimentary sponsor? Their logo comes down immediately.')
+      : mode === 'end_of_period'
         ? window.confirm(
             'Cancel billing after this period? Their logo stays up until the period ends. Past payments are not refunded.',
           )
@@ -132,7 +137,7 @@ export function SponsorshipRequestsSection({
 
     setBusy({ id, action: 'cancel' })
     try {
-      const result = await cancelSponsorship(orgSlug, id, mode)
+      const result = await cancelSponsorship(orgSlug, id, complimentary ? 'refund_now' : mode)
       if (result?.error) {
         toast.error(result.error)
         return
@@ -141,7 +146,7 @@ export function SponsorshipRequestsSection({
       const nowIso = new Date().toISOString()
       const moved = activeRows.find((row) => row.id === id)
       if (moved) {
-        if (mode === 'end_of_period') {
+        if (!complimentary && mode === 'end_of_period') {
           setActiveRows((rows) =>
             rows.map((row) =>
               row.id === id
@@ -168,11 +173,13 @@ export function SponsorshipRequestsSection({
       }
 
       toast.success(
-        mode === 'end_of_period'
-          ? 'Sponsorship will end after this period. Logo stays until then.'
-          : mode === 'refund_full'
-            ? 'Sponsorship canceled with a full refund.'
-            : 'Sponsorship canceled and latest payment refunded (fees kept).',
+        complimentary
+          ? 'Complimentary sponsor removed.'
+          : mode === 'end_of_period'
+            ? 'Sponsorship will end after this period. Logo stays until then.'
+            : mode === 'refund_full'
+              ? 'Sponsorship canceled with a full refund.'
+              : 'Sponsorship canceled and latest payment refunded (fees kept).',
       )
       router.refresh()
     } catch {
@@ -239,30 +246,43 @@ export function SponsorshipRequestsSection({
               const rowBusy = isBusy(row.id)
               const showing = row.status === 'hidden'
               const ending = Boolean(row.cancel_at_period_end)
+              const complimentary = isComplimentarySponsorship(row)
               const endingLabel =
                 ending && row.current_period_end
                   ? `Ends ${formatSponsorshipConsoleDate(row.current_period_end)}`
                   : ending
                     ? 'Ending after this period'
                     : null
+              const statusBadge = complimentary
+                ? showing
+                  ? 'Complimentary · Hidden'
+                  : 'Complimentary'
+                : showing && endingLabel
+                  ? `Hidden · ${endingLabel}`
+                  : showing
+                    ? 'Hidden'
+                    : endingLabel
               return (
                 <SponsorshipRowCard
                   key={row.id}
                   row={row}
-                  badge={
-                    showing && endingLabel
-                      ? `Hidden · ${endingLabel}`
-                      : showing
-                        ? 'Hidden'
-                        : endingLabel
-                  }
+                  badge={statusBadge}
                   meta={
                     row.approved_at
                       ? `Approved ${formatSponsorshipConsoleDate(row.approved_at)}`
                       : undefined
                   }
                   actions={
-                    ending ? null : (
+                    ending ? null : complimentary ? (
+                      <button
+                        type="button"
+                        className="inline-flex min-h-11 w-full items-center justify-center rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-2.5 text-sm font-medium text-red-300 transition hover:border-red-400/50 hover:bg-red-500/15 disabled:opacity-50 sm:w-auto"
+                        disabled={Boolean(busy)}
+                        onClick={() => void handleCancel(row.id, 'refund_now')}
+                      >
+                        {isBusy(row.id, 'cancel') ? 'Removing…' : 'Remove'}
+                      </button>
+                    ) : (
                       <EndSponsorshipMenu
                         disabled={Boolean(busy)}
                         busy={isBusy(row.id, 'cancel')}

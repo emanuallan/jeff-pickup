@@ -14,6 +14,9 @@ import {
   isImmediateSponsorshipCancelMode,
   isSponsorshipCancelMode,
   type SponsorshipCancelMode,
+  validateSponsorLogoUrl,
+  validateSponsorName,
+  validateSponsorUrl,
   validateSponsorshipIntroText,
 } from '@/lib/sponsorship'
 import {
@@ -607,4 +610,63 @@ export async function isSponsorshipFeatureEnabled(orgSlug: string) {
   const org = await getOrgForMember(orgSlug)
   if (!org) return false
   return orgFeatures(org).group_sponsorships
+}
+
+/** Interior-only: add an approved sponsor with no Stripe payment. */
+export async function createComplimentarySponsorship(
+  orgSlug: string,
+  input: {
+    tierId: string
+    sponsorName: string
+    logoUrl: string
+    sponsorUrl?: string
+  },
+) {
+  try {
+    const org = await requireInteriorSponsorshipAccess(orgSlug)
+    const supabase = await createClient()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    const tierId = input.tierId.trim()
+    if (!tierId) return { error: 'Choose a sponsorship tier.' }
+
+    const nameError = validateSponsorName(input.sponsorName)
+    if (nameError) return { error: nameError }
+
+    const logoError = validateSponsorLogoUrl(input.logoUrl)
+    if (logoError) return { error: logoError }
+
+    const urlResult = validateSponsorUrl(input.sponsorUrl ?? '')
+    if (!urlResult.ok) return { error: urlResult.error }
+
+    const { data: tier, error: tierError } = await supabase
+      .from('sponsorship_tiers')
+      .select('id')
+      .eq('id', tierId)
+      .eq('org_id', org.id)
+      .eq('status', 'active')
+      .maybeSingle()
+
+    if (tierError) return { error: tierError.message }
+    if (!tier) return { error: 'Sponsorship tier not found.' }
+
+    const { data, error } = await supabase.rpc('create_complimentary_sponsorship', {
+      p_org_id: org.id,
+      p_tier_id: tier.id,
+      p_sponsor_name: input.sponsorName.trim(),
+      p_logo_url: input.logoUrl.trim(),
+      p_sponsor_url: urlResult.value,
+      p_sponsor_message: null,
+      p_contact_email: user?.email ?? '',
+    })
+
+    if (error) return { error: error.message }
+
+    revalidateSponsorshipPaths(orgSlug)
+    return { ok: true as const, id: data as string }
+  } catch {
+    return { error: 'Not authorized.' }
+  }
 }

@@ -517,6 +517,28 @@ export function sortSponsorshipTiersForPublicDisplay(
   })
 }
 
+/** Cheapest active tier for complimentary (no-payment) sponsors. */
+export function pickCheapestActiveSponsorshipTier<
+  T extends { price_cents: number; sort_order?: number; name?: string },
+>(tiers: T[]): T | null {
+  if (tiers.length === 0) return null
+  return (
+    [...tiers].sort((a, b) => {
+      if (a.price_cents !== b.price_cents) return a.price_cents - b.price_cents
+      const order = (a.sort_order ?? 0) - (b.sort_order ?? 0)
+      if (order !== 0) return order
+      return (a.name ?? '').localeCompare(b.name ?? '')
+    })[0] ?? null
+  )
+}
+
+/** No Stripe subscription — added manually (complimentary). */
+export function isComplimentarySponsorship(row: {
+  stripe_subscription_id?: string | null
+}): boolean {
+  return !row.stripe_subscription_id
+}
+
 /** Relative logo size from amount vs other visible sponsors. */
 export function sponsorLogoSizeForAmount(
   amountCents: number,

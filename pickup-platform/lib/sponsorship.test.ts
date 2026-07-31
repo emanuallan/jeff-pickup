@@ -13,6 +13,8 @@ import {
   sponsorRefundAmountCents,
   sortPublicSponsorsByAmount,
   sortSponsorshipTiersForPublicDisplay,
+  pickCheapestActiveSponsorshipTier,
+  isComplimentarySponsorship,
   sponsorshipBlocksStripeDisconnect,
   buildSponsorshipPageShareCopy,
   summarizeSponsorshipTierPrices,
@@ -262,6 +264,27 @@ describe('public sponsorship hierarchy', () => {
       },
     ])
     expect(sorted.map((t) => t.id)).toEqual(['a', 'b'])
+  })
+
+  it('picks the cheapest active tier for complimentary sponsors', () => {
+    expect(pickCheapestActiveSponsorshipTier([])).toBeNull()
+    const cheapest = pickCheapestActiveSponsorshipTier([
+      { id: 'hi', name: 'Champion', price_cents: 10000, sort_order: 0 },
+      { id: 'lo', name: 'Supporter', price_cents: 2500, sort_order: 1 },
+      { id: 'mid', name: 'Partner', price_cents: 5000, sort_order: 2 },
+    ])
+    expect(cheapest?.id).toBe('lo')
+
+    const tieBreak = pickCheapestActiveSponsorshipTier([
+      { id: 'b', name: 'Beta', price_cents: 2500, sort_order: 1 },
+      { id: 'a', name: 'Alpha', price_cents: 2500, sort_order: 0 },
+    ])
+    expect(tieBreak?.id).toBe('a')
+  })
+
+  it('treats missing Stripe subscription as complimentary', () => {
+    expect(isComplimentarySponsorship({ stripe_subscription_id: null })).toBe(true)
+    expect(isComplimentarySponsorship({ stripe_subscription_id: 'sub_123' })).toBe(false)
   })
 
   it('sizes logos by relative amount', () => {
