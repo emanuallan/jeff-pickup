@@ -141,17 +141,13 @@ export function PaidJoinSheet({
         detail?: string
       }
       if (!res.ok || !payload.url) {
-        const detail =
-          typeof payload.detail === 'string' && payload.detail.trim()
-            ? ` (${payload.detail.trim()})`
-            : ''
-        setMessage(`${payload.error ?? 'Could not start checkout.'}${detail}`)
+        setMessage('Not available at this time. Please try again later.')
         setBusy(false)
         return
       }
       window.location.href = payload.url
     } catch {
-      setMessage('Could not start checkout.')
+      setMessage('Not available at this time. Please try again later.')
       setBusy(false)
     }
   }

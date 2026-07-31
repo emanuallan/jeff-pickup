@@ -142,11 +142,14 @@ describe('PaidJoinSheet', () => {
     expect(screen.getByRole('button', { name: /pay · \$30\.00/i })).toBeInTheDocument()
   })
 
-  it('shows checkout errors from the API', async () => {
+  it('shows a generic message when checkout fails to start', async () => {
     const user = userEvent.setup()
     fetchMock.mockResolvedValue({
       ok: false,
-      json: async () => ({ error: 'Could not start checkout.', detail: 'Connect offline' }),
+      json: async () => ({
+        error: 'Could not start checkout.',
+        detail: "The provided key 'sk_live_***' does not have access to account 'acct_***'",
+      }),
     })
 
     render(
@@ -173,8 +176,11 @@ describe('PaidJoinSheet', () => {
     await user.click(screen.getByRole('button', { name: /pay · \$5\.00/i }))
 
     await waitFor(() => {
-      expect(screen.getByText(/could not start checkout/i)).toBeInTheDocument()
+      expect(
+        screen.getByText(/not available at this time\. please try again later\./i),
+      ).toBeInTheDocument()
     })
-    expect(screen.getByText(/connect offline/i)).toBeInTheDocument()
+    expect(screen.queryByText(/sk_live_/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/acct_/i)).not.toBeInTheDocument()
   })
 })
