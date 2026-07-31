@@ -88,14 +88,6 @@ export async function middleware(request: NextRequest) {
       return NextResponse.next()
     }
 
-    // Cross-group participant home lives on the apex path; keep it unscoped.
-    if (pathname === '/me' || pathname.startsWith('/me/')) {
-      const sessionResponse = await updateSession(request)
-      const response = NextResponse.next()
-      copyCookies(sessionResponse.response, response)
-      return response
-    }
-
     const url = request.nextUrl.clone()
     const path = pathname === '/' ? '' : pathname
     url.pathname = `/org/${orgSlug}${path}`

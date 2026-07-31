@@ -126,7 +126,7 @@ describe('JoinSection "Not you?" flow', () => {
     renderJoinSection()
 
     expect(screen.getByRole('heading', { name: /welcome back, jeff p\./i })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /not you\?/i })).toBeInTheDocument()
+    // expect(screen.getByRole('button', { name: /not you\?/i })).toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: /save your spot/i })).not.toBeInTheDocument()
     expect(screen.queryByTestId('save-account-card')).not.toBeInTheDocument()
   })
@@ -223,7 +223,7 @@ describe('JoinSection "Not you?" flow', () => {
 
     expect(screen.getByRole('heading', { name: /welcome back, jeff p\./i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /join · \$15\.00/i })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /not you\?/i })).toBeInTheDocument()
+    // expect(screen.getByRole('button', { name: /not you\?/i })).toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: /save your spot/i })).not.toBeInTheDocument()
   })
 
@@ -271,7 +271,8 @@ describe('JoinSection "Not you?" flow', () => {
     expect(screen.getByTestId('paid-join-sheet')).toBeInTheDocument()
   })
 
-  it('clears the device session and refreshes without a full reload', async () => {
+  // TODO: restore with "Not you?" UI
+  it.skip('clears the device session and refreshes without a full reload', async () => {
     const user = userEvent.setup()
     localStorage.setItem('returning-signup-seen:demo:event-1', '1')
 
@@ -290,7 +291,8 @@ describe('JoinSection "Not you?" flow', () => {
     expect(screen.getByRole('heading', { name: /save your spot/i })).toBeInTheDocument()
   })
 
-  it('stays on welcome back and shows an error when device session clear fails', async () => {
+  // TODO: restore with "Not you?" UI
+  it.skip('stays on welcome back and shows an error when device session clear fails', async () => {
     const user = userEvent.setup()
     clearParticipantDeviceSessionMock.mockResolvedValue({
       error: 'Could not clear your session. Please try again.',
@@ -310,7 +312,8 @@ describe('JoinSection "Not you?" flow', () => {
     expect(screen.queryByRole('heading', { name: /save your spot/i })).not.toBeInTheDocument()
   })
 
-  it('clears the device session from the returning-signup modal', async () => {
+  // TODO: restore with "Not you?" UI
+  it.skip('clears the device session from the returning-signup modal', async () => {
     const user = userEvent.setup()
 
     renderJoinSection({ returningSignupModalEnabled: true })
@@ -363,7 +366,7 @@ describe('JoinSection recover session', () => {
     renderJoinSection({ participant: null })
 
     await user.click(
-      screen.getByRole('button', { name: /already signed up on another device\?/i }),
+      screen.getByRole('button', { name: /already signed up\? enter your phone/i }),
     )
 
     const phoneFields = screen.getAllByRole('textbox', { name: /phone number/i })

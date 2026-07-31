@@ -290,6 +290,7 @@ export function ReturningSignupModal({
 
             {error ? <p className="mt-4 text-sm text-red-300">{error}</p> : null}
 
+            {/* TODO: restore "Not you?" on returning-signup bottom sheet
             {onNotYou ? (
               <div className="mt-4 text-center">
                 <button
@@ -306,6 +307,7 @@ export function ReturningSignupModal({
                 </button>
               </div>
             ) : null}
+            */}
           </>
         )}
       </BottomSheet>

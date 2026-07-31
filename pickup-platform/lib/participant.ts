@@ -5,6 +5,8 @@ import type { SessionTeamOrUnassigned } from '@/lib/session-team'
 import { createClient } from '@/lib/supabase/server'
 
 export type Participant = {
+  /** Present when resolved via get_participant_for_session (needed for /me stats). */
+  participant_id?: string
   first_name: string
   last_name: string
   display_name: string

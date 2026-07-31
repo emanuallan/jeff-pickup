@@ -127,9 +127,9 @@ function RecoverSession({
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="text-xs text-zinc-600 transition-colors hover:text-zinc-500"
+          className="text-xs text-zinc-400 underline underline-offset-2 transition-colors hover:text-zinc-300"
         >
-          Already signed up on another device? Enter your phone
+          Already signed up? Enter your phone
         </button>
       </div>
     )
@@ -359,6 +359,7 @@ function PaidJoinSection({
         >
           {joiningWaitlist ? `Join waitlist · ${totalLabel}` : `Join · ${totalLabel}`}
         </button>
+        {/* TODO: restore "Not you?" to clear soft session from welcome-back paid join
         <div className="text-right">
           <button
             type="button"
@@ -368,6 +369,7 @@ function PaidJoinSection({
             Not you?
           </button>
         </div>
+        */}
         {sheet}
       </div>
     )
@@ -786,6 +788,7 @@ export function JoinSection(props: Props) {
         >
           {loading ? 'Counting you in…' : joiningWaitlist ? 'Join waitlist' : `Count me in ${arrowRight}`}
         </button>
+        {/* TODO: restore "Not you?" to clear soft session from welcome-back quick join
         <div className="text-right">
           <button
             type="button"
@@ -795,6 +798,7 @@ export function JoinSection(props: Props) {
             Not you?
           </button>
         </div>
+        */}
         {error ? <p className="text-sm text-red-300">{error}</p> : null}
       </div>
     )

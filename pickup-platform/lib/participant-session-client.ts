@@ -28,6 +28,33 @@ export async function saveParticipantProfile(profile: {
   }
 }
 
+/** Update name/display/email for the soft session (does not change phone). */
+export async function updateParticipantProfile(profile: {
+  slug: string
+  firstName: string
+  lastName: string
+  displayName?: string | null
+  email?: string | null
+}): Promise<{ ok: true } | { error: string }> {
+  try {
+    const response = await fetch('/api/participant/profile', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify(profile),
+    })
+
+    if (!response.ok) {
+      const payload = (await response.json().catch(() => null)) as { error?: string } | null
+      return { error: payload?.error ?? 'Could not update your profile.' }
+    }
+
+    return { ok: true }
+  } catch {
+    return { error: 'Could not update your profile.' }
+  }
+}
+
 /** Clear hc_session via route handler so Set-Cookie is applied on the response. */
 export async function clearParticipantDeviceSession(): Promise<{ ok: true } | { error: string }> {
   const response = await fetch('/api/participant/session', {

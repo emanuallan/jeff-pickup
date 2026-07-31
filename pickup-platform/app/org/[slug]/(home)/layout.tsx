@@ -23,6 +23,7 @@ import { OrgHomeBottomNav, OrgHomeDesktopNav } from './_components/org-home-bott
 import { OrgHomeShareButton } from './_components/org-home-share-button'
 import { ParticipantNotificationBellSlot } from '../_components/participant-notification-bell-slot'
 import { ParticipantFeedbackDeepLinkSlot } from '../_components/participant-feedback-deep-link-slot'
+import { ParticipantMeButtonSlot } from '../_components/participant-me-button-slot'
 
 type Props = {
   children: ReactNode
@@ -115,7 +116,12 @@ export default async function OrgHomeLayout({ children, params }: Props) {
               <ParticipantNotificationBellSlot slug={slug} accent={accent} />
             </Suspense>
           </div>
-          {socialLinks.length > 0 ? <LinksButton links={socialLinks} /> : null}
+          <div className="flex shrink-0 items-center gap-2">
+            {socialLinks.length > 0 ? <LinksButton links={socialLinks} /> : null}
+            <Suspense fallback={null}>
+              <ParticipantMeButtonSlot slug={slug} accent={accent} />
+            </Suspense>
+          </div>
         </nav>
 
         <OrgHeader
@@ -159,6 +165,9 @@ export default async function OrgHomeLayout({ children, params }: Props) {
                 />
               </Suspense>
               {socialLinks.length > 0 ? <LinksButton links={socialLinks} /> : null}
+              <Suspense fallback={null}>
+                <ParticipantMeButtonSlot slug={slug} accent={accent} />
+              </Suspense>
             </nav>
           </div>
         </div>
