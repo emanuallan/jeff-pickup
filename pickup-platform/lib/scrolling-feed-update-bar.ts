@@ -22,6 +22,7 @@ export type ScrollingFeedTickerItem = {
   headline: string
   eventShortId: string | null
   dateLabel: string | null
+  sponsorId?: string | null
   sponsorLogoUrl?: string | null
   sponsorUrl?: string | null
 }
@@ -88,6 +89,7 @@ export function buildSponsorTickerItem(
     headline: `Brought to you by ${sponsor.sponsor_name}`,
     eventShortId: null,
     dateLabel: null,
+    sponsorId: sponsor.id,
     sponsorLogoUrl: sponsor.logo_url,
     sponsorUrl: sponsor.sponsor_url,
   }

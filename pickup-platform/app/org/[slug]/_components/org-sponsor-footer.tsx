@@ -10,6 +10,7 @@ import { orgSponsorshipUrl } from '@/lib/site-url'
 import { safeExternalHref } from '@/lib/social-links'
 import { accentOnDark, hexToRgba } from '@/lib/colors'
 import { arrowRight } from '@/lib/text-arrows'
+import { sponsorTrackedClickHref } from '@/lib/sponsor-link-clicks'
 
 type Props = {
   slug: string
@@ -93,7 +94,7 @@ function SponsorLogo({
   if (href) {
     return (
       <a
-        href={href}
+        href={sponsorTrackedClickHref(sponsor.id, 'footer')}
         target="_blank"
         rel="noopener noreferrer"
         className="group inline-flex max-w-full flex-col items-center gap-1.5"

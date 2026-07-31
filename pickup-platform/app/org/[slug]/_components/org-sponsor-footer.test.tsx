@@ -35,6 +35,10 @@ describe('OrgSponsorSection', () => {
     ).toBeInTheDocument()
     expect(screen.getByText('Community partners')).toBeInTheDocument()
     expect(screen.getByText('Acme')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /acme/i })).toHaveAttribute(
+      'href',
+      '/api/sponsorship/click?id=1&placement=footer',
+    )
     expect(screen.getByRole('link', { name: /become a community partner/i })).toHaveAttribute(
       'href',
       expect.stringContaining('/sponsorship'),

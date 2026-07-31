@@ -8,6 +8,7 @@ import {
   type PublicSponsor,
   type PublicSponsorshipPage,
 } from '@/lib/sponsorship'
+import { parseSponsorLinkClickStats } from '@/lib/sponsor-link-clicks'
 
 export type OrgStripeAccount = {
   org_id: string
@@ -113,6 +114,18 @@ export async function getSponsorshipsForOrg(orgId: string, statuses?: string[]) 
       tier_name: tier?.name ?? 'Tier',
     }
   })
+}
+
+export async function getSponsorLinkClickStatsForOrg(orgId: string) {
+  const supabase = await createClient()
+  const { data, error } = await supabase.rpc('get_sponsor_link_click_stats', {
+    p_org_id: orgId,
+  })
+  if (error) {
+    console.error('get_sponsor_link_click_stats failed:', error.message)
+    return []
+  }
+  return parseSponsorLinkClickStats(data)
 }
 
 export async function countPendingSponsorships(orgId: string): Promise<number> {

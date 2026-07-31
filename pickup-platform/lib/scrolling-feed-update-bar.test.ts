@@ -104,6 +104,7 @@ describe('sponsor ticker helpers', () => {
       headline: 'Brought to you by Acme Sports',
       eventShortId: null,
       dateLabel: null,
+      sponsorId: 'sponsor-1',
       sponsorLogoUrl: 'https://example.com/logo.png',
       sponsorUrl: 'https://acme.example',
     })

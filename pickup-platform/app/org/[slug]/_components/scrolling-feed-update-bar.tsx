@@ -15,6 +15,7 @@ import { accentOnDark, hexToRgba, readableTextColor } from '@/lib/colors'
 import { orgPublicEventHref } from '@/lib/org-public-nav'
 import type { PublicSponsor } from '@/lib/sponsorship'
 import { safeExternalHref } from '@/lib/social-links'
+import { sponsorTrackedClickHref } from '@/lib/sponsor-link-clicks'
 import {
   apiItemsToTickerItems,
   interleaveSponsorsIntoTickerItems,
@@ -186,7 +187,12 @@ function TickerSegment({
       </span>
     )
 
-    const href = item.sponsorUrl ? safeExternalHref(item.sponsorUrl) : null
+    const href =
+      item.sponsorId && item.sponsorUrl
+        ? sponsorTrackedClickHref(item.sponsorId, 'ticker')
+        : item.sponsorUrl
+          ? safeExternalHref(item.sponsorUrl)
+          : null
     body = href ? (
       <a
         href={href}
