@@ -22,7 +22,7 @@ export function SponsorshipOverviewStats({ rows }: { rows: SponsorshipRow[] }) {
     {
       label: 'Monthly',
       value: formatTierPrice(stats.monthlyRecurringCents),
-      hint: 'From active sponsors',
+      hint: 'From paid sponsors',
     },
     {
       label: 'History',

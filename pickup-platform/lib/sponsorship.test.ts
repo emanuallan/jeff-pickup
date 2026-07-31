@@ -174,11 +174,11 @@ describe('sponsorship lifecycle helpers', () => {
   it('builds simple console overview stats', () => {
     expect(
       buildSponsorshipOverviewStats([
-        { status: 'pending_approval', monthly_amount_cents: 2500 },
-        { status: 'approved', monthly_amount_cents: 2500 },
-        { status: 'hidden', monthly_amount_cents: 5000 },
-        { status: 'declined', monthly_amount_cents: 2500 },
-        { status: 'canceled', monthly_amount_cents: 2500 },
+        { status: 'pending_approval', monthly_amount_cents: 2500, stripe_subscription_id: 'sub_p' },
+        { status: 'approved', monthly_amount_cents: 2500, stripe_subscription_id: 'sub_a' },
+        { status: 'hidden', monthly_amount_cents: 5000, stripe_subscription_id: 'sub_h' },
+        { status: 'declined', monthly_amount_cents: 2500, stripe_subscription_id: 'sub_d' },
+        { status: 'canceled', monthly_amount_cents: 2500, stripe_subscription_id: 'sub_c' },
       ]),
     ).toEqual({
       pendingCount: 1,
@@ -186,6 +186,34 @@ describe('sponsorship lifecycle helpers', () => {
       hiddenCount: 1,
       monthlyRecurringCents: 7500,
       historyCount: 2,
+    })
+  })
+
+  it('excludes complimentary sponsors from monthly recurring totals', () => {
+    expect(
+      buildSponsorshipOverviewStats([
+        {
+          status: 'approved',
+          monthly_amount_cents: 2500,
+          stripe_subscription_id: 'sub_paid',
+        },
+        {
+          status: 'approved',
+          monthly_amount_cents: 10000,
+          stripe_subscription_id: null,
+        },
+        {
+          status: 'hidden',
+          monthly_amount_cents: 5000,
+          stripe_subscription_id: null,
+        },
+      ]),
+    ).toEqual({
+      pendingCount: 0,
+      activeCount: 2,
+      hiddenCount: 1,
+      monthlyRecurringCents: 2500,
+      historyCount: 0,
     })
   })
 

@@ -147,21 +147,21 @@ export function OrgPublicSplash({
 
           {splashSponsors.length > 0 ? (
             <div
-              className="mt-8 flex w-full max-w-md flex-col items-center gap-2.5"
+              className="mt-9 flex w-full max-w-lg flex-col items-center gap-3.5"
               data-testid="org-public-splash-sponsors"
             >
               <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-500">
                 Community partners
               </p>
-              <ul className="flex flex-wrap items-center justify-center gap-3">
+              <ul className="flex flex-wrap items-center justify-center gap-4 sm:gap-5">
                 {splashSponsors.map((sponsor) => (
                   <li key={sponsor.id}>
                     <Image
                       src={sponsor.logo_url}
                       alt={sponsor.sponsor_name}
-                      width={96}
-                      height={28}
-                      className="h-6 w-auto max-w-[96px] object-contain"
+                      width={160}
+                      height={48}
+                      className="h-11 w-auto max-w-[140px] object-contain sm:h-12 sm:max-w-[160px]"
                       unoptimized
                     />
                   </li>

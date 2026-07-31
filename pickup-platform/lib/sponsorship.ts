@@ -271,6 +271,7 @@ export function formatPlatformFeePercent(platformFeePercent: number): string {
 export type SponsorshipOverviewInput = {
   status: string
   monthly_amount_cents: number
+  stripe_subscription_id?: string | null
 }
 
 export type SponsorshipOverviewStats = {
@@ -298,11 +299,15 @@ export function buildSponsorshipOverviewStats(
         break
       case 'approved':
         activeCount += 1
-        monthlyRecurringCents += row.monthly_amount_cents
+        if (!isComplimentarySponsorship(row)) {
+          monthlyRecurringCents += row.monthly_amount_cents
+        }
         break
       case 'hidden':
         hiddenCount += 1
-        monthlyRecurringCents += row.monthly_amount_cents
+        if (!isComplimentarySponsorship(row)) {
+          monthlyRecurringCents += row.monthly_amount_cents
+        }
         break
       case 'declined':
       case 'canceled':
