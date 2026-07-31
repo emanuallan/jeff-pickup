@@ -147,6 +147,7 @@ export default async function OrgHomePage({ params, searchParams }: Props) {
     activeEvents.find((event) => !isEventCancelled(event.status)) ?? activeEvents[0] ?? null
 
   let chipPrefixEvents: typeof events = previousEvent ? [previousEvent] : []
+  let chipSuffixEvents: typeof events = []
   let selectedEvent = defaultEvent
 
   if (eventRef) {
@@ -158,7 +159,11 @@ export default async function OrgHomePage({ params, searchParams }: Props) {
       if (linked?.org_id === org.id) {
         selectedEvent = linked
         if (isEventEnded(linked)) {
+          // Deep-linked past session: temporarily replace the default previous chip.
           chipPrefixEvents = [linked]
+        } else {
+          // Far-future (outside the upcoming chip window): temporary trailing chip.
+          chipSuffixEvents = [linked]
         }
       }
     }
@@ -185,6 +190,7 @@ export default async function OrgHomePage({ params, searchParams }: Props) {
         eventId={selectedEvent.short_id}
         upcomingEvents={events}
         chipPrefixEvents={chipPrefixEvents}
+        chipSuffixEvents={chipSuffixEvents}
       />
     </>
   )

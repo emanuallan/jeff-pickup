@@ -2,7 +2,10 @@ import { Suspense } from 'react'
 import type { Org } from '@/lib/orgs'
 import type { EventWithLocation } from '@/lib/events'
 import { isEventEnded } from '@/lib/events'
-import { buildMatchdayChipDisplays } from '@/lib/matchday-chip-display'
+import {
+  buildMatchdayChipDisplays,
+  mergeMatchdayChipRail,
+} from '@/lib/matchday-chip-display'
 import { SessionPanel } from './session-panel'
 import { SessionPanelSkeleton } from '../../_components/session-skeleton-ui'
 import { MatchdayDateChips } from './matchday-date-chips'
@@ -14,6 +17,8 @@ type Props = {
   eventId: string
   upcomingEvents: EventWithLocation[]
   chipPrefixEvents?: EventWithLocation[]
+  /** Temporary trailing chips for deep-linked far-future sessions outside the rail. */
+  chipSuffixEvents?: EventWithLocation[]
 }
 
 export function MatchdayPanel({
@@ -23,12 +28,15 @@ export function MatchdayPanel({
   eventId,
   upcomingEvents,
   chipPrefixEvents = [],
+  chipSuffixEvents = [],
 }: Props) {
   const prefixIds = new Set(chipPrefixEvents.map((ev) => ev.short_id))
-  const chipEvents = [
-    ...chipPrefixEvents,
-    ...upcomingEvents.filter((ev) => !isEventEnded(ev) && !prefixIds.has(ev.short_id)),
-  ]
+  const chipEvents = mergeMatchdayChipRail({
+    prefix: chipPrefixEvents,
+    upcoming: upcomingEvents,
+    suffix: chipSuffixEvents,
+    isEnded: isEventEnded,
+  })
   const accent = org.branding.accent_color
   const chips = buildMatchdayChipDisplays(
     chipEvents.map((ev) => ({

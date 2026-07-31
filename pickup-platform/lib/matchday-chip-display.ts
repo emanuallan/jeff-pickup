@@ -17,6 +17,28 @@ export type MatchdayChipDisplay = {
   ariaLabel: string
 }
 
+/**
+ * Build the date-chip rail: optional past prefix, upcoming window, optional
+ * temporary far-future suffix (deep-link outside the window).
+ */
+export function mergeMatchdayChipRail<T extends { short_id: string }>(args: {
+  prefix: T[]
+  upcoming: T[]
+  suffix?: T[]
+  isEnded: (event: T) => boolean
+}): T[] {
+  const prefixIds = new Set(args.prefix.map((ev) => ev.short_id))
+  const upcoming = args.upcoming.filter(
+    (ev) => !args.isEnded(ev) && !prefixIds.has(ev.short_id),
+  )
+  const upcomingIds = new Set(upcoming.map((ev) => ev.short_id))
+  const suffix = (args.suffix ?? []).filter(
+    (ev) => !prefixIds.has(ev.short_id) && !upcomingIds.has(ev.short_id),
+  )
+
+  return [...args.prefix, ...upcoming, ...suffix]
+}
+
 function dayKey(event: ChipEventInput): string {
   return new Date(event.starts_at).toLocaleDateString('en-CA', {
     timeZone: event.timezone || 'UTC',
