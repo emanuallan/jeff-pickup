@@ -52,15 +52,10 @@ function LockIcon({ className }: { className?: string }) {
   )
 }
 
-function initialsFor(firstName: string, lastName: string) {
-  const first = firstName.trim().charAt(0)
-  const last = lastName.trim().charAt(0)
-  return `${first}${last}`.toUpperCase() || '?'
-}
-
 /**
  * Confirm + pay for a paid session using soft phone identity.
- * Collects email once for receipts / Stripe Checkout prefill.
+ * Collects email only when the soft profile does not already have one
+ * (otherwise edit on /me).
  */
 export function PaidJoinSheet({
   open,
@@ -80,9 +75,9 @@ export function PaidJoinSheet({
   eventWhen,
 }: Props) {
   const storedEmail = normalizeLoginEmail(knownProfile.email ?? '')
+  const hasStoredEmail = isValidEmail(storedEmail)
   const [guestCount, setGuestCount] = useState(initialGuestCount)
   const [email, setEmail] = useState(storedEmail)
-  const [editingEmail, setEditingEmail] = useState(!isValidEmail(storedEmail))
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
 
@@ -91,7 +86,6 @@ export function PaidJoinSheet({
     const known = normalizeLoginEmail(knownProfile.email ?? '')
     setGuestCount(initialGuestCount)
     setEmail(known)
-    setEditingEmail(!isValidEmail(known))
     setBusy(false)
     setMessage(null)
   }, [open, initialGuestCount, knownProfile.email])
@@ -100,6 +94,10 @@ export function PaidJoinSheet({
   const totalCents = sessionPaymentTotalCents(priceCents, effectiveGuests)
   const totalLabel = formatPriceCents(totalCents)
   const accentTextOnDark = accentOnDark(accent)
+  const showGuestBlock = showGuestSelect && guestsEnabled
+  const showExtrasBlock = !hasStoredEmail || showGuestBlock
+  const displayName = `${knownProfile.firstName.trim()} ${knownProfile.lastName.trim()}`.trim()
+  const displayEmail = hasStoredEmail ? storedEmail : null
 
   async function startCheckout() {
     if (
@@ -111,9 +109,8 @@ export function PaidJoinSheet({
       return
     }
 
-    const normalizedEmail = normalizeLoginEmail(email)
+    const normalizedEmail = normalizeLoginEmail(hasStoredEmail ? storedEmail : email)
     if (!isValidEmail(normalizedEmail)) {
-      setEditingEmail(true)
       setMessage('Enter a valid email address.')
       return
     }
@@ -215,71 +212,53 @@ export function PaidJoinSheet({
           </div>
         </div>
 
-        <div className="mt-3 divide-y divide-white/5 overflow-hidden rounded-2xl border border-white/10 bg-zinc-950/40">
-          <div className="flex items-center gap-3 px-4 py-3">
-            <span
-              className="flex size-9 shrink-0 items-center justify-center rounded-full text-xs font-semibold"
-              style={{
-                color: accentTextOnDark,
-                backgroundColor: hexToRgba(accent, 0.14),
-                border: `1px solid ${hexToRgba(accent, 0.24)}`,
-              }}
-              aria-hidden
-            >
-              {initialsFor(knownProfile.firstName, knownProfile.lastName)}
-            </span>
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm text-zinc-100">
-                {knownProfile.firstName} {knownProfile.lastName}
-              </p>
-              {editingEmail ? null : (
-                <p className="truncate text-xs text-zinc-500">{email}</p>
-              )}
-            </div>
-            {editingEmail ? null : (
-              <button
-                type="button"
-                onClick={() => setEditingEmail(true)}
-                className="shrink-0 rounded-lg border border-white/10 px-3 py-1.5 text-xs font-medium transition-colors hover:bg-white/5"
-                style={{ color: accentTextOnDark }}
-              >
-                Change
-              </button>
-            )}
+        {displayEmail ? (
+          <div className="mt-4 flex items-baseline justify-between gap-3 text-sm">
+            <span className="min-w-0 truncate font-medium text-zinc-100">{displayName}</span>
+            <span className="shrink-0 truncate text-zinc-400">{displayEmail}</span>
           </div>
+        ) : null}
 
-          {editingEmail ? (
-            <div className="px-4 py-3">
-              <input
-                type="email"
-                name="email"
-                autoComplete="email"
-                aria-label="Email"
-                required
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-                placeholder="Email for your receipt"
-                className="w-full rounded-xl border border-white/10 bg-zinc-950/70 px-3.5 py-3 text-base text-zinc-100 outline-none transition-colors placeholder:text-zinc-600 focus:border-transparent focus:ring-2 sm:text-sm"
-                style={{ '--tw-ring-color': accent } as React.CSSProperties}
-              />
-            </div>
-          ) : null}
+        {showExtrasBlock ? (
+          <div className="mt-3 divide-y divide-white/5 overflow-hidden rounded-2xl border border-white/10 bg-zinc-950/40">
+            {!hasStoredEmail ? (
+              <div className="px-4 py-3">
+                <label className="block">
+                  <span className="text-[11px] font-medium tracking-wide text-zinc-500 uppercase">
+                    Email for your receipt
+                  </span>
+                  <input
+                    type="email"
+                    name="email"
+                    autoComplete="email"
+                    aria-label="Email"
+                    required
+                    value={email}
+                    onChange={(event) => setEmail(event.target.value)}
+                    placeholder="you@example.com"
+                    className="mt-2 w-full rounded-xl border border-white/10 bg-zinc-950/70 px-3.5 py-3 text-base text-zinc-100 outline-none transition-colors placeholder:text-zinc-600 focus:border-transparent focus:ring-2 sm:text-sm"
+                    style={{ '--tw-ring-color': accent } as React.CSSProperties}
+                  />
+                </label>
+              </div>
+            ) : null}
 
-          {showGuestSelect && guestsEnabled ? (
-            <div className="px-4 py-3">
-              <label className="block">
-                <span className="text-[11px] font-medium tracking-wide text-zinc-500 uppercase">
-                  Guests
-                </span>
-                <GuestCountSelect
-                  value={guestCount}
-                  onChange={setGuestCount}
-                  accent={accent}
-                />
-              </label>
-            </div>
-          ) : null}
-        </div>
+            {showGuestBlock ? (
+              <div className="px-4 py-3">
+                <label className="block">
+                  <span className="text-[11px] font-medium tracking-wide text-zinc-500 uppercase">
+                    Guests
+                  </span>
+                  <GuestCountSelect
+                    value={guestCount}
+                    onChange={setGuestCount}
+                    accent={accent}
+                  />
+                </label>
+              </div>
+            ) : null}
+          </div>
+        ) : null}
 
         {message ? (
           <p className="mt-3 text-sm text-red-300" role="alert">

@@ -68,7 +68,7 @@ describe('PaidJoinSheet', () => {
     })
   })
 
-  it('shows a stored email as a receipt row until the user edits it', async () => {
+  it('shows a read-only name and email when a receipt email is already on file', async () => {
     const user = userEvent.setup()
     fetchMock.mockResolvedValue({
       ok: true,
@@ -96,18 +96,21 @@ describe('PaidJoinSheet', () => {
       />,
     )
 
+    expect(screen.getByText('Ada Lovelace')).toBeInTheDocument()
     expect(screen.getByText('ada@example.com')).toBeInTheDocument()
     expect(screen.queryByLabelText(/^email$/i)).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /change/i })).not.toBeInTheDocument()
 
-    await user.click(screen.getByRole('button', { name: /change/i }))
-    expect(screen.getByLabelText(/^email$/i)).toHaveValue('ada@example.com')
-
-    await user.clear(screen.getByLabelText(/^email$/i))
-    await user.type(screen.getByLabelText(/^email$/i), 'not-an-email')
     await user.click(screen.getByRole('button', { name: /pay · \$5\.00/i }))
 
-    expect(await screen.findByText(/enter a valid email address/i)).toBeInTheDocument()
-    expect(fetchMock).not.toHaveBeenCalled()
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledOnce()
+    })
+
+    const body = JSON.parse(
+      String((fetchMock.mock.calls[0]?.[1] as { body?: string })?.body ?? '{}'),
+    ) as Record<string, unknown>
+    expect(body.email).toBe('ada@example.com')
   })
 
   it('breaks down guest pricing and explains the refund path', () => {
