@@ -670,3 +670,33 @@ export async function createComplimentarySponsorship(
     return { error: 'Not authorized.' }
   }
 }
+
+/** Snapshot current visit totals for a sponsor and reset the live counter. */
+export async function archiveSponsorshipAnalytics(orgSlug: string, sponsorshipId: string) {
+  try {
+    const org = await requireInteriorSponsorshipAccess(orgSlug)
+    const supabase = await createClient()
+
+    const { data: row, error: rowError } = await supabase
+      .from('sponsorships')
+      .select('id')
+      .eq('id', sponsorshipId)
+      .eq('org_id', org.id)
+      .maybeSingle()
+
+    if (rowError || !row) {
+      return { error: 'Sponsorship not found.' }
+    }
+
+    const { data, error } = await supabase.rpc('archive_sponsor_link_analytics', {
+      p_sponsorship_id: sponsorshipId,
+    })
+
+    if (error) return { error: error.message }
+
+    revalidateSponsorshipPaths(orgSlug)
+    return { ok: true as const, archive: data }
+  } catch {
+    return { error: 'Not authorized.' }
+  }
+}

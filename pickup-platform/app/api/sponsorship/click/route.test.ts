@@ -39,6 +39,7 @@ describe('GET /api/sponsorship/click', () => {
       sponsorshipId: 's1',
       placement: 'footer',
       viewerKey: expect.any(String),
+      sessionToken: null,
     })
     expect(response.status).toBe(302)
     expect(response.headers.get('location')).toBe('https://acme.example/')

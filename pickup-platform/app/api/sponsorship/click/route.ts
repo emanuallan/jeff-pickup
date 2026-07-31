@@ -4,6 +4,7 @@ import {
   isSponsorLinkPlacement,
   recordSponsorLinkClick,
 } from '@/lib/sponsor-link-clicks'
+import { SESSION_COOKIE } from '@/lib/participant-session'
 import { safeExternalHref } from '@/lib/social-links'
 import { VISITOR_COOKIE } from '@/lib/visitor-cookie'
 
@@ -31,11 +32,13 @@ export async function GET(request: Request) {
   const cookieStore = await cookies()
   const existingVisitor = cookieStore.get(VISITOR_COOKIE)?.value?.trim() || null
   const viewerKey = existingVisitor || crypto.randomUUID()
+  const sessionToken = cookieStore.get(SESSION_COOKIE)?.value?.trim() || null
 
   const destination = await recordSponsorLinkClick({
     sponsorshipId,
     placement: placementRaw,
     viewerKey,
+    sessionToken,
   })
 
   const href = destination ? safeExternalHref(destination) : null

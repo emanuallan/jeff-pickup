@@ -7,6 +7,7 @@ import { isInteriorOperator } from '@/lib/interior'
 import { orgFeatures, orgSponsorshipSettings } from '@/lib/org-features'
 import {
   getOrgStripeAccount,
+  getSponsorLinkClickArchivesForOrg,
   getSponsorLinkClickStatsForOrg,
   getSponsorshipsForOrg,
   getSponsorshipTiersForOrg,
@@ -75,11 +76,12 @@ export default async function SponsorshipConsolePage({ params, searchParams }: P
     notFound()
   }
 
-  const [stripeAccount, tiers, sponsorships, visitStats] = await Promise.all([
+  const [stripeAccount, tiers, sponsorships, visitStats, visitArchives] = await Promise.all([
     getOrgStripeAccount(org.id),
     getSponsorshipTiersForOrg(org.id),
     getSponsorshipsForOrg(org.id),
     getSponsorLinkClickStatsForOrg(org.id),
+    getSponsorLinkClickArchivesForOrg(org.id),
   ])
 
   const features = orgFeatures(org)
@@ -183,7 +185,11 @@ export default async function SponsorshipConsolePage({ params, searchParams }: P
             active={active}
             history={history}
           />
-          <SponsorshipVisitsSection orgSlug={orgSlug} stats={visitStats} />
+          <SponsorshipVisitsSection
+            orgSlug={orgSlug}
+            stats={visitStats}
+            archives={visitArchives}
+          />
         </div>
 
         <div className="space-y-3">
