@@ -171,6 +171,11 @@ begin
     raise exception 'Not authorized';
   end if;
 
+  -- Only inactive (not live on public pages) sponsors can be archived.
+  if v_row.status = 'approved' then
+    raise exception 'Hide or cancel this sponsor before archiving visit analytics';
+  end if;
+
   select
     count(*)::int,
     count(distinct viewer_key)::int,

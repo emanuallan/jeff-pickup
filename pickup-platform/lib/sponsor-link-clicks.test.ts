@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  canArchiveSponsorAnalytics,
   isSponsorLinkPlacement,
   parseSponsorLinkClickArchives,
   parseSponsorLinkClickStats,
@@ -18,6 +19,13 @@ describe('sponsor link click helpers', () => {
     )
     expect(isSponsorLinkPlacement('ticker')).toBe(true)
     expect(isSponsorLinkPlacement('splash')).toBe(false)
+  })
+
+  it('only allows archiving inactive (non-live) sponsors', () => {
+    expect(canArchiveSponsorAnalytics('approved')).toBe(false)
+    expect(canArchiveSponsorAnalytics('hidden')).toBe(true)
+    expect(canArchiveSponsorAnalytics('canceled')).toBe(true)
+    expect(canArchiveSponsorAnalytics('declined')).toBe(true)
   })
 
   it('parses and exports console click stats as CSV', () => {

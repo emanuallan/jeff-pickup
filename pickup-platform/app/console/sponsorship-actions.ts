@@ -19,6 +19,7 @@ import {
   validateSponsorUrl,
   validateSponsorshipIntroText,
 } from '@/lib/sponsorship'
+import { canArchiveSponsorAnalytics } from '@/lib/sponsor-link-clicks'
 import {
   createTierStripeProductAndPrice,
   deactivateTierStripePrice,
@@ -679,13 +680,19 @@ export async function archiveSponsorshipAnalytics(orgSlug: string, sponsorshipId
 
     const { data: row, error: rowError } = await supabase
       .from('sponsorships')
-      .select('id')
+      .select('id, status')
       .eq('id', sponsorshipId)
       .eq('org_id', org.id)
       .maybeSingle()
 
     if (rowError || !row) {
       return { error: 'Sponsorship not found.' }
+    }
+
+    if (!canArchiveSponsorAnalytics(row.status)) {
+      return {
+        error: 'Hide or cancel this sponsor before archiving visit analytics.',
+      }
     }
 
     const { data, error } = await supabase.rpc('archive_sponsor_link_analytics', {

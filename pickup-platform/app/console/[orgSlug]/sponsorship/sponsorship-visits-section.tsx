@@ -7,6 +7,7 @@ import type {
   SponsorLinkClickArchive,
   SponsorLinkClickStat,
 } from '@/lib/sponsor-link-clicks'
+import { canArchiveSponsorAnalytics } from '@/lib/sponsor-link-clicks'
 import { archiveSponsorshipAnalytics } from '../../sponsorship-actions'
 import { ConsoleSection, btnOutline } from '../../_components/console-ui'
 import { useConsoleToast } from '../../_components/console-toast'
@@ -173,14 +174,18 @@ export function SponsorshipVisitsSection({
                             >
                               People
                             </button>
-                            <button
-                              type="button"
-                              className={`${btnOutline} min-h-9 px-3 py-1.5 text-xs`}
-                              disabled={busyId !== null}
-                              onClick={() => void handleArchive(row.sponsorship_id, row.sponsor_name)}
-                            >
-                              {busyId === row.sponsorship_id ? 'Archiving…' : 'Archive'}
-                            </button>
+                            {canArchiveSponsorAnalytics(row.status) ? (
+                              <button
+                                type="button"
+                                className={`${btnOutline} min-h-9 px-3 py-1.5 text-xs`}
+                                disabled={busyId !== null}
+                                onClick={() =>
+                                  void handleArchive(row.sponsorship_id, row.sponsor_name)
+                                }
+                              >
+                                {busyId === row.sponsorship_id ? 'Archiving…' : 'Archive'}
+                              </button>
+                            ) : null}
                           </>
                         ) : null}
                       </div>
@@ -190,8 +195,8 @@ export function SponsorshipVisitsSection({
               )}
               <p className="text-[11px] leading-relaxed text-zinc-500">
                 People lists known participants (with visit counts) and anonymous guests. Export CSV
-                includes period summaries plus those people rows. Archive closes the current period
-                and resets the live counter.
+                includes period summaries plus those people rows. Archive is available after a
+                sponsor is hidden or canceled (not live on public pages).
               </p>
             </div>
 

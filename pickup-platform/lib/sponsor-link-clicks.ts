@@ -54,6 +54,14 @@ export function isSponsorLinkPlacement(value: string): value is SponsorLinkPlace
   return (SPONSOR_LINK_PLACEMENTS as readonly string[]).includes(value)
 }
 
+/**
+ * Archive is only for sponsors no longer live on public pages.
+ * Public logos require status = approved (hidden/canceled/etc. are inactive).
+ */
+export function canArchiveSponsorAnalytics(status: string): boolean {
+  return status !== 'approved'
+}
+
 /** Same-origin redirect that records the click, then sends the visitor to the sponsor site. */
 export function sponsorTrackedClickHref(
   sponsorshipId: string,
