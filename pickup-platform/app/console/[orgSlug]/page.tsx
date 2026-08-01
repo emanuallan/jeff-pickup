@@ -30,12 +30,12 @@ export default async function OrgConsolePage({ params }: Props) {
   const orgUrl = orgEventsUrl(org.slug)
 
   return (
-    <ConsolePage width="max-w-2xl">
+    <ConsolePage>
       <Link
         href="/console"
         className="inline-flex min-h-9 items-center gap-1 text-sm text-zinc-400 transition-colors hover:text-zinc-200"
       >
-        <span aria-hidden>←</span> All groups
+        <span aria-hidden>←</span> Groups
       </Link>
 
       <OrgConsoleHeader

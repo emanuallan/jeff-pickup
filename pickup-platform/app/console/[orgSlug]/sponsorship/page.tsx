@@ -24,6 +24,7 @@ import {
   ConsoleHeader,
   ConsolePage,
   ConsoleSection,
+  Disclosure,
   btnOutline,
   btnPrimary,
 } from '../../_components/console-ui'
@@ -73,7 +74,7 @@ export default async function SponsorshipConsolePage({ params, searchParams }: P
 
   const showInteriorTools = isInteriorOperator(user?.id) && membership?.role === 'owner'
   if (!showInteriorTools) {
-    notFound()
+    redirect(`/console/${orgSlug}`)
   }
 
   const [stripeAccount, tiers, sponsorships, visitStats, visitArchives] = await Promise.all([
@@ -145,7 +146,7 @@ export default async function SponsorshipConsolePage({ params, searchParams }: P
   )
 
   return (
-    <ConsolePage width="max-w-2xl">
+    <ConsolePage>
       <ConsoleHeader
         title="Sponsorships"
         description="Review sponsors, shape your public offer, and get paid through Stripe."
@@ -192,30 +193,30 @@ export default async function SponsorshipConsolePage({ params, searchParams }: P
           />
         </div>
 
-        <div className="space-y-3">
-          <ConsoleGroupLabel>Public offer</ConsoleGroupLabel>
-          <ConsoleSection
-            title="Page intro"
-            description="Shown at the top of your public sponsorship page."
-          >
-            <SponsorshipIntroForm
-              orgSlug={orgSlug}
-              introText={sponsorshipSettings?.intro_text ?? ''}
-            />
-          </ConsoleSection>
+        <Disclosure summary="Public offer · intro & tiers">
+          <div className="space-y-4">
+            <ConsoleSection
+              title="Page intro"
+              description="Shown at the top of your public sponsorship page."
+            >
+              <SponsorshipIntroForm
+                orgSlug={orgSlug}
+                introText={sponsorshipSettings?.intro_text ?? ''}
+              />
+            </ConsoleSection>
 
-          <ConsoleSection title="Tiers" description="Monthly options sponsors can choose from.">
-            <SponsorshipTiersSection
-              orgSlug={orgSlug}
-              tiers={tiers}
-              canEdit
-              lockedTierIds={collectTierIdsLockedBySponsors(sponsorships)}
-            />
-          </ConsoleSection>
-        </div>
+            <ConsoleSection title="Tiers" description="Monthly options sponsors can choose from.">
+              <SponsorshipTiersSection
+                orgSlug={orgSlug}
+                tiers={tiers}
+                canEdit
+                lockedTierIds={collectTierIdsLockedBySponsors(sponsorships)}
+              />
+            </ConsoleSection>
+          </div>
+        </Disclosure>
 
-        <div className="space-y-3">
-          <ConsoleGroupLabel>Payouts</ConsoleGroupLabel>
+        <Disclosure summary="Payouts · Stripe">
           <ConsoleSection
             title="Stripe"
             description="Balances and bank payouts live in Stripe — not inside Organizr."
@@ -234,15 +235,12 @@ export default async function SponsorshipConsolePage({ params, searchParams }: P
               showConnectPending={showConnectPending}
             />
           </ConsoleSection>
-        </div>
+        </Disclosure>
 
-        <div className="space-y-3">
-          <ConsoleGroupLabel>Setup</ConsoleGroupLabel>
+        <Disclosure summary="Setup · availability" defaultOpen={!featureReady}>
           <ConsoleSection
             title="Availability"
             description="Turn the public sponsorship offer on or off."
-            collapsible={featureReady}
-            defaultOpen={!featureReady}
           >
             <div className="-mx-1">
               <SponsorshipFeatureToggle
@@ -252,7 +250,7 @@ export default async function SponsorshipConsolePage({ params, searchParams }: P
               />
             </div>
           </ConsoleSection>
-        </div>
+        </Disclosure>
       </div>
     </ConsolePage>
   )

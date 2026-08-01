@@ -19,6 +19,7 @@ import {
   btnPrimary,
   chipAction,
 } from '../../../../_components/console-ui'
+import { ConfirmSheet } from '../../../../_components/confirm-sheet'
 import { ConsoleSubmitButton } from '../../../../_components/console-submit-button'
 import { useConsoleToast } from '../../../../_components/console-toast'
 import {
@@ -65,17 +66,15 @@ function RosterRow({
   onTeamChange?: (team: number | null) => Promise<void>
 }) {
   const [pending, setPending] = useState(false)
+  const [confirmRemove, setConfirmRemove] = useState(false)
   const [guestPending, setGuestPending] = useState(false)
   const [teamPending, setTeamPending] = useState(false)
 
   async function handleRemove() {
-    const label = entry.display_name
-    if (!window.confirm(`Remove ${label} from this session?`)) {
-      return
-    }
     setPending(true)
     await onRemove()
     setPending(false)
+    setConfirmRemove(false)
   }
 
   async function handlePromote() {
@@ -158,14 +157,29 @@ function RosterRow({
           ) : null}
           <button
             type="button"
-            onClick={() => void handleRemove()}
+            onClick={() => setConfirmRemove(true)}
             disabled={pending}
             className={`${chipAction} text-zinc-400 hover:bg-red-500/10 hover:text-red-300 disabled:opacity-50`}
           >
-            {pending ? 'Removing…' : 'Remove'}
+            Remove
           </button>
         </div>
       </div>
+      <ConfirmSheet
+        open={confirmRemove}
+        onClose={() => !pending && setConfirmRemove(false)}
+        title="Remove from session?"
+        description={
+          <>
+            <span className="font-medium text-zinc-200">{entry.display_name}</span> will be
+            removed from this session.
+          </>
+        }
+        confirmLabel="Remove"
+        danger
+        pending={pending}
+        onConfirm={handleRemove}
+      />
     </ConsoleCard>
   )
 }

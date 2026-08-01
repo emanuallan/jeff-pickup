@@ -12,7 +12,7 @@ import { useConsoleToast } from './_components/console-toast'
 
 type SlugState = 'idle' | 'checking' | 'available' | 'taken' | 'invalid'
 
-export function CreateOrgForm() {
+export function CreateOrgForm({ rootDomain }: { rootDomain: string }) {
   const toast = useConsoleToast()
   const [pending, setPending] = useState(false)
   const [slug, setSlug] = useState('')
@@ -139,7 +139,7 @@ export function CreateOrgForm() {
         {slugState === 'checking' ? (
           <p className="mt-1 text-xs text-zinc-500">Checking availability…</p>
         ) : slugState === 'available' ? (
-          <p className="mt-1 text-xs text-emerald-400">✓ {slug}.organizr.co is available</p>
+          <p className="mt-1 text-xs text-emerald-400">✓ {slug}.{rootDomain} is available</p>
         ) : slugState === 'taken' ? (
           <p className="mt-1 text-xs text-red-300">That slug is already taken.</p>
         ) : slugState === 'invalid' ? (

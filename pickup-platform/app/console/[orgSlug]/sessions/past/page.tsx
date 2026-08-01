@@ -2,7 +2,12 @@ import { notFound } from 'next/navigation'
 import { getOrgForMember } from '@/lib/orgs'
 import { getPastEventsForConsole } from '@/lib/events'
 import { SessionEventCard } from '../../session-event-card'
-import { ConsolePage, ConsoleHeader, ConsoleSection } from '../../../_components/console-ui'
+import {
+  ConsolePage,
+  ConsoleHeader,
+  ConsoleSection,
+  EmptyState,
+} from '../../../_components/console-ui'
 
 type Props = {
   params: Promise<{ orgSlug: string }>
@@ -38,7 +43,10 @@ export default async function PastSessionsPage({ params }: Props) {
               ))}
             </ul>
           ) : (
-            <p className="text-sm text-zinc-500">No past sessions yet.</p>
+            <EmptyState
+              title="No past sessions yet"
+              description="Completed sessions show up here so you can review who came and how they went."
+            />
           )}
         </ConsoleSection>
       </div>

@@ -10,6 +10,7 @@ import type {
 import { canArchiveSponsorAnalytics } from '@/lib/sponsor-link-clicks'
 import { archiveSponsorshipAnalytics } from '../../sponsorship-actions'
 import { ConsoleSection, btnOutline } from '../../_components/console-ui'
+import { ConfirmSheet } from '../../_components/confirm-sheet'
 import { useConsoleToast } from '../../_components/console-toast'
 import { SponsorVisitorsSheet } from './sponsor-visitors-sheet'
 
@@ -34,6 +35,10 @@ export function SponsorshipVisitsSection({
   const [archivedRows, setArchivedRows] = useState(archives)
   const [busyId, setBusyId] = useState<string | null>(null)
   const [visitorsTarget, setVisitorsTarget] = useState<VisitorsTarget | null>(null)
+  const [archiveTarget, setArchiveTarget] = useState<{
+    sponsorshipId: string
+    sponsorName: string
+  } | null>(null)
 
   useEffect(() => {
     setLiveStats(stats)
@@ -44,13 +49,14 @@ export function SponsorshipVisitsSection({
   const exportHref = `/api/console/${orgSlug}/sponsorship/clicks`
   const archivedExportHref = `${exportHref}?scope=archived`
 
-  async function handleArchive(sponsorshipId: string, sponsorName: string) {
+  function handleArchive(sponsorshipId: string, sponsorName: string) {
     if (busyId) return
-    const confirmed = window.confirm(
-      `Archive current visit totals for ${sponsorName}? Live counts reset to zero; the archived period stays available for CSV reports.`,
-    )
-    if (!confirmed) return
+    setArchiveTarget({ sponsorshipId, sponsorName })
+  }
 
+  async function runArchive() {
+    if (!archiveTarget) return
+    const { sponsorshipId } = archiveTarget
     setBusyId(sponsorshipId)
     try {
       const result = await archiveSponsorshipAnalytics(orgSlug, sponsorshipId)
@@ -100,6 +106,7 @@ export function SponsorshipVisitsSection({
       }
 
       toast.success('Visit period archived. Live counter reset.')
+      setArchiveTarget(null)
       router.refresh()
     } catch {
       toast.error('Could not archive visits. Try again.')
@@ -278,6 +285,25 @@ export function SponsorshipVisitsSection({
           archiveId={visitorsTarget.archiveId}
           open
           onClose={() => setVisitorsTarget(null)}
+        />
+      ) : null}
+
+      {archiveTarget ? (
+        <ConfirmSheet
+          open
+          onClose={() => !busyId && setArchiveTarget(null)}
+          title="Archive visit totals?"
+          description={
+            <>
+              Archive current visit totals for{' '}
+              <span className="font-medium text-zinc-200">{archiveTarget.sponsorName}</span>?
+              Live counts reset to zero; the archived period stays available for CSV reports.
+            </>
+          }
+          confirmLabel="Archive period"
+          danger
+          pending={busyId === archiveTarget.sponsorshipId}
+          onConfirm={runArchive}
         />
       ) : null}
     </>

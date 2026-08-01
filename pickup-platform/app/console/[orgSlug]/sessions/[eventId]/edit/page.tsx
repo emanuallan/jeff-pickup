@@ -43,7 +43,7 @@ export default async function EditSessionRosterPage({ params }: Props) {
   const teamsOnSession = sessionTeamsEnabled(features.team_selection, event.team_count)
 
   return (
-    <ConsolePage width="max-w-2xl">
+    <ConsolePage>
       <ConsoleHeader
         title="Edit roster"
         description={`${formatEventTime(event)} · ${event.location_label}`}

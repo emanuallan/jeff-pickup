@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { getOrgForMember } from '@/lib/orgs'
 import { getLocationsForOrg } from '@/lib/locations'
@@ -7,7 +8,14 @@ import { orgFeatures } from '@/lib/org-features'
 import { createOneOffEvent } from '../../actions'
 import { AddOneOffButton } from '../add-one-off-button'
 import { SessionEventCard } from '../session-event-card'
-import { ConsolePage, ConsoleHeader, ConsoleSection } from '../../_components/console-ui'
+import {
+  ConsolePage,
+  ConsoleHeader,
+  ConsoleSection,
+  EmptyState,
+  btnOutline,
+  btnPrimary,
+} from '../../_components/console-ui'
 
 type Props = {
   params: Promise<{ orgSlug: string }>
@@ -30,19 +38,20 @@ export default async function SessionsPage({ params }: Props) {
   const hasLocation = locations.length > 0
   const sessionFeesEnabled = Boolean(stripeAccount?.charges_enabled)
   const teamSelectionEnabled = orgFeatures(org).team_selection
+  const createOneOff = createOneOffEvent.bind(null, orgSlug)
 
   return (
     <ConsolePage>
       <ConsoleHeader
         title="Sessions"
-        description="Upcoming sessions from your recurring schedule — the next 5 per schedule roll in automatically."
+        description="Upcoming sessions from your schedules and one-offs — the next ones roll in automatically."
         backHref={`/console/${orgSlug}`}
         backLabel="Console"
         actions={
           hasLocation ? (
             <AddOneOffButton
               locations={locations}
-              createOneOff={createOneOffEvent.bind(null, orgSlug)}
+              createOneOff={createOneOff}
               sessionFeesEnabled={sessionFeesEnabled}
               teamSelectionEnabled={teamSelectionEnabled}
             />
@@ -66,10 +75,33 @@ export default async function SessionsPage({ params }: Props) {
                 </li>
               ))}
             </ul>
+          ) : !hasLocation ? (
+            <EmptyState
+              title="Add a location first"
+              description="Sessions need somewhere to meet — in person or online."
+            >
+              <Link href={`/console/${orgSlug}/locations`} className={btnPrimary}>
+                Go to locations
+              </Link>
+            </EmptyState>
           ) : (
-            <p className="text-sm text-zinc-500">
-              No upcoming sessions yet. Add a recurring schedule or a one-off session to get started.
-            </p>
+            <EmptyState
+              title="No upcoming sessions yet"
+              description="Add a recurring schedule so sessions appear automatically, or create a one-off."
+            >
+              <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
+                <Link href={`/console/${orgSlug}/schedules`} className={btnPrimary}>
+                  Add a schedule
+                </Link>
+                <AddOneOffButton
+                  locations={locations}
+                  createOneOff={createOneOff}
+                  sessionFeesEnabled={sessionFeesEnabled}
+                  teamSelectionEnabled={teamSelectionEnabled}
+                  className={btnOutline}
+                />
+              </div>
+            </EmptyState>
           )}
         </ConsoleSection>
       </div>

@@ -138,6 +138,16 @@ export async function middleware(request: NextRequest) {
     return redirectResponse
   }
 
+  // Console requires a signed-in organizer — redirect before pages 404 as "not a member".
+  if (pathname.startsWith('/console') && !sessionResponse.user) {
+    const loginUrl = new URL('/login', request.url)
+    loginUrl.searchParams.set('next', `${pathname}${request.nextUrl.search}`)
+    const redirectResponse = NextResponse.redirect(loginUrl)
+    copyCookies(sessionResponse.response, redirectResponse)
+    applyVisitorCookie(redirectResponse, isNewVisitor, visitorKey)
+    return redirectResponse
+  }
+
   const response = NextResponse.next({ request: { headers: requestHeaders } })
   copyCookies(sessionResponse.response, response)
   applyVisitorCookie(response, isNewVisitor, visitorKey)

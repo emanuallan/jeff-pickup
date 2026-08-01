@@ -4,6 +4,7 @@ import { useEffect, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { refreshGroupRules, updateGroupRulesFeature, updateGroupRulesText } from '../actions'
 import { ConsoleSubmitButton } from '../_components/console-submit-button'
+import { ConfirmSheet } from '../_components/confirm-sheet'
 import { btnSecondary } from '../_components/console-ui'
 import { useConsoleToast } from '../_components/console-toast'
 import {
@@ -88,6 +89,8 @@ export function GroupRulesSection({ orgSlug, enabled: initialEnabled, rules, sum
   const router = useRouter()
   const [enabled, setEnabled] = useState(initialEnabled)
   const [showAgreements, setShowAgreements] = useState(false)
+  const [confirmRefresh, setConfirmRefresh] = useState(false)
+  const [refreshPending, setRefreshPending] = useState(false)
 
   useEffect(() => {
     setEnabled(initialEnabled)
@@ -104,17 +107,15 @@ export function GroupRulesSection({ orgSlug, enabled: initialEnabled, rules, sum
   }
 
   async function handleRefresh() {
-    const confirmed = window.confirm(
-      'Everyone will need to accept the current rules again before they can sign up. Continue?',
-    )
-    if (!confirmed) return
-
+    setRefreshPending(true)
     const result = await refreshGroupRules(orgSlug)
+    setRefreshPending(false)
     if (result?.error) {
       toast.error(result.error)
       return
     }
     toast.success('Re-acceptance requested. Participants will be prompted on their next sign-up.')
+    setConfirmRefresh(false)
     router.refresh()
   }
 
@@ -182,7 +183,7 @@ export function GroupRulesSection({ orgSlug, enabled: initialEnabled, rules, sum
                 <div className="mt-4 flex flex-wrap gap-2">
                   <button
                     type="button"
-                    onClick={() => void handleRefresh()}
+                    onClick={() => setConfirmRefresh(true)}
                     className="rounded-lg border border-white/10 px-3 py-2 text-xs font-medium text-zinc-200 transition hover:border-indigo-500/30 hover:bg-zinc-900"
                   >
                     Request re-acceptance
@@ -232,6 +233,17 @@ export function GroupRulesSection({ orgSlug, enabled: initialEnabled, rules, sum
           Turn on the toggle above to add agreement text and gate sign-ups.
         </p>
       )}
+
+      <ConfirmSheet
+        open={confirmRefresh}
+        onClose={() => !refreshPending && setConfirmRefresh(false)}
+        title="Request re-acceptance?"
+        description="Everyone will need to accept the current rules again before they can sign up."
+        confirmLabel="Request re-acceptance"
+        danger
+        pending={refreshPending}
+        onConfirm={handleRefresh}
+      />
     </div>
   )
 }

@@ -40,7 +40,7 @@ export default async function OrgBrandingPage({ params }: Props) {
   const orgHost = new URL(orgUrl).host
 
   return (
-    <ConsolePage width="max-w-2xl">
+    <ConsolePage>
       <ConsoleHeader
         title="Branding"
         description="Your group's profile, look, and links on public pages."
@@ -54,7 +54,7 @@ export default async function OrgBrandingPage({ params }: Props) {
         </ConsoleSection>
 
         <ConsoleSection
-          title="Branding"
+          title="Logo & accent"
           description="How your group looks on its public page and shared links."
         >
           <BrandingForm

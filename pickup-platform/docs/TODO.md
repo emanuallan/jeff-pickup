@@ -20,7 +20,7 @@ Track deferred work and known simplifications. Prefer shipping simple, refine la
 - [x] One-off event create/cancel in console
 - [x] Minimal org creation form (`/console/new`)
 - [x] Optional capacity (migration 003)
-- [ ] Auto-materialize when a schedule is created (currently manual button)
+- [x] Auto-materialize when a schedule is created (manual button remains as escape hatch)
 - [ ] Geocoding for location lat/lon (deferred — fields exist, default 0)
 
 ## Phase 2 — Participant identity + roster

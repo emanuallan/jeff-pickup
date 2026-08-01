@@ -17,6 +17,7 @@ import {
   IconSettings,
   IconParticipants,
   IconFeedback,
+  IconSponsorship,
 } from './console-nav-icons'
 
 function formatCount(n: number, singular: string, plural?: string) {
@@ -110,6 +111,9 @@ export async function OrgConsoleNavSection({ orgId, orgSlug }: NavSectionProps) 
     oneOffEventCount: counts.oneOffEventCount,
   })
   const base = `/console/${orgSlug}`
+  const setupHref = `${base}/setup`
+  /** Sections that need sessions to exist stay locked until setup completes. */
+  const needsSessions = !isSetup
 
   return (
     <>
@@ -117,10 +121,11 @@ export async function OrgConsoleNavSection({ orgId, orgSlug }: NavSectionProps) 
         <div className="mt-6 rounded-xl border border-indigo-500/25 bg-indigo-500/5 px-4 py-3">
           <p className="text-sm font-medium text-indigo-200">Get started</p>
           <p className="mt-0.5 text-xs text-zinc-400">
-            Add a location and your first sessions — recurring or one-off.
+            Add a location and your first sessions — recurring or one-off. Locations, schedules,
+            branding, and settings are available anytime.
           </p>
           <Link
-            href={`${base}/setup`}
+            href={setupHref}
             className="mt-3 inline-flex min-h-10 items-center rounded-lg bg-indigo-600 px-4 text-sm font-semibold text-white transition hover:bg-indigo-500"
           >
             Continue setup
@@ -131,7 +136,7 @@ export async function OrgConsoleNavSection({ orgId, orgSlug }: NavSectionProps) 
       <div className="mt-8">
         <ConsoleNavGrid>
           <ConsoleNavTile
-            href={`${base}/sessions`}
+            href={needsSessions ? setupHref : `${base}/sessions`}
             title="Sessions"
             icon={<IconSessions />}
             badge={sessionsNavBadge(
@@ -140,43 +145,42 @@ export async function OrgConsoleNavSection({ orgId, orgSlug }: NavSectionProps) 
               counts.activeCancelledSessionCount,
             )}
             live={counts.liveSessionCount > 0}
-            disabled={!isSetup}
+            locked={needsSessions}
+            lockedHint="Finish setup"
           />
           <ConsoleNavTile
-            href={`${base}/sessions/past`}
+            href={needsSessions ? setupHref : `${base}/sessions/past`}
             title="Past sessions"
             icon={<IconPastSessions />}
             badge={pastSessionsNavBadge(
               counts.pastSessionCount,
               counts.pastCancelledSessionCount,
             )}
-            disabled={!isSetup}
+            locked={needsSessions}
+            lockedHint="Finish setup"
           />
           <ConsoleNavTile
             href={`${base}/locations`}
             title="Locations"
             icon={<IconLocation />}
             badge={formatCount(counts.locationCount, 'location')}
-            disabled={!isSetup}
           />
           <ConsoleNavTile
             href={`${base}/schedules`}
             title="Schedules"
             icon={<IconSchedule />}
             badge={formatCount(counts.scheduleCount, 'schedule')}
-            disabled={!isSetup}
           />
           <ConsoleNavTile
             href={`${base}/branding`}
             title="Branding"
             icon={<IconBranding />}
-            disabled={!isSetup}
           />
           {showInteriorTools ? (
             <ConsoleNavTile
-              href={`${base}/sponsorship`}
+              href={needsSessions ? setupHref : `${base}/sponsorship`}
               title="Sponsorships"
-              icon={<IconBranding />}
+              icon={<IconSponsorship />}
               badge={
                 pendingSponsorships > 0
                   ? `${pendingSponsorships} pending`
@@ -184,19 +188,21 @@ export async function OrgConsoleNavSection({ orgId, orgSlug }: NavSectionProps) 
                     ? 'Enabled'
                     : 'Set up'
               }
-              disabled={!isSetup}
+              locked={needsSessions}
+              lockedHint="Finish setup"
             />
           ) : null}
           <ConsoleNavTile
-            href={`${base}/participants`}
+            href={needsSessions ? setupHref : `${base}/participants`}
             title="Participants"
             icon={<IconParticipants />}
             badge={formatCount(counts.participantCount, 'person', 'people')}
-            disabled={!isSetup}
+            locked={needsSessions}
+            lockedHint="Finish setup"
           />
           {features?.session_feedback ? (
             <ConsoleNavTile
-              href={`${base}/feedback`}
+              href={needsSessions ? setupHref : `${base}/feedback`}
               title="Feedback"
               icon={<IconFeedback />}
               badge={
@@ -204,14 +210,14 @@ export async function OrgConsoleNavSection({ orgId, orgSlug }: NavSectionProps) 
                   ? `${recentFeedbackCount} recent`
                   : 'No feedback yet'
               }
-              disabled={!isSetup}
+              locked={needsSessions}
+              lockedHint="Finish setup"
             />
           ) : null}
           <ConsoleNavTile
             href={`${base}/settings`}
             title="Settings"
             icon={<IconSettings />}
-            disabled={!isSetup}
           />
         </ConsoleNavGrid>
       </div>

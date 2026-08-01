@@ -14,6 +14,7 @@ import {
   ConsoleHeader,
   ConsoleSection,
   ConsoleCard,
+  EmptyState,
 } from '../../_components/console-ui'
 
 type Props = {
@@ -47,9 +48,9 @@ export default async function ConsoleFeedbackPage({ params, searchParams }: Prop
   const summary = buildSessionFeedbackSummary(rows)
 
   return (
-    <ConsolePage width="max-w-2xl">
+    <ConsolePage>
       <ConsoleHeader
-        title="Session feedback"
+        title="Feedback"
         description="Ratings and comments from participants after sessions end."
         backHref={
           eventRef
@@ -91,9 +92,10 @@ export default async function ConsoleFeedbackPage({ params, searchParams }: Prop
           }
         >
           {rows.length === 0 ? (
-            <p className="text-sm text-zinc-500">
-              No feedback yet. Participants who signed up will be prompted after sessions end.
-            </p>
+            <EmptyState
+              title="No feedback yet"
+              description="Participants who signed up will be prompted after sessions end."
+            />
           ) : (
             <ul className="space-y-2">
               {rows.map((row) => (

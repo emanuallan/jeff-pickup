@@ -20,6 +20,7 @@ import {
   ConsoleHeader,
   ConsoleSection,
   ConsoleCard,
+  Disclosure,
   btnOutline,
 } from '../../../_components/console-ui'
 import { UnregisteredStatCard } from './unregistered-stat-card'
@@ -83,13 +84,13 @@ export default async function ConsoleEventAnalyticsPage({ params }: Props) {
   const priceLabel = paidSession ? formatPriceCents(event.price_cents ?? 0) : null
 
   return (
-    <ConsolePage width="max-w-2xl">
+    <ConsolePage>
       <ConsoleHeader
         title={formatEventTime(event)}
         live={isLive}
         description={event.location_label}
         backHref={`/console/${orgSlug}/sessions`}
-        backLabel="Back"
+        backLabel="Sessions"
         useHistoryBack
         actions={
           <>
@@ -110,80 +111,6 @@ export default async function ConsoleEventAnalyticsPage({ params }: Props) {
       </p>
 
       <div className="mt-8 space-y-6">
-        <ConsoleSection title="Engagement" description="Traffic and sign-up funnel for this session.">
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-            <PageViewsStatCard orgSlug={orgSlug} eventId={eventId} count={analytics.pageViews} />
-            <UniqueVisitorsStatCard
-              orgSlug={orgSlug}
-              eventId={eventId}
-              count={analytics.uniqueVisitors}
-            />
-            <SignupRateStatCard
-              orgSlug={orgSlug}
-              eventId={eventId}
-              rate={analytics.conversionRate != null ? `${analytics.conversionRate}%` : '—'}
-              capped={analytics.conversionCapped}
-              hasTraffic={hasTraffic}
-              hint={
-                analytics.uniqueSignups > 0
-                  ? analytics.conversionCapped
-                    ? `${analytics.uniqueSignups} signed up · shared device`
-                    : `${analytics.uniqueSignups} signed up`
-                  : analytics.uniqueVisitors > 0
-                    ? 'No sign-ups yet'
-                    : 'Needs page views'
-              }
-            />
-            <AllTimeSignupsStatCard
-              orgSlug={orgSlug}
-              eventId={eventId}
-              count={analytics.uniqueSignups}
-            />
-            <CurrentSignupsStatCard
-              orgSlug={orgSlug}
-              eventId={eventId}
-              count={analytics.currentSignups}
-              headcountHint={`${analytics.headcount} total headcount`}
-            />
-            <UnregisteredStatCard
-              orgSlug={orgSlug}
-              eventId={eventId}
-              count={analytics.uniqueLeft}
-              timezone={event.timezone}
-            />
-          </div>
-
-          <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
-            <GuestExtrasStatCard
-              orgSlug={orgSlug}
-              eventId={eventId}
-              count={analytics.totalGuests}
-            />
-            {event.capacity != null ? (
-              <CapacityFillStatCard
-                orgSlug={orgSlug}
-                eventId={eventId}
-                fill={analytics.capacityFill != null ? `${analytics.capacityFill}%` : '—'}
-              />
-            ) : (
-              <ConsoleCard className="flex flex-col gap-1">
-                <div className="tabular-nums text-2xl font-semibold text-zinc-50">No limit</div>
-                <div className="text-xs font-medium text-zinc-400">Capacity</div>
-              </ConsoleCard>
-            )}
-            <LastSignupStatCard
-              orgSlug={orgSlug}
-              eventId={eventId}
-              value={
-                analytics.lastSignupAt
-                  ? formatInstantInZone(analytics.lastSignupAt, event.timezone)
-                  : '—'
-              }
-              hasActivity={hasSignupActivity}
-            />
-          </div>
-        </ConsoleSection>
-
         {paidSession && event.price_cents != null ? (
           <SessionPaymentsSection
             priceCents={event.price_cents}
@@ -364,6 +291,83 @@ export default async function ConsoleEventAnalyticsPage({ params }: Props) {
             </details>
           ) : null}
         </ConsoleSection>
+
+        <Disclosure summary="Engagement stats">
+          <p className="mb-4 text-xs text-zinc-500">
+            Traffic and sign-up funnel for this session.
+          </p>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+            <PageViewsStatCard orgSlug={orgSlug} eventId={eventId} count={analytics.pageViews} />
+            <UniqueVisitorsStatCard
+              orgSlug={orgSlug}
+              eventId={eventId}
+              count={analytics.uniqueVisitors}
+            />
+            <SignupRateStatCard
+              orgSlug={orgSlug}
+              eventId={eventId}
+              rate={analytics.conversionRate != null ? `${analytics.conversionRate}%` : '—'}
+              capped={analytics.conversionCapped}
+              hasTraffic={hasTraffic}
+              hint={
+                analytics.uniqueSignups > 0
+                  ? analytics.conversionCapped
+                    ? `${analytics.uniqueSignups} signed up · shared device`
+                    : `${analytics.uniqueSignups} signed up`
+                  : analytics.uniqueVisitors > 0
+                    ? 'No sign-ups yet'
+                    : 'Needs page views'
+              }
+            />
+            <AllTimeSignupsStatCard
+              orgSlug={orgSlug}
+              eventId={eventId}
+              count={analytics.uniqueSignups}
+            />
+            <CurrentSignupsStatCard
+              orgSlug={orgSlug}
+              eventId={eventId}
+              count={analytics.currentSignups}
+              headcountHint={`${analytics.headcount} total headcount`}
+            />
+            <UnregisteredStatCard
+              orgSlug={orgSlug}
+              eventId={eventId}
+              count={analytics.uniqueLeft}
+              timezone={event.timezone}
+            />
+          </div>
+
+          <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
+            <GuestExtrasStatCard
+              orgSlug={orgSlug}
+              eventId={eventId}
+              count={analytics.totalGuests}
+            />
+            {event.capacity != null ? (
+              <CapacityFillStatCard
+                orgSlug={orgSlug}
+                eventId={eventId}
+                fill={analytics.capacityFill != null ? `${analytics.capacityFill}%` : '—'}
+              />
+            ) : (
+              <ConsoleCard className="flex flex-col gap-1">
+                <div className="tabular-nums text-2xl font-semibold text-zinc-50">No limit</div>
+                <div className="text-xs font-medium text-zinc-400">Capacity</div>
+              </ConsoleCard>
+            )}
+            <LastSignupStatCard
+              orgSlug={orgSlug}
+              eventId={eventId}
+              value={
+                analytics.lastSignupAt
+                  ? formatInstantInZone(analytics.lastSignupAt, event.timezone)
+                  : '—'
+              }
+              hasActivity={hasSignupActivity}
+            />
+          </div>
+        </Disclosure>
 
         {showDebrief ? (
           <Suspense

@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { notFound } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
 import { getOrgForMember } from '@/lib/orgs'
 import { createClient } from '@/lib/supabase/server'
 import { isInteriorOperator } from '@/lib/interior'
@@ -76,7 +76,7 @@ export default async function SponsorshipSetupPage({ params, searchParams }: Pro
 
   const showInteriorTools = isInteriorOperator(user?.id) && membership?.role === 'owner'
   if (!showInteriorTools) {
-    notFound()
+    redirect(`/console/${orgSlug}`)
   }
 
   const [stripeAccount, tiers, sponsorships] = await Promise.all([

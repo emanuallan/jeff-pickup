@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { deleteEvent } from '../actions'
 import { chipAction } from '../_components/console-ui'
+import { ConfirmSheet } from '../_components/confirm-sheet'
 import { useConsoleToast } from '../_components/console-toast'
 
 type Props = {
@@ -14,15 +15,10 @@ type Props = {
 
 export function DeleteEventButton({ orgSlug, eventId, eventLabel, recurring }: Props) {
   const toast = useConsoleToast()
+  const [open, setOpen] = useState(false)
   const [pending, setPending] = useState(false)
 
   async function handleDelete() {
-    const warning = recurring
-      ? `Delete "${eventLabel}"? This removes the session from your schedule permanently — it won't come back automatically.`
-      : `Delete "${eventLabel}"? This permanently removes the session and its roster. This can't be undone.`
-    if (!window.confirm(warning)) {
-      return
-    }
     setPending(true)
     const result = await deleteEvent(orgSlug, eventId)
     setPending(false)
@@ -31,16 +27,41 @@ export function DeleteEventButton({ orgSlug, eventId, eventLabel, recurring }: P
       return
     }
     toast.success('Session deleted.')
+    setOpen(false)
   }
 
   return (
-    <button
-      type="button"
-      onClick={handleDelete}
-      disabled={pending}
-      className={`${chipAction} text-zinc-400 hover:bg-red-500/10 hover:text-red-300 disabled:opacity-50`}
-    >
-      {pending ? 'Deleting…' : 'Delete'}
-    </button>
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        disabled={pending}
+        className={`${chipAction} text-zinc-400 hover:bg-red-500/10 hover:text-red-300 disabled:opacity-50`}
+      >
+        Delete
+      </button>
+      <ConfirmSheet
+        open={open}
+        onClose={() => !pending && setOpen(false)}
+        title="Delete session?"
+        description={
+          recurring ? (
+            <>
+              <span className="font-medium text-zinc-200">{eventLabel}</span> will be removed from
+              your schedule permanently — it won&apos;t come back automatically.
+            </>
+          ) : (
+            <>
+              <span className="font-medium text-zinc-200">{eventLabel}</span> and its roster will be
+              permanently removed. This can&apos;t be undone.
+            </>
+          )
+        }
+        confirmLabel="Delete session"
+        danger
+        pending={pending}
+        onConfirm={handleDelete}
+      />
+    </>
   )
 }

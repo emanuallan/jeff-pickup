@@ -195,30 +195,7 @@ export function ConsoleCard({
   )
 }
 
-/** Collapsible disclosure styled for the console (used for add-forms, past sessions). */
-export function Disclosure({
-  summary,
-  children,
-  className = '',
-}: {
-  summary: string
-  children: React.ReactNode
-  className?: string
-}) {
-  return (
-    <details
-      className={`group rounded-lg border border-white/10 bg-zinc-950/40 ${className}`}
-    >
-      <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between px-3 py-3 text-xs font-medium text-zinc-300 transition-colors hover:text-zinc-100 sm:px-4">
-        {summary}
-        <span className="text-zinc-500 transition-transform group-open:rotate-180" aria-hidden>
-          ⌄
-        </span>
-      </summary>
-      <div className="border-t border-white/5 px-3 py-4 sm:px-4">{children}</div>
-    </details>
-  )
-}
+export { Disclosure } from './console-disclosure'
 
 /** Dashed empty-state placeholder. */
 export function EmptyState({
@@ -244,8 +221,8 @@ export function EmptyState({
 const navTileClass =
   'flex aspect-square flex-col items-center justify-center rounded-xl border border-white/10 bg-zinc-900/50 p-3 text-center transition active:scale-[0.98] hover:border-indigo-500/30 hover:bg-zinc-900'
 
-const navTileDisabledClass =
-  'pointer-events-none flex aspect-square flex-col items-center justify-center rounded-xl border border-white/5 bg-zinc-900/30 p-3 text-center opacity-50'
+const navTileLockedClass =
+  'flex aspect-square flex-col items-center justify-center rounded-xl border border-dashed border-indigo-500/25 bg-zinc-900/30 p-3 text-center opacity-80 transition hover:border-indigo-500/40 hover:bg-zinc-900/50 active:scale-[0.98]'
 
 /** Square nav tile for the org console hub — mobile-first grid entry point. */
 export function ConsoleNavTile({
@@ -254,7 +231,8 @@ export function ConsoleNavTile({
   icon,
   badge,
   external,
-  disabled,
+  locked,
+  lockedHint,
   live,
 }: {
   href: string
@@ -262,35 +240,39 @@ export function ConsoleNavTile({
   icon: React.ReactNode
   badge?: ReactNode
   external?: boolean
-  disabled?: boolean
+  /** When true, tile links to href but shows a locked/setup-needed treatment. */
+  locked?: boolean
+  /** Shown instead of badge when locked (e.g. "Finish setup"). */
+  lockedHint?: string
   live?: boolean
 }) {
+  const shownBadge = locked ? (lockedHint ?? 'Finish setup') : badge
   const content = (
     <>
-      <div className="flex h-10 w-10 items-center justify-center text-indigo-300">{icon}</div>
+      <div
+        className={`flex h-10 w-10 items-center justify-center ${locked ? 'text-indigo-300/70' : 'text-indigo-300'}`}
+      >
+        {icon}
+      </div>
       <div className="mt-2 flex items-center justify-center gap-1.5">
-        {live ? (
+        {live && !locked ? (
           <span
             className="h-2 w-2 shrink-0 rounded-full bg-red-500 ring-2 ring-red-500/25"
             aria-hidden
           />
         ) : null}
         <span className="text-sm font-medium leading-tight text-zinc-100">{title}</span>
-        {live ? <span className="sr-only"> — live session</span> : null}
+        {live && !locked ? <span className="sr-only"> — live session</span> : null}
       </div>
-      {badge != null && badge !== '' ? (
-        <div className="mt-1 text-xs leading-tight text-zinc-500">{badge}</div>
+      {shownBadge != null && shownBadge !== '' ? (
+        <div
+          className={`mt-1 text-xs leading-tight ${locked ? 'font-medium text-indigo-300/90' : 'text-zinc-500'}`}
+        >
+          {shownBadge}
+        </div>
       ) : null}
     </>
   )
-
-  if (disabled) {
-    return (
-      <div className={navTileDisabledClass} aria-disabled="true">
-        {content}
-      </div>
-    )
-  }
 
   if (external) {
     return (
@@ -301,7 +283,11 @@ export function ConsoleNavTile({
   }
 
   return (
-    <Link href={href} className={navTileClass}>
+    <Link
+      href={href}
+      className={locked ? navTileLockedClass : navTileClass}
+      aria-disabled={locked || undefined}
+    >
       {content}
     </Link>
   )

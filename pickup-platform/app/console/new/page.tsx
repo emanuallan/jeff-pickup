@@ -22,7 +22,7 @@ export default async function NewOrgPage() {
       </p>
 
       <div className="mt-8">
-        <CreateOrgForm />
+        <CreateOrgForm rootDomain={rootDomain} />
       </div>
     </ConsolePage>
   )

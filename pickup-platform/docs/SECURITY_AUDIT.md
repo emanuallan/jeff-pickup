@@ -114,7 +114,7 @@ Run from `pickup-platform/` on 2026-07-05:
 
 1. **Phone session recovery** — Add OTP step before issuing session tokens; enable `require_phone_verification` when ready.
 2. **Rate limiting** — OTP verify, recovery, PII CSV exports, headcount polling (Vercel WAF / Upstash / Supabase edge).
-3. **Middleware console gate** — Redirect unauthenticated `/console/*` to login (currently some routes return 404).
+3. ~~**Middleware console gate**~~ — Done: unauthenticated `/console/*` redirects to login.
 4. **Console API test suite** — Extend smoke tests to roster, visitors, analytics-detail, unregistered routes.
 5. **Cron hardening** — Rotate `CRON_SECRET`; add IP allowlist if host supports it.
 6. **Security headers** — Review CSP and `Referrer-Policy` in `app/layout.tsx`.
@@ -127,7 +127,7 @@ Run from `pickup-platform/` on 2026-07-05:
 ## Explicitly out of scope (this pass)
 
 - Changes to `recover_participant_session` RPC or recovery UX
-- Middleware console redirect
+- ~~Middleware console redirect~~
 - Rate-limit infrastructure
 - OTP verification implementation
 - RLS/migration changes

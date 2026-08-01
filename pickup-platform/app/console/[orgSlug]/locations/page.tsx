@@ -5,7 +5,13 @@ import { createLocation, updateLocation } from '../../actions'
 import { AddLocationButton } from '../add-location-button'
 import { EditLocationButton } from '../edit-location-button'
 import { DeleteLocationButton } from '../delete-location-button'
-import { ConsolePage, ConsoleHeader, ConsoleSection, ConsoleCard } from '../../_components/console-ui'
+import {
+  ConsolePage,
+  ConsoleHeader,
+  ConsoleSection,
+  ConsoleCard,
+  EmptyState,
+} from '../../_components/console-ui'
 
 type Props = {
   params: Promise<{ orgSlug: string }>
@@ -68,7 +74,12 @@ export default async function LocationsPage({ params }: Props) {
               ))}
             </ul>
           ) : (
-            <p className="text-sm text-zinc-500">No locations yet. Tap Add location above.</p>
+            <EmptyState
+              title="No locations yet"
+              description="Add where your group meets — a field, gym, park, or online link."
+            >
+              <AddLocationButton addLocation={addLocation} />
+            </EmptyState>
           )}
         </ConsoleSection>
       </div>

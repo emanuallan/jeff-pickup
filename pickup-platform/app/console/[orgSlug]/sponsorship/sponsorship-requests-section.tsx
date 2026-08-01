@@ -10,6 +10,7 @@ import {
   declineSponsorship,
 } from '../../sponsorship-actions'
 import { btnOutline, btnPrimary, ConsoleSection } from '../../_components/console-ui'
+import { ConfirmSheet } from '../../_components/confirm-sheet'
 import { useConsoleToast } from '../../_components/console-toast'
 import {
   formatSponsorshipConsoleDate,
@@ -26,6 +27,10 @@ type BusyAction = {
   action: 'approve' | 'decline' | 'cancel'
 }
 
+type ConfirmAction =
+  | { kind: 'decline'; id: string }
+  | { kind: 'cancel'; id: string; mode: SponsorshipCancelMode }
+
 export function SponsorshipRequestsSection({
   orgSlug,
   pending,
@@ -40,6 +45,7 @@ export function SponsorshipRequestsSection({
   const toast = useConsoleToast()
   const router = useRouter()
   const [busy, setBusy] = useState<BusyAction | null>(null)
+  const [confirmAction, setConfirmAction] = useState<ConfirmAction | null>(null)
   const [pendingRows, setPendingRows] = useState(pending)
   const [activeRows, setActiveRows] = useState(active)
   const [historyRows, setHistoryRows] = useState(history)
@@ -82,13 +88,17 @@ export function SponsorshipRequestsSection({
     }
   }
 
-  async function handleDecline(id: string) {
+  function handleDecline(id: string) {
     if (busy) return
-    const confirmed = window.confirm(
-      'Decline this sponsorship request? Their latest payment will be refunded (minus platform and card fees), and their logo will not go live.',
-    )
-    if (!confirmed) return
+    setConfirmAction({ kind: 'decline', id })
+  }
 
+  function handleCancel(id: string, mode: SponsorshipCancelMode) {
+    if (busy) return
+    setConfirmAction({ kind: 'cancel', id, mode })
+  }
+
+  async function runDecline(id: string) {
     setBusy({ id, action: 'decline' })
     try {
       const result = await declineSponsorship(orgSlug, id)
@@ -106,6 +116,7 @@ export function SponsorshipRequestsSection({
         ])
       }
       toast.success('Sponsor declined and payment refunded.')
+      setConfirmAction(null)
       router.refresh()
     } catch {
       toast.error('Could not decline this sponsorship. Try again.')
@@ -114,26 +125,9 @@ export function SponsorshipRequestsSection({
     }
   }
 
-  async function handleCancel(id: string, mode: SponsorshipCancelMode) {
-    if (busy) return
-
+  async function runCancel(id: string, mode: SponsorshipCancelMode) {
     const target = activeRows.find((row) => row.id === id)
     const complimentary = target ? isComplimentarySponsorship(target) : false
-
-    const confirmed = complimentary
-      ? window.confirm('Remove this complimentary sponsor? Their logo comes down immediately.')
-      : mode === 'end_of_period'
-        ? window.confirm(
-            'Cancel billing after this period? Their logo stays up until the period ends. Past payments are not refunded.',
-          )
-        : mode === 'refund_full'
-          ? window.confirm(
-              'NOT RECOMMENDED: Cancel now and refund the full payment (including fees)? Their logo comes down immediately. Your group will likely take a loss from card processing and payout clawbacks. Continue?',
-            )
-          : window.confirm(
-              'Cancel now? Their logo comes down immediately, and their latest payment is refunded (minus platform and card fees).',
-            )
-    if (!confirmed) return
 
     setBusy({ id, action: 'cancel' })
     try {
@@ -181,6 +175,7 @@ export function SponsorshipRequestsSection({
               ? 'Sponsorship canceled with a full refund.'
               : 'Sponsorship canceled and latest payment refunded (fees kept).',
       )
+      setConfirmAction(null)
       router.refresh()
     } catch {
       toast.error('Could not cancel this sponsorship. Try again.')
@@ -188,6 +183,55 @@ export function SponsorshipRequestsSection({
       setBusy(null)
     }
   }
+
+  const confirmTarget =
+    confirmAction?.kind === 'cancel'
+      ? activeRows.find((row) => row.id === confirmAction.id)
+      : null
+  const confirmComplimentary = confirmTarget
+    ? isComplimentarySponsorship(confirmTarget)
+    : false
+
+  const confirmCopy = (() => {
+    if (!confirmAction) return null
+    if (confirmAction.kind === 'decline') {
+      return {
+        title: 'Decline sponsorship?',
+        description:
+          'Their latest payment will be refunded (minus platform and card fees), and their logo will not go live.',
+        confirmLabel: 'Decline request',
+      }
+    }
+    if (confirmComplimentary) {
+      return {
+        title: 'Remove complimentary sponsor?',
+        description: 'Their logo comes down immediately.',
+        confirmLabel: 'Remove sponsor',
+      }
+    }
+    if (confirmAction.mode === 'end_of_period') {
+      return {
+        title: 'Cancel after this period?',
+        description:
+          'Their logo stays up until the period ends. Past payments are not refunded.',
+        confirmLabel: 'Cancel at period end',
+      }
+    }
+    if (confirmAction.mode === 'refund_full') {
+      return {
+        title: 'Cancel with full refund?',
+        description:
+          'Not recommended. Their logo comes down immediately and the full payment (including fees) is refunded. Your group will likely take a loss from card processing and payout clawbacks.',
+        confirmLabel: 'Refund full amount',
+      }
+    }
+    return {
+      title: 'Cancel sponsorship now?',
+      description:
+        'Their logo comes down immediately, and their latest payment is refunded (minus platform and card fees).',
+      confirmLabel: 'Cancel now',
+    }
+  })()
 
   return (
     <div className="space-y-4">
@@ -319,6 +363,23 @@ export function SponsorshipRequestsSection({
           </ul>
         )}
       </ConsoleSection>
+
+      {confirmCopy && confirmAction ? (
+        <ConfirmSheet
+          open
+          onClose={() => !busy && setConfirmAction(null)}
+          title={confirmCopy.title}
+          description={confirmCopy.description}
+          confirmLabel={confirmCopy.confirmLabel}
+          danger
+          pending={Boolean(busy)}
+          onConfirm={() =>
+            confirmAction.kind === 'decline'
+              ? runDecline(confirmAction.id)
+              : runCancel(confirmAction.id, confirmAction.mode)
+          }
+        />
+      ) : null}
     </div>
   )
 }

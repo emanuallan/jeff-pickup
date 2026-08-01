@@ -59,7 +59,7 @@ export default async function OrgSettingsPage({ params }: Props) {
       : null
 
   return (
-    <ConsolePage width="max-w-2xl">
+    <ConsolePage>
       <ConsoleHeader
         title="Settings"
         description="Advanced options and group management."

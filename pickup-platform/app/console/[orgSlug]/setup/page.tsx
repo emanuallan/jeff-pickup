@@ -112,12 +112,12 @@ export default async function SetupPage({ params }: Props) {
         <div className="mt-8 space-y-6">
           <ConsoleSection
             title="Step 1 · Add a location"
-            description="Where do your sessions happen? You can add more later."
+            description="Where do your sessions happen? Add as many as you need."
             action={<StepBadge n={1} done={hasLocation} />}
           >
             <div className="space-y-4">
               {locationList}
-              {!hasLocation ? <AddLocationButton addLocation={addLocation} /> : null}
+              <AddLocationButton addLocation={addLocation} />
             </div>
           </ConsoleSection>
 
@@ -125,7 +125,7 @@ export default async function SetupPage({ params }: Props) {
             title="Step 2 · Add sessions"
             description={
               hasLocation
-                ? 'Set a recurring schedule, or add a one-off session to publish your first event.'
+                ? 'Set a recurring schedule, or add a one-off session to publish your first session.'
                 : 'Add a location above first — sessions need somewhere to meet.'
             }
             action={<StepBadge n={2} done={hasSessions} locked={!hasLocation} />}
@@ -148,7 +148,11 @@ export default async function SetupPage({ params }: Props) {
               </div>
             ) : !hasLocation ? (
               <p className="text-sm text-zinc-600">Locked until you add a location.</p>
-            ) : null}
+            ) : (
+              <p className="text-sm text-zinc-500">
+                Sessions are set. You can add more from Schedules or Sessions after setup.
+              </p>
+            )}
           </ConsoleSection>
         </div>
       )}

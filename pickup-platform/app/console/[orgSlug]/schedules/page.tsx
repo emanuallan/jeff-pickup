@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { getOrgForMember } from '@/lib/orgs'
 import { orgFeatures } from '@/lib/org-features'
@@ -7,7 +8,14 @@ import { createSchedule } from '../../actions'
 import { AddScheduleButton } from '../add-schedule-button'
 import { EditScheduleButton } from '../edit-schedule-button'
 import { DeleteScheduleButton } from '../delete-schedule-button'
-import { ConsolePage, ConsoleHeader, ConsoleSection, ConsoleCard } from '../../_components/console-ui'
+import {
+  ConsolePage,
+  ConsoleHeader,
+  ConsoleSection,
+  ConsoleCard,
+  EmptyState,
+  btnPrimary,
+} from '../../_components/console-ui'
 
 type Props = {
   params: Promise<{ orgSlug: string }>
@@ -41,7 +49,7 @@ export default async function SchedulesPage({ params }: Props) {
   return (
     <ConsolePage>
       <ConsoleHeader
-        title="Recurring schedules"
+        title="Schedules"
         description="When sessions repeat — upcoming sessions are created automatically."
         backHref={`/console/${orgSlug}`}
         backLabel="Console"
@@ -100,11 +108,26 @@ export default async function SchedulesPage({ params }: Props) {
               ))}
             </ul>
           ) : locations.length > 0 ? (
-            <p className="text-sm text-zinc-500">No schedules yet. Tap Add schedule above.</p>
+            <EmptyState
+              title="No schedules yet"
+              description="Set a recurring cadence so upcoming sessions appear on your calendar automatically."
+            >
+              <AddScheduleButton
+                orgSlug={orgSlug}
+                locations={locations}
+                createSchedule={createSchedule}
+                teamSelectionEnabled={teamSelectionEnabled}
+              />
+            </EmptyState>
           ) : (
-            <p className="text-sm text-zinc-500">
-              Add a location first — a schedule needs somewhere to meet.
-            </p>
+            <EmptyState
+              title="Add a location first"
+              description="A schedule needs somewhere to meet before you can set a cadence."
+            >
+              <Link href={`/console/${orgSlug}/locations`} className={btnPrimary}>
+                Go to locations
+              </Link>
+            </EmptyState>
           )}
         </ConsoleSection>
       </div>
