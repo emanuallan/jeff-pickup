@@ -23,7 +23,7 @@ export function buildWebsiteJsonLd() {
       name: 'Organizr',
       url: baseUrl,
       description:
-        "Organizr is the easy headcount for recurring group activities — share a link, see who's coming, and run your sessions.",
+        "Organizr is the easy headcount for pickup soccer — share one link, see who's playing, and get balanced sides before kick-off.",
     },
     {
       '@context': 'https://schema.org',
@@ -31,7 +31,7 @@ export function buildWebsiteJsonLd() {
       name: 'Organizr',
       url: baseUrl,
       description:
-        'Simple sign-ups and live rosters for pickup sports, run clubs, meetups, and recurring group activities.',
+        'Branded signup pages, live rosters, and balanced teams for pickup soccer and other recurring group sports.',
     },
   ]
 }

@@ -27,16 +27,16 @@ export function clampDescription(text: string, max = 125): string {
 
 export function buildRootMetadata(): Metadata {
   const baseUrl = rootBaseUrl()
-  const title = 'Organizr — Know who\'s coming'
+  const title = 'Organizr — Know who\'s playing'
   const shortTitle = 'Organizr'
   const description = clampDescription(
-    "Organizr is the easy headcount for recurring group activities — pickup sports, run clubs, and meetups. Share a link, see who's coming, and run your sessions.",
+    'The easy headcount for pickup soccer — a branded signup page, a live roster, and balanced sides before kick-off.',
   )
   const image = {
     url: `${baseUrl}/og-image`,
     width: 1200,
     height: 630,
-    alt: "Organizr — Know who's coming.",
+    alt: "Organizr — Know who's playing.",
   }
 
   return {
@@ -78,7 +78,7 @@ export function buildMarketingPageMetadata(
     url: `${baseUrl}/og-image`,
     width: 1200,
     height: 630,
-    alt: "Organizr — Know who's coming.",
+    alt: "Organizr — Know who's playing.",
   }
 
   return {

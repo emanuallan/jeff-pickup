@@ -8,7 +8,7 @@ import { MarketingPage } from '../_components/marketing-page'
 export const metadata: Metadata = buildMarketingPageMetadata(
   '/features',
   'Features',
-  'Live rosters, recurring schedules, branded pages, waitlists, session feedback, and an organizer console — built for people who run recurring groups.',
+  'Live rosters, balanced teams, recurring schedules, waitlists, kick-off weather, and an organizer console — built for pickup soccer.',
 )
 
 export default function FeaturesPage() {
@@ -17,20 +17,22 @@ export default function FeaturesPage() {
   return (
     <MarketingPage
       demoUrl={demoUrl}
-      title="Features"
+      title="Everything you need to run the game"
+      intro="Organizr replaces the weekly headcount text with a branded page, a live roster, balanced sides, and a console built for whoever runs the game. Everything below is live today."
       prose={false}
+      wide
       actions={
         <>
-          <Link href="/login" className={`${organizrBtnPrimary} flex-1 text-center`}>
+          <Link href="/login" className={`${organizrBtnPrimary} text-center sm:min-w-44`}>
             Create your group
           </Link>
           <a
             href={demoUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className={`${organizrBtnSecondary} flex-1 text-center`}
+            className={`${organizrBtnSecondary} text-center sm:min-w-44`}
           >
-            Try the demo
+            See a live group
           </a>
         </>
       }

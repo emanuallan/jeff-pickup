@@ -85,6 +85,38 @@ function LocationMark({ accentFg, online }: { accentFg: string; online?: boolean
   )
 }
 
+/** Faint centre-circle arc for the apex card — satori-safe (divs only, no SVG paths). */
+function PitchMarks() {
+  const line = 'rgba(255,255,255,0.06)'
+
+  return (
+    <>
+      <div
+        style={{
+          position: 'absolute',
+          top: '-190px',
+          right: '-150px',
+          width: '620px',
+          height: '620px',
+          borderRadius: '9999px',
+          border: `2px solid ${line}`,
+        }}
+      />
+      <div
+        style={{
+          position: 'absolute',
+          top: '-60px',
+          right: '-20px',
+          width: '360px',
+          height: '360px',
+          borderRadius: '9999px',
+          border: `2px solid ${line}`,
+        }}
+      />
+    </>
+  )
+}
+
 /** Apex marketing preview — Organizr brand, not tenant styling. */
 export function MarketingOgCard({ logoSrc }: { logoSrc: string }) {
   const accentText = readableTextColor(ORGANIZR_ACCENT)
@@ -115,6 +147,7 @@ export function MarketingOgCard({ logoSrc }: { logoSrc: string }) {
             'linear-gradient(to bottom, rgba(79, 70, 229, 0.22), rgba(79, 70, 229, 0.04), transparent)',
         }}
       />
+      <PitchMarks />
       <DotGrid />
 
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', zIndex: 1 }}>
@@ -141,7 +174,7 @@ export function MarketingOgCard({ logoSrc }: { logoSrc: string }) {
             color: ORGANIZR_ACCENT_SOFT,
           }}
         >
-          Group activities
+          Pickup soccer
         </div>
       </div>
 
@@ -155,7 +188,7 @@ export function MarketingOgCard({ logoSrc }: { logoSrc: string }) {
             letterSpacing: '-0.04em',
           }}
         >
-          Know who&apos;s coming.
+          Know who&apos;s playing.
         </div>
         <div
           style={{
@@ -167,7 +200,7 @@ export function MarketingOgCard({ logoSrc }: { logoSrc: string }) {
             maxWidth: '780px',
           }}
         >
-          Pickup sports, run clubs, meetups — share a link and see who&apos;s in.
+          A live roster and balanced sides for your weekly game.
         </div>
       </div>
 

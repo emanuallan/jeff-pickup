@@ -20,10 +20,15 @@ Treat the codebase, docs/, and supabase/migrations as authoritative over anythin
 - On Vercel, the project's Root Directory is set to `pickup-platform`.
 
 ## What Organizr is
-An activity-agnostic platform for organizing recurring group activities (pickup sports, run clubs,
-meetups, etc.) and tracking who's coming ("headcount"). It generalizes the Jeff Pickup PoC into a
-replicable, self-serve, multi-tenant product. Each org gets its own subdomain (e.g.
-jeffsoccer.organizr.co). Copy is generic ("session", "who's coming"); each org sets its own activity.
+A platform for organizing recurring group activities and tracking who's coming ("headcount"). It
+generalizes the Jeff Pickup PoC into a replicable, self-serve, multi-tenant product. Each org gets
+its own subdomain (e.g. jeffsoccer.organizr.co).
+- **Positioning: pickup soccer first.** The apex marketing site (`/`, `/features`, `/about`, OG
+  cards, JSON-LD) speaks to pickup soccer organizers — "Know who's playing", pitches, kick-off,
+  sides — with a secondary note that other recurring crews (basketball, volleyball, run clubs) use
+  the same tools. **The product itself stays activity-agnostic:** in-app copy remains generic
+  ("session", "who's coming") because each org sets its own activity. Don't push soccer wording
+  into `app/org/`, `app/console/`, or `lib/`.
 - Product name: "Organizr" is the brand/default everywhere user-facing. "Headcount" was the old
   codename — now only used as a descriptive word, and it still appears in internal docs/migration
   comments/package.json name (intentionally left).
