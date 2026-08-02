@@ -8,6 +8,7 @@ import {
   type CSSProperties,
   type ReactNode,
 } from 'react'
+import { createPortal } from 'react-dom'
 import { lockBodyScroll } from '@/lib/body-scroll-lock'
 import { COMPACT_SHEET_MEDIA_QUERY, matchesCompactSheetLayout } from '@/lib/sheet-layout'
 
@@ -82,9 +83,14 @@ export function BottomSheet({
   const [dragOffset, setDragOffset] = useState(0)
   const [isDragging, setIsDragging] = useState(false)
   const [compactLayout, setCompactLayout] = useState(() => initialCompactLayout(variant))
+  const [mounted, setMounted] = useState(false)
   const dragStartY = useRef<number | null>(null)
   const dragOffsetRef = useRef(0)
   const swipeEnabled = variant === 'fixed' || variant === 'top' || compactLayout
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   useEffect(() => {
     if (variant !== 'console') return
@@ -186,7 +192,7 @@ export function BottomSheet({
     }
   }, [present, requestClose])
 
-  if (!present) return null
+  if (!present || !mounted) return null
 
   const overlayClass =
     variant === 'console'
@@ -259,7 +265,7 @@ export function BottomSheet({
             compactLayout ? 'pt-0' : 'pt-5'
           }`
 
-  return (
+  return createPortal(
     <div
       className={overlayClass}
       role="dialog"
@@ -288,7 +294,8 @@ export function BottomSheet({
         <div className={contentClass}>{children}</div>
         {swipeEnabled && dragUp ? <SheetHandle {...handleProps} /> : null}
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }
 
