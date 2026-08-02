@@ -1,7 +1,5 @@
 import { NextResponse } from 'next/server'
-import { getAuthUser } from '@/lib/auth'
-import { isInteriorOperator } from '@/lib/interior'
-import { getOrgForMember } from '@/lib/orgs'
+import { requireOrgOwner } from '@/lib/console/require-org-owner'
 import {
   createConnectAccountLink,
   createConnectExpressAccount,
@@ -20,7 +18,7 @@ type Props = {
 
 function connectErrorRedirect(orgSlug: string, code: string) {
   return NextResponse.redirect(
-    `${consoleOrgUrl(orgSlug)}/sponsorship/setup?connect_error=${encodeURIComponent(code)}`,
+    `${consoleOrgUrl(orgSlug)}/payments?connect_error=${encodeURIComponent(code)}`,
   )
 }
 
@@ -31,9 +29,9 @@ export async function GET(_request: Request, { params }: Props) {
     return connectErrorRedirect(orgSlug, 'stripe_not_configured')
   }
 
-  const [org, user] = await Promise.all([getOrgForMember(orgSlug), getAuthUser()])
+  const org = await requireOrgOwner(orgSlug)
 
-  if (!org || !isInteriorOperator(user?.id)) {
+  if (!org) {
     return connectErrorRedirect(orgSlug, 'unauthorized')
   }
 

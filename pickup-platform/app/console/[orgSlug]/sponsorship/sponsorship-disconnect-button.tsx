@@ -10,9 +10,15 @@ import { chipAction } from '../../_components/console-ui'
 type Props = {
   orgSlug: string
   canDisconnect: boolean
+  /** Where to send the organizer after a successful disconnect. */
+  redirectTo?: string
 }
 
-export function SponsorshipDisconnectButton({ orgSlug, canDisconnect }: Props) {
+export function SponsorshipDisconnectButton({
+  orgSlug,
+  canDisconnect,
+  redirectTo,
+}: Props) {
   const toast = useConsoleToast()
   const router = useRouter()
   const [open, setOpen] = useState(false)
@@ -29,7 +35,7 @@ export function SponsorshipDisconnectButton({ orgSlug, canDisconnect }: Props) {
       }
       toast.success('Stripe disconnected.')
       setOpen(false)
-      router.replace(`/console/${orgSlug}/sponsorship/setup`)
+      router.replace(redirectTo ?? `/console/${orgSlug}/settings`)
     })
   }
 

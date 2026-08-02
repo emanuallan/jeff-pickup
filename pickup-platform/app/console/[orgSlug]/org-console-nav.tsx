@@ -3,10 +3,10 @@ import { getOrgConsoleNavCounts } from '@/lib/org-console-counts'
 import { isOrgConsoleSetupComplete } from '@/lib/org-setup'
 import { getOrgForMember } from '@/lib/orgs'
 import { createClient } from '@/lib/supabase/server'
-import { isInteriorOperator } from '@/lib/interior'
 import { orgFeatures } from '@/lib/org-features'
 import { countRecentOrgSessionFeedback } from '@/lib/session-feedback.server'
-import { countPendingSponsorships } from '@/lib/sponsorship.server'
+import { countPendingSponsorships, getOrgStripeAccount } from '@/lib/sponsorship.server'
+import { isStripeConfigured } from '@/lib/stripe'
 import { ConsoleNavGrid, ConsoleNavTile } from '../_components/console-ui'
 import {
   IconSessions,
@@ -87,12 +87,13 @@ type NavSectionProps = {
 /** Fetches hub counts off the critical path — badges, setup gating, and get-started banner. */
 export async function OrgConsoleNavSection({ orgId, orgSlug }: NavSectionProps) {
   const supabase = await createClient()
-  const [counts, org, recentFeedbackCount, pendingSponsorships, { data: { user } }] =
+  const [counts, org, recentFeedbackCount, pendingSponsorships, stripeAccount, { data: { user } }] =
     await Promise.all([
       getOrgConsoleNavCounts(orgId),
       getOrgForMember(orgSlug),
       countRecentOrgSessionFeedback(orgId),
       countPendingSponsorships(orgId),
+      getOrgStripeAccount(orgId),
       supabase.auth.getUser(),
     ])
   const { data: membership } = user
@@ -104,7 +105,10 @@ export async function OrgConsoleNavSection({ orgId, orgSlug }: NavSectionProps) 
         .maybeSingle()
     : { data: null }
   const features = org ? orgFeatures(org) : null
-  const showInteriorTools = isInteriorOperator(user?.id) && membership?.role === 'owner'
+  const isOwner = membership?.role === 'owner'
+  const stripeReady = Boolean(stripeAccount?.charges_enabled)
+  const showPaymentsBanner =
+    isOwner && isStripeConfigured() && !stripeReady
   const isSetup = isOrgConsoleSetupComplete({
     locationCount: counts.locationCount,
     scheduleCount: counts.scheduleCount,
@@ -112,8 +116,21 @@ export async function OrgConsoleNavSection({ orgId, orgSlug }: NavSectionProps) 
   })
   const base = `/console/${orgSlug}`
   const setupHref = `${base}/setup`
+  const paymentsHref = `${base}/payments`
   /** Sections that need sessions to exist stay locked until setup completes. */
   const needsSessions = !isSetup
+  const hasStripeAccount = Boolean(stripeAccount)
+  const sponsorshipsLocked = needsSessions || !stripeReady
+  const sponsorshipsHref = needsSessions
+    ? setupHref
+    : !stripeReady
+      ? paymentsHref
+      : `${base}/sponsorship`
+  const sponsorshipsLockedHint = needsSessions
+    ? 'Finish setup'
+    : hasStripeAccount
+      ? 'Finish payments'
+      : 'Set up payments'
 
   return (
     <>
@@ -129,6 +146,25 @@ export async function OrgConsoleNavSection({ orgId, orgSlug }: NavSectionProps) 
             className="mt-3 inline-flex min-h-10 items-center rounded-lg bg-indigo-600 px-4 text-sm font-semibold text-white transition hover:bg-indigo-500"
           >
             Continue setup
+          </Link>
+        </div>
+      ) : null}
+
+      {showPaymentsBanner ? (
+        <div className="mt-6 rounded-xl border border-emerald-500/25 bg-emerald-500/5 px-4 py-3">
+          <p className="text-sm font-medium text-emerald-200">
+            {hasStripeAccount ? 'Finish Stripe setup' : 'Collect payments'}
+          </p>
+          <p className="mt-0.5 text-xs text-zinc-400">
+            {hasStripeAccount
+              ? 'Complete Stripe Connect so you can charge session fees and offer sponsorships.'
+              : 'Connect Stripe to charge session fees and unlock group sponsorships.'}
+          </p>
+          <Link
+            href={paymentsHref}
+            className="mt-3 inline-flex min-h-10 items-center rounded-lg bg-emerald-600 px-4 text-sm font-semibold text-white transition hover:bg-emerald-500"
+          >
+            {hasStripeAccount ? 'Continue setup' : 'Set up payments'}
           </Link>
         </div>
       ) : null}
@@ -176,9 +212,9 @@ export async function OrgConsoleNavSection({ orgId, orgSlug }: NavSectionProps) 
             title="Branding"
             icon={<IconBranding />}
           />
-          {showInteriorTools ? (
+          {isOwner ? (
             <ConsoleNavTile
-              href={needsSessions ? setupHref : `${base}/sponsorship`}
+              href={sponsorshipsHref}
               title="Sponsorships"
               icon={<IconSponsorship />}
               badge={
@@ -188,8 +224,8 @@ export async function OrgConsoleNavSection({ orgId, orgSlug }: NavSectionProps) 
                     ? 'Enabled'
                     : 'Set up'
               }
-              locked={needsSessions}
-              lockedHint="Finish setup"
+              locked={sponsorshipsLocked}
+              lockedHint={sponsorshipsLockedHint}
             />
           ) : null}
           <ConsoleNavTile

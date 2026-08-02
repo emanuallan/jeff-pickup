@@ -154,7 +154,7 @@ export function SponsorshipTiersSection({
           </button>
         )
       ) : (
-        <p className="text-sm text-zinc-500">Connect Stripe to create tiers.</p>
+        <p className="text-sm text-zinc-500">Finish payments setup to create tiers.</p>
       )}
     </div>
   )

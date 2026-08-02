@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
 import { getAuthUser } from '@/lib/auth'
-import { isInteriorOperator } from '@/lib/interior'
 import { getOrgForMember } from '@/lib/orgs'
 import { createClient } from '@/lib/supabase/server'
 import {
@@ -14,14 +13,14 @@ type Props = {
 
 async function requireSponsorshipConsoleAccess(orgSlug: string) {
   const [org, user] = await Promise.all([getOrgForMember(orgSlug), getAuthUser()])
-  if (!org || !isInteriorOperator(user?.id)) return null
+  if (!org || !user) return null
 
   const supabase = await createClient()
   const { data: membership } = await supabase
     .from('org_members')
     .select('role')
     .eq('org_id', org.id)
-    .eq('user_id', user!.id)
+    .eq('user_id', user.id)
     .maybeSingle()
 
   if (membership?.role !== 'owner') return null

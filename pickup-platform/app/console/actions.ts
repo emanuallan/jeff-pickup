@@ -64,7 +64,7 @@ async function assertCanSetSessionFee(
   const stripeAccount = await getOrgStripeAccount(orgId)
   if (!stripeAccount?.charges_enabled) {
     return {
-      error: 'Connect Stripe (sponsorship setup) before setting a session fee.',
+      error: 'Connect Stripe in Payments before setting a session fee.',
     }
   }
   return null

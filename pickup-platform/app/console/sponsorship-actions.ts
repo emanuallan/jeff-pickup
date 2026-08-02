@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { getOrgForMember } from '@/lib/orgs'
 import { createClient } from '@/lib/supabase/server'
-import { isInteriorOperator } from '@/lib/interior'
+import { requireOrgOwner } from '@/lib/console/require-org-owner'
 import { orgFeatures, orgSponsorshipSettings } from '@/lib/org-features'
 import {
   assertTierCountLimit,
@@ -30,38 +30,18 @@ import {
 } from '@/lib/stripe-connect'
 import { getOrgStripeAccount } from '@/lib/sponsorship.server'
 
-async function requireInteriorSponsorshipAccess(slug: string) {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!isInteriorOperator(user?.id)) {
-    throw new Error('Not authorized')
-  }
-
-  const org = await getOrgForMember(slug)
+async function requireSponsorshipOwnerAccess(slug: string) {
+  const org = await requireOrgOwner(slug)
   if (!org) {
     throw new Error('Not authorized')
   }
-
-  const { data: membership } = await supabase
-    .from('org_members')
-    .select('role')
-    .eq('org_id', org.id)
-    .eq('user_id', user!.id)
-    .maybeSingle()
-
-  if (membership?.role !== 'owner') {
-    throw new Error('Not authorized')
-  }
-
   return org
 }
 
 function revalidateSponsorshipPaths(orgSlug: string) {
   revalidatePath(`/console/${orgSlug}/sponsorship`)
-  revalidatePath(`/console/${orgSlug}/sponsorship/setup`)
+  revalidatePath(`/console/${orgSlug}/payments`)
+  revalidatePath(`/console/${orgSlug}/settings`)
   revalidatePath(`/org/${orgSlug}`)
   revalidatePath(`/org/${orgSlug}/sponsorship`)
 }
@@ -85,7 +65,7 @@ async function tierHasActiveSponsors(
 
 export async function updateSponsorshipFeature(orgSlug: string, enabled: boolean) {
   try {
-    const org = await requireInteriorSponsorshipAccess(orgSlug)
+    const org = await requireSponsorshipOwnerAccess(orgSlug)
     const supabase = await createClient()
     const settings = org.settings
 
@@ -128,7 +108,7 @@ export async function updateSponsorshipFeature(orgSlug: string, enabled: boolean
 
 export async function updateSponsorshipIntro(orgSlug: string, formData: FormData) {
   try {
-    const org = await requireInteriorSponsorshipAccess(orgSlug)
+    const org = await requireSponsorshipOwnerAccess(orgSlug)
     const parsed = parseSponsorshipIntroFormData(formData)
     if (!parsed.ok) return { error: parsed.error }
 
@@ -163,13 +143,13 @@ export async function updateSponsorshipIntro(orgSlug: string, formData: FormData
 
 export async function saveSponsorshipTier(orgSlug: string, formData: FormData) {
   try {
-    const org = await requireInteriorSponsorshipAccess(orgSlug)
+    const org = await requireSponsorshipOwnerAccess(orgSlug)
     const parsed = parseSponsorshipTierFormData(formData)
     if (!parsed.ok) return { error: parsed.error }
 
     const stripeAccount = await getOrgStripeAccount(org.id)
     if (!stripeAccount?.charges_enabled) {
-      return { error: 'Connect Stripe before creating tiers.' }
+      return { error: 'Connect Stripe in Payments before creating tiers.' }
     }
 
     const supabase = await createClient()
@@ -279,7 +259,7 @@ export async function saveSponsorshipTier(orgSlug: string, formData: FormData) {
 
 export async function deleteSponsorshipTier(orgSlug: string, tierId: string) {
   try {
-    const org = await requireInteriorSponsorshipAccess(orgSlug)
+    const org = await requireSponsorshipOwnerAccess(orgSlug)
     const supabase = await createClient()
 
     const { data: tier } = await supabase
@@ -321,7 +301,7 @@ export async function deleteSponsorshipTier(orgSlug: string, tierId: string) {
 
 export async function reorderSponsorshipTiers(orgSlug: string, orderedIds: string[]) {
   try {
-    const org = await requireInteriorSponsorshipAccess(orgSlug)
+    const org = await requireSponsorshipOwnerAccess(orgSlug)
     const supabase = await createClient()
 
     for (let index = 0; index < orderedIds.length; index += 1) {
@@ -342,7 +322,7 @@ export async function reorderSponsorshipTiers(orgSlug: string, orderedIds: strin
 
 export async function approveSponsorship(orgSlug: string, sponsorshipId: string) {
   try {
-    await requireInteriorSponsorshipAccess(orgSlug)
+    await requireSponsorshipOwnerAccess(orgSlug)
     const supabase = await createClient()
     const { error } = await supabase.rpc('organizer_approve_sponsorship', {
       p_sponsorship_id: sponsorshipId,
@@ -363,7 +343,7 @@ export async function declineSponsorship(
   reason?: string,
 ) {
   try {
-    const org = await requireInteriorSponsorshipAccess(orgSlug)
+    const org = await requireSponsorshipOwnerAccess(orgSlug)
     const supabase = await createClient()
 
     const { data: row, error: rowError } = await supabase
@@ -425,7 +405,7 @@ export async function setSponsorshipHidden(
   hidden: boolean,
 ) {
   try {
-    await requireInteriorSponsorshipAccess(orgSlug)
+    await requireSponsorshipOwnerAccess(orgSlug)
     const supabase = await createClient()
     const { error } = await supabase.rpc('organizer_set_sponsorship_hidden', {
       p_sponsorship_id: sponsorshipId,
@@ -457,7 +437,7 @@ export async function cancelSponsorship(
       return { error: 'Choose how to cancel this sponsorship.' }
     }
 
-    const org = await requireInteriorSponsorshipAccess(orgSlug)
+    const org = await requireSponsorshipOwnerAccess(orgSlug)
     const supabase = await createClient()
 
     const { data: row, error: rowError } = await supabase
@@ -557,7 +537,7 @@ export async function cancelSponsorship(
 
 export async function disconnectStripeAccount(orgSlug: string) {
   try {
-    const org = await requireInteriorSponsorshipAccess(orgSlug)
+    const org = await requireSponsorshipOwnerAccess(orgSlug)
     const supabase = await createClient()
 
     const stripeAccount = await getOrgStripeAccount(org.id)
@@ -613,7 +593,7 @@ export async function isSponsorshipFeatureEnabled(orgSlug: string) {
   return orgFeatures(org).group_sponsorships
 }
 
-/** Interior-only: add an approved sponsor with no Stripe payment. */
+/** Add an approved sponsor with no Stripe payment. */
 export async function createComplimentarySponsorship(
   orgSlug: string,
   input: {
@@ -624,7 +604,7 @@ export async function createComplimentarySponsorship(
   },
 ) {
   try {
-    const org = await requireInteriorSponsorshipAccess(orgSlug)
+    const org = await requireSponsorshipOwnerAccess(orgSlug)
     const supabase = await createClient()
     const {
       data: { user },
@@ -675,7 +655,7 @@ export async function createComplimentarySponsorship(
 /** Snapshot current visit totals for a sponsor and reset the live counter. */
 export async function archiveSponsorshipAnalytics(orgSlug: string, sponsorshipId: string) {
   try {
-    const org = await requireInteriorSponsorshipAccess(orgSlug)
+    const org = await requireSponsorshipOwnerAccess(orgSlug)
     const supabase = await createClient()
 
     const { data: row, error: rowError } = await supabase

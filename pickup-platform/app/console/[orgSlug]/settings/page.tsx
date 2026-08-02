@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { getOrgForMember } from '@/lib/orgs'
 import { createClient } from '@/lib/supabase/server'
@@ -13,7 +14,12 @@ import { getGroupRulesAgreementSummary } from '@/lib/group-rules.server'
 import { isInteriorOperator } from '@/lib/interior'
 import { InteriorAddOwnerSection } from '../interior-add-owner-section'
 import { InteriorSetTimezoneSection } from '../interior-set-timezone-section'
+import { getOrgStripeAccount, getSponsorshipsForOrg } from '@/lib/sponsorship.server'
+import { orgHasSponsorshipsBlockingStripeDisconnect } from '@/lib/sponsorship'
+import { isStripeConfigured } from '@/lib/stripe'
 import { ConsolePage, ConsoleHeader, ConsoleSection } from '../../_components/console-ui'
+import { PaymentsStripePanel } from '../payments/payments-stripe-panel'
+import { SponsorshipDisconnectButton } from '../sponsorship/sponsorship-disconnect-button'
 
 type Props = {
   params: Promise<{ orgSlug: string }>
@@ -58,6 +64,16 @@ export default async function OrgSettingsPage({ params }: Props) {
       ? await getGroupRulesAgreementSummary(org.id, rules.version)
       : null
 
+  const [stripeAccount, sponsorships] = isOwner
+    ? await Promise.all([getOrgStripeAccount(org.id), getSponsorshipsForOrg(org.id)])
+    : [null, []]
+  const stripeReady = Boolean(stripeAccount?.charges_enabled)
+  const payoutsEnabled = Boolean(stripeAccount?.payouts_enabled)
+  const hasStripeAccount = Boolean(stripeAccount)
+  const canDisconnectStripe = !orgHasSponsorshipsBlockingStripeDisconnect(sponsorships)
+  const connectPath = `/api/console/${orgSlug}/sponsorship/connect`
+  const payoutsPath = `/api/console/${orgSlug}/sponsorship/payouts`
+
   return (
     <ConsolePage>
       <ConsoleHeader
@@ -100,6 +116,54 @@ export default async function OrgSettingsPage({ params }: Props) {
         >
           <MaterializeButton orgSlug={orgSlug} />
         </ConsoleSection>
+
+        {isOwner ? (
+          <ConsoleSection
+            title="Payments"
+            description="Stripe Connect powers session fees and sponsorships. Disconnect only when you need to switch accounts."
+          >
+            {hasStripeAccount || isStripeConfigured() ? (
+              <div className="space-y-4">
+                <PaymentsStripePanel
+                  stripeConfigured={isStripeConfigured()}
+                  stripeReady={stripeReady}
+                  hasStripeAccount={hasStripeAccount}
+                  payoutsEnabled={payoutsEnabled}
+                  connectPath={connectPath}
+                  payoutsPath={payoutsPath}
+                  connectErrorDisplay={null}
+                  showConnectSuccess={false}
+                  showConnectPending={false}
+                />
+                {hasStripeAccount ? (
+                  <div className="border-t border-white/5 pt-3">
+                    <SponsorshipDisconnectButton
+                      orgSlug={orgSlug}
+                      canDisconnect={canDisconnectStripe}
+                      redirectTo={`/console/${orgSlug}/settings`}
+                    />
+                  </div>
+                ) : null}
+                {!stripeReady ? (
+                  <p className="text-sm text-zinc-500">
+                    Prefer a guided setup?{' '}
+                    <Link
+                      href={`/console/${orgSlug}/payments`}
+                      className="font-medium text-zinc-300 underline decoration-zinc-600 underline-offset-2 hover:text-zinc-100"
+                    >
+                      Open payments onboarding
+                    </Link>
+                    .
+                  </p>
+                ) : null}
+              </div>
+            ) : (
+              <p className="text-sm text-amber-300">
+                Stripe is not configured on this environment yet.
+              </p>
+            )}
+          </ConsoleSection>
+        ) : null}
 
         {showInteriorTools ? (
           <ConsoleSection

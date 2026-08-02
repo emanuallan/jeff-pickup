@@ -1,5 +1,4 @@
 import { getAuthUser } from '@/lib/auth'
-import { isInteriorOperator } from '@/lib/interior'
 import { getOrgForMember } from '@/lib/orgs'
 import { createClient } from '@/lib/supabase/server'
 import {
@@ -40,7 +39,7 @@ export async function GET(request: Request, { params }: Props) {
   const { orgSlug } = await params
   const [org, user] = await Promise.all([getOrgForMember(orgSlug), getAuthUser()])
 
-  if (!org || !isInteriorOperator(user?.id)) {
+  if (!org || !user) {
     return new Response('Unauthorized', { status: 401 })
   }
 
@@ -49,7 +48,7 @@ export async function GET(request: Request, { params }: Props) {
     .from('org_members')
     .select('role')
     .eq('org_id', org.id)
-    .eq('user_id', user!.id)
+    .eq('user_id', user.id)
     .maybeSingle()
 
   if (membership?.role !== 'owner') {

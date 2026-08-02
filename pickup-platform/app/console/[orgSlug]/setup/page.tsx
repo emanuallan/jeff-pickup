@@ -11,6 +11,8 @@ import { AddOneOffButton } from '../add-one-off-button'
 import { ConsolePage, ConsoleSection, ConsoleCard, btnSecondary } from '../../_components/console-ui'
 import { getOrgStripeAccount } from '@/lib/sponsorship.server'
 import { orgFeatures } from '@/lib/org-features'
+import { getUpcomingEventsForConsole, pickFeaturedUpcomingEvent } from '@/lib/events'
+import { SetupComplete } from './setup-complete'
 
 type Props = {
   params: Promise<{ orgSlug: string }>
@@ -60,6 +62,12 @@ export default async function SetupPage({ params }: Props) {
     scheduleCount: counts.scheduleCount,
     oneOffEventCount: counts.oneOffEventCount,
   })
+  const firstSession = isComplete
+    ? pickFeaturedUpcomingEvent(await getUpcomingEventsForConsole(org.id, 5))
+    : null
+  const firstSessionHref = firstSession
+    ? `/console/${orgSlug}/sessions/${firstSession.short_id}`
+    : null
   const addLocation = createLocation.bind(null, orgSlug)
   const createOneOff = createOneOffEvent.bind(null, orgSlug)
 
@@ -90,26 +98,23 @@ export default async function SetupPage({ params }: Props) {
         <span aria-hidden>←</span> {org.name}
       </Link>
 
-      <div className="mt-4">
-        <h1 className="text-2xl font-semibold tracking-tight text-zinc-50">Get started</h1>
-        <p className="mt-1 text-sm text-zinc-400">
-          {isComplete
-            ? 'Your group is set up. Sessions will appear automatically.'
-            : 'Two quick steps to go live — recurring or one-off sessions both work.'}
-        </p>
-      </div>
-
       {isComplete ? (
-        <div className="mt-8">
-          <Link
-            href={`/console/${orgSlug}`}
-            className="inline-flex min-h-11 items-center justify-center rounded-lg bg-indigo-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-indigo-500"
-          >
-            Back to console
-          </Link>
-        </div>
+        <SetupComplete
+          orgSlug={orgSlug}
+          orgName={org.name}
+          accentColor={org.branding.accent_color}
+          firstSessionHref={firstSessionHref}
+        />
       ) : (
-        <div className="mt-8 space-y-6">
+        <>
+          <div className="mt-4">
+            <h1 className="text-2xl font-semibold tracking-tight text-zinc-50">Get started</h1>
+            <p className="mt-1 text-sm text-zinc-400">
+              Two quick steps to go live — recurring or one-off sessions both work.
+            </p>
+          </div>
+
+          <div className="mt-8 space-y-6">
           <ConsoleSection
             title="Step 1 · Add a location"
             description="Where do your sessions happen? Add as many as you need."
@@ -154,7 +159,8 @@ export default async function SetupPage({ params }: Props) {
               </p>
             )}
           </ConsoleSection>
-        </div>
+          </div>
+        </>
       )}
     </ConsolePage>
   )

@@ -1,7 +1,5 @@
 import { NextResponse } from 'next/server'
-import { getAuthUser } from '@/lib/auth'
-import { isInteriorOperator } from '@/lib/interior'
-import { getOrgForMember } from '@/lib/orgs'
+import { requireOrgOwner } from '@/lib/console/require-org-owner'
 import { createConnectExpressLoginLink, findStripeAccountIdForOrg } from '@/lib/stripe-connect'
 import { getOrgStripeAccount } from '@/lib/sponsorship.server'
 import { isStripeConfigured } from '@/lib/stripe'
@@ -14,7 +12,7 @@ type Props = {
 
 function payoutsErrorRedirect(orgSlug: string, code: string) {
   return NextResponse.redirect(
-    `${consoleOrgUrl(orgSlug)}/sponsorship/setup?connect_error=${encodeURIComponent(code)}`,
+    `${consoleOrgUrl(orgSlug)}/payments?connect_error=${encodeURIComponent(code)}`,
   )
 }
 
@@ -26,9 +24,9 @@ export async function GET(_request: Request, { params }: Props) {
     return payoutsErrorRedirect(orgSlug, 'stripe_not_configured')
   }
 
-  const [org, user] = await Promise.all([getOrgForMember(orgSlug), getAuthUser()])
+  const org = await requireOrgOwner(orgSlug)
 
-  if (!org || !isInteriorOperator(user?.id)) {
+  if (!org) {
     return payoutsErrorRedirect(orgSlug, 'unauthorized')
   }
 
@@ -38,7 +36,7 @@ export async function GET(_request: Request, { params }: Props) {
       stripeAccount?.stripe_account_id ?? (await findStripeAccountIdForOrg(org.id))
 
     if (!stripeAccountId) {
-      return NextResponse.redirect(`${consoleOrgUrl(orgSlug)}/sponsorship/setup`)
+      return NextResponse.redirect(`${consoleOrgUrl(orgSlug)}/payments`)
     }
 
     if (!stripeAccount?.charges_enabled) {

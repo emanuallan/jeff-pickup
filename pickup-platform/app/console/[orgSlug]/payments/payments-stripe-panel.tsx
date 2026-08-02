@@ -1,15 +1,15 @@
 import { btnOutline, btnPrimary } from '../../_components/console-ui'
-import { SponsorshipConnectError, SponsorshipConnectSuccess } from './sponsorship-connect-error'
-import { SponsorshipDisconnectButton } from './sponsorship-disconnect-button'
+import {
+  SponsorshipConnectError,
+  SponsorshipConnectSuccess,
+} from '../sponsorship/sponsorship-connect-error'
 import type { StripeConnectErrorDisplay } from '@/lib/stripe-connect-errors'
 
 type Props = {
-  orgSlug: string
   stripeConfigured: boolean
   stripeReady: boolean
   hasStripeAccount: boolean
   payoutsEnabled: boolean
-  canDisconnectStripe: boolean
   connectPath: string
   payoutsPath: string
   connectErrorDisplay: StripeConnectErrorDisplay | null
@@ -28,13 +28,12 @@ function StatusDot({ tone }: { tone: 'ok' | 'warn' }) {
   )
 }
 
-export function SponsorshipPayoutsPanel({
-  orgSlug,
+/** Stripe Connect status + connect/continue CTAs. Disconnect lives in Settings. */
+export function PaymentsStripePanel({
   stripeConfigured,
   stripeReady,
   hasStripeAccount,
   payoutsEnabled,
-  canDisconnectStripe,
   connectPath,
   payoutsPath,
   connectErrorDisplay,
@@ -49,6 +48,7 @@ export function SponsorshipPayoutsPanel({
     <div className="space-y-4">
       {connectErrorDisplay ? <SponsorshipConnectError error={connectErrorDisplay} /> : null}
       {showPendingBanner ? <SponsorshipConnectSuccess pending /> : null}
+      {showConnectSuccess && stripeReady ? <SponsorshipConnectSuccess /> : null}
 
       {!stripeConfigured ? (
         <p className="text-sm text-amber-300">
@@ -64,7 +64,7 @@ export function SponsorshipPayoutsPanel({
               </p>
               <p className="text-sm leading-relaxed text-zinc-400">
                 {payoutsEnabled
-                  ? 'Sponsor payments go to your Stripe account (5% platform fee), then to your bank on Stripe\'s schedule.'
+                  ? 'Session fees and sponsorships go to your Stripe account (5% platform fee on sponsorships), then to your bank on Stripe’s schedule.'
                   : 'Your account can take payments, but Stripe still needs payout details before money can reach your bank.'}
               </p>
             </div>
@@ -83,17 +83,6 @@ export function SponsorshipPayoutsPanel({
               Update account
             </a>
           </div>
-
-          <div className="border-t border-white/5 pt-3">
-            {canDisconnectStripe ? (
-              <SponsorshipDisconnectButton orgSlug={orgSlug} canDisconnect />
-            ) : (
-              <p className="text-xs leading-relaxed text-zinc-500">
-                Cancel or decline all active and pending sponsorships before you can disconnect
-                Stripe.
-              </p>
-            )}
-          </div>
         </div>
       ) : hasStripeAccount ? (
         <div className="space-y-3">
@@ -101,7 +90,7 @@ export function SponsorshipPayoutsPanel({
             <div className="flex gap-2.5">
               <StatusDot tone="warn" />
               <p className="text-sm leading-relaxed text-zinc-400">
-                Finish onboarding so this group can accept sponsors and get paid.
+                Finish onboarding so this group can collect session fees and sponsorships.
               </p>
             </div>
           ) : null}
@@ -112,8 +101,8 @@ export function SponsorshipPayoutsPanel({
       ) : (
         <div className="space-y-4">
           <p className="text-sm leading-relaxed text-zinc-400">
-            Connect Stripe Express to collect monthly sponsorships. Payments go to your Stripe
-            balance, then your bank. Organizr keeps a 5% platform fee.
+            Connect Stripe Express to collect session fees and monthly sponsorships. Payments go to
+            your Stripe balance, then your bank. Organizr keeps a 5% platform fee on sponsorships.
           </p>
           <a href={connectPath} className={`${btnPrimary} w-full sm:w-auto`}>
             Connect Stripe
