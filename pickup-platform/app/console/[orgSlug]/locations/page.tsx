@@ -32,7 +32,7 @@ export default async function LocationsPage({ params }: Props) {
     <ConsolePage>
       <ConsoleHeader
         title="Locations"
-        description="Where your sessions happen — in person or online."
+        description="Where your sessions happen — a field, gym, park, and so on."
         backHref={`/console/${orgSlug}`}
         backLabel="Console"
         actions={<AddLocationButton addLocation={addLocation} />}
@@ -76,7 +76,7 @@ export default async function LocationsPage({ params }: Props) {
           ) : (
             <EmptyState
               title="No locations yet"
-              description="Add where your group meets — a field, gym, park, or online link."
+              description="Add where your group meets — a field, gym, park, etc."
             >
               <AddLocationButton addLocation={addLocation} />
             </EmptyState>

@@ -78,7 +78,7 @@ export default async function SessionsPage({ params }: Props) {
           ) : !hasLocation ? (
             <EmptyState
               title="Add a location first"
-              description="Sessions need somewhere to meet — in person or online."
+              description="Sessions need somewhere to meet — a field, gym, park, etc."
             >
               <Link href={`/console/${orgSlug}/locations`} className={btnPrimary}>
                 Go to locations

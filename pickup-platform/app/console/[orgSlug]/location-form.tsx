@@ -6,6 +6,11 @@ import { consoleInput, btnSecondary } from '../_components/console-ui'
 import { ConsoleSubmitButton } from '../_components/console-submit-button'
 import { useConsoleToast } from '../_components/console-toast'
 
+// Console currently only offers physical locations for new adds. Keep the
+// online UI below so existing online locations remain editable, and flip this
+// to true to re-enable creating/switching to online from the form.
+const ALLOW_ONLINE_LOCATION_CREATION = false
+
 type Props = {
   location?: Location
   saveLocation: (
@@ -28,6 +33,9 @@ export function LocationForm({
   const toast = useConsoleToast()
   const [isOnline, setIsOnline] = useState(location?.is_online ?? false)
   const [pending, setPending] = useState(false)
+  // Show the type toggle only when creating online is allowed, or when editing
+  // an already-online location (so organizers can still manage or convert it).
+  const showTypeToggle = ALLOW_ONLINE_LOCATION_CREATION || Boolean(location?.is_online)
 
   async function handleSubmit(formData: FormData) {
     setPending(true)
@@ -43,26 +51,28 @@ export function LocationForm({
 
   return (
     <form action={handleSubmit} className="space-y-3">
-      <div className="flex rounded-lg border border-white/10 p-1 text-xs">
-        <button
-          type="button"
-          onClick={() => setIsOnline(false)}
-          className={`flex min-h-11 flex-1 items-center justify-center rounded-md px-3 py-2 font-medium transition ${
-            !isOnline ? 'bg-indigo-500/20 text-indigo-100' : 'text-zinc-400 hover:text-zinc-200'
-          }`}
-        >
-          In person
-        </button>
-        <button
-          type="button"
-          onClick={() => setIsOnline(true)}
-          className={`flex min-h-11 flex-1 items-center justify-center rounded-md px-3 py-2 font-medium transition ${
-            isOnline ? 'bg-indigo-500/20 text-indigo-100' : 'text-zinc-400 hover:text-zinc-200'
-          }`}
-        >
-          Online
-        </button>
-      </div>
+      {showTypeToggle ? (
+        <div className="flex rounded-lg border border-white/10 p-1 text-xs">
+          <button
+            type="button"
+            onClick={() => setIsOnline(false)}
+            className={`flex min-h-11 flex-1 items-center justify-center rounded-md px-3 py-2 font-medium transition ${
+              !isOnline ? 'bg-indigo-500/20 text-indigo-100' : 'text-zinc-400 hover:text-zinc-200'
+            }`}
+          >
+            In person
+          </button>
+          <button
+            type="button"
+            onClick={() => setIsOnline(true)}
+            className={`flex min-h-11 flex-1 items-center justify-center rounded-md px-3 py-2 font-medium transition ${
+              isOnline ? 'bg-indigo-500/20 text-indigo-100' : 'text-zinc-400 hover:text-zinc-200'
+            }`}
+          >
+            Online
+          </button>
+        </div>
+      ) : null}
       <input type="hidden" name="is_online" value={isOnline ? 'true' : 'false'} />
 
       <input

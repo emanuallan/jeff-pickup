@@ -28,7 +28,7 @@ export function AddLocationButton({
           Add location
         </h2>
         <p className="mt-1 text-sm text-zinc-400">
-          Where your sessions happen — in person or online.
+          Where your sessions happen — a field, gym, park, and so on.
         </p>
         <div className="mt-5">
           <LocationForm
