@@ -1,7 +1,11 @@
 import type { Metadata } from 'next'
 import { notFound, redirect } from 'next/navigation'
 import { getPublicOrgBySlug, getPublicUpcomingEventsForOrg, getPublicOrgAndEvent, getPublicPreviousEventForOrg } from '@/lib/public-data'
-import { isLeaderboardUnlocked, resolveOrgLeaderboardPeriod } from '@/lib/engagement'
+import {
+  getOrgCapsLeaderboard,
+  isLeaderboardUnlocked,
+  resolveOrgLeaderboardPeriod,
+} from '@/lib/engagement'
 import { orgFeatures } from '@/lib/org-features'
 import { formatEventTime, isEventCancelled, isEventEnded, pickFeaturedUpcomingEvent } from '@/lib/events'
 import { buildOrgMetadata } from '@/lib/og-metadata'
@@ -42,6 +46,26 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
   }
 
   const eventRef = resolveCalEventId(cal, ev)
+  const path = orgHomeCanonicalPath({ tab, cal: eventRef })
+
+  if (tab === 'leaderboard' && orgFeatures(org).leaderboard) {
+    const capsRows = await getOrgCapsLeaderboard(org.id)
+    const top = capsRows[0]
+    const title = `Leaderboard · ${org.name}`
+    const description = top
+      ? `${top.display_name} leads ${org.name} with ${top.caps} ${top.caps === 1 ? 'cap' : 'caps'}. See the full caps ranking and weekly streaks, then join a session to climb.`
+      : `See caps and weekly streaks for ${org.name}. Track who shows up most and join a session to climb the leaderboard yourself.`
+
+    return buildOrgMetadata({
+      slug,
+      path,
+      imagePath: '/leaderboard/og-image',
+      title,
+      description,
+      siteName: org.name,
+    })
+  }
+
   let previewEvent = null
 
   if (eventRef) {
@@ -55,8 +79,6 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
     const events = await getPublicUpcomingEventsForOrg(org.id, 20, true)
     previewEvent = pickFeaturedUpcomingEvent(events)
   }
-
-  const path = orgHomeCanonicalPath({ tab, cal: eventRef })
 
   if (previewEvent) {
     const when = formatEventTime(previewEvent)

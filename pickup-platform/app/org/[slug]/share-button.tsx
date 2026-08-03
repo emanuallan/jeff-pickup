@@ -105,7 +105,7 @@ function CheckIcon() {
 }
 
 async function fetchShareImageBlob(imagePath: string): Promise<Blob> {
-  const res = await fetch(imagePath)
+  const res = await fetch(imagePath, { cache: 'no-store' })
   if (!res.ok) {
     throw new Error('Could not load share image')
   }

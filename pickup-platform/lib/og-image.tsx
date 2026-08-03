@@ -7,6 +7,18 @@ import { ogArrowRight } from '@/lib/text-arrows'
 export const ogImageSize = { width: 1200, height: 630 }
 export const ogImageContentType = 'image/png'
 
+/**
+ * Override Next/ImageResponse's production default (immutable, max-age=1y).
+ * Share cards and OG previews include live schedule/ranking data, so keep CDN
+ * TTL short and allow cheap revalidation.
+ */
+export const OG_IMAGE_CACHE_CONTROL =
+  'public, max-age=60, s-maxage=60, stale-while-revalidate=300'
+
+const ogImageResponseHeaders = {
+  'Cache-Control': OG_IMAGE_CACHE_CONTROL,
+} as const
+
 /** Organizr marketing indigo — matches apex site and console CTAs. */
 export const ORGANIZR_ACCENT = '#4f46e5'
 const ORGANIZR_ACCENT_SOFT = '#818cf8'
@@ -476,14 +488,18 @@ export function OrgOgCard({
 
 export async function renderMarketingOgImage() {
   const [fonts, logoSrc] = await Promise.all([getOgFonts(), getOrganizrLogoDataUrl()])
-  return new ImageResponse(<MarketingOgCard logoSrc={logoSrc} />, { ...ogImageSize, fonts })
+  return new ImageResponse(<MarketingOgCard logoSrc={logoSrc} />, {
+    ...ogImageSize,
+    fonts,
+    headers: ogImageResponseHeaders,
+  })
 }
 
 export async function renderOrgOgImage(props: Omit<OrgOgCardProps, 'organizrLogoSrc'>) {
   const [fonts, organizrLogoSrc] = await Promise.all([getOgFonts(), getOrganizrLogoDataUrl()])
   return new ImageResponse(
     <OrgOgCard {...props} organizrLogoSrc={organizrLogoSrc} />,
-    { ...ogImageSize, fonts },
+    { ...ogImageSize, fonts, headers: ogImageResponseHeaders },
   )
 }
 
@@ -1366,6 +1382,7 @@ export async function renderOrgShareImage(
   return new ImageResponse(<OrgShareCard {...props} organizrLogoSrc={organizrLogoSrc} />, {
     ...shareImageSize,
     fonts,
+    headers: ogImageResponseHeaders,
   })
 }
 
@@ -1378,6 +1395,7 @@ export async function renderOrgCalendarShareImage(
     {
       ...shareImageSize,
       fonts,
+      headers: ogImageResponseHeaders,
     },
   )
 }
