@@ -7,7 +7,7 @@ import {
 const selectClass =
   'mt-1 w-full appearance-none rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2.5 text-base outline-none transition-colors focus:border-transparent focus:ring-2 sm:text-sm'
 
-/** Inline row: label left, compact number select flexes to fill. */
+/** Inline row: label left, select flexes to fill. */
 const inlineSelectClass =
   'min-w-0 flex-1 appearance-none rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2.5 text-base outline-none transition-colors focus:border-transparent focus:ring-2 sm:text-sm'
 
@@ -20,8 +20,6 @@ type Props = {
   accent: string
   className?: string
   disabled?: boolean
-  /** Use plain numbers (0–5) instead of "N guest(s)". */
-  compact?: boolean
 }
 
 export function GuestCountSelect({
@@ -33,7 +31,6 @@ export function GuestCountSelect({
   accent,
   className = selectClass,
   disabled = false,
-  compact = false,
 }: Props) {
   const controlled = value !== undefined
 
@@ -50,19 +47,19 @@ export function GuestCountSelect({
     >
       {guestCountOptions().map((count) => (
         <option key={count} value={count}>
-          {guestCountOptionLabel(count, { compact })}
+          {guestCountOptionLabel(count)}
         </option>
       ))}
     </select>
   )
 }
 
-type FieldProps = Omit<Props, 'className' | 'compact'> & {
+type FieldProps = Omit<Props, 'className'> & {
   labelClassName?: string
   selectClassName?: string
 }
 
-/** Single-line “Guests you're bringing:” + compact number select. */
+/** Single-line “Guests you're bringing:” + guest count select. */
 export function GuestCountField({
   labelClassName = 'shrink-0 text-xs text-zinc-500',
   selectClassName = inlineSelectClass,
@@ -71,11 +68,7 @@ export function GuestCountField({
   return (
     <label className="flex items-center gap-3">
       <span className={labelClassName}>Guests you&apos;re bringing:</span>
-      <GuestCountSelect
-        {...selectProps}
-        compact
-        className={selectClassName}
-      />
+      <GuestCountSelect {...selectProps} className={selectClassName} />
     </label>
   )
 }

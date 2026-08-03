@@ -50,11 +50,5 @@ describe('guest-signups', () => {
       expect(guestCountOptionLabel(1)).toBe('1 guest')
       expect(guestCountOptionLabel(3)).toBe('3 guests')
     })
-
-    it('formats compact numeric labels', () => {
-      expect(guestCountOptionLabel(0, { compact: true })).toBe('0')
-      expect(guestCountOptionLabel(1, { compact: true })).toBe('1')
-      expect(guestCountOptionLabel(3, { compact: true })).toBe('3')
-    })
   })
 })
