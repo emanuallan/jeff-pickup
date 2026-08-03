@@ -71,12 +71,16 @@ function useOrgHomeNavIndicator(activeKey: string, navItems: OrgPublicNavItem[])
     }
 
     const navRect = nav.getBoundingClientRect()
-    const linkRect = activeLink.getBoundingClientRect()
-    const inset = 12
+    // Measure the icon+label cluster, not the stretched grid cell — on wide
+    // phones each tab cell is much wider than the label.
+    const content = activeLink.querySelector('[data-nav-tab-content]')
+    const target = content instanceof HTMLElement ? content : activeLink
+    const targetRect = target.getBoundingClientRect()
+    const inset = 4
 
     setIndicator({
-      left: linkRect.left - navRect.left + inset,
-      width: linkRect.width - inset * 2,
+      left: targetRect.left - navRect.left + inset,
+      width: Math.max(0, targetRect.width - inset * 2),
     })
   }, [activeKey])
 
@@ -123,9 +127,9 @@ function OrgHomeNavTabs({
     <nav
       ref={navRef}
       aria-label="Group sections"
-      className={`relative grid ${ORG_PUBLIC_CONTENT_MAX} ${
+      className={`relative grid w-full ${
         isTop
-          ? 'border-b border-zinc-800/80 pb-0'
+          ? `mx-auto ${ORG_PUBLIC_CONTENT_MAX} border-b border-zinc-800/80 pb-0`
           : 'border-t border-zinc-800/80 px-2 pt-1'
       }`}
       style={{ gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))` }}
@@ -165,13 +169,18 @@ function OrgHomeNavTabs({
             } ${active ? 'text-zinc-100' : 'text-zinc-500 hover:text-zinc-300'}`}
             style={active ? { color: accentFg } : undefined}
           >
-            <NavIcon itemKey={item.key} />
             <span
-              className={`font-medium leading-none tracking-wide ${
-                isTop ? 'text-xs' : 'text-[10px]'
-              }`}
+              data-nav-tab-content
+              className="flex flex-col items-center gap-1"
             >
-              {item.label}
+              <NavIcon itemKey={item.key} />
+              <span
+                className={`font-medium leading-none tracking-wide ${
+                  isTop ? 'text-xs' : 'text-[10px]'
+                }`}
+              >
+                {item.label}
+              </span>
             </span>
           </Link>
         )
