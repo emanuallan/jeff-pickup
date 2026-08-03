@@ -451,7 +451,7 @@ export function GuestCountEditor(props: {
         }}
         accent={props.accent}
         labelClassName="shrink-0 text-xs font-medium text-zinc-400"
-        selectClassName="min-w-0 flex-1 appearance-none rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-base outline-none focus:ring-2 sm:text-sm"
+        selectClassName="min-w-0 flex-1 appearance-none rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-base outline-none focus:border-transparent focus:ring-2 focus:ring-inset sm:text-sm"
         disabled={loading}
       />
       {loading ? <p className="mt-1.5 text-xs text-zinc-500">Saving…</p> : null}

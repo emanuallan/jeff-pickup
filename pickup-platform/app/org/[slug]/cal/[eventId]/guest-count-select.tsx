@@ -5,11 +5,11 @@ import {
 } from '@/lib/guest-signups'
 
 const selectClass =
-  'mt-1 w-full appearance-none rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2.5 text-base outline-none transition-colors focus:border-transparent focus:ring-2 sm:text-sm'
+  'mt-1 w-full appearance-none rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2.5 text-base outline-none transition-colors focus:border-transparent focus:ring-2 focus:ring-inset sm:text-sm'
 
 /** Inline row: label left, select flexes to fill. */
 const inlineSelectClass =
-  'min-w-0 flex-1 appearance-none rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2.5 text-base outline-none transition-colors focus:border-transparent focus:ring-2 sm:text-sm'
+  'min-w-0 flex-1 appearance-none rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2.5 text-base outline-none transition-colors focus:border-transparent focus:ring-2 focus:ring-inset sm:text-sm'
 
 type Props = {
   id?: string
