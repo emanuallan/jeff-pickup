@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { BottomSheet } from '@/app/_components/bottom-sheet'
-import { GuestCountSelect } from './guest-count-select'
+import { GuestCountField } from './guest-count-select'
 import { isValidPhoneDigits } from '@/lib/phone'
 import { isValidEmail, normalizeLoginEmail } from '@/lib/login-otp'
 import { accentOnDark, hexToRgba } from '@/lib/colors'
@@ -245,16 +245,12 @@ export function PaidJoinSheet({
 
             {showGuestBlock ? (
               <div className="px-4 py-3">
-                <label className="block">
-                  <span className="text-[11px] font-medium tracking-wide text-zinc-500 uppercase">
-                    Guests
-                  </span>
-                  <GuestCountSelect
-                    value={guestCount}
-                    onChange={setGuestCount}
-                    accent={accent}
-                  />
-                </label>
+                <GuestCountField
+                  value={guestCount}
+                  onChange={setGuestCount}
+                  accent={accent}
+                  labelClassName="shrink-0 text-[11px] font-medium tracking-wide text-zinc-500"
+                />
               </div>
             ) : null}
           </div>

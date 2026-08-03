@@ -248,7 +248,7 @@ describe('JoinSection "Not you?" flow', () => {
     })
 
     expect(screen.getByRole('button', { name: /continue · \$5\.00/i })).toBeInTheDocument()
-    await user.selectOptions(screen.getByLabelText(/^guests$/i), '2')
+    await user.selectOptions(screen.getByLabelText(/guests you're bringing/i), '2')
     expect(screen.getByRole('button', { name: /continue · \$15\.00/i })).toBeInTheDocument()
   })
 

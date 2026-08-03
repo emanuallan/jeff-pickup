@@ -15,7 +15,7 @@ import { ReturningSignupModal, clearReturningSignupSeen, markReturningSignupProm
 import { GroupRulesSheet } from './group-rules-sheet'
 import { getGroupRulesJoinStatus } from './group-rules-actions'
 import { useParticipationMotion } from './participation-motion'
-import { GuestCountSelect } from './guest-count-select'
+import { GuestCountField } from './guest-count-select'
 import { clampGuestCount } from '@/lib/guest-signups'
 import {
   clearParticipantDeviceSession,
@@ -337,14 +337,11 @@ function PaidJoinSection({
         </div>
 
         {guestsEnabled ? (
-          <label className="block">
-            <span className="text-xs text-zinc-500">Guests</span>
-            <GuestCountSelect
-              value={guestCount}
-              onChange={setGuestCount}
-              accent={accent}
-            />
-          </label>
+          <GuestCountField
+            value={guestCount}
+            onChange={setGuestCount}
+            accent={accent}
+          />
         ) : null}
 
         <button
@@ -433,14 +430,11 @@ function PaidJoinSection({
           </label>
 
           {guestsEnabled ? (
-            <label className="block">
-              <span className="text-xs text-zinc-500">Guests</span>
-              <GuestCountSelect
-                value={guestCount}
-                onChange={setGuestCount}
-                accent={accent}
-              />
-            </label>
+            <GuestCountField
+              value={guestCount}
+              onChange={setGuestCount}
+              accent={accent}
+            />
           ) : null}
 
           {formError ? <p className="text-sm text-red-300">{formError}</p> : null}
@@ -732,14 +726,11 @@ export function JoinSection(props: Props) {
         </div>
 
         {guestsEnabled ? (
-          <label className="block">
-            <span className="text-xs text-zinc-500">Guests</span>
-            <GuestCountSelect
-              value={guestCount}
-              onChange={setGuestCount}
-              accent={props.accent}
-            />
-          </label>
+          <GuestCountField
+            value={guestCount}
+            onChange={setGuestCount}
+            accent={props.accent}
+          />
         ) : null}
 
         <button
@@ -917,10 +908,7 @@ export function JoinSection(props: Props) {
       </label>
 
       {guestsEnabled ? (
-        <label className="block">
-          <span className="text-xs text-zinc-500">Guests</span>
-          <GuestCountSelect name="guest_count" defaultValue={0} accent={props.accent} />
-        </label>
+        <GuestCountField name="guest_count" defaultValue={0} accent={props.accent} />
       ) : (
         <input type="hidden" name="guest_count" value={0} />
       )}

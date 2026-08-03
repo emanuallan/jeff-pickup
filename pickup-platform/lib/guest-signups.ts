@@ -14,7 +14,11 @@ export function guestCountOptions(): number[] {
   return Array.from({ length: MAX_GUEST_COUNT + 1 }, (_, index) => index)
 }
 
-export function guestCountOptionLabel(count: number): string {
+export function guestCountOptionLabel(
+  count: number,
+  options?: { compact?: boolean },
+): string {
+  if (options?.compact) return String(count)
   if (count === 0) return 'Just me'
   if (count === 1) return '1 guest'
   return `${count} guests`

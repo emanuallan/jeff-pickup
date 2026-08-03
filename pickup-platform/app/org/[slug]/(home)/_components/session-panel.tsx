@@ -95,7 +95,8 @@ export async function SessionPanel({ slug, org, event, eventId }: Props) {
             </p>
           ) : null}
 
-          <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-zinc-800 pt-4 text-sm">
+          {/* Border/margin only when at least one chip renders (headcount/weather/etc. can all be empty). */}
+          <div className="flex flex-wrap items-center gap-2 text-sm has-[*]:mt-5 has-[*]:border-t has-[*]:border-zinc-800 has-[*]:pt-4">
             {paidSession ? (
               <SessionPriceBadge
                 priceCents={priceCents}

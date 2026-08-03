@@ -3,7 +3,7 @@
 import { useRef, useState, useEffect, useTransition, type ReactNode } from 'react'
 import { useRouter } from 'next/navigation'
 import { leaveEvent, updateArrivalStatus, updateGuestCount, updateSignupTeam } from './actions'
-import { GuestCountSelect } from './guest-count-select'
+import { GuestCountField } from './guest-count-select'
 import {
   arrivalStatuses,
   arrivalStatusEmoji,
@@ -443,20 +443,18 @@ export function GuestCountEditor(props: {
 
   return (
     <div>
-      <p className="text-xs font-medium text-zinc-400">Guests you&apos;re bringing</p>
-      <div className="mt-2 flex items-center gap-2">
-        <GuestCountSelect
-          value={count}
-          onChange={(nextCount) => {
-            setCount(nextCount)
-            void saveGuestCount(nextCount)
-          }}
-          accent={props.accent}
-          className="min-w-[9.5rem] rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-base outline-none focus:ring-2 sm:text-sm"
-          disabled={loading}
-        />
-        {loading ? <span className="text-xs text-zinc-500">Saving…</span> : null}
-      </div>
+      <GuestCountField
+        value={count}
+        onChange={(nextCount) => {
+          setCount(nextCount)
+          void saveGuestCount(nextCount)
+        }}
+        accent={props.accent}
+        labelClassName="shrink-0 text-xs font-medium text-zinc-400"
+        selectClassName="min-w-0 flex-1 appearance-none rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-base outline-none focus:ring-2 sm:text-sm"
+        disabled={loading}
+      />
+      {loading ? <p className="mt-1.5 text-xs text-zinc-500">Saving…</p> : null}
       {error ? <p className="mt-2 text-sm text-red-300">{error}</p> : null}
     </div>
   )
