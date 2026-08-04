@@ -2,7 +2,6 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import {
   CONNECT_CODE_TTL_MS,
   generateConnectCode,
-  generatePairToken,
   PAIR_TOKEN_TTL_MS,
 } from '@/lib/telegram/tokens'
 
@@ -13,6 +12,16 @@ export type TelegramOrgLink = {
   linked_at: string
   announce_sessions: boolean
   announce_mvp: boolean
+}
+
+export type TelegramOrgByChat = TelegramOrgLink & {
+  org_slug: string
+  org_name: string
+}
+
+/** Pass chat/user ids as strings so bigint values stay exact for PostgREST. */
+function asTelegramId(id: number | string): string {
+  return String(id)
 }
 
 export async function getTelegramOrgLinkByOrgId(
@@ -31,20 +40,58 @@ export async function getTelegramOrgLinkByOrgId(
   return data as TelegramOrgLink
 }
 
+export async function getTelegramOrgByChatId(
+  chatId: number,
+): Promise<TelegramOrgByChat | null> {
+  const admin = createAdminClient()
+  const { data, error } = await admin.rpc('get_telegram_org_by_chat', {
+    p_telegram_chat_id: asTelegramId(chatId),
+  })
+
+  if (error) {
+    console.error('get_telegram_org_by_chat failed', error.message)
+    return null
+  }
+
+  const row = data as {
+    org_id?: string
+    org_slug?: string
+    org_name?: string
+    telegram_chat_id?: number | string
+    chat_title?: string | null
+    linked_at?: string
+    announce_sessions?: boolean
+    announce_mvp?: boolean
+  } | null
+
+  if (!row?.org_id || !row.org_slug || !row.org_name) return null
+
+  return {
+    org_id: String(row.org_id),
+    org_slug: String(row.org_slug),
+    org_name: String(row.org_name),
+    telegram_chat_id: Number(row.telegram_chat_id),
+    chat_title: row.chat_title ?? null,
+    linked_at: String(row.linked_at ?? ''),
+    announce_sessions: row.announce_sessions !== false,
+    announce_mvp: row.announce_mvp !== false,
+  }
+}
+
+/** @deprecated Prefer getTelegramOrgByChatId — kept for call sites that only need the link row. */
 export async function getTelegramOrgLinkByChatId(
   chatId: number,
 ): Promise<TelegramOrgLink | null> {
-  const admin = createAdminClient()
-  const { data, error } = await admin
-    .from('telegram_org_links')
-    .select(
-      'org_id, telegram_chat_id, chat_title, linked_at, announce_sessions, announce_mvp',
-    )
-    .eq('telegram_chat_id', chatId)
-    .maybeSingle()
-
-  if (error || !data) return null
-  return data as TelegramOrgLink
+  const row = await getTelegramOrgByChatId(chatId)
+  if (!row) return null
+  return {
+    org_id: row.org_id,
+    telegram_chat_id: row.telegram_chat_id,
+    chat_title: row.chat_title,
+    linked_at: row.linked_at,
+    announce_sessions: row.announce_sessions,
+    announce_mvp: row.announce_mvp,
+  }
 }
 
 export async function unlinkTelegramOrg(orgId: string): Promise<void> {
@@ -80,7 +127,7 @@ export async function redeemConnectCode(opts: {
   const admin = createAdminClient()
   const { data, error } = await admin.rpc('redeem_telegram_connect_code', {
     p_code: opts.code,
-    p_telegram_chat_id: opts.chatId,
+    p_telegram_chat_id: asTelegramId(opts.chatId),
     p_chat_title: opts.chatTitle,
   })
 
@@ -108,15 +155,19 @@ export async function getParticipantIdForTelegramUser(
   telegramUserId: number,
 ): Promise<string | null> {
   const admin = createAdminClient()
-  const { data, error } = await admin
-    .from('telegram_participant_links')
-    .select('participant_id')
-    .eq('org_id', orgId)
-    .eq('telegram_user_id', telegramUserId)
-    .maybeSingle()
+  const { data, error } = await admin.rpc('get_telegram_participant_link', {
+    p_org_id: orgId,
+    p_telegram_user_id: asTelegramId(telegramUserId),
+  })
 
-  if (error || !data) return null
-  return String(data.participant_id)
+  if (error) {
+    console.error('get_telegram_participant_link failed', error.message)
+    return null
+  }
+
+  const row = data as { participant_id?: string } | null
+  if (!row?.participant_id) return null
+  return String(row.participant_id)
 }
 
 export async function createPairToken(opts: {
@@ -125,19 +176,21 @@ export async function createPairToken(opts: {
   telegramUsername: string | null
 }): Promise<{ token: string; expiresAt: string }> {
   const admin = createAdminClient()
-  const token = generatePairToken()
-  const expiresAt = new Date(Date.now() + PAIR_TOKEN_TTL_MS).toISOString()
-
-  const { error } = await admin.from('telegram_pair_tokens').insert({
-    token,
-    org_id: opts.orgId,
-    telegram_user_id: opts.telegramUserId,
-    telegram_username: opts.telegramUsername,
-    expires_at: expiresAt,
+  const { data, error } = await admin.rpc('create_telegram_pair_token', {
+    p_org_id: opts.orgId,
+    p_telegram_user_id: asTelegramId(opts.telegramUserId),
+    p_telegram_username: opts.telegramUsername,
+    p_ttl_minutes: Math.round(PAIR_TOKEN_TTL_MS / 60_000),
   })
 
-  if (error) throw error
-  return { token, expiresAt }
+  if (error) throw new Error(error.message)
+
+  const result = data as { token?: string; expires_at?: string } | null
+  if (!result?.token || !result.expires_at) {
+    throw new Error('Failed to create pairing link')
+  }
+
+  return { token: result.token, expiresAt: result.expires_at }
 }
 
 export type PairTokenRow = {
@@ -151,13 +204,16 @@ export type PairTokenRow = {
 
 export async function getOpenPairToken(token: string): Promise<PairTokenRow | null> {
   const admin = createAdminClient()
-  const { data, error } = await admin
-    .from('telegram_pair_tokens')
-    .select('token, org_id, telegram_user_id, telegram_username, expires_at, used_at')
-    .eq('token', token)
-    .maybeSingle()
+  const { data, error } = await admin.rpc('get_telegram_pair_token', {
+    p_token: token,
+  })
 
-  if (error || !data) return null
+  if (error) {
+    console.error('get_telegram_pair_token failed', error.message)
+    return null
+  }
+
+  if (!data) return null
   return data as PairTokenRow
 }
 
@@ -197,7 +253,7 @@ export async function unlinkTelegramParticipant(
     .from('telegram_participant_links')
     .delete()
     .eq('org_id', orgId)
-    .eq('telegram_user_id', telegramUserId)
+    .eq('telegram_user_id', asTelegramId(telegramUserId))
 
   if (error) throw error
 }

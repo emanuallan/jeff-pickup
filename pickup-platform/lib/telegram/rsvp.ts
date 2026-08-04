@@ -9,7 +9,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import {
   createPairToken,
   getParticipantIdForTelegramUser,
-  getTelegramOrgLinkByChatId,
+  getTelegramOrgByChatId,
 } from '@/lib/telegram/links'
 import {
   formatNeedPairMessage,
@@ -64,20 +64,6 @@ export async function getNextUpcomingEventForOrg(
   }
 
   return null
-}
-
-async function getOrgSlugAndName(
-  orgId: string,
-): Promise<{ slug: string; name: string } | null> {
-  const admin = createAdminClient()
-  const { data, error } = await admin
-    .from('orgs')
-    .select('slug, name')
-    .eq('id', orgId)
-    .maybeSingle()
-
-  if (error || !data) return null
-  return { slug: String(data.slug), name: String(data.name) }
 }
 
 async function getParticipant(participantId: string): Promise<ParticipantRow | null> {
@@ -160,8 +146,8 @@ export async function handleTelegramRsvp(opts: {
   telegramUsername: string | null
   action: TelegramRsvpAction
 }): Promise<TelegramRsvpResult> {
-  const link = await getTelegramOrgLinkByChatId(opts.chatId)
-  if (!link) {
+  const linked = await getTelegramOrgByChatId(opts.chatId)
+  if (!linked) {
     return {
       ok: false,
       message:
@@ -169,20 +155,15 @@ export async function handleTelegramRsvp(opts: {
     }
   }
 
-  const org = await getOrgSlugAndName(link.org_id)
-  if (!org) {
-    return { ok: false, message: 'Organization not found.' }
-  }
-
   const participantId = await getParticipantIdForTelegramUser(
-    link.org_id,
+    linked.org_id,
     opts.telegramUserId,
   )
 
   if (!participantId) {
     const message = await ensurePairPrompt({
-      orgId: link.org_id,
-      orgSlug: org.slug,
+      orgId: linked.org_id,
+      orgSlug: linked.org_slug,
       telegramUserId: opts.telegramUserId,
       telegramUsername: opts.telegramUsername,
     })
@@ -194,12 +175,12 @@ export async function handleTelegramRsvp(opts: {
     return { ok: false, message: 'Your linked account was not found. Try /link again.' }
   }
 
-  const event = await getNextUpcomingEventForOrg(link.org_id)
+  const event = await getNextUpcomingEventForOrg(linked.org_id)
   if (!event) {
     return { ok: false, message: 'No upcoming sessions for this group.' }
   }
 
-  const eventUrl = publicEventUrl(org.slug, event.short_id)
+  const eventUrl = publicEventUrl(linked.org_slug, event.short_id)
 
   if (opts.action !== 'out' && isPaidSession(event.price_cents)) {
     const existing = await getSignupForParticipant(event.id, participantId)
@@ -221,7 +202,7 @@ export async function handleTelegramRsvp(opts: {
         }
       }
 
-      const sessionToken = await mintSessionToken(link.org_id, participant.phone)
+      const sessionToken = await mintSessionToken(linked.org_id, participant.phone)
       const { error } = await admin.rpc('leave_event', {
         p_signup_id: existing.id,
         p_session_token: sessionToken,
@@ -247,7 +228,7 @@ export async function handleTelegramRsvp(opts: {
     const existing = await getSignupForParticipant(event.id, participantId)
 
     if (existing) {
-      const sessionToken = await mintSessionToken(link.org_id, participant.phone)
+      const sessionToken = await mintSessionToken(linked.org_id, participant.phone)
       const { error } = await admin.rpc('update_arrival_status', {
         p_signup_id: existing.id,
         p_session_token: sessionToken,
@@ -330,8 +311,8 @@ export async function handleTelegramRsvp(opts: {
 }
 
 export async function handleTelegramNext(chatId: number): Promise<TelegramRsvpResult> {
-  const link = await getTelegramOrgLinkByChatId(chatId)
-  if (!link) {
+  const linked = await getTelegramOrgByChatId(chatId)
+  if (!linked) {
     return {
       ok: false,
       message:
@@ -339,12 +320,7 @@ export async function handleTelegramNext(chatId: number): Promise<TelegramRsvpRe
     }
   }
 
-  const org = await getOrgSlugAndName(link.org_id)
-  if (!org) {
-    return { ok: false, message: 'Organization not found.' }
-  }
-
-  const event = await getNextUpcomingEventForOrg(link.org_id)
+  const event = await getNextUpcomingEventForOrg(linked.org_id)
   if (!event) {
     return { ok: false, message: 'No upcoming sessions for this group.' }
   }
@@ -352,7 +328,7 @@ export async function handleTelegramNext(chatId: number): Promise<TelegramRsvpRe
   const { formatNextSessionMessage } = await import('@/lib/telegram/messages')
   return {
     ok: true,
-    message: formatNextSessionMessage(org.name, org.slug, event),
+    message: formatNextSessionMessage(linked.org_name, linked.org_slug, event),
   }
 }
 
@@ -364,34 +340,32 @@ export async function handleTelegramLinkPrompt(opts: {
   chatId: number
   telegramUserId: number
   telegramUsername: string | null
-  /** When true, chat may be a DM without an org link — require start payload or fail. */
+  /** When true, chat may be a DM without an org link. */
   isPrivateChat: boolean
 }): Promise<TelegramRsvpResult> {
-  let orgId: string | null = null
-  let orgSlug: string | null = null
+  // Always resolve by chat id first — works for groups and avoids relying on
+  // chat.type if the client UI looks like a DM (e.g. 2-person group titled with the bot name).
+  const linked = await getTelegramOrgByChatId(opts.chatId)
 
-  if (!opts.isPrivateChat) {
-    const link = await getTelegramOrgLinkByChatId(opts.chatId)
-    if (!link) {
+  if (!linked) {
+    if (opts.isPrivateChat) {
       return {
         ok: false,
-        message: 'This chat is not linked to an Organizr group yet.',
+        message:
+          'Open your linked Organizr group chat and send /link there (not in this private chat).',
       }
     }
-    orgId = link.org_id
-    const org = await getOrgSlugAndName(link.org_id)
-    orgSlug = org?.slug ?? null
-  }
-
-  if (!orgId || !orgSlug) {
     return {
       ok: false,
       message:
-        'Use /link inside your linked group chat, or open the pairing link the bot sent you there.',
+        'This chat is not linked to an Organizr group yet. Generate a connect code in the console and send /connect CODE here.',
     }
   }
 
-  const existing = await getParticipantIdForTelegramUser(orgId, opts.telegramUserId)
+  const existing = await getParticipantIdForTelegramUser(
+    linked.org_id,
+    opts.telegramUserId,
+  )
   if (existing) {
     return {
       ok: true,
@@ -399,12 +373,17 @@ export async function handleTelegramLinkPrompt(opts: {
     }
   }
 
-  const message = await ensurePairPrompt({
-    orgId,
-    orgSlug,
-    telegramUserId: opts.telegramUserId,
-    telegramUsername: opts.telegramUsername,
-  })
-
-  return { ok: true, message }
+  try {
+    const message = await ensurePairPrompt({
+      orgId: linked.org_id,
+      orgSlug: linked.org_slug,
+      telegramUserId: opts.telegramUserId,
+      telegramUsername: opts.telegramUsername,
+    })
+    return { ok: true, message }
+  } catch (e) {
+    const err = e instanceof Error ? e.message : 'Could not create pairing link'
+    console.error('telegram pair token failed', err)
+    return { ok: false, message: err }
+  }
 }

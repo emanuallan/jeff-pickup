@@ -94,7 +94,7 @@ export function formatMvpAnnouncement(opts: {
 export function formatGroupLinkedMessage(orgName: string, orgSlug: string): string {
   return [
     `Linked to ${orgName} (${orgSlug}).`,
-    'Players: DM me /link then use /in /out /maybe here.',
+    'Players: send /link here to pair, then use /in /out /maybe.',
     'Anyone: /next for the upcoming session.',
   ].join('\n')
 }

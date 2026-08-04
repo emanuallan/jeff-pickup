@@ -92,6 +92,7 @@ describe('telegram messages', () => {
   })
 
   it('formats group linked help', () => {
+    expect(formatGroupLinkedMessage('Jeff', 'jeff')).toContain('/link')
     expect(formatGroupLinkedMessage('Jeff', 'jeff')).toContain('/in')
   })
 
