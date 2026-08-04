@@ -30,6 +30,8 @@ export type TelegramRsvpResult = {
   message: string
   /** Pairing link — deliver via DM; never post the URL in the group. */
   pairViaDm?: boolean
+  /** Opaque pair token for t.me deep-link fallback when DM is blocked. */
+  pairToken?: string
 }
 
 const ARRIVAL_STATUS_BY_ACTION: Record<TelegramArrivalAction, 'on_my_way' | 'running_late'> = {
@@ -186,13 +188,25 @@ async function ensurePairPrompt(opts: {
   orgSlug: string
   telegramUserId: number
   telegramUsername: string | null
-}): Promise<string> {
+}): Promise<{ message: string; token: string }> {
   const { token } = await createPairToken({
     orgId: opts.orgId,
     telegramUserId: opts.telegramUserId,
     telegramUsername: opts.telegramUsername,
   })
-  return formatNeedPairMessage(telegramPairUrl(opts.orgSlug, token))
+  return {
+    message: formatNeedPairMessage(telegramPairUrl(opts.orgSlug, token)),
+    token,
+  }
+}
+
+function pairPromptResult(prompt: { message: string; token: string }): TelegramRsvpResult {
+  return {
+    ok: true,
+    message: prompt.message,
+    pairViaDm: true,
+    pairToken: prompt.token,
+  }
 }
 
 export async function handleTelegramRsvp(opts: {
@@ -218,13 +232,14 @@ export async function handleTelegramRsvp(opts: {
   )
 
   if (!participantId) {
-    const message = await ensurePairPrompt({
-      orgId: linked.org_id,
-      orgSlug: linked.org_slug,
-      telegramUserId: opts.telegramUserId,
-      telegramUsername: opts.telegramUsername,
-    })
-    return { ok: true, message, pairViaDm: true }
+    return pairPromptResult(
+      await ensurePairPrompt({
+        orgId: linked.org_id,
+        orgSlug: linked.org_slug,
+        telegramUserId: opts.telegramUserId,
+        telegramUsername: opts.telegramUsername,
+      }),
+    )
   }
 
   const participant = await getParticipant(participantId)
@@ -420,13 +435,14 @@ export async function handleTelegramArrivalStatus(opts: {
   )
 
   if (!participantId) {
-    const message = await ensurePairPrompt({
-      orgId: linked.org_id,
-      orgSlug: linked.org_slug,
-      telegramUserId: opts.telegramUserId,
-      telegramUsername: opts.telegramUsername,
-    })
-    return { ok: true, message, pairViaDm: true }
+    return pairPromptResult(
+      await ensurePairPrompt({
+        orgId: linked.org_id,
+        orgSlug: linked.org_slug,
+        telegramUserId: opts.telegramUserId,
+        telegramUsername: opts.telegramUsername,
+      }),
+    )
   }
 
   const participant = await getParticipant(participantId)
@@ -610,16 +626,69 @@ export async function handleTelegramLinkPrompt(opts: {
   }
 
   try {
-    const message = await ensurePairPrompt({
-      orgId: linked.org_id,
-      orgSlug: linked.org_slug,
-      telegramUserId: opts.telegramUserId,
-      telegramUsername: opts.telegramUsername,
-    })
-    return { ok: true, message, pairViaDm: true }
+    return pairPromptResult(
+      await ensurePairPrompt({
+        orgId: linked.org_id,
+        orgSlug: linked.org_slug,
+        telegramUserId: opts.telegramUserId,
+        telegramUsername: opts.telegramUsername,
+      }),
+    )
   } catch (e) {
     const err = e instanceof Error ? e.message : 'Could not create pairing link'
     console.error('telegram pair token failed', err)
     return { ok: false, message: err }
+  }
+}
+
+/** Handle /start p_<pairToken> — only for the Telegram user the token was minted for. */
+export async function handleTelegramStartPairPayload(
+  startPayload: string,
+  telegramUserId: number,
+): Promise<TelegramRsvpResult | null> {
+  const trimmed = startPayload.trim()
+  if (!trimmed.startsWith('p_') || trimmed.length <= 2) return null
+
+  const token = trimmed.slice(2)
+  const { getOpenPairToken } = await import('@/lib/telegram/links')
+  const row = await getOpenPairToken(token)
+  if (!row || row.used_at) {
+    return {
+      ok: false,
+      message: 'That pairing link expired or was already used. Go back to the group and send /link again.',
+    }
+  }
+  if (new Date(row.expires_at).getTime() < Date.now()) {
+    return {
+      ok: false,
+      message: 'That pairing link expired. Go back to the group and send /link again.',
+    }
+  }
+
+  if (Number(row.telegram_user_id) !== Number(telegramUserId)) {
+    return {
+      ok: false,
+      message: 'That pairing link belongs to a different Telegram account. Send /link from the group with your own account.',
+    }
+  }
+
+  const admin = createAdminClient()
+  const { data: org, error } = await admin
+    .from('orgs')
+    .select('slug')
+    .eq('id', row.org_id)
+    .maybeSingle()
+
+  if (error || !org?.slug) {
+    console.error('telegram start pair org lookup failed', error?.message)
+    return {
+      ok: false,
+      message: 'Could not load your pairing link. Go back to the group and send /link again.',
+    }
+  }
+
+  return {
+    ok: true,
+    message: formatNeedPairMessage(telegramPairUrl(String(org.slug), token)),
   }
 }

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   formatCountMessage,
+  formatDmBlockedPairHint,
   formatGroupLinkedMessage,
   formatMvpAnnouncement,
   formatNeedPairMessage,
@@ -8,6 +9,7 @@ import {
   formatRosterMessage,
   formatRsvpReply,
   publicEventUrl,
+  telegramBotStartUrl,
   telegramPairUrl,
 } from '@/lib/telegram/messages'
 import { generateConnectCode, generatePairToken } from '@/lib/telegram/tokens'
@@ -93,6 +95,17 @@ describe('telegram messages', () => {
     expect(pair).toContain('https://pair.example')
     expect(pair).toContain('OPEN THIS LINK IN YOUR PHONE BROWSER')
     expect(pair).toContain('DO NOT USE TELEGRAM')
+  })
+
+  it('formats DM-blocked pair hint with start deep link', () => {
+    const url = telegramBotStartUrl('OrganizrCaptainBot', 'link')
+    expect(url).toBe('https://t.me/OrganizrCaptainBot?start=link')
+    const hint = formatDmBlockedPairHint(url)
+    expect(hint).toContain(url)
+    expect(hint).toContain("can't DM you")
+    expect(hint).toContain('send /link again')
+    expect(hint).not.toContain('p_')
+    expect(formatDmBlockedPairHint(null)).toContain('send /link again')
   })
 
   it('formats MVP announcement', () => {

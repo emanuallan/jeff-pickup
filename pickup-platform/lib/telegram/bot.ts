@@ -1,6 +1,10 @@
 import { Bot, GrammyError } from 'grammy'
 import { getTelegramBotToken, getTelegramBotUsername } from '@/lib/telegram/config'
-import { formatGroupLinkedMessage } from '@/lib/telegram/messages'
+import {
+  formatDmBlockedPairHint,
+  formatGroupLinkedMessage,
+  telegramBotStartUrl,
+} from '@/lib/telegram/messages'
 import { redeemConnectCode } from '@/lib/telegram/links'
 import {
   handleTelegramArrivalStatus,
@@ -9,6 +13,7 @@ import {
   handleTelegramNext,
   handleTelegramRoster,
   handleTelegramRsvp,
+  handleTelegramStartPairPayload,
 } from '@/lib/telegram/rsvp'
 
 let botSingleton: Bot | null = null
@@ -23,7 +28,7 @@ async function replyLinkResult(
     reply: (text: string) => Promise<unknown>
     api: { sendMessage: (chatId: number, text: string) => Promise<unknown> }
   },
-  result: { ok: boolean; message: string; pairViaDm?: boolean },
+  result: { ok: boolean; message: string; pairViaDm?: boolean; pairToken?: string },
   preferDm: boolean,
 ) {
   if (preferDm && result.pairViaDm && ctx.from) {
@@ -32,9 +37,11 @@ async function replyLinkResult(
       await ctx.reply('I sent you a private pairing link — check your DM with me.')
       return
     } catch {
-      await ctx.reply(
-        "I couldn't message you privately. Open a DM with me first, then send /link here.",
-      )
+      const botName = getTelegramBotUsername()
+      // Never put the pair token in the group — anyone who sees it could open the
+      // web pair URL and bind the requester's Telegram id to their own profile.
+      const startUrl = botName ? telegramBotStartUrl(botName, 'link') : null
+      await ctx.reply(formatDmBlockedPairHint(startUrl))
       return
     }
   }
@@ -49,6 +56,24 @@ export function createTelegramBot(): Bot | null {
   const bot = new Bot(token)
 
   bot.command('start', async (ctx) => {
+    const payload = ctx.match?.trim()
+    if (payload === 'link') {
+      await ctx.reply(
+        'Thanks — I can message you now. Go back to your group and send /link (or /in) again.',
+      )
+      return
+    }
+
+    // Legacy/private deep links may still carry p_<token>; only deliver to the
+    // Telegram user the token was minted for.
+    if (payload && ctx.from) {
+      const pairResult = await handleTelegramStartPairPayload(payload, ctx.from.id)
+      if (pairResult) {
+        await ctx.reply(pairResult.message)
+        return
+      }
+    }
+
     const botName = getTelegramBotUsername()
     await ctx.reply(
       [

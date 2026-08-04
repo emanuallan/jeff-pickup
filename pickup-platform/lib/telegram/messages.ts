@@ -77,6 +77,29 @@ export function formatNeedPairMessage(pairUrl: string): string {
   ].join('\n')
 }
 
+/** Deep link that opens a private chat with the bot and runs /start <payload>. */
+export function telegramBotStartUrl(botUsername: string, startPayload: string): string {
+  const user = botUsername.replace(/^@/, '')
+  return `https://t.me/${user}?start=${encodeURIComponent(startPayload)}`
+}
+
+/** Group-chat tip when Telegram blocks the bot from DMing the user yet. */
+export function formatDmBlockedPairHint(botStartUrl: string | null): string {
+  if (botStartUrl) {
+    return [
+      "I can't DM you until you open me once (Telegram rule).",
+      '',
+      '1. Tap this link and press Start:',
+      botStartUrl,
+      '2. Come back here and send /link again — I\'ll DM your pairing link.',
+    ].join('\n')
+  }
+  return [
+    "I can't DM you until you open me once (Telegram rule).",
+    'Open a chat with the bot, press Start, then send /link again in the group.',
+  ].join('\n')
+}
+
 export function formatPaidSessionMessage(url: string): string {
   return [
     'This session requires payment — sign up on the web:',
