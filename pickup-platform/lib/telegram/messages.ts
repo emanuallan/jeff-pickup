@@ -77,9 +77,7 @@ export function formatPairPromptMessage(): string {
     '',
     'Link your Organizr account to RSVP from Telegram.',
     '',
-    "Easiest: tap Share phone number below — Telegram confirms it's your number.",
-    '',
-    'After you finish, go back to your group and use /in.',
+    "🟢 Easiest: tap Share phone number below — Telegram confirms it's your number.",
   ].join('\n')
 }
 

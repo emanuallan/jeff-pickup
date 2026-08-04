@@ -97,7 +97,7 @@ describe('telegram messages', () => {
     const pair = formatNeedPairMessage('https://pair.example')
     expect(pair).toContain("You're ready to pair")
     expect(pair).toContain('Share phone number')
-    expect(pair).toContain('/in')
+    expect(pair).toContain('🟢')
     expect(pair).not.toContain('https://pair.example')
     expect(formatWebsitePairHint()).toContain('press and hold')
   })
@@ -120,8 +120,8 @@ describe('telegram messages', () => {
     expect(msg).toContain("You're ready to pair")
     expect(msg).toContain('Share phone number')
     expect(msg).not.toContain('https://pair.example')
-    expect(msg).toContain('/in')
     expect(formatContactPairedMessage('Alex', 'Jeff')).toContain('linked as Alex')
+    expect(formatContactPairedMessage('Alex', 'Jeff')).toContain('/in')
   })
 
   it('formats MVP announcement', () => {
