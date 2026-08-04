@@ -100,26 +100,36 @@ export function TelegramSection({ orgSlug, initial }: Props) {
       <ol className="list-decimal space-y-2 pl-5 text-sm text-zinc-400">
         <li>Add {botMention} to your Telegram group.</li>
         <li>Generate a connect code below.</li>
-        <li>
-          In the group, send <code className="text-zinc-300">/connect CODE</code> as an
-          admin.
-        </li>
+        <li>Copy the message and paste it in the group as an admin.</li>
       </ol>
 
       {code ? (
-        <div className="rounded-xl border border-indigo-500/25 bg-indigo-500/5 px-4 py-3">
-          <p className="text-xs font-medium uppercase tracking-wide text-indigo-300">
-            Connect code
-          </p>
-          <p className="mt-1 font-mono text-2xl tracking-widest text-zinc-50">{code}</p>
-          {expiresAt ? (
-            <p className="mt-1 text-xs text-zinc-500">
-              Expires {new Date(expiresAt).toLocaleString()}
+        <div className="space-y-3 rounded-xl border border-indigo-500/25 bg-indigo-500/5 px-4 py-3">
+          <div>
+            <p className="text-xs font-medium uppercase tracking-wide text-indigo-300">
+              Paste this in your Telegram group
             </p>
-          ) : null}
-          <p className="mt-2 text-sm text-zinc-400">
-            In Telegram: <code className="text-zinc-200">/connect {code}</code>
-          </p>
+            <p className="mt-2 font-mono text-xl tracking-wide text-zinc-50">
+              /connect {code}
+            </p>
+            {expiresAt ? (
+              <p className="mt-1 text-xs text-zinc-500">
+                Expires {new Date(expiresAt).toLocaleString()}
+              </p>
+            ) : null}
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              void navigator.clipboard.writeText(`/connect ${code}`).then(
+                () => toast.success('Copied — paste it in your Telegram group.'),
+                () => toast.error('Could not copy. Select the text and copy manually.'),
+              )
+            }}
+            className={btnSecondary}
+          >
+            Copy message
+          </button>
         </div>
       ) : null}
 
