@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import {
+  formatCountMessage,
   formatGroupLinkedMessage,
   formatMvpAnnouncement,
   formatNeedPairMessage,
   formatPaidSessionMessage,
+  formatRosterMessage,
   formatRsvpReply,
   publicEventUrl,
   telegramPairUrl,
@@ -97,6 +99,26 @@ describe('telegram messages', () => {
   it('formats group linked help', () => {
     expect(formatGroupLinkedMessage('Jeff', 'jeff')).toContain('/link')
     expect(formatGroupLinkedMessage('Jeff', 'jeff')).toContain('/in')
+    expect(formatGroupLinkedMessage('Jeff', 'jeff')).toContain('/roster')
+    expect(formatGroupLinkedMessage('Jeff', 'jeff')).toContain('/count')
+  })
+
+  it('formats count and roster', () => {
+    expect(formatCountMessage(8)).toBe('8 signed up')
+    const msg = formatRosterMessage({
+      event,
+      headcount: 3,
+      roster: [
+        { display_name: 'Alex', guest_count: 0, arrival_status: 'confirmed' },
+        { display_name: 'Sam', guest_count: 1, arrival_status: 'maybe' },
+      ],
+      waitlist: [{ display_name: 'Pat', guest_count: 0, arrival_status: 'confirmed' }],
+    })
+    expect(msg).toContain('3 signed up')
+    expect(msg).toContain('• Alex')
+    expect(msg).toContain('Sam (+1)')
+    expect(msg).toContain('Waitlist (1)')
+    expect(msg).toContain('• Pat')
   })
 
   it('builds public URLs', () => {

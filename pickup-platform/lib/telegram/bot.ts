@@ -3,9 +3,10 @@ import { getTelegramBotToken, getTelegramBotUsername } from '@/lib/telegram/conf
 import { formatGroupLinkedMessage } from '@/lib/telegram/messages'
 import { redeemConnectCode } from '@/lib/telegram/links'
 import {
-  handleTelegramAnnounce,
+  handleTelegramCount,
   handleTelegramLinkPrompt,
   handleTelegramNext,
+  handleTelegramRoster,
   handleTelegramRsvp,
 } from '@/lib/telegram/rsvp'
 
@@ -60,6 +61,7 @@ export function createTelegramBot(): Bot | null {
         '',
         'Organizers: generate a connect code in the console, add me to your group, then /connect CODE.',
         'Players: in your linked group, /link then /in /out /maybe.',
+        'Anyone: /next · /roster · /count.',
         botName ? `Bot: @${botName}` : '',
       ]
         .filter(Boolean)
@@ -177,23 +179,21 @@ export function createTelegramBot(): Bot | null {
     await ctx.reply(result.message)
   })
 
-  bot.command('announce', async (ctx) => {
+  bot.command('roster', async (ctx) => {
     if (!ctx.chat || ctx.chat.type === 'private') {
-      await ctx.reply('Use /announce inside your linked group chat.')
+      await ctx.reply('Use /roster inside your linked group chat.')
       return
     }
-    if (ctx.from) {
-      try {
-        const member = await ctx.getChatMember(ctx.from.id)
-        if (member.status !== 'creator' && member.status !== 'administrator') {
-          await ctx.reply('Only a group admin can /announce.')
-          return
-        }
-      } catch {
-        // Soft check.
-      }
+    const result = await handleTelegramRoster(ctx.chat.id)
+    await ctx.reply(result.message)
+  })
+
+  bot.command('count', async (ctx) => {
+    if (!ctx.chat || ctx.chat.type === 'private') {
+      await ctx.reply('Use /count inside your linked group chat.')
+      return
     }
-    const result = await handleTelegramAnnounce(ctx.chat.id)
+    const result = await handleTelegramCount(ctx.chat.id)
     await ctx.reply(result.message)
   })
 
@@ -224,5 +224,6 @@ export const TELEGRAM_BOT_COMMANDS = [
   { command: 'out', description: 'Leave the next session' },
   { command: 'maybe', description: 'Mark maybe for the next session' },
   { command: 'next', description: 'Show the next session' },
-  { command: 'announce', description: 'Announce the next session (admins)' },
+  { command: 'roster', description: 'List signups for the next session' },
+  { command: 'count', description: 'Headcount for the next session' },
 ] as const

@@ -80,7 +80,7 @@ export function TelegramSection({ orgSlug, initial }: Props) {
             ) : null}
           </p>
           <p className="mt-2 text-xs text-zinc-500">
-            Players use /link then /in /out /maybe. Admins can /announce the next session.
+            Players use /link then /in /out /maybe. Anyone can /next, /roster, or /count.
           </p>
         </div>
         <button

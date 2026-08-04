@@ -365,8 +365,77 @@ export async function handleTelegramNext(chatId: number): Promise<TelegramRsvpRe
   }
 }
 
-export async function handleTelegramAnnounce(chatId: number): Promise<TelegramRsvpResult> {
-  return handleTelegramNext(chatId)
+async function loadNextSessionForChat(chatId: number): Promise<
+  | { ok: false; message: string }
+  | {
+      ok: true
+      linked: NonNullable<Awaited<ReturnType<typeof getTelegramOrgByChatId>>>
+      event: NonNullable<Awaited<ReturnType<typeof getNextUpcomingEventForOrg>>>
+    }
+> {
+  const linked = await getTelegramOrgByChatId(chatId)
+  if (!linked) {
+    return {
+      ok: false,
+      message:
+        'This chat is not linked to an Organizr group. An organizer can connect it from the console.',
+    }
+  }
+
+  const event = await getNextUpcomingEventForOrg(linked.org_id)
+  if (!event) {
+    return { ok: false, message: 'No upcoming sessions for this group.' }
+  }
+
+  return { ok: true, linked, event }
+}
+
+export async function handleTelegramCount(chatId: number): Promise<TelegramRsvpResult> {
+  const loaded = await loadNextSessionForChat(chatId)
+  if (!loaded.ok) return loaded
+
+  const { getPublicRosterLive } = await import('@/lib/public-data')
+  const { rosterHeadcount } = await import('@/lib/signups')
+  const { formatCountMessage } = await import('@/lib/telegram/messages')
+
+  const roster = await getPublicRosterLive(loaded.event.id)
+  return { ok: true, message: formatCountMessage(rosterHeadcount(roster)) }
+}
+
+export async function handleTelegramRoster(chatId: number): Promise<TelegramRsvpResult> {
+  const loaded = await loadNextSessionForChat(chatId)
+  if (!loaded.ok) return loaded
+
+  const { getPublicOrgBySlug, getPublicRosterLive, getPublicWaitlistLive } = await import(
+    '@/lib/public-data'
+  )
+  const { orgFeatures } = await import('@/lib/org-features')
+  const { rosterHeadcount } = await import('@/lib/signups')
+  const { formatRosterMessage } = await import('@/lib/telegram/messages')
+
+  const org = await getPublicOrgBySlug(loaded.linked.org_slug)
+  if (!org || !orgFeatures(org).public_roster) {
+    return {
+      ok: false,
+      message: 'The roster is private for this group. Try /count for the headcount.',
+    }
+  }
+
+  const waitlistEnabled = loaded.event.capacity != null
+  const [roster, waitlist] = await Promise.all([
+    getPublicRosterLive(loaded.event.id),
+    waitlistEnabled ? getPublicWaitlistLive(loaded.event.id) : Promise.resolve([]),
+  ])
+
+  return {
+    ok: true,
+    message: formatRosterMessage({
+      event: loaded.event,
+      roster,
+      waitlist,
+      headcount: rosterHeadcount(roster),
+    }),
+  }
 }
 
 export async function handleTelegramLinkPrompt(opts: {

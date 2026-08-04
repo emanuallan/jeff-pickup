@@ -116,7 +116,7 @@ export default async function OrgSettingsPage({ params }: Props) {
 
         <ConsoleSection
           title="Telegram"
-          description="Link a Telegram group so players can /in /out /maybe and see session announcements."
+          description="Link a Telegram group so players can /in /out /maybe and check /next, /roster, or /count."
         >
           {telegramState ? (
             <TelegramSection orgSlug={orgSlug} initial={telegramState} />
