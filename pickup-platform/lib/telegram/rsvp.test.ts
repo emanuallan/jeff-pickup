@@ -56,7 +56,7 @@ describe('handleTelegramStartLinkIntent', () => {
     const result = await handleTelegramStartLinkIntent('i_A1B2C3D4', 42)
     expect(result?.ok).toBe(true)
     expect(result?.pairUrl).toContain('/telegram/pair?token=pair-secret')
-    expect(result?.message).toContain("You're all set to pair")
+    expect(result?.message).toContain("You're ready to pair")
     expect(redeemLinkIntent).toHaveBeenCalledWith('A1B2C3D4', 42)
   })
 

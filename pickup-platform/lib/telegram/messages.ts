@@ -70,9 +70,9 @@ export function formatNeedPairMessage(pairUrl: string): string {
   return [
     'Link your Organizr account to RSVP from Telegram.',
     '',
-    'Returning players: open the link in Safari/Chrome (press and hold → Open in Browser) so your saved profile can prefill.',
+    'Easiest: tap Share phone number below — Telegram confirms it\'s your number.',
     '',
-    'Tap the button below, or open this link (expires in 30 minutes):',
+    'Prefer the website? Open this link in Safari/Chrome (press and hold → Open in Browser). Expires in 30 minutes:',
     pairUrl,
   ].join('\n')
 }
@@ -89,7 +89,7 @@ export function formatDmBlockedPairHint(botStartUrl: string | null): string {
     return [
       "I can't message you yet (Telegram needs you to open me once).",
       '',
-      'Tap here and press Start — I\'ll send your pairing link right away:',
+      'Tap here and press Start — I\'ll send your pairing options right away:',
       botStartUrl,
     ].join('\n')
   }
@@ -101,11 +101,19 @@ export function formatDmBlockedPairHint(botStartUrl: string | null): string {
 
 export function formatLinkIntentStartMessage(pairUrl: string): string {
   return [
-    'You\'re all set to pair.',
+    'You\'re ready to pair.',
     '',
     formatNeedPairMessage(pairUrl),
     '',
     'After you finish, go back to your group and use /in.',
+  ].join('\n')
+}
+
+export function formatContactPairedMessage(displayName: string, orgName: string): string {
+  return [
+    `You're linked as ${displayName} for ${orgName}.`,
+    '',
+    'Go back to your group and send /in (or /out /maybe).',
   ].join('\n')
 }
 

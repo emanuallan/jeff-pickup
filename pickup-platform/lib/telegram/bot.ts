@@ -1,5 +1,6 @@
-import { Bot, GrammyError, InlineKeyboard } from 'grammy'
+import { Bot, GrammyError, InlineKeyboard, Keyboard } from 'grammy'
 import { getTelegramBotToken, getTelegramBotUsername } from '@/lib/telegram/config'
+import { handleTelegramContactPair } from '@/lib/telegram/contact-pair'
 import {
   formatDmBlockedPairHint,
   formatGroupLinkedMessage,
@@ -25,20 +26,40 @@ function usernameOf(ctx: { from?: { username?: string } }): string | null {
 }
 
 function pairUrlKeyboard(pairUrl: string): InlineKeyboard {
-  return new InlineKeyboard().url('Open pairing link', pairUrl)
+  return new InlineKeyboard().url('Open website pairing link', pairUrl)
+}
+
+function contactShareKeyboard(): Keyboard {
+  return new Keyboard().requestContact('Share phone number').resized().oneTime()
 }
 
 async function sendPairDm(
-  api: { sendMessage: (chatId: number, text: string, other?: object) => Promise<unknown> },
+  api: {
+    sendMessage: (chatId: number, text: string, other?: object) => Promise<unknown>
+  },
   userId: number,
   message: string,
   pairUrl?: string | null,
 ) {
   if (pairUrl) {
-    await api.sendMessage(userId, message, { reply_markup: pairUrlKeyboard(pairUrl) })
+    await api.sendMessage(userId, message, { reply_markup: contactShareKeyboard() })
+    await api.sendMessage(userId, 'Or pair on the website:', {
+      reply_markup: pairUrlKeyboard(pairUrl),
+    })
     return
   }
   await api.sendMessage(userId, message)
+}
+
+async function replyPairPrompt(
+  ctx: {
+    reply: (text: string, other?: object) => Promise<unknown>
+  },
+  message: string,
+  pairUrl: string,
+) {
+  await ctx.reply(message, { reply_markup: contactShareKeyboard() })
+  await ctx.reply('Or pair on the website:', { reply_markup: pairUrlKeyboard(pairUrl) })
 }
 
 async function replyLinkResult(
@@ -60,13 +81,13 @@ async function replyLinkResult(
   if (preferDm && result.pairViaDm && ctx.from) {
     try {
       await sendPairDm(ctx.api, ctx.from.id, result.message, result.pairUrl)
-      await ctx.reply('I sent you a private pairing link — check your DM with me.')
+      await ctx.reply('I sent you a private pairing message — check your DM with me.')
       return
     } catch {
       const botName = getTelegramBotUsername()
       let startUrl: string | null = botName ? telegramBotStartUrl(botName, 'link') : null
 
-      // Prefer an opaque intent id so /start can DM the pair URL without a second /link.
+      // Prefer an opaque intent id so /start can DM pairing options without a second /link.
       if (botName && result.orgId && result.pairToken) {
         try {
           const intent = await createLinkIntent({
@@ -90,7 +111,7 @@ async function replyLinkResult(
   }
 
   if (result.pairUrl && result.ok) {
-    await ctx.reply(result.message, { reply_markup: pairUrlKeyboard(result.pairUrl) })
+    await replyPairPrompt(ctx, result.message, result.pairUrl)
     return
   }
 
@@ -110,9 +131,7 @@ export function createTelegramBot(): Bot | null {
       const intentResult = await handleTelegramStartLinkIntent(payload, ctx.from.id)
       if (intentResult) {
         if (intentResult.ok && intentResult.pairUrl) {
-          await ctx.reply(intentResult.message, {
-            reply_markup: pairUrlKeyboard(intentResult.pairUrl),
-          })
+          await replyPairPrompt(ctx, intentResult.message, intentResult.pairUrl)
         } else {
           await ctx.reply(intentResult.message)
         }
@@ -122,9 +141,7 @@ export function createTelegramBot(): Bot | null {
       const pairResult = await handleTelegramStartPairPayload(payload, ctx.from.id)
       if (pairResult) {
         if (pairResult.ok && pairResult.pairUrl) {
-          await ctx.reply(pairResult.message, {
-            reply_markup: pairUrlKeyboard(pairResult.pairUrl),
-          })
+          await replyPairPrompt(ctx, pairResult.message, pairResult.pairUrl)
         } else {
           await ctx.reply(pairResult.message)
         }
@@ -153,6 +170,31 @@ export function createTelegramBot(): Bot | null {
         .filter(Boolean)
         .join('\n'),
     )
+  })
+
+  bot.on('message:contact', async (ctx) => {
+    if (!ctx.from || !ctx.chat || ctx.chat.type !== 'private') {
+      await ctx.reply('Share your phone in a private chat with the bot.')
+      return
+    }
+
+    const contact = ctx.message.contact
+    const result = await handleTelegramContactPair({
+      telegramUserId: ctx.from.id,
+      telegramUsername: usernameOf(ctx),
+      fromFirstName: ctx.from.first_name,
+      fromLastName: ctx.from.last_name,
+      contact: {
+        phone_number: contact.phone_number,
+        first_name: contact.first_name,
+        last_name: contact.last_name,
+        user_id: contact.user_id,
+      },
+    })
+
+    await ctx.reply(result.message, {
+      reply_markup: { remove_keyboard: true },
+    })
   })
 
   bot.command('connect', async (ctx) => {

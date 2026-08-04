@@ -288,6 +288,54 @@ export async function getOpenPairToken(token: string): Promise<PairTokenRow | nu
   return data as PairTokenRow
 }
 
+export type OpenPairTokenForUser = PairTokenRow & {
+  org_slug: string
+  org_name: string
+}
+
+/** Latest unused pair token for this Telegram user (Phase B contact-share). */
+export async function getLatestOpenPairTokenForUser(
+  telegramUserId: number,
+): Promise<OpenPairTokenForUser | null> {
+  const admin = createAdminClient()
+  const { data, error } = await admin.rpc('get_open_telegram_pair_token_for_user', {
+    p_telegram_user_id: asTelegramId(telegramUserId),
+  })
+
+  if (error) {
+    console.error('get_open_telegram_pair_token_for_user failed', error.message)
+    return null
+  }
+
+  if (!data) return null
+
+  const row = data as {
+    token?: string
+    org_id?: string
+    org_slug?: string
+    org_name?: string
+    telegram_user_id?: number | string
+    telegram_username?: string | null
+    expires_at?: string
+    used_at?: string | null
+  }
+
+  if (!row.token || !row.org_id || !row.org_slug || !row.org_name || !row.expires_at) {
+    return null
+  }
+
+  return {
+    token: String(row.token),
+    org_id: String(row.org_id),
+    org_slug: String(row.org_slug),
+    org_name: String(row.org_name),
+    telegram_user_id: Number(row.telegram_user_id),
+    telegram_username: row.telegram_username ?? null,
+    expires_at: String(row.expires_at),
+    used_at: row.used_at ?? null,
+  }
+}
+
 export async function completeTelegramPair(
   token: string,
   participantId: string,

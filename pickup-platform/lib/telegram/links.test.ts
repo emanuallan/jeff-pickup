@@ -71,4 +71,28 @@ describe('telegram link intents', () => {
       /different Telegram account/,
     )
   })
+
+  it('loads the latest open pair token for a telegram user', async () => {
+    rpc.mockResolvedValue({
+      data: {
+        token: 'pair-tok',
+        org_id: 'org-1',
+        org_slug: 'jeff',
+        org_name: 'Jeff',
+        telegram_user_id: 99,
+        telegram_username: 'alex',
+        expires_at: '2026-08-04T20:00:00.000Z',
+        used_at: null,
+      },
+      error: null,
+    })
+
+    const { getLatestOpenPairTokenForUser } = await import('@/lib/telegram/links')
+    const row = await getLatestOpenPairTokenForUser(99)
+    expect(row?.token).toBe('pair-tok')
+    expect(row?.org_slug).toBe('jeff')
+    expect(rpc).toHaveBeenCalledWith('get_open_telegram_pair_token_for_user', {
+      p_telegram_user_id: '99',
+    })
+  })
 })

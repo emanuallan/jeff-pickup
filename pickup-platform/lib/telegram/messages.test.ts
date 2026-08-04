@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  formatContactPairedMessage,
   formatCountMessage,
   formatDmBlockedPairHint,
   formatGroupLinkedMessage,
@@ -94,8 +95,8 @@ describe('telegram messages', () => {
     expect(formatPaidSessionMessage('https://example.com')).toContain('https://example.com')
     const pair = formatNeedPairMessage('https://pair.example')
     expect(pair).toContain('https://pair.example')
+    expect(pair).toContain('Share phone number')
     expect(pair).toContain('Open in Browser')
-    expect(pair).not.toContain('OPEN THIS LINK IN YOUR PHONE BROWSER')
   })
 
   it('formats DM-blocked pair hint with opaque intent start link', () => {
@@ -106,16 +107,18 @@ describe('telegram messages', () => {
     const hint = formatDmBlockedPairHint(url)
     expect(hint).toContain(url)
     expect(hint).toContain("can't message you")
-    expect(hint).toContain("I'll send your pairing link right away")
+    expect(hint).toContain('pairing options')
     expect(hint).not.toContain('p_')
     expect(formatDmBlockedPairHint(null)).toContain('send /link again')
   })
 
-  it('formats link-intent start message with pair URL', () => {
+  it('formats link-intent start and contact-paired messages', () => {
     const msg = formatLinkIntentStartMessage('https://pair.example')
-    expect(msg).toContain("You're all set to pair")
+    expect(msg).toContain("You're ready to pair")
+    expect(msg).toContain('Share phone number')
     expect(msg).toContain('https://pair.example')
     expect(msg).toContain('/in')
+    expect(formatContactPairedMessage('Alex', 'Jeff')).toContain('linked as Alex')
   })
 
   it('formats MVP announcement', () => {
