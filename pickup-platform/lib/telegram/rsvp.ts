@@ -6,6 +6,7 @@ import {
 import { MAX_EVENT_DURATION_MIN } from '@/lib/event-duration'
 import { isPaidSession } from '@/lib/session-payment'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { createPublicClient } from '@/lib/supabase/public'
 import {
   createPairToken,
   getParticipantIdForTelegramUser,
@@ -33,28 +34,51 @@ type ParticipantRow = {
   display_name: string
 }
 
+/** Match lib/events.ts so PostgREST embeds resolve the same way as the public site. */
 const LOCATION_SELECT =
   '*, locations(label, address, lat, lon, maps_url, is_online, meeting_url), schedules!events_schedule_id_fkey(title, duration_min)'
 
 export async function getNextUpcomingEventForOrg(
   orgId: string,
 ): Promise<EventWithLocation | null> {
-  const admin = createAdminClient()
+  // Use the cookie-less anon client (same as the public site). The service-role
+  // embed select was returning empty/errors here and surfacing as "no sessions".
+  const supabase = createPublicClient()
   const now = new Date()
   const lookbackIso = new Date(
     now.getTime() - MAX_EVENT_DURATION_MIN * 60_000,
   ).toISOString()
 
-  const { data, error } = await admin
-    .from('events')
-    .select(LOCATION_SELECT)
-    .eq('org_id', orgId)
-    .neq('status', 'cancelled')
-    .gte('starts_at', lookbackIso)
-    .order('starts_at', { ascending: true })
-    .limit(20)
+  const runQuery = (select: string) =>
+    supabase
+      .from('events')
+      .select(select)
+      .eq('org_id', orgId)
+      .neq('status', 'cancelled')
+      .gte('starts_at', lookbackIso)
+      .order('starts_at', { ascending: true })
+      .limit(20)
 
-  if (error || !data?.length) return null
+  let { data, error } = await runQuery(LOCATION_SELECT)
+
+  // Fallback without embeds if the relationship hint fails in this environment.
+  if (error) {
+    console.error('telegram upcoming events embed query failed', error.message, {
+      orgId,
+    })
+    ;({ data, error } = await runQuery(
+      'id, short_id, org_id, schedule_id, location_id, starts_at, timezone, duration_min, capacity, min_players, status, announcement, additional_information, price_cents, team_count, title',
+    ))
+  }
+
+  if (error) {
+    console.error('telegram getNextUpcomingEventForOrg failed', error.message, {
+      orgId,
+    })
+    return null
+  }
+
+  if (!data?.length) return null
 
   for (const row of data) {
     const event = mapEventRow(row as Record<string, unknown>)
