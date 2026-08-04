@@ -49,8 +49,11 @@ export async function getNextUpcomingEventForOrg(
     now.getTime() - MAX_EVENT_DURATION_MIN * 60_000,
   ).toISOString()
 
-  const runQuery = (select: string) =>
-    supabase
+  async function fetchRows(select: string): Promise<{
+    data: Record<string, unknown>[] | null
+    error: { message: string } | null
+  }> {
+    const result = await supabase
       .from('events')
       .select(select)
       .eq('org_id', orgId)
@@ -59,14 +62,20 @@ export async function getNextUpcomingEventForOrg(
       .order('starts_at', { ascending: true })
       .limit(20)
 
-  let { data, error } = await runQuery(LOCATION_SELECT)
+    return {
+      data: (result.data as Record<string, unknown>[] | null) ?? null,
+      error: result.error ? { message: result.error.message } : null,
+    }
+  }
+
+  let { data, error } = await fetchRows(LOCATION_SELECT)
 
   // Fallback without embeds if the relationship hint fails in this environment.
   if (error) {
     console.error('telegram upcoming events embed query failed', error.message, {
       orgId,
     })
-    ;({ data, error } = await runQuery(
+    ;({ data, error } = await fetchRows(
       'id, short_id, org_id, schedule_id, location_id, starts_at, timezone, duration_min, capacity, min_players, status, announcement, additional_information, price_cents, team_count, title',
     ))
   }
@@ -81,7 +90,7 @@ export async function getNextUpcomingEventForOrg(
   if (!data?.length) return null
 
   for (const row of data) {
-    const event = mapEventRow(row as Record<string, unknown>)
+    const event = mapEventRow(row)
     if (!isEventEnded(event, now)) {
       return event
     }
