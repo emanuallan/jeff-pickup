@@ -1,11 +1,38 @@
+import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { getPublicOrgBySlug } from '@/lib/public-data'
+import { buildOrgMetadata } from '@/lib/og-metadata'
+import { ROBOTS_PRIVATE } from '@/lib/seo'
 import { loadPairPageState } from './actions'
 import { TelegramPairForm } from './pair-form'
 
 type Props = {
   params: Promise<{ slug: string }>
   searchParams: Promise<{ token?: string }>
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { slug } = await params
+  const org = await getPublicOrgBySlug(slug)
+
+  if (!org || org.status !== 'active') {
+    return { robots: ROBOTS_PRIVATE }
+  }
+
+  const meta = buildOrgMetadata({
+    slug,
+    path: '/telegram/pair',
+    imagePath: '/telegram/pair/og-image',
+    title: `You're almost there · ${org.name}`,
+    description: `Link your Telegram account to ${org.name} on Organizr.`,
+    siteName: org.name,
+    imageAlt: `You're almost there — link Telegram to ${org.name}`,
+  })
+
+  return {
+    ...meta,
+    robots: ROBOTS_PRIVATE,
+  }
 }
 
 export default async function TelegramPairPage({ params, searchParams }: Props) {

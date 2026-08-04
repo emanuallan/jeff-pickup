@@ -503,6 +503,131 @@ export async function renderOrgOgImage(props: Omit<OrgOgCardProps, 'organizrLogo
   )
 }
 
+export type TelegramPairOgCardProps = {
+  orgName: string
+  accent: string
+  logoUrl?: string | null
+  organizrLogoSrc: string
+}
+
+/** Pairing deep-link preview — group logo + “You're almost there!” + Organizr. */
+export function TelegramPairOgCard({
+  orgName,
+  accent,
+  logoUrl,
+  organizrLogoSrc,
+}: TelegramPairOgCardProps) {
+  const accentFg = accentOnDark(accent)
+
+  return (
+    <div
+      style={{
+        width: '100%',
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        position: 'relative',
+        overflow: 'hidden',
+        backgroundColor: '#09090b',
+        color: '#fafafa',
+        padding: '52px 60px',
+      }}
+    >
+      <div
+        style={{
+          position: 'absolute',
+          top: '-80px',
+          right: '-40px',
+          width: '520px',
+          height: '520px',
+          borderRadius: '9999px',
+          background: `radial-gradient(circle, ${hexToRgba(accent, 0.34)} 0%, transparent 68%)`,
+        }}
+      />
+      <div
+        style={{
+          position: 'absolute',
+          bottom: '-120px',
+          left: '-80px',
+          width: '440px',
+          height: '440px',
+          borderRadius: '9999px',
+          background: `radial-gradient(circle, ${hexToRgba(accent, 0.14)} 0%, transparent 70%)`,
+        }}
+      />
+      <DotGrid opacity={0.22} />
+
+      <div
+        style={{
+          display: 'flex',
+          ...font(600),
+          fontSize: '22px',
+          letterSpacing: '0.08em',
+          textTransform: 'uppercase',
+          color: accentFg,
+          zIndex: 1,
+        }}
+      >
+        Telegram pairing
+      </div>
+
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: '28px',
+          zIndex: 1,
+          maxWidth: '980px',
+        }}
+      >
+        <SharePanelLogo orgName={orgName} logoUrl={logoUrl} panelText={accentFg} />
+        <div
+          style={{
+            display: 'flex',
+            ...font(700),
+            fontSize: '64px',
+            lineHeight: 1.05,
+            letterSpacing: '-0.04em',
+            textAlign: 'center',
+            color: '#fafafa',
+          }}
+        >
+          You&apos;re almost there!
+        </div>
+        <div
+          style={{
+            display: 'flex',
+            ...font(400),
+            fontSize: '28px',
+            lineHeight: 1.35,
+            color: '#a1a1aa',
+            textAlign: 'center',
+          }}
+        >
+          {`Link your Telegram to ${orgName}`}
+        </div>
+      </div>
+
+      <div style={{ display: 'flex', zIndex: 1 }}>
+        <SharePoweredByPill logoSrc={organizrLogoSrc} />
+      </div>
+    </div>
+  )
+}
+
+export async function renderTelegramPairOgImage(
+  props: Omit<TelegramPairOgCardProps, 'organizrLogoSrc'>,
+) {
+  const [fonts, organizrLogoSrc] = await Promise.all([getOgFonts(), getOrganizrLogoDataUrl()])
+  return new ImageResponse(
+    <TelegramPairOgCard {...props} organizrLogoSrc={organizrLogoSrc} />,
+    { ...ogImageSize, fonts, headers: ogImageResponseHeaders },
+  )
+}
+
 export const shareImageSize = { width: 1080, height: 1080 }
 
 export type OrgShareCardProps = {
