@@ -1,7 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { GET } from './route'
 import { materializeEvents } from '@/lib/materializer'
-import { materializeSessionFeedbackNotifications, finalizePendingSessionMvpVotes } from '@/lib/session-feedback-materializer'
+import {
+  materializeSessionFeedbackNotifications,
+  finalizePendingSessionMvpVotes,
+} from '@/lib/session-feedback-materializer'
+import { announcePendingTelegramMvps } from '@/lib/telegram/announce'
 
 vi.mock('@/lib/materializer', () => ({
   materializeEvents: vi.fn(),
@@ -12,11 +16,16 @@ vi.mock('@/lib/session-feedback-materializer', () => ({
   finalizePendingSessionMvpVotes: vi.fn(),
 }))
 
+vi.mock('@/lib/telegram/announce', () => ({
+  announcePendingTelegramMvps: vi.fn(),
+}))
+
 const materializeEventsMock = vi.mocked(materializeEvents)
 const materializeSessionFeedbackNotificationsMock = vi.mocked(
   materializeSessionFeedbackNotifications,
 )
 const finalizePendingSessionMvpVotesMock = vi.mocked(finalizePendingSessionMvpVotes)
+const announcePendingTelegramMvpsMock = vi.mocked(announcePendingTelegramMvps)
 
 describe('GET /api/cron/materialize', () => {
   beforeEach(() => {
@@ -24,8 +33,10 @@ describe('GET /api/cron/materialize', () => {
     materializeEventsMock.mockReset()
     materializeSessionFeedbackNotificationsMock.mockReset()
     finalizePendingSessionMvpVotesMock.mockReset()
+    announcePendingTelegramMvpsMock.mockReset()
     materializeSessionFeedbackNotificationsMock.mockResolvedValue(0)
     finalizePendingSessionMvpVotesMock.mockResolvedValue(0)
+    announcePendingTelegramMvpsMock.mockResolvedValue(0)
   })
 
   afterEach(() => {
@@ -61,10 +72,12 @@ describe('GET /api/cron/materialize', () => {
       count: 12,
       feedbackCount: 0,
       mvpFinalizedCount: 0,
+      telegramMvpAnnounced: 0,
     })
     expect(materializeEventsMock).toHaveBeenCalledOnce()
     expect(materializeSessionFeedbackNotificationsMock).toHaveBeenCalledOnce()
     expect(finalizePendingSessionMvpVotesMock).toHaveBeenCalledOnce()
+    expect(announcePendingTelegramMvpsMock).toHaveBeenCalledOnce()
   })
 
   it('returns 500 when materialization fails', async () => {

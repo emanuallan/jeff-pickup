@@ -20,6 +20,8 @@ import { isStripeConfigured } from '@/lib/stripe'
 import { ConsolePage, ConsoleHeader, ConsoleSection } from '../../_components/console-ui'
 import { PaymentsStripePanel } from '../payments/payments-stripe-panel'
 import { SponsorshipDisconnectButton } from '../sponsorship/sponsorship-disconnect-button'
+import { TelegramSection } from '../telegram-section'
+import { getTelegramConsoleState } from '../../telegram-actions'
 
 type Props = {
   params: Promise<{ orgSlug: string }>
@@ -64,9 +66,11 @@ export default async function OrgSettingsPage({ params }: Props) {
       ? await getGroupRulesAgreementSummary(org.id, rules.version)
       : null
 
-  const [stripeAccount, sponsorships] = isOwner
-    ? await Promise.all([getOrgStripeAccount(org.id), getSponsorshipsForOrg(org.id)])
-    : [null, []]
+  const [stripeAccount, sponsorships, telegramState] = await Promise.all([
+    isOwner ? getOrgStripeAccount(org.id) : Promise.resolve(null),
+    isOwner ? getSponsorshipsForOrg(org.id) : Promise.resolve([]),
+    getTelegramConsoleState(orgSlug),
+  ])
   const stripeReady = Boolean(stripeAccount?.charges_enabled)
   const payoutsEnabled = Boolean(stripeAccount?.payouts_enabled)
   const hasStripeAccount = Boolean(stripeAccount)
@@ -108,6 +112,17 @@ export default async function OrgSettingsPage({ params }: Props) {
             rules={rules}
             summary={agreementSummary}
           />
+        </ConsoleSection>
+
+        <ConsoleSection
+          title="Telegram"
+          description="Link a Telegram group so players can /in /out /maybe and see session announcements."
+        >
+          {telegramState ? (
+            <TelegramSection orgSlug={orgSlug} initial={telegramState} />
+          ) : (
+            <p className="text-sm text-zinc-500">Unable to load Telegram settings.</p>
+          )}
         </ConsoleSection>
 
         <ConsoleSection

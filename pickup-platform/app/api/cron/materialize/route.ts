@@ -3,6 +3,7 @@ import {
   finalizePendingSessionMvpVotes,
   materializeSessionFeedbackNotifications,
 } from '@/lib/session-feedback-materializer'
+import { announcePendingTelegramMvps } from '@/lib/telegram/announce'
 
 /**
  * Vercel Cron hits this daily to materialize events for all orgs.
@@ -22,7 +23,14 @@ export async function GET(request: Request) {
     const count = await materializeEvents()
     const feedbackCount = await materializeSessionFeedbackNotifications()
     const mvpFinalizedCount = await finalizePendingSessionMvpVotes()
-    return Response.json({ ok: true, count, feedbackCount, mvpFinalizedCount })
+    const telegramMvpAnnounced = await announcePendingTelegramMvps()
+    return Response.json({
+      ok: true,
+      count,
+      feedbackCount,
+      mvpFinalizedCount,
+      telegramMvpAnnounced,
+    })
   } catch (e) {
     const message = e instanceof Error ? e.message : 'Materialization failed'
     return Response.json({ error: message }, { status: 500 })
