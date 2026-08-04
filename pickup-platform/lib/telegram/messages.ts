@@ -56,6 +56,9 @@ export function formatRsvpReply(opts: {
 export function formatNeedPairMessage(pairUrl: string): string {
   return [
     'Link your Organizr account first.',
+    '',
+    'RETURNING PLAYERS: OPEN THIS LINK IN YOUR PHONE BROWSER (PRESS AND HOLD THE LINK → OPEN IN BROWSER / SAFARI / CHROME). DO NOT USE TELEGRAM\'S IN-APP BROWSER IF YOU WANT YOUR SAVED PROFILE PREFILLED FROM YOUR COOKIE.',
+    '',
     'Open this private link (expires in 30 minutes):',
     pairUrl,
   ].join('\n')

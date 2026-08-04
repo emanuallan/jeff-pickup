@@ -76,7 +76,10 @@ describe('telegram messages', () => {
 
   it('formats paid and pair prompts', () => {
     expect(formatPaidSessionMessage('https://example.com')).toContain('https://example.com')
-    expect(formatNeedPairMessage('https://pair.example')).toContain('https://pair.example')
+    const pair = formatNeedPairMessage('https://pair.example')
+    expect(pair).toContain('https://pair.example')
+    expect(pair).toContain('OPEN THIS LINK IN YOUR PHONE BROWSER')
+    expect(pair).toContain('DO NOT USE TELEGRAM')
   })
 
   it('formats MVP announcement', () => {

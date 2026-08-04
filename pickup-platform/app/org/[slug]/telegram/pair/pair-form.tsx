@@ -25,6 +25,7 @@ export function TelegramPairForm({
   const [error, setError] = useState<string | null>(null)
   const [doneName, setDoneName] = useState<string | null>(null)
   const [pending, startTransition] = useTransition()
+  const [showPhoneForm, setShowPhoneForm] = useState(!sessionDisplayName)
 
   if (doneName) {
     return (
@@ -75,6 +76,12 @@ export function TelegramPairForm({
           Connect your Telegram account to your {orgName} profile so you can RSVP with
           /in /out /maybe.
         </p>
+        {!sessionDisplayName ? (
+          <p className="mt-3 text-xs leading-relaxed text-amber-200/90">
+            Returning player? Open this page in Safari or Chrome (press and hold the
+            Telegram link → Open in browser) so your saved profile can be detected.
+          </p>
+        ) : null}
       </div>
 
       {error ? (
@@ -83,7 +90,7 @@ export function TelegramPairForm({
         </p>
       ) : null}
 
-      {sessionDisplayName ? (
+      {sessionDisplayName && !showPhoneForm ? (
         <div className="space-y-3 rounded-2xl border border-white/10 bg-zinc-900/60 p-4">
           <p className="text-sm text-zinc-300">
             Continue as <span className="font-medium text-zinc-100">{sessionDisplayName}</span>?
@@ -96,46 +103,66 @@ export function TelegramPairForm({
           >
             {pending ? 'Linking…' : 'Yes, link this account'}
           </button>
-          <p className="text-xs text-zinc-500">Not you? Enter your phone below.</p>
+          <button
+            type="button"
+            disabled={pending}
+            onClick={() => setShowPhoneForm(true)}
+            className="w-full text-center text-xs text-zinc-500 underline-offset-2 hover:text-zinc-300 hover:underline"
+          >
+            Not you? Use a different phone
+          </button>
         </div>
       ) : null}
 
-      <form action={handlePhoneSubmit} className="space-y-3 rounded-2xl border border-white/10 bg-zinc-900/40 p-4">
-        <p className="text-sm font-medium text-zinc-200">
-          {sessionDisplayName ? 'Use a different phone' : 'Enter your details'}
-        </p>
-        <div className="grid gap-3 sm:grid-cols-2">
-          <label className="block text-xs text-zinc-500">
-            First name
-            <input
-              name="firstName"
-              required
-              className="mt-1 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2.5 text-sm text-zinc-100 outline-none"
-            />
-          </label>
-          <label className="block text-xs text-zinc-500">
-            Last name
-            <input
-              name="lastName"
-              required
-              className="mt-1 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2.5 text-sm text-zinc-100 outline-none"
-            />
-          </label>
-        </div>
-        <label className="block text-xs text-zinc-500">
-          Phone
-          <div className="mt-1">
-            <PhoneInput className="mt-0 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2.5 text-sm text-zinc-100 outline-none" />
-          </div>
-        </label>
-        <button
-          type="submit"
-          disabled={pending}
-          className="w-full rounded-xl border border-white/10 bg-zinc-800 px-4 py-2.5 text-sm font-medium text-zinc-100 hover:bg-zinc-700 disabled:opacity-60"
+      {showPhoneForm ? (
+        <form
+          action={handlePhoneSubmit}
+          className="space-y-3 rounded-2xl border border-white/10 bg-zinc-900/40 p-4"
         >
-          {pending ? 'Linking…' : 'Link Telegram'}
-        </button>
-      </form>
+          <p className="text-sm font-medium text-zinc-200">Enter your details</p>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label className="block text-xs text-zinc-500">
+              First name
+              <input
+                name="firstName"
+                required
+                className="mt-1 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2.5 text-sm text-zinc-100 outline-none"
+              />
+            </label>
+            <label className="block text-xs text-zinc-500">
+              Last name
+              <input
+                name="lastName"
+                required
+                className="mt-1 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2.5 text-sm text-zinc-100 outline-none"
+              />
+            </label>
+          </div>
+          <label className="block text-xs text-zinc-500">
+            Phone
+            <div className="mt-1">
+              <PhoneInput className="mt-0 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2.5 text-sm text-zinc-100 outline-none" />
+            </div>
+          </label>
+          <button
+            type="submit"
+            disabled={pending}
+            className="w-full rounded-xl border border-white/10 bg-zinc-800 px-4 py-2.5 text-sm font-medium text-zinc-100 hover:bg-zinc-700 disabled:opacity-60"
+          >
+            {pending ? 'Linking…' : 'Link Telegram'}
+          </button>
+          {sessionDisplayName ? (
+            <button
+              type="button"
+              disabled={pending}
+              onClick={() => setShowPhoneForm(false)}
+              className="w-full text-center text-xs text-zinc-500 underline-offset-2 hover:text-zinc-300 hover:underline"
+            >
+              Back to {sessionDisplayName}
+            </button>
+          ) : null}
+        </form>
+      ) : null}
     </div>
   )
 }
