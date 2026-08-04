@@ -132,6 +132,28 @@ describe('telegram messages', () => {
     expect(msg).toContain('• Pat')
   })
 
+  it('formats roster grouped by team when teamCount is set', () => {
+    const msg = formatRosterMessage({
+      event: { ...event, team_count: 2 },
+      headcount: 4,
+      teamCount: 2,
+      roster: [
+        { display_name: 'Alex', guest_count: 0, arrival_status: 'confirmed', team: 1 },
+        { display_name: 'Sam', guest_count: 1, arrival_status: 'confirmed', team: 1 },
+        { display_name: 'Jordan', guest_count: 0, arrival_status: 'confirmed', team: 2 },
+        { display_name: 'Pat', guest_count: 0, arrival_status: 'maybe', team: null },
+      ],
+      waitlist: [],
+    })
+    expect(msg).toContain('Team 1 (3):')
+    expect(msg).toContain('• Alex')
+    expect(msg).toContain('Sam (+1)')
+    expect(msg).toContain('Team 2 (1):')
+    expect(msg).toContain('• Jordan')
+    expect(msg).toContain('Unassigned (1):')
+    expect(msg).toContain('Pat')
+  })
+
   it('builds public URLs', () => {
     expect(publicEventUrl('jeff', 'abc')).toContain('cal=abc')
     expect(telegramPairUrl('jeff', 'tok')).toContain('/telegram/pair?token=tok')

@@ -3,6 +3,12 @@ import { buildEventShareText } from '@/lib/public-share-text'
 import { orgPublicEventHref } from '@/lib/org-public-nav'
 import { orgBaseUrl } from '@/lib/site-url'
 import { arrivalStatusEmoji, arrivalStatusLabel } from '@/lib/arrival-status'
+import {
+  sessionTeamLabel,
+  splitRosterByTeam,
+  teamHeadcount,
+  type SessionTeamOrUnassigned,
+} from '@/lib/session-team'
 
 export function publicEventUrl(orgSlug: string, shortId: string): string {
   return `${orgBaseUrl(orgSlug)}${orgPublicEventHref(shortId)}`
@@ -124,16 +130,26 @@ export function formatRosterLine(entry: {
   return `• ${emoji}${entry.display_name}${guests}`
 }
 
+type RosterMessageEntry = {
+  display_name: string
+  guest_count: number
+  arrival_status: string
+  team?: SessionTeamOrUnassigned
+}
+
 export function formatRosterMessage(opts: {
   event: EventWithLocation
-  roster: Array<{ display_name: string; guest_count: number; arrival_status: string }>
-  waitlist: Array<{ display_name: string; guest_count: number; arrival_status: string }>
+  roster: RosterMessageEntry[]
+  waitlist: RosterMessageEntry[]
   headcount: number
+  /** When set, group confirmed roster by team (session teams are on). */
+  teamCount?: number | null
 }): string {
-  const { event, roster, waitlist, headcount } = opts
+  const { event, roster, waitlist, headcount, teamCount } = opts
   const session = eventDisplayName(event.title)
   const when = formatEventWhenLine(event)
   const isOnline = Boolean(event.location_is_online)
+  const showTeams = teamCount != null && teamCount >= 2
 
   const lines = [
     `${session} · ${when}`,
@@ -146,8 +162,34 @@ export function formatRosterMessage(opts: {
     return lines.join('\n')
   }
 
-  for (const entry of roster) {
-    lines.push(formatRosterLine(entry, isOnline))
+  if (showTeams && roster.length > 0) {
+    const { teams, unassigned } = splitRosterByTeam(roster, teamCount)
+    for (let i = 0; i < teams.length; i++) {
+      const members = teams[i]!
+      const n = teamHeadcount(members)
+      lines.push(`${sessionTeamLabel(i + 1)} (${n}):`)
+      if (members.length === 0) {
+        lines.push('• —')
+      } else {
+        for (const entry of members) {
+          lines.push(formatRosterLine(entry, isOnline))
+        }
+      }
+      lines.push('')
+    }
+    if (unassigned.length > 0) {
+      lines.push(`${sessionTeamLabel(null)} (${teamHeadcount(unassigned)}):`)
+      for (const entry of unassigned) {
+        lines.push(formatRosterLine(entry, isOnline))
+      }
+      lines.push('')
+    }
+    // Drop trailing blank from the last team block before waitlist.
+    if (lines[lines.length - 1] === '') lines.pop()
+  } else {
+    for (const entry of roster) {
+      lines.push(formatRosterLine(entry, isOnline))
+    }
   }
 
   if (waitlist.length > 0) {

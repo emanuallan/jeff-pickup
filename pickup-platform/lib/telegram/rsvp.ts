@@ -457,6 +457,7 @@ export async function handleTelegramRoster(chatId: number): Promise<TelegramRsvp
   )
   const { orgFeatures } = await import('@/lib/org-features')
   const { rosterHeadcount } = await import('@/lib/signups')
+  const { sessionTeamsEnabled } = await import('@/lib/session-team')
   const { formatRosterMessage } = await import('@/lib/telegram/messages')
 
   const org = await getPublicOrgBySlug(loaded.linked.org_slug)
@@ -473,6 +474,10 @@ export async function handleTelegramRoster(chatId: number): Promise<TelegramRsvp
     waitlistEnabled ? getPublicWaitlistLive(loaded.event.id) : Promise.resolve([]),
   ])
 
+  const features = orgFeatures(org)
+  const teamsOn =
+    sessionTeamsEnabled(features.team_selection, loaded.event.team_count)
+
   return {
     ok: true,
     message: formatRosterMessage({
@@ -480,6 +485,7 @@ export async function handleTelegramRoster(chatId: number): Promise<TelegramRsvp
       roster,
       waitlist,
       headcount: rosterHeadcount(roster),
+      teamCount: teamsOn ? loaded.event.team_count : null,
     }),
   }
 }
