@@ -9,6 +9,34 @@ import { rootBaseUrl } from '@/lib/site-url'
 export const runtime = 'nodejs'
 
 /**
+ * Public origin Telegram should POST to.
+ * Apex organizr.co 308s to www — Telegram does not follow webhook redirects,
+ * so we must register the www host (or an explicit override).
+ */
+function telegramWebhookBaseUrl(request: Request): string {
+  const explicit = process.env.TELEGRAM_WEBHOOK_BASE_URL?.trim().replace(/\/$/, '')
+  if (explicit) return explicit
+
+  try {
+    const origin = new URL(request.url).origin
+    if (origin === 'https://organizr.co') {
+      return 'https://www.organizr.co'
+    }
+    if (!origin.includes('localhost')) {
+      return origin
+    }
+  } catch {
+    // fall through
+  }
+
+  const root = rootBaseUrl()
+  if (root === 'https://organizr.co') {
+    return 'https://www.organizr.co'
+  }
+  return root
+}
+
+/**
  * One-time / ops helper: register the Telegram webhook + bot commands.
  * Auth: Bearer CRON_SECRET (same as materialize cron).
  *
@@ -32,7 +60,7 @@ export async function POST(request: Request) {
     return Response.json({ error: 'Bot unavailable' }, { status: 503 })
   }
 
-  const webhookUrl = `${rootBaseUrl()}/api/telegram/webhook`
+  const webhookUrl = `${telegramWebhookBaseUrl(request)}/api/telegram/webhook`
   const webhookSecret = getTelegramWebhookSecret()
 
   await bot.api.setWebhook(webhookUrl, {
