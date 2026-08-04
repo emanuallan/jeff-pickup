@@ -855,3 +855,36 @@ textarea {
 		color: var(--organizr-brand, #6366f1);
 	}
 }
+
+/* Join CTA — left-to-right shimmer (Count me in / Join dock). */
+@keyframes join-cta-shimmer {
+	0% {
+		transform: translateX(-120%);
+	}
+	100% {
+		transform: translateX(120%);
+	}
+}
+
+.join-cta-glow-active::after {
+	content: '';
+	pointer-events: none;
+	position: absolute;
+	inset: 0;
+	background: linear-gradient(
+		90deg,
+		transparent 0%,
+		rgba(255, 255, 255, 0.28) 45%,
+		rgba(255, 255, 255, 0.4) 50%,
+		rgba(255, 255, 255, 0.28) 55%,
+		transparent 100%
+	);
+	animation: join-cta-shimmer 3s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.join-cta-glow-active::after {
+		animation: none;
+		display: none;
+	}
+}

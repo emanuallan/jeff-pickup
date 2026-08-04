@@ -347,14 +347,16 @@ function PaidJoinSection({
         <button
           type="button"
           onClick={() => setSheetOpen(true)}
-          className="w-full rounded-xl px-4 py-3.5 text-sm font-semibold shadow-lg transition-opacity hover:opacity-90"
+          className="join-cta-glow-active relative w-full overflow-hidden rounded-xl px-4 py-3.5 text-sm font-semibold shadow-lg transition-opacity hover:opacity-90"
           style={{
             backgroundColor: accent,
             color: accentText,
             boxShadow: `0 10px 30px -12px ${accent}`,
           }}
         >
-          {joiningWaitlist ? `Join waitlist · ${totalLabel}` : `Join · ${totalLabel}`}
+          <span className="relative z-10">
+            {joiningWaitlist ? `Join waitlist · ${totalLabel}` : `Join · ${totalLabel}`}
+          </span>
         </button>
         {/* TODO: restore "Not you?" to clear soft session from welcome-back paid join
         <div className="text-right">
@@ -441,14 +443,14 @@ function PaidJoinSection({
 
           <button
             type="submit"
-            className="w-full rounded-xl px-4 py-3.5 text-sm font-semibold shadow-lg transition-opacity hover:opacity-90"
+            className="join-cta-glow-active relative w-full overflow-hidden rounded-xl px-4 py-3.5 text-sm font-semibold shadow-lg transition-opacity hover:opacity-90"
             style={{
               backgroundColor: accent,
               color: accentText,
               boxShadow: `0 10px 30px -12px ${accent}`,
             }}
           >
-            {`Continue · ${totalLabel}`}
+            <span className="relative z-10">{`Continue · ${totalLabel}`}</span>
           </button>
         </form>
 
@@ -770,14 +772,16 @@ export function JoinSection(props: Props) {
 
             await runQuickJoin()
           }}
-          className="w-full rounded-xl px-4 py-3.5 text-sm font-semibold shadow-lg transition-opacity hover:opacity-90 disabled:opacity-50"
+          className="join-cta-glow-active relative w-full overflow-hidden rounded-xl px-4 py-3.5 text-sm font-semibold shadow-lg transition-opacity hover:opacity-90 disabled:opacity-50"
           style={{
             backgroundColor: props.accent,
             color: props.accentText,
             boxShadow: `0 10px 30px -12px ${props.accent}`,
           }}
         >
-          {loading ? 'Counting you in…' : joiningWaitlist ? 'Join waitlist' : `Count me in ${arrowRight}`}
+          <span className="relative z-10">
+            {loading ? 'Counting you in…' : joiningWaitlist ? 'Join waitlist' : `Count me in ${arrowRight}`}
+          </span>
         </button>
         {/* TODO: restore "Not you?" to clear soft session from welcome-back quick join
         <div className="text-right">
@@ -918,14 +922,16 @@ export function JoinSection(props: Props) {
       <button
         type="submit"
         disabled={loading}
-        className="w-full rounded-xl px-4 py-3.5 text-sm font-semibold shadow-lg transition-opacity hover:opacity-90 disabled:opacity-50"
+        className="join-cta-glow-active relative w-full overflow-hidden rounded-xl px-4 py-3.5 text-sm font-semibold shadow-lg transition-opacity hover:opacity-90 disabled:opacity-50"
         style={{
           backgroundColor: props.accent,
           color: props.accentText,
           boxShadow: `0 10px 30px -12px ${props.accent}`,
         }}
       >
-        {loading ? 'Counting you in…' : joiningWaitlist ? 'Join waitlist' : `Count me in ${arrowRight}`}
+        <span className="relative z-10">
+          {loading ? 'Counting you in…' : joiningWaitlist ? 'Join waitlist' : `Count me in ${arrowRight}`}
+        </span>
       </button>
       </form>
 

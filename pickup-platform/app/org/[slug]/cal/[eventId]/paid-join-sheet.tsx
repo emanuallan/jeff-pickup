@@ -266,21 +266,23 @@ export function PaidJoinSheet({
           type="button"
           disabled={busy}
           onClick={() => void startCheckout()}
-          className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3.5 text-sm font-semibold shadow-lg transition-opacity hover:opacity-90 disabled:opacity-60"
+          className="join-cta-glow-active relative mt-4 flex w-full items-center justify-center gap-2 overflow-hidden rounded-xl px-4 py-3.5 text-sm font-semibold shadow-lg transition-opacity hover:opacity-90 disabled:opacity-60"
           style={{
             backgroundColor: accent,
             color: accentText,
             boxShadow: `0 10px 30px -12px ${accent}`,
           }}
         >
-          {busy ? (
-            'Redirecting…'
-          ) : (
-            <>
-              <LockIcon className="size-4" />
-              {`Checkout · ${totalLabel}`}
-            </>
-          )}
+          <span className="relative z-10 inline-flex items-center justify-center gap-2">
+            {busy ? (
+              'Redirecting…'
+            ) : (
+              <>
+                <LockIcon className="size-4" />
+                {`Checkout · ${totalLabel}`}
+              </>
+            )}
+          </span>
         </button>
 
         <p className="mt-3 text-center text-[11px] leading-relaxed text-zinc-600">
