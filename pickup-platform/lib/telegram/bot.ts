@@ -22,23 +22,17 @@ async function replyLinkResult(
     reply: (text: string) => Promise<unknown>
     api: { sendMessage: (chatId: number, text: string) => Promise<unknown> }
   },
-  result: { ok: boolean; message: string },
+  result: { ok: boolean; message: string; pairViaDm?: boolean },
   preferDm: boolean,
 ) {
-  if (!preferDm || !ctx.from) {
-    await ctx.reply(result.message)
-    return
-  }
-
-  const hasUrl = /https?:\/\/\S+/.test(result.message)
-  if (result.ok && hasUrl) {
+  if (preferDm && result.pairViaDm && ctx.from) {
     try {
       await ctx.api.sendMessage(ctx.from.id, result.message)
       await ctx.reply('I sent you a private pairing link — check your DM with me.')
       return
     } catch {
       await ctx.reply(
-        `${result.message}\n\n(Tip: open a DM with me first so I can message you privately.)`,
+        "I couldn't message you privately. Open a DM with me first, then send /link here.",
       )
       return
     }
@@ -138,7 +132,7 @@ export function createTelegramBot(): Bot | null {
       action: 'in',
       guestCountArg: ctx.match,
     })
-    await ctx.reply(result.message)
+    await replyLinkResult(ctx, result, true)
   })
 
   bot.command('out', async (ctx) => {
@@ -153,7 +147,7 @@ export function createTelegramBot(): Bot | null {
       telegramUsername: usernameOf(ctx),
       action: 'out',
     })
-    await ctx.reply(result.message)
+    await replyLinkResult(ctx, result, true)
   })
 
   bot.command('maybe', async (ctx) => {
@@ -168,7 +162,7 @@ export function createTelegramBot(): Bot | null {
       telegramUsername: usernameOf(ctx),
       action: 'maybe',
     })
-    await ctx.reply(result.message)
+    await replyLinkResult(ctx, result, true)
   })
 
   bot.command('next', async (ctx) => {

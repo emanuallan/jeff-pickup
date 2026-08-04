@@ -23,9 +23,12 @@ import {
 
 export type TelegramRsvpAction = 'in' | 'out' | 'maybe'
 
-export type TelegramRsvpResult =
-  | { ok: true; message: string }
-  | { ok: false; message: string }
+export type TelegramRsvpResult = {
+  ok: boolean
+  message: string
+  /** Pairing link — deliver via DM; never post the URL in the group. */
+  pairViaDm?: boolean
+}
 
 type ParticipantRow = {
   id: string
@@ -214,7 +217,7 @@ export async function handleTelegramRsvp(opts: {
       telegramUserId: opts.telegramUserId,
       telegramUsername: opts.telegramUsername,
     })
-    return { ok: false, message }
+    return { ok: true, message, pairViaDm: true }
   }
 
   const participant = await getParticipant(participantId)
@@ -534,7 +537,7 @@ export async function handleTelegramLinkPrompt(opts: {
       telegramUserId: opts.telegramUserId,
       telegramUsername: opts.telegramUsername,
     })
-    return { ok: true, message }
+    return { ok: true, message, pairViaDm: true }
   } catch (e) {
     const err = e instanceof Error ? e.message : 'Could not create pairing link'
     console.error('telegram pair token failed', err)
