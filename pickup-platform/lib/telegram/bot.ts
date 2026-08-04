@@ -3,6 +3,7 @@ import { getTelegramBotToken, getTelegramBotUsername } from '@/lib/telegram/conf
 import { formatGroupLinkedMessage } from '@/lib/telegram/messages'
 import { redeemConnectCode } from '@/lib/telegram/links'
 import {
+  handleTelegramArrivalStatus,
   handleTelegramCount,
   handleTelegramLinkPrompt,
   handleTelegramNext,
@@ -54,7 +55,7 @@ export function createTelegramBot(): Bot | null {
         'Organizr bot — RSVP from Telegram.',
         '',
         'Organizers: generate a connect code in the console, add me to your group, then /connect CODE.',
-        'Players: in your linked group, /link then /in /out /maybe.',
+        'Players: in your linked group, /link then /in /out /maybe /omw /late.',
         'Anyone: /next · /roster · /count.',
         botName ? `Bot: @${botName}` : '',
       ]
@@ -165,6 +166,36 @@ export function createTelegramBot(): Bot | null {
     await replyLinkResult(ctx, result, true)
   })
 
+  bot.command('omw', async (ctx) => {
+    if (!ctx.from || !ctx.chat) return
+    if (ctx.chat.type === 'private') {
+      await ctx.reply('Use /omw inside your linked group chat.')
+      return
+    }
+    const result = await handleTelegramArrivalStatus({
+      chatId: ctx.chat.id,
+      telegramUserId: ctx.from.id,
+      telegramUsername: usernameOf(ctx),
+      action: 'omw',
+    })
+    await replyLinkResult(ctx, result, true)
+  })
+
+  bot.command('late', async (ctx) => {
+    if (!ctx.from || !ctx.chat) return
+    if (ctx.chat.type === 'private') {
+      await ctx.reply('Use /late inside your linked group chat.')
+      return
+    }
+    const result = await handleTelegramArrivalStatus({
+      chatId: ctx.chat.id,
+      telegramUserId: ctx.from.id,
+      telegramUsername: usernameOf(ctx),
+      action: 'late',
+    })
+    await replyLinkResult(ctx, result, true)
+  })
+
   bot.command('next', async (ctx) => {
     if (!ctx.chat || ctx.chat.type === 'private') {
       await ctx.reply('Use /next inside your linked group chat.')
@@ -218,6 +249,8 @@ export const TELEGRAM_BOT_COMMANDS = [
   { command: 'in', description: 'RSVP in (/in 2 brings 2 guests)' },
   { command: 'out', description: 'Leave the next session' },
   { command: 'maybe', description: 'Mark maybe for the next session' },
+  { command: 'omw', description: 'Mark on my way' },
+  { command: 'late', description: 'Mark running late' },
   { command: 'next', description: 'Show the next session' },
   { command: 'roster', description: 'List signups for the next session' },
   { command: 'count', description: 'Headcount for the next session' },

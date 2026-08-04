@@ -23,11 +23,18 @@ import {
 
 export type TelegramRsvpAction = 'in' | 'out' | 'maybe'
 
+export type TelegramArrivalAction = 'omw' | 'late'
+
 export type TelegramRsvpResult = {
   ok: boolean
   message: string
   /** Pairing link — deliver via DM; never post the URL in the group. */
   pairViaDm?: boolean
+}
+
+const ARRIVAL_STATUS_BY_ACTION: Record<TelegramArrivalAction, 'on_my_way' | 'running_late'> = {
+  omw: 'on_my_way',
+  late: 'running_late',
 }
 
 type ParticipantRow = {
@@ -386,6 +393,78 @@ export async function handleTelegramRsvp(opts: {
         guestCount: applyGuestCount ? guestCount : null,
       }),
     }
+  } catch (e) {
+    const message = e instanceof Error ? e.message : 'Something went wrong'
+    return { ok: false, message }
+  }
+}
+
+export async function handleTelegramArrivalStatus(opts: {
+  chatId: number
+  telegramUserId: number
+  telegramUsername: string | null
+  action: TelegramArrivalAction
+}): Promise<TelegramRsvpResult> {
+  const linked = await getTelegramOrgByChatId(opts.chatId)
+  if (!linked) {
+    return {
+      ok: false,
+      message:
+        'This chat is not linked to an Organizr group. An organizer can connect it from the console.',
+    }
+  }
+
+  const participantId = await getParticipantIdForTelegramUser(
+    linked.org_id,
+    opts.telegramUserId,
+  )
+
+  if (!participantId) {
+    const message = await ensurePairPrompt({
+      orgId: linked.org_id,
+      orgSlug: linked.org_slug,
+      telegramUserId: opts.telegramUserId,
+      telegramUsername: opts.telegramUsername,
+    })
+    return { ok: true, message, pairViaDm: true }
+  }
+
+  const participant = await getParticipant(participantId)
+  if (!participant) {
+    return {
+      ok: false,
+      message:
+        'Could not load your linked profile. Try /link again — if it says you are already linked, ask an organizer to check Telegram bot setup.',
+    }
+  }
+
+  const event = await getNextUpcomingEventForOrg(linked.org_id)
+  if (!event) {
+    return { ok: false, message: 'No upcoming sessions for this group.' }
+  }
+
+  const existing = await getSignupForParticipant(event.id, participantId)
+  if (!existing) {
+    return {
+      ok: false,
+      message: "You're not signed up for the next session. Use /in first.",
+    }
+  }
+
+  try {
+    const admin = createAdminClient()
+    const sessionToken = await mintSessionToken(linked.org_id, participant.phone)
+    const { error } = await admin.rpc('update_arrival_status', {
+      p_signup_id: existing.id,
+      p_session_token: sessionToken,
+      p_status: ARRIVAL_STATUS_BY_ACTION[opts.action],
+    })
+
+    if (error) {
+      return { ok: false, message: error.message }
+    }
+
+    return { ok: true, message: 'Status updated' }
   } catch (e) {
     const message = e instanceof Error ? e.message : 'Something went wrong'
     return { ok: false, message }
