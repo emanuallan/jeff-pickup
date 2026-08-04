@@ -107,7 +107,11 @@ async function getParticipant(participantId: string): Promise<ParticipantRow | n
     .eq('id', participantId)
     .maybeSingle()
 
-  if (error || !data) return null
+  if (error) {
+    console.error('telegram getParticipant failed', error.message, { participantId })
+    return null
+  }
+  if (!data) return null
   return data as ParticipantRow
 }
 
@@ -142,7 +146,14 @@ async function getSignupForParticipant(
     .eq('participant_id', participantId)
     .maybeSingle()
 
-  if (error || !data) return null
+  if (error) {
+    console.error('telegram getSignupForParticipant failed', error.message, {
+      eventId,
+      participantId,
+    })
+    return null
+  }
+  if (!data) return null
   return {
     id: String(data.id),
     arrival_status: String(data.arrival_status),
@@ -205,7 +216,11 @@ export async function handleTelegramRsvp(opts: {
 
   const participant = await getParticipant(participantId)
   if (!participant) {
-    return { ok: false, message: 'Your linked account was not found. Try /link again.' }
+    return {
+      ok: false,
+      message:
+        'Could not load your linked profile. Try /link again — if it says you are already linked, ask an organizer to check Telegram bot setup.',
+    }
   }
 
   const event = await getNextUpcomingEventForOrg(linked.org_id)
