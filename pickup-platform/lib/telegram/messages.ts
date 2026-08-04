@@ -66,15 +66,25 @@ export function formatRsvpReply(opts: {
   return `${emoji} ${displayName}${guests}: ${label}${wait} — ${session} (${when})${head}`
 }
 
-export function formatNeedPairMessage(pairUrl: string): string {
+export function formatNeedPairMessage(_pairUrl?: string): string {
+  return formatPairPromptMessage()
+}
+
+/** Primary DM copy for pairing — no raw URL (avoids heavy link previews). */
+export function formatPairPromptMessage(): string {
   return [
+    "You're ready to pair.",
+    '',
     'Link your Organizr account to RSVP from Telegram.',
     '',
-    'Easiest: tap Share phone number below — Telegram confirms it\'s your number.',
+    "Easiest: tap Share phone number below — Telegram confirms it's your number.",
     '',
-    'Prefer the website? Open this link in Safari/Chrome (press and hold → Open in Browser). Expires in 30 minutes:',
-    pairUrl,
+    'After you finish, go back to your group and use /in.',
   ].join('\n')
+}
+
+export function formatWebsitePairHint(): string {
+  return 'Or pair on the website (preferably press and hold to open in your browser):'
 }
 
 /** Deep link that opens a private chat with the bot and runs /start <payload>. */
@@ -99,14 +109,8 @@ export function formatDmBlockedPairHint(botStartUrl: string | null): string {
   ].join('\n')
 }
 
-export function formatLinkIntentStartMessage(pairUrl: string): string {
-  return [
-    'You\'re ready to pair.',
-    '',
-    formatNeedPairMessage(pairUrl),
-    '',
-    'After you finish, go back to your group and use /in.',
-  ].join('\n')
+export function formatLinkIntentStartMessage(_pairUrl?: string): string {
+  return formatPairPromptMessage()
 }
 
 export function formatContactPairedMessage(displayName: string, orgName: string): string {

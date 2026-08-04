@@ -10,6 +10,7 @@ import {
   formatPaidSessionMessage,
   formatRosterMessage,
   formatRsvpReply,
+  formatWebsitePairHint,
   publicEventUrl,
   telegramBotStartUrl,
   telegramPairUrl,
@@ -94,9 +95,11 @@ describe('telegram messages', () => {
   it('formats paid and pair prompts', () => {
     expect(formatPaidSessionMessage('https://example.com')).toContain('https://example.com')
     const pair = formatNeedPairMessage('https://pair.example')
-    expect(pair).toContain('https://pair.example')
+    expect(pair).toContain("You're ready to pair")
     expect(pair).toContain('Share phone number')
-    expect(pair).toContain('Open in Browser')
+    expect(pair).toContain('/in')
+    expect(pair).not.toContain('https://pair.example')
+    expect(formatWebsitePairHint()).toContain('press and hold')
   })
 
   it('formats DM-blocked pair hint with opaque intent start link', () => {
@@ -116,7 +119,7 @@ describe('telegram messages', () => {
     const msg = formatLinkIntentStartMessage('https://pair.example')
     expect(msg).toContain("You're ready to pair")
     expect(msg).toContain('Share phone number')
-    expect(msg).toContain('https://pair.example')
+    expect(msg).not.toContain('https://pair.example')
     expect(msg).toContain('/in')
     expect(formatContactPairedMessage('Alex', 'Jeff')).toContain('linked as Alex')
   })

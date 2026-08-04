@@ -44,6 +44,25 @@ export function resolveTelegramPairNames(opts: {
   return { firstName, lastName }
 }
 
+async function findParticipantIdByOrgPhone(
+  orgId: string,
+  phone: string,
+): Promise<string | null> {
+  const admin = createAdminClient()
+  const { data, error } = await admin
+    .from('participants')
+    .select('id')
+    .eq('org_id', orgId)
+    .eq('phone', phone)
+    .maybeSingle()
+
+  if (error) {
+    console.error('telegram findParticipantIdByOrgPhone failed', error.message)
+    return null
+  }
+  return data?.id ? String(data.id) : null
+}
+
 export async function handleTelegramContactPair(opts: {
   telegramUserId: number
   telegramUsername: string | null
@@ -88,6 +107,23 @@ export async function handleTelegramContactPair(opts: {
     return {
       ok: true,
       message: `You're already linked for ${pending.org_name}. Go back to your group and send /in.`,
+    }
+  }
+
+  // Existing soft participant: link only — do not overwrite name/email/display.
+  const existingId = await findParticipantIdByOrgPhone(pending.org_id, phone)
+  if (existingId) {
+    try {
+      const paired = await completeTelegramPair(pending.token, existingId)
+      return {
+        ok: true,
+        message: formatContactPairedMessage(paired.display_name, pending.org_name),
+      }
+    } catch (e) {
+      return {
+        ok: false,
+        message: e instanceof Error ? e.message : 'Could not complete pairing',
+      }
     }
   }
 

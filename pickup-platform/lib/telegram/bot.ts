@@ -4,6 +4,7 @@ import { handleTelegramContactPair } from '@/lib/telegram/contact-pair'
 import {
   formatDmBlockedPairHint,
   formatGroupLinkedMessage,
+  formatWebsitePairHint,
   telegramBotStartUrl,
 } from '@/lib/telegram/messages'
 import { createLinkIntent, redeemConnectCode } from '@/lib/telegram/links'
@@ -33,6 +34,8 @@ function contactShareKeyboard(): Keyboard {
   return new Keyboard().requestContact('Share phone number').resized().oneTime()
 }
 
+const noLinkPreview = { link_preview_options: { is_disabled: true } }
+
 async function sendPairDm(
   api: {
     sendMessage: (chatId: number, text: string, other?: object) => Promise<unknown>
@@ -42,13 +45,17 @@ async function sendPairDm(
   pairUrl?: string | null,
 ) {
   if (pairUrl) {
-    await api.sendMessage(userId, message, { reply_markup: contactShareKeyboard() })
-    await api.sendMessage(userId, 'Or pair on the website:', {
+    await api.sendMessage(userId, message, {
+      reply_markup: contactShareKeyboard(),
+      ...noLinkPreview,
+    })
+    await api.sendMessage(userId, formatWebsitePairHint(), {
       reply_markup: pairUrlKeyboard(pairUrl),
+      ...noLinkPreview,
     })
     return
   }
-  await api.sendMessage(userId, message)
+  await api.sendMessage(userId, message, noLinkPreview)
 }
 
 async function replyPairPrompt(
@@ -58,8 +65,14 @@ async function replyPairPrompt(
   message: string,
   pairUrl: string,
 ) {
-  await ctx.reply(message, { reply_markup: contactShareKeyboard() })
-  await ctx.reply('Or pair on the website:', { reply_markup: pairUrlKeyboard(pairUrl) })
+  await ctx.reply(message, {
+    reply_markup: contactShareKeyboard(),
+    ...noLinkPreview,
+  })
+  await ctx.reply(formatWebsitePairHint(), {
+    reply_markup: pairUrlKeyboard(pairUrl),
+    ...noLinkPreview,
+  })
 }
 
 async function replyLinkResult(
