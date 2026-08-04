@@ -108,9 +108,7 @@ begin
     raise exception 'Organization not found';
   end if;
 
-  v_token := encode(gen_random_bytes(24), 'base64');
-  -- URL-safe-ish: replace +/ and strip =
-  v_token := rtrim(replace(replace(v_token, '+', '-'), '/', '_'), '=');
+  v_token := replace(gen_random_uuid()::text || gen_random_uuid()::text, '-', '');
   v_expires_at := now() + make_interval(mins => greatest(1, least(coalesce(p_ttl_minutes, 30), 120)));
 
   insert into public.telegram_pair_tokens (
