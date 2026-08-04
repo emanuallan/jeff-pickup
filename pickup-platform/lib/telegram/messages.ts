@@ -84,7 +84,7 @@ export function formatPairPromptMessage(): string {
 }
 
 export function formatWebsitePairHint(): string {
-  return 'Or pair on the website (preferably press and hold to open in your browser):'
+  return 'Or pair on the website (if using this option, preferably press and hold to open in your browser):'
 }
 
 /** Deep link that opens a private chat with the bot and runs /start <payload>. */
