@@ -6,6 +6,11 @@ import {
 import { MAX_EVENT_DURATION_MIN } from '@/lib/event-duration'
 import { parseOptionalGuestCountArg, resolveGuestCount } from '@/lib/guest-signups'
 import { isPaidSession } from '@/lib/session-payment'
+import {
+  isSessionTeamNumber,
+  sessionTeamLabel,
+  sessionTeamsEnabled,
+} from '@/lib/session-team'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createPublicClient } from '@/lib/supabase/public'
 import {
@@ -481,6 +486,159 @@ export async function handleTelegramArrivalStatus(opts: {
     }
 
     return { ok: true, message: 'Status updated' }
+  } catch (e) {
+    const message = e instanceof Error ? e.message : 'Something went wrong'
+    return { ok: false, message }
+  }
+}
+
+/** Parse `/join 2` → team number, or null if missing/invalid format. */
+export function parseTelegramTeamArg(raw: string | undefined | null): number | null {
+  const token = raw?.trim().split(/\s+/)[0]
+  if (!token) return null
+  if (!/^\d+$/.test(token)) return null
+  return Number.parseInt(token, 10)
+}
+
+export async function handleTelegramJoinTeam(opts: {
+  chatId: number
+  telegramUserId: number
+  telegramUsername: string | null
+  teamArg?: string | null
+}): Promise<TelegramRsvpResult> {
+  const linked = await getTelegramOrgByChatId(opts.chatId)
+  if (!linked) {
+    return {
+      ok: false,
+      message:
+        'This chat is not linked to an Organizr group. An organizer can connect it from the console.',
+    }
+  }
+
+  const participantId = await getParticipantIdForTelegramUser(
+    linked.org_id,
+    opts.telegramUserId,
+  )
+
+  if (!participantId) {
+    return pairPromptResult(
+      await ensurePairPrompt({
+        orgId: linked.org_id,
+        orgSlug: linked.org_slug,
+        telegramUserId: opts.telegramUserId,
+        telegramUsername: opts.telegramUsername,
+      }),
+    )
+  }
+
+  const participant = await getParticipant(participantId)
+  if (!participant) {
+    return {
+      ok: false,
+      message:
+        'Could not load your linked profile. Try /link again — if it says you are already linked, ask an organizer to check Telegram bot setup.',
+    }
+  }
+
+  const event = await getNextUpcomingEventForOrg(linked.org_id)
+  if (!event) {
+    return { ok: false, message: 'No upcoming sessions for this group.' }
+  }
+
+  const { getPublicOrgBySlug } = await import('@/lib/public-data')
+  const { orgFeatures } = await import('@/lib/org-features')
+  const org = await getPublicOrgBySlug(linked.org_slug)
+  const features = org ? orgFeatures(org) : null
+  const teamsOn =
+    features != null && sessionTeamsEnabled(features.team_selection, event.team_count)
+
+  if (!teamsOn || event.team_count == null) {
+    return {
+      ok: false,
+      message: 'Teams are not enabled for this session. Use /in to sign up.',
+    }
+  }
+
+  const team = parseTelegramTeamArg(opts.teamArg)
+  if (team == null || !isSessionTeamNumber(team, event.team_count)) {
+    return {
+      ok: false,
+      message: `Usage: /join 1 … /join ${event.team_count} (pick a team for this session).`,
+    }
+  }
+
+  const eventUrl = publicEventUrl(linked.org_slug, event.short_id)
+  const admin = createAdminClient()
+  const displayName = participant.display_name || participant.first_name || 'Player'
+
+  try {
+    let existing = await getSignupForParticipant(event.id, participantId)
+
+    if (!existing) {
+      if (isPaidSession(event.price_cents)) {
+        return { ok: false, message: formatPaidSessionMessage(eventUrl) }
+      }
+
+      const { data, error } = await admin.rpc('join_event', {
+        p_event_id: event.id,
+        p_phone: participant.phone,
+        p_first_name: participant.first_name,
+        p_last_name: participant.last_name,
+        p_display_name: participant.display_name,
+        p_guest_count: 0,
+      })
+
+      if (error) {
+        if (error.message === 'GROUP_RULES_REQUIRED') {
+          return {
+            ok: false,
+            message: `Accept the group rules on the web first, then try again:\n${eventUrl}`,
+          }
+        }
+        if (error.message.toLowerCase().includes('requires payment')) {
+          return { ok: false, message: formatPaidSessionMessage(eventUrl) }
+        }
+        return { ok: false, message: error.message }
+      }
+
+      const result = data as { signup_id?: string; list_status?: string } | null
+      if (result?.list_status === 'waitlisted' || !result?.signup_id) {
+        return {
+          ok: false,
+          message:
+            "You're on the waitlist — team pick is only for confirmed signups.",
+        }
+      }
+
+      existing = {
+        id: String(result.signup_id),
+        arrival_status: 'confirmed',
+        list_status: 'confirmed',
+      }
+    }
+
+    if (existing.list_status === 'waitlisted') {
+      return {
+        ok: false,
+        message: "You're on the waitlist — team pick is only for confirmed signups.",
+      }
+    }
+
+    const sessionToken = await mintSessionToken(linked.org_id, participant.phone)
+    const { error: teamError } = await admin.rpc('update_signup_team', {
+      p_signup_id: existing.id,
+      p_session_token: sessionToken,
+      p_team: String(team),
+    })
+
+    if (teamError) {
+      return { ok: false, message: teamError.message }
+    }
+
+    return {
+      ok: true,
+      message: `${displayName} → ${sessionTeamLabel(team)}`,
+    }
   } catch (e) {
     const message = e instanceof Error ? e.message : 'Something went wrong'
     return { ok: false, message }

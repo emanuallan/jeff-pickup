@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest'
-import { getNextUpcomingEventForOrg } from '@/lib/telegram/rsvp'
+import { getNextUpcomingEventForOrg, parseTelegramTeamArg } from '@/lib/telegram/rsvp'
 
 const fromMock = vi.fn()
 
@@ -10,6 +10,16 @@ vi.mock('@/lib/supabase/public', () => ({
 vi.mock('@/lib/supabase/admin', () => ({
   createAdminClient: () => ({ from: vi.fn(), rpc: vi.fn() }),
 }))
+
+describe('parseTelegramTeamArg', () => {
+  it('parses team numbers and rejects junk', () => {
+    expect(parseTelegramTeamArg(undefined)).toBeNull()
+    expect(parseTelegramTeamArg('')).toBeNull()
+    expect(parseTelegramTeamArg('abc')).toBeNull()
+    expect(parseTelegramTeamArg('2')).toBe(2)
+    expect(parseTelegramTeamArg(' 3 extra')).toBe(3)
+  })
+})
 
 describe('getNextUpcomingEventForOrg', () => {
   beforeEach(() => {
