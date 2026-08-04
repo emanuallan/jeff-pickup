@@ -276,15 +276,17 @@ export function ReturningSignupModal({
                 type="button"
                 disabled={loading !== null}
                 onClick={() => void handleJoin('confirmed')}
-                className="flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3.5 text-sm font-semibold shadow-lg transition-opacity hover:opacity-90 disabled:opacity-50"
+                className="join-cta-glow-active relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-xl px-4 py-3.5 text-sm font-semibold shadow-lg transition-opacity hover:opacity-90 disabled:opacity-50"
                 style={{
                   backgroundColor: accent,
                   color: accentText,
                   boxShadow: `0 10px 30px -12px ${accent}`,
                 }}
               >
-                <CheckIcon />
-                {loading === 'confirmed' ? 'Counting you in…' : "I'm in"}
+                <span className="relative z-10 inline-flex items-center justify-center gap-2">
+                  <CheckIcon />
+                  {loading === 'confirmed' ? 'Counting you in…' : "I'm in"}
+                </span>
               </button>
             </div>
 
