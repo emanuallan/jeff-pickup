@@ -136,6 +136,7 @@ export function createTelegramBot(): Bot | null {
       telegramUserId: ctx.from.id,
       telegramUsername: usernameOf(ctx),
       action: 'in',
+      guestCountArg: ctx.match,
     })
     await ctx.reply(result.message)
   })
@@ -220,7 +221,7 @@ export const TELEGRAM_BOT_COMMANDS = [
   { command: 'start', description: 'Help and intro' },
   { command: 'connect', description: 'Link this group with a console code' },
   { command: 'link', description: 'Pair your Telegram with Organizr' },
-  { command: 'in', description: 'RSVP in for the next session' },
+  { command: 'in', description: 'RSVP in (/in 2 brings 2 guests)' },
   { command: 'out', description: 'Leave the next session' },
   { command: 'maybe', description: 'Mark maybe for the next session' },
   { command: 'next', description: 'Show the next session' },

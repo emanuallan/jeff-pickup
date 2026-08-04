@@ -10,6 +10,17 @@ export function resolveGuestCount(count: number, guestsEnabled: boolean): number
   return guestsEnabled ? clampGuestCount(count) : 0
 }
 
+/**
+ * Parse an optional guest count from a bot command arg (e.g. `/in 2`).
+ * Returns null when omitted or not a non-negative integer.
+ */
+export function parseOptionalGuestCountArg(raw: string | undefined | null): number | null {
+  const token = raw?.trim().split(/\s+/)[0]
+  if (!token) return null
+  if (!/^\d+$/.test(token)) return null
+  return Number.parseInt(token, 10)
+}
+
 export function guestCountOptions(): number[] {
   return Array.from({ length: MAX_GUEST_COUNT + 1 }, (_, index) => index)
 }

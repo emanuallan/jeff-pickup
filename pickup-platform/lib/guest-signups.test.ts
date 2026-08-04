@@ -4,6 +4,7 @@ import {
   guestCountOptionLabel,
   guestCountOptions,
   MAX_GUEST_COUNT,
+  parseOptionalGuestCountArg,
   resolveGuestCount,
 } from './guest-signups'
 
@@ -32,6 +33,23 @@ describe('guest-signups', () => {
 
     it('returns 0 when guests disabled', () => {
       expect(resolveGuestCount(5, false)).toBe(0)
+    })
+  })
+
+  describe('parseOptionalGuestCountArg', () => {
+    it('returns null when omitted or invalid', () => {
+      expect(parseOptionalGuestCountArg(undefined)).toBeNull()
+      expect(parseOptionalGuestCountArg('')).toBeNull()
+      expect(parseOptionalGuestCountArg('  ')).toBeNull()
+      expect(parseOptionalGuestCountArg('abc')).toBeNull()
+      expect(parseOptionalGuestCountArg('-1')).toBeNull()
+      expect(parseOptionalGuestCountArg('1.5')).toBeNull()
+    })
+
+    it('parses the first integer token', () => {
+      expect(parseOptionalGuestCountArg('0')).toBe(0)
+      expect(parseOptionalGuestCountArg('2')).toBe(2)
+      expect(parseOptionalGuestCountArg(' 3 guests')).toBe(3)
     })
   })
 

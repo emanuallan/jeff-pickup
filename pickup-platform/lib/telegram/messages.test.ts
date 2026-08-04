@@ -66,6 +66,17 @@ describe('telegram messages', () => {
     expect(msg).toContain('8 confirmed')
   })
 
+  it('formats RSVP in reply with guests', () => {
+    const msg = formatRsvpReply({
+      displayName: 'Alex',
+      status: 'confirmed',
+      event,
+      headcount: 10,
+      guestCount: 2,
+    })
+    expect(msg).toContain('Alex (+2 guests)')
+  })
+
   it('formats out reply', () => {
     const msg = formatRsvpReply({
       displayName: 'Alex',

@@ -4,6 +4,7 @@ import {
   type EventWithLocation,
 } from '@/lib/events'
 import { MAX_EVENT_DURATION_MIN } from '@/lib/event-duration'
+import { parseOptionalGuestCountArg, resolveGuestCount } from '@/lib/guest-signups'
 import { isPaidSession } from '@/lib/session-payment'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createPublicClient } from '@/lib/supabase/public'
@@ -189,6 +190,8 @@ export async function handleTelegramRsvp(opts: {
   telegramUserId: number
   telegramUsername: string | null
   action: TelegramRsvpAction
+  /** Raw text after `/in` (e.g. `"2"`). Ignored unless action is `in`. */
+  guestCountArg?: string | null
 }): Promise<TelegramRsvpResult> {
   const linked = await getTelegramOrgByChatId(opts.chatId)
   if (!linked) {
@@ -240,6 +243,21 @@ export async function handleTelegramRsvp(opts: {
   const admin = createAdminClient()
   const displayName = participant.display_name || participant.first_name || 'Player'
 
+  let guestCount: number | null = null
+  let applyGuestCount = false
+  if (opts.action === 'in') {
+    const parsed = parseOptionalGuestCountArg(opts.guestCountArg)
+    if (parsed != null) {
+      const { getPublicOrgBySlug } = await import('@/lib/public-data')
+      const { orgFeatures } = await import('@/lib/org-features')
+      const org = await getPublicOrgBySlug(linked.org_slug)
+      const guestsEnabled = org ? orgFeatures(org).guest_signups : false
+      // When guests are disabled, ignore the number (treat as solo signup).
+      guestCount = resolveGuestCount(parsed, guestsEnabled)
+      applyGuestCount = guestsEnabled
+    }
+  }
+
   try {
     if (opts.action === 'out') {
       const existing = await getSignupForParticipant(event.id, participantId)
@@ -287,6 +305,17 @@ export async function handleTelegramRsvp(opts: {
         return { ok: false, message: error.message }
       }
 
+      if (applyGuestCount && guestCount != null) {
+        const { error: guestError } = await admin.rpc('update_guest_count', {
+          p_signup_id: existing.id,
+          p_session_token: sessionToken,
+          p_guest_count: guestCount,
+        })
+        if (guestError) {
+          return { ok: false, message: guestError.message }
+        }
+      }
+
       return {
         ok: true,
         message: formatRsvpReply({
@@ -296,6 +325,7 @@ export async function handleTelegramRsvp(opts: {
           headcount: await getConfirmedHeadcount(event.id),
           listStatus: existing.list_status,
           isOnline: event.location_is_online,
+          guestCount: applyGuestCount ? guestCount : null,
         }),
       }
     }
@@ -306,7 +336,7 @@ export async function handleTelegramRsvp(opts: {
       p_first_name: participant.first_name,
       p_last_name: participant.last_name,
       p_display_name: participant.display_name,
-      p_guest_count: 0,
+      p_guest_count: applyGuestCount && guestCount != null ? guestCount : 0,
     })
 
     if (error) {
@@ -350,6 +380,7 @@ export async function handleTelegramRsvp(opts: {
         headcount: await getConfirmedHeadcount(event.id),
         listStatus,
         isOnline: event.location_is_online,
+        guestCount: applyGuestCount ? guestCount : null,
       }),
     }
   } catch (e) {

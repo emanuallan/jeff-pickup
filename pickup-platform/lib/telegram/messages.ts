@@ -34,8 +34,9 @@ export function formatRsvpReply(opts: {
   headcount: number | null
   listStatus?: string | null
   isOnline?: boolean
+  guestCount?: number | null
 }): string {
-  const { displayName, status, event, headcount, listStatus, isOnline } = opts
+  const { displayName, status, event, headcount, listStatus, isOnline, guestCount } = opts
   const session = eventDisplayName(event.title)
   const when = formatEventWhenLine(event)
 
@@ -46,11 +47,17 @@ export function formatRsvpReply(opts: {
   const emoji = arrivalStatusEmoji(status, isOnline)
   const label = arrivalStatusLabel(status, isOnline)
   const waitlisted = listStatus === 'waitlisted'
+  const guests =
+    guestCount != null && guestCount > 0
+      ? guestCount === 1
+        ? ' (+1 guest)'
+        : ` (+${guestCount} guests)`
+      : ''
   const head =
     headcount != null ? ` · ${headcount} confirmed` : ''
   const wait = waitlisted ? ' (waitlisted)' : ''
 
-  return `${emoji} ${displayName}: ${label}${wait} — ${session} (${when})${head}`
+  return `${emoji} ${displayName}${guests}: ${label}${wait} — ${session} (${when})${head}`
 }
 
 export function formatNeedPairMessage(pairUrl: string): string {
@@ -97,7 +104,7 @@ export function formatMvpAnnouncement(opts: {
 export function formatGroupLinkedMessage(orgName: string, orgSlug: string): string {
   return [
     `Linked to ${orgName} (${orgSlug}).`,
-    'Players: send /link here to pair, then use /in /out /maybe.',
+    'Players: send /link here to pair, then use /in /out /maybe (/in 2 for guests).',
     'Anyone: /next · /roster · /count.',
   ].join('\n')
 }
