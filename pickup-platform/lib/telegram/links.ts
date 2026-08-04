@@ -2,6 +2,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import {
   CONNECT_CODE_TTL_MS,
   generateConnectCode,
+  LINK_INTENT_TTL_MS,
   PAIR_TOKEN_TTL_MS,
 } from '@/lib/telegram/tokens'
 
@@ -191,6 +192,76 @@ export async function createPairToken(opts: {
   }
 
   return { token: result.token, expiresAt: result.expires_at }
+}
+
+export async function createLinkIntent(opts: {
+  orgId: string
+  telegramUserId: number
+  telegramUsername: string | null
+  pairToken: string
+}): Promise<{ id: string; expiresAt: string }> {
+  const admin = createAdminClient()
+  const { data, error } = await admin.rpc('create_telegram_link_intent', {
+    p_org_id: opts.orgId,
+    p_telegram_user_id: asTelegramId(opts.telegramUserId),
+    p_telegram_username: opts.telegramUsername,
+    p_pair_token: opts.pairToken,
+    p_ttl_minutes: Math.round(LINK_INTENT_TTL_MS / 60_000),
+  })
+
+  if (error) throw new Error(error.message)
+
+  const result = data as { id?: string; expires_at?: string } | null
+  if (!result?.id || !result.expires_at) {
+    throw new Error('Failed to create link intent')
+  }
+
+  return { id: result.id, expiresAt: result.expires_at }
+}
+
+export type LinkIntentRedeem = {
+  org_id: string
+  org_slug: string
+  org_name: string
+  pair_token: string
+  telegram_user_id: number
+}
+
+export async function redeemLinkIntent(
+  intentId: string,
+  telegramUserId: number,
+): Promise<LinkIntentRedeem | null> {
+  const admin = createAdminClient()
+  const { data, error } = await admin.rpc('redeem_telegram_link_intent', {
+    p_intent_id: intentId,
+    p_telegram_user_id: asTelegramId(telegramUserId),
+  })
+
+  if (error) {
+    throw new Error(error.message)
+  }
+
+  if (!data) return null
+
+  const row = data as {
+    org_id?: string
+    org_slug?: string
+    org_name?: string
+    pair_token?: string
+    telegram_user_id?: number | string
+  }
+
+  if (!row.org_id || !row.org_slug || !row.org_name || !row.pair_token) {
+    return null
+  }
+
+  return {
+    org_id: String(row.org_id),
+    org_slug: String(row.org_slug),
+    org_name: String(row.org_name),
+    pair_token: String(row.pair_token),
+    telegram_user_id: Number(row.telegram_user_id),
+  }
 }
 
 export type PairTokenRow = {

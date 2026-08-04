@@ -20,3 +20,4 @@ export function generatePairToken(): string {
 
 export const CONNECT_CODE_TTL_MS = 30 * 60 * 1000 // 30 minutes
 export const PAIR_TOKEN_TTL_MS = 30 * 60 * 1000 // 30 minutes
+export const LINK_INTENT_TTL_MS = 30 * 60 * 1000 // 30 minutes

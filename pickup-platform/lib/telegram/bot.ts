@@ -1,11 +1,11 @@
-import { Bot, GrammyError } from 'grammy'
+import { Bot, GrammyError, InlineKeyboard } from 'grammy'
 import { getTelegramBotToken, getTelegramBotUsername } from '@/lib/telegram/config'
 import {
   formatDmBlockedPairHint,
   formatGroupLinkedMessage,
   telegramBotStartUrl,
 } from '@/lib/telegram/messages'
-import { redeemConnectCode } from '@/lib/telegram/links'
+import { createLinkIntent, redeemConnectCode } from '@/lib/telegram/links'
 import {
   handleTelegramArrivalStatus,
   handleTelegramCount,
@@ -14,6 +14,7 @@ import {
   handleTelegramNext,
   handleTelegramRoster,
   handleTelegramRsvp,
+  handleTelegramStartLinkIntent,
   handleTelegramStartPairPayload,
 } from '@/lib/telegram/rsvp'
 
@@ -23,28 +24,74 @@ function usernameOf(ctx: { from?: { username?: string } }): string | null {
   return ctx.from?.username ?? null
 }
 
+function pairUrlKeyboard(pairUrl: string): InlineKeyboard {
+  return new InlineKeyboard().url('Open pairing link', pairUrl)
+}
+
+async function sendPairDm(
+  api: { sendMessage: (chatId: number, text: string, other?: object) => Promise<unknown> },
+  userId: number,
+  message: string,
+  pairUrl?: string | null,
+) {
+  if (pairUrl) {
+    await api.sendMessage(userId, message, { reply_markup: pairUrlKeyboard(pairUrl) })
+    return
+  }
+  await api.sendMessage(userId, message)
+}
+
 async function replyLinkResult(
   ctx: {
-    from?: { id: number }
-    reply: (text: string) => Promise<unknown>
-    api: { sendMessage: (chatId: number, text: string) => Promise<unknown> }
+    from?: { id: number; username?: string }
+    reply: (text: string, other?: object) => Promise<unknown>
+    api: { sendMessage: (chatId: number, text: string, other?: object) => Promise<unknown> }
   },
-  result: { ok: boolean; message: string; pairViaDm?: boolean; pairToken?: string },
+  result: {
+    ok: boolean
+    message: string
+    pairViaDm?: boolean
+    pairToken?: string
+    pairUrl?: string
+    orgId?: string
+  },
   preferDm: boolean,
 ) {
   if (preferDm && result.pairViaDm && ctx.from) {
     try {
-      await ctx.api.sendMessage(ctx.from.id, result.message)
+      await sendPairDm(ctx.api, ctx.from.id, result.message, result.pairUrl)
       await ctx.reply('I sent you a private pairing link — check your DM with me.')
       return
     } catch {
       const botName = getTelegramBotUsername()
-      // Never put the pair token in the group — anyone who sees it could open the
-      // web pair URL and bind the requester's Telegram id to their own profile.
-      const startUrl = botName ? telegramBotStartUrl(botName, 'link') : null
+      let startUrl: string | null = botName ? telegramBotStartUrl(botName, 'link') : null
+
+      // Prefer an opaque intent id so /start can DM the pair URL without a second /link.
+      if (botName && result.orgId && result.pairToken) {
+        try {
+          const intent = await createLinkIntent({
+            orgId: result.orgId,
+            telegramUserId: ctx.from.id,
+            telegramUsername: usernameOf(ctx),
+            pairToken: result.pairToken,
+          })
+          startUrl = telegramBotStartUrl(botName, `i_${intent.id}`)
+        } catch (e) {
+          console.error(
+            'telegram createLinkIntent failed',
+            e instanceof Error ? e.message : e,
+          )
+        }
+      }
+
       await ctx.reply(formatDmBlockedPairHint(startUrl))
       return
     }
+  }
+
+  if (result.pairUrl && result.ok) {
+    await ctx.reply(result.message, { reply_markup: pairUrlKeyboard(result.pairUrl) })
+    return
   }
 
   await ctx.reply(result.message)
@@ -58,21 +105,39 @@ export function createTelegramBot(): Bot | null {
 
   bot.command('start', async (ctx) => {
     const payload = ctx.match?.trim()
-    if (payload === 'link') {
-      await ctx.reply(
-        'Thanks — I can message you now. Go back to your group and send /link (or /in) again.',
-      )
-      return
-    }
 
-    // Legacy/private deep links may still carry p_<token>; only deliver to the
-    // Telegram user the token was minted for.
     if (payload && ctx.from) {
-      const pairResult = await handleTelegramStartPairPayload(payload, ctx.from.id)
-      if (pairResult) {
-        await ctx.reply(pairResult.message)
+      const intentResult = await handleTelegramStartLinkIntent(payload, ctx.from.id)
+      if (intentResult) {
+        if (intentResult.ok && intentResult.pairUrl) {
+          await ctx.reply(intentResult.message, {
+            reply_markup: pairUrlKeyboard(intentResult.pairUrl),
+          })
+        } else {
+          await ctx.reply(intentResult.message)
+        }
         return
       }
+
+      const pairResult = await handleTelegramStartPairPayload(payload, ctx.from.id)
+      if (pairResult) {
+        if (pairResult.ok && pairResult.pairUrl) {
+          await ctx.reply(pairResult.message, {
+            reply_markup: pairUrlKeyboard(pairResult.pairUrl),
+          })
+        } else {
+          await ctx.reply(pairResult.message)
+        }
+        return
+      }
+    }
+
+    // Legacy tip without intent id — user still needs to /link once in the group.
+    if (payload === 'link') {
+      await ctx.reply(
+        'Thanks — I can message you now. Go back to your group and send /link (or /in) once more.',
+      )
+      return
     }
 
     const botName = getTelegramBotUsername()

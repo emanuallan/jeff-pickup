@@ -68,11 +68,11 @@ export function formatRsvpReply(opts: {
 
 export function formatNeedPairMessage(pairUrl: string): string {
   return [
-    'Link your Organizr account first.',
+    'Link your Organizr account to RSVP from Telegram.',
     '',
-    'RETURNING PLAYERS: OPEN THIS LINK IN YOUR PHONE BROWSER (PRESS AND HOLD THE LINK → OPEN IN BROWSER / SAFARI / CHROME). DO NOT USE TELEGRAM\'S IN-APP BROWSER IF YOU WANT YOUR SAVED PROFILE PREFILLED.',
+    'Returning players: open the link in Safari/Chrome (press and hold → Open in Browser) so your saved profile can prefill.',
     '',
-    'Open this private link (expires in 30 minutes):',
+    'Tap the button below, or open this link (expires in 30 minutes):',
     pairUrl,
   ].join('\n')
 }
@@ -87,16 +87,25 @@ export function telegramBotStartUrl(botUsername: string, startPayload: string): 
 export function formatDmBlockedPairHint(botStartUrl: string | null): string {
   if (botStartUrl) {
     return [
-      "I can't DM you until you open me once (Telegram rule).",
+      "I can't message you yet (Telegram needs you to open me once).",
       '',
-      '1. Tap this link and press Start:',
+      'Tap here and press Start — I\'ll send your pairing link right away:',
       botStartUrl,
-      '2. Come back here and send /link again — I\'ll DM your pairing link.',
     ].join('\n')
   }
   return [
-    "I can't DM you until you open me once (Telegram rule).",
+    "I can't message you yet (Telegram needs you to open me once).",
     'Open a chat with the bot, press Start, then send /link again in the group.',
+  ].join('\n')
+}
+
+export function formatLinkIntentStartMessage(pairUrl: string): string {
+  return [
+    'You\'re all set to pair.',
+    '',
+    formatNeedPairMessage(pairUrl),
+    '',
+    'After you finish, go back to your group and use /in.',
   ].join('\n')
 }
 

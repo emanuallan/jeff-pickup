@@ -3,6 +3,7 @@ import {
   formatCountMessage,
   formatDmBlockedPairHint,
   formatGroupLinkedMessage,
+  formatLinkIntentStartMessage,
   formatMvpAnnouncement,
   formatNeedPairMessage,
   formatPaidSessionMessage,
@@ -93,19 +94,28 @@ describe('telegram messages', () => {
     expect(formatPaidSessionMessage('https://example.com')).toContain('https://example.com')
     const pair = formatNeedPairMessage('https://pair.example')
     expect(pair).toContain('https://pair.example')
-    expect(pair).toContain('OPEN THIS LINK IN YOUR PHONE BROWSER')
-    expect(pair).toContain('DO NOT USE TELEGRAM')
+    expect(pair).toContain('Open in Browser')
+    expect(pair).not.toContain('OPEN THIS LINK IN YOUR PHONE BROWSER')
   })
 
-  it('formats DM-blocked pair hint with start deep link', () => {
-    const url = telegramBotStartUrl('OrganizrCaptainBot', 'link')
-    expect(url).toBe('https://t.me/OrganizrCaptainBot?start=link')
+  it('formats DM-blocked pair hint with opaque intent start link', () => {
+    const url = telegramBotStartUrl('OrganizrCaptainBot', 'i_A1B2C3D4')
+    expect(url).toBe('https://t.me/OrganizrCaptainBot?start=i_A1B2C3D4')
+    expect(url).not.toMatch(/p_/)
+    expect(url).not.toContain('secret')
     const hint = formatDmBlockedPairHint(url)
     expect(hint).toContain(url)
-    expect(hint).toContain("can't DM you")
-    expect(hint).toContain('send /link again')
+    expect(hint).toContain("can't message you")
+    expect(hint).toContain("I'll send your pairing link right away")
     expect(hint).not.toContain('p_')
     expect(formatDmBlockedPairHint(null)).toContain('send /link again')
+  })
+
+  it('formats link-intent start message with pair URL', () => {
+    const msg = formatLinkIntentStartMessage('https://pair.example')
+    expect(msg).toContain("You're all set to pair")
+    expect(msg).toContain('https://pair.example')
+    expect(msg).toContain('/in')
   })
 
   it('formats MVP announcement', () => {

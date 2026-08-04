@@ -35,8 +35,12 @@ export type TelegramRsvpResult = {
   message: string
   /** Pairing link — deliver via DM; never post the URL in the group. */
   pairViaDm?: boolean
-  /** Opaque pair token for t.me deep-link fallback when DM is blocked. */
+  /** Opaque pair token for link-intent fallback when DM is blocked. */
   pairToken?: string
+  orgId?: string
+  orgSlug?: string
+  /** Absolute web pair URL (for inline keyboard button). */
+  pairUrl?: string
 }
 
 const ARRIVAL_STATUS_BY_ACTION: Record<TelegramArrivalAction, 'on_my_way' | 'running_late'> = {
@@ -193,24 +197,37 @@ async function ensurePairPrompt(opts: {
   orgSlug: string
   telegramUserId: number
   telegramUsername: string | null
-}): Promise<{ message: string; token: string }> {
+}): Promise<{ message: string; token: string; pairUrl: string; orgId: string; orgSlug: string }> {
   const { token } = await createPairToken({
     orgId: opts.orgId,
     telegramUserId: opts.telegramUserId,
     telegramUsername: opts.telegramUsername,
   })
+  const pairUrl = telegramPairUrl(opts.orgSlug, token)
   return {
-    message: formatNeedPairMessage(telegramPairUrl(opts.orgSlug, token)),
+    message: formatNeedPairMessage(pairUrl),
     token,
+    pairUrl,
+    orgId: opts.orgId,
+    orgSlug: opts.orgSlug,
   }
 }
 
-function pairPromptResult(prompt: { message: string; token: string }): TelegramRsvpResult {
+function pairPromptResult(prompt: {
+  message: string
+  token: string
+  pairUrl: string
+  orgId: string
+  orgSlug: string
+}): TelegramRsvpResult {
   return {
     ok: true,
     message: prompt.message,
     pairViaDm: true,
     pairToken: prompt.token,
+    pairUrl: prompt.pairUrl,
+    orgId: prompt.orgId,
+    orgSlug: prompt.orgSlug,
   }
 }
 
@@ -799,6 +816,39 @@ export async function handleTelegramLinkPrompt(opts: {
   }
 }
 
+/** Handle /start i_<intentId> — redeem pending link intent and DM the pair URL. */
+export async function handleTelegramStartLinkIntent(
+  startPayload: string,
+  telegramUserId: number,
+): Promise<TelegramRsvpResult | null> {
+  const trimmed = startPayload.trim()
+  if (!trimmed.startsWith('i_') || trimmed.length <= 2) return null
+
+  const intentId = trimmed.slice(2)
+  const { redeemLinkIntent } = await import('@/lib/telegram/links')
+  const { formatLinkIntentStartMessage } = await import('@/lib/telegram/messages')
+
+  try {
+    const redeemed = await redeemLinkIntent(intentId, telegramUserId)
+    if (!redeemed) {
+      return {
+        ok: false,
+        message: 'That start link expired or was already used. Send /link in your group again.',
+      }
+    }
+
+    const pairUrl = telegramPairUrl(redeemed.org_slug, redeemed.pair_token)
+    return {
+      ok: true,
+      message: formatLinkIntentStartMessage(pairUrl),
+      pairUrl,
+    }
+  } catch (e) {
+    const message = e instanceof Error ? e.message : 'Could not load your pairing link'
+    return { ok: false, message }
+  }
+}
+
 /** Handle /start p_<pairToken> — only for the Telegram user the token was minted for. */
 export async function handleTelegramStartPairPayload(
   startPayload: string,
@@ -845,8 +895,10 @@ export async function handleTelegramStartPairPayload(
     }
   }
 
+  const pairUrl = telegramPairUrl(String(org.slug), token)
   return {
     ok: true,
-    message: formatNeedPairMessage(telegramPairUrl(String(org.slug), token)),
+    message: formatNeedPairMessage(pairUrl),
+    pairUrl,
   }
 }

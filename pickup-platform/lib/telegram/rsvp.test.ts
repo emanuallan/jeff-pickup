@@ -1,7 +1,12 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest'
-import { getNextUpcomingEventForOrg, parseTelegramTeamArg } from '@/lib/telegram/rsvp'
+import {
+  getNextUpcomingEventForOrg,
+  handleTelegramStartLinkIntent,
+  parseTelegramTeamArg,
+} from '@/lib/telegram/rsvp'
 
 const fromMock = vi.fn()
+const redeemLinkIntent = vi.fn()
 
 vi.mock('@/lib/supabase/public', () => ({
   createPublicClient: () => ({ from: fromMock }),
@@ -11,6 +16,14 @@ vi.mock('@/lib/supabase/admin', () => ({
   createAdminClient: () => ({ from: vi.fn(), rpc: vi.fn() }),
 }))
 
+vi.mock('@/lib/telegram/links', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/lib/telegram/links')>()
+  return {
+    ...actual,
+    redeemLinkIntent: (...args: unknown[]) => redeemLinkIntent(...args),
+  }
+})
+
 describe('parseTelegramTeamArg', () => {
   it('parses team numbers and rejects junk', () => {
     expect(parseTelegramTeamArg(undefined)).toBeNull()
@@ -18,6 +31,49 @@ describe('parseTelegramTeamArg', () => {
     expect(parseTelegramTeamArg('abc')).toBeNull()
     expect(parseTelegramTeamArg('2')).toBe(2)
     expect(parseTelegramTeamArg(' 3 extra')).toBe(3)
+  })
+})
+
+describe('handleTelegramStartLinkIntent', () => {
+  beforeEach(() => {
+    redeemLinkIntent.mockReset()
+  })
+
+  it('returns null for non-intent payloads', async () => {
+    await expect(handleTelegramStartLinkIntent('link', 1)).resolves.toBeNull()
+    await expect(handleTelegramStartLinkIntent('p_abc', 1)).resolves.toBeNull()
+  })
+
+  it('delivers the pairing URL after a successful redeem', async () => {
+    redeemLinkIntent.mockResolvedValue({
+      org_id: 'org-1',
+      org_slug: 'jeff',
+      org_name: 'Jeff',
+      pair_token: 'pair-secret',
+      telegram_user_id: 42,
+    })
+
+    const result = await handleTelegramStartLinkIntent('i_A1B2C3D4', 42)
+    expect(result?.ok).toBe(true)
+    expect(result?.pairUrl).toContain('/telegram/pair?token=pair-secret')
+    expect(result?.message).toContain("You're all set to pair")
+    expect(redeemLinkIntent).toHaveBeenCalledWith('A1B2C3D4', 42)
+  })
+
+  it('fails closed when the intent is missing', async () => {
+    redeemLinkIntent.mockResolvedValue(null)
+    const result = await handleTelegramStartLinkIntent('i_GONE', 42)
+    expect(result?.ok).toBe(false)
+    expect(result?.message).toMatch(/expired or was already used/i)
+  })
+
+  it('fails closed when redeem rejects wrong user / expiry', async () => {
+    redeemLinkIntent.mockRejectedValue(
+      new Error('That start link belongs to a different Telegram account'),
+    )
+    const result = await handleTelegramStartLinkIntent('i_A1B2C3D4', 99)
+    expect(result?.ok).toBe(false)
+    expect(result?.message).toMatch(/different Telegram account/)
   })
 })
 
