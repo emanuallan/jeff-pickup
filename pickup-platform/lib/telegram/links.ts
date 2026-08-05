@@ -144,6 +144,12 @@ export async function redeemConnectCode(opts: {
     throw new Error('Failed to link group')
   }
 
+  // Avoid blasting historical MVP results the first time a group is linked.
+  const { suppressHistoricalTelegramMvpAnnouncements } = await import(
+    '@/lib/telegram/announce'
+  )
+  await suppressHistoricalTelegramMvpAnnouncements(result.org_id)
+
   return {
     org_id: result.org_id,
     org_slug: result.org_slug,

@@ -2,7 +2,7 @@
   "crons": [
     {
       "path": "/api/cron/materialize",
-      "schedule": "0 6 * * *"
+      "schedule": "0 16 * * *"
     }
   ]
 }

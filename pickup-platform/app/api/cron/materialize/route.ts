@@ -6,10 +6,14 @@ import {
 import { announcePendingTelegramMvps } from '@/lib/telegram/announce'
 
 /**
- * Vercel Cron hits this daily to materialize events for all orgs.
- * Protect with CRON_SECRET — set the same value in Vercel env vars.
+ * Vercel Cron hits this daily (Hobby: once/day max).
+ * Schedule: 16:00 UTC ≈ 12:00 PM Eastern during EDT (11:00 AM EST in winter).
+ * Hobby may invoke anytime within that UTC hour.
  *
- * TODO: add vercel.json cron schedule when deploying
+ * Runs: event materialization, feedback notification materialization,
+ * MVP vote finalization sweep, Telegram MVP announcements.
+ *
+ * Protect with CRON_SECRET — set the same value in Vercel env vars.
  */
 export async function GET(request: Request) {
   const secret = process.env.CRON_SECRET
