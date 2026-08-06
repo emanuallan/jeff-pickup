@@ -9,15 +9,20 @@ export const ogImageContentType = 'image/png'
 
 /**
  * Override Next/ImageResponse's production default (immutable, max-age=1y).
- * Share cards and OG previews include live schedule/ranking data, so keep CDN
- * TTL short and allow cheap revalidation.
+ * Cards do not embed live roster/headcount — tier TTLs by how often copy changes.
  */
-export const OG_IMAGE_CACHE_CONTROL =
-  'public, max-age=60, s-maxage=60, stale-while-revalidate=300'
+export const OG_IMAGE_CACHE_CONTROL_STATIC =
+  'public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800'
+export const OG_IMAGE_CACHE_CONTROL_SCHEDULE =
+  'public, max-age=300, s-maxage=900, stale-while-revalidate=3600'
+export const OG_IMAGE_CACHE_CONTROL_SPONSORSHIP =
+  'public, max-age=300, s-maxage=3600, stale-while-revalidate=86400'
+export const OG_IMAGE_CACHE_CONTROL_RANKING =
+  'public, max-age=60, s-maxage=300, stale-while-revalidate=1800'
 
-const ogImageResponseHeaders = {
-  'Cache-Control': OG_IMAGE_CACHE_CONTROL,
-} as const
+function ogCacheHeaders(cacheControl: string) {
+  return { 'Cache-Control': cacheControl }
+}
 
 /** Organizr marketing indigo — matches apex site and console CTAs. */
 export const ORGANIZR_ACCENT = '#4f46e5'
@@ -491,15 +496,18 @@ export async function renderMarketingOgImage() {
   return new ImageResponse(<MarketingOgCard logoSrc={logoSrc} />, {
     ...ogImageSize,
     fonts,
-    headers: ogImageResponseHeaders,
+    headers: ogCacheHeaders(OG_IMAGE_CACHE_CONTROL_STATIC),
   })
 }
 
-export async function renderOrgOgImage(props: Omit<OrgOgCardProps, 'organizrLogoSrc'>) {
+export async function renderOrgOgImage(
+  props: Omit<OrgOgCardProps, 'organizrLogoSrc'>,
+  cacheControl: string = OG_IMAGE_CACHE_CONTROL_SCHEDULE,
+) {
   const [fonts, organizrLogoSrc] = await Promise.all([getOgFonts(), getOrganizrLogoDataUrl()])
   return new ImageResponse(
     <OrgOgCard {...props} organizrLogoSrc={organizrLogoSrc} />,
-    { ...ogImageSize, fonts, headers: ogImageResponseHeaders },
+    { ...ogImageSize, fonts, headers: ogCacheHeaders(cacheControl) },
   )
 }
 
@@ -624,7 +632,7 @@ export async function renderTelegramPairOgImage(
   const [fonts, organizrLogoSrc] = await Promise.all([getOgFonts(), getOrganizrLogoDataUrl()])
   return new ImageResponse(
     <TelegramPairOgCard {...props} organizrLogoSrc={organizrLogoSrc} />,
-    { ...ogImageSize, fonts, headers: ogImageResponseHeaders },
+    { ...ogImageSize, fonts, headers: ogCacheHeaders(OG_IMAGE_CACHE_CONTROL_STATIC) },
   )
 }
 
@@ -1507,7 +1515,7 @@ export async function renderOrgShareImage(
   return new ImageResponse(<OrgShareCard {...props} organizrLogoSrc={organizrLogoSrc} />, {
     ...shareImageSize,
     fonts,
-    headers: ogImageResponseHeaders,
+    headers: ogCacheHeaders(OG_IMAGE_CACHE_CONTROL_SCHEDULE),
   })
 }
 
@@ -1520,7 +1528,7 @@ export async function renderOrgCalendarShareImage(
     {
       ...shareImageSize,
       fonts,
-      headers: ogImageResponseHeaders,
+      headers: ogCacheHeaders(OG_IMAGE_CACHE_CONTROL_SCHEDULE),
     },
   )
 }

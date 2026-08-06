@@ -1,8 +1,10 @@
 import { cache } from 'react'
 import { getAuthUser } from '@/lib/auth'
 import { createClient } from '@/lib/supabase/server'
+import { createPublicClient } from '@/lib/supabase/public'
 import { MAX_ORG_LINKS } from '@/lib/social-links'
 import { parseOrgSettings, type OrgSettings } from '@/lib/org-features'
+import { withPublicCache } from '@/lib/public-cache'
 
 export type Org = {
   id: string
@@ -61,19 +63,26 @@ export const getOrgBySlug = cache(async (slug: string): Promise<Org | null> => {
 
 /** Active org slugs for apex sitemap discovery. */
 export async function getActivePublicOrgSlugs(): Promise<string[]> {
-  const supabase = await createClient()
+  return withPublicCache(
+    ['active-public-org-slugs-v1'],
+    3600,
+    ['orgs:active-slugs'],
+    async () => {
+      const supabase = createPublicClient()
 
-  const { data, error } = await supabase
-    .from('orgs')
-    .select('slug')
-    .eq('status', 'active')
-    .order('slug')
+      const { data, error } = await supabase
+        .from('orgs')
+        .select('slug')
+        .eq('status', 'active')
+        .order('slug')
 
-  if (error || !data) {
-    return []
-  }
+      if (error || !data) {
+        return []
+      }
 
-  return data.map((row) => String(row.slug))
+      return data.map((row) => String(row.slug))
+    },
+  )
 }
 
 export async function getUserOrgs(): Promise<Org[]> {
@@ -109,9 +118,13 @@ export async function getUserOrgs(): Promise<Org[]> {
 }
 
 export const getOrgForMember = cache(async (slug: string): Promise<Org | null> => {
-  const [user, org] = await Promise.all([getAuthUser(), getOrgBySlug(slug)])
+  const user = await getAuthUser()
+  if (!user) {
+    return null
+  }
 
-  if (!user || !org) {
+  const org = await getOrgBySlug(slug)
+  if (!org) {
     return null
   }
 

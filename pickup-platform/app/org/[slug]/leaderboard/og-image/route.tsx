@@ -5,7 +5,7 @@ import {
   getOrgStreakLeaderboard,
 } from '@/lib/engagement'
 import { orgFeatures } from '@/lib/org-features'
-import { renderOrgOgImage } from '@/lib/og-image'
+import { OG_IMAGE_CACHE_CONTROL_RANKING, renderOrgOgImage } from '@/lib/og-image'
 import { ogArrowRight } from '@/lib/text-arrows'
 
 type Context = {
@@ -41,14 +41,17 @@ export async function GET(_request: Request, { params }: Context) {
     }
   }
 
-  return renderOrgOgImage({
-    slug,
-    orgName: org?.name ?? 'Organizr',
-    accent: org?.branding.accent_color ?? '#2563eb',
-    logoUrl: org?.branding.logo_url,
-    eyebrow: 'Leaderboard',
-    headline,
-    subline,
-    cta: `See the rankings ${ogArrowRight}`,
-  })
+  return renderOrgOgImage(
+    {
+      slug,
+      orgName: org?.name ?? 'Organizr',
+      accent: org?.branding.accent_color ?? '#2563eb',
+      logoUrl: org?.branding.logo_url,
+      eyebrow: 'Leaderboard',
+      headline,
+      subline,
+      cta: `See the rankings ${ogArrowRight}`,
+    },
+    OG_IMAGE_CACHE_CONTROL_RANKING,
+  )
 }

@@ -124,6 +124,10 @@ export async function middleware(request: NextRequest) {
     return response
   }
 
+  if (pathname === '/robots.txt' || pathname === '/sitemap.xml') {
+    return NextResponse.next()
+  }
+
   const requestHeaders = new Headers(request.headers)
   const visitorKey = attachVisitorKey(request, requestHeaders)
   const isNewVisitor = visitorKey != null && !request.cookies.get(VISITOR_COOKIE)?.value

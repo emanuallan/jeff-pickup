@@ -1,14 +1,14 @@
 import { Suspense } from 'react'
 import type { ReactNode } from 'react'
 import { notFound } from 'next/navigation'
-import { getPublicOrgBySlug, getPublicUpcomingEventsForOrg } from '@/lib/public-data'
+import { getPublicOrgBySlug, getPublicUpcomingEventsForOrg, getPublicOrgPastSessionCount } from '@/lib/public-data'
 import { pickFeaturedUpcomingEvent } from '@/lib/events'
 import { getOrgForMember } from '@/lib/orgs'
 import { orgFeatures } from '@/lib/org-features'
 import { isOrgSessionFeedEnabled } from '@/lib/org-session-feed'
 import { getPublicSponsors } from '@/lib/sponsorship.server'
 import { ORG_PUBLIC_NAV_BASE } from '@/lib/org-public-nav'
-import { isLeaderboardUnlocked } from '@/lib/engagement'
+import { LEADERBOARD_MIN_SESSIONS } from '@/lib/engagement'
 import { resolveOrgPublicNavItems } from '@/lib/org-public-nav.server'
 import {
   buildEventShareText,
@@ -38,14 +38,15 @@ export default async function OrgHomeLayout({ children, params }: Props) {
     notFound()
   }
 
-  const [events, membership, leaderboardUnlocked, sponsors] = await Promise.all([
+  const [events, membership, pastSessionCount, sponsors] = await Promise.all([
     getPublicUpcomingEventsForOrg(org.id, 20, true),
     getOrgForMember(slug),
-    isLeaderboardUnlocked(org.id),
+    getPublicOrgPastSessionCount(org.id),
     orgFeatures(org).group_sponsorships ? getPublicSponsors(org.id) : Promise.resolve([]),
   ])
   const featured = pickFeaturedUpcomingEvent(events)
   const accent = org.branding.accent_color
+  const leaderboardUnlocked = pastSessionCount >= LEADERBOARD_MIN_SESSIONS
   const navItems = resolveOrgPublicNavItems({ org, leaderboardUnlocked }, ORG_PUBLIC_NAV_BASE)
   const socialLinks = org.branding.links
   const calendarShare = {

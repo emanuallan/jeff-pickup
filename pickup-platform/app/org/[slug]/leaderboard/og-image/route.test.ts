@@ -23,6 +23,8 @@ vi.mock('@/lib/org-features', () => ({
 }))
 
 vi.mock('@/lib/og-image', () => ({
+  OG_IMAGE_CACHE_CONTROL_RANKING:
+    'public, max-age=60, s-maxage=300, stale-while-revalidate=1800',
   renderOrgOgImage: (...args: unknown[]) => renderOrgOgImageMock(...args),
 }))
 
@@ -69,6 +71,7 @@ describe('GET /org/[slug]/leaderboard/og-image', () => {
         headline: 'Alex · 12 caps',
         subline: 'Sam · 4-week streak',
       }),
+      'public, max-age=60, s-maxage=300, stale-while-revalidate=1800',
     )
   })
 })
