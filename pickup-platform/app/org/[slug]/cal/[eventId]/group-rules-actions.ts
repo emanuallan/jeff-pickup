@@ -25,7 +25,9 @@ export async function getGroupRulesJoinStatus(
 
   return getGroupRulesStatusForJoin(org.id, {
     sessionToken,
-    phone: sessionToken || !hasValidPhone ? null : normalizedPhone,
+    // Keep phone even when a cookie exists — stale hc_session after db reset
+    // should not block first-time join acceptance checks.
+    phone: hasValidPhone ? normalizedPhone : null,
   })
 }
 
@@ -61,7 +63,7 @@ export async function acceptGroupRules(
     p_org_id: org.id,
     p_rules_version: rulesVersion,
     p_session_token: sessionToken,
-    p_phone: sessionToken ? null : hasValidPhone ? normalizedPhone : null,
+    p_phone: hasValidPhone ? normalizedPhone : null,
   })
 
   if (error) {
