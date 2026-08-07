@@ -6,7 +6,7 @@ import { getParticipantForSession } from '@/lib/participant'
 import { getParticipantEngagementStats } from '@/lib/engagement'
 import { getSoftParticipantCareerStats } from '@/lib/participant-me-stats'
 import { orgFeatures } from '@/lib/org-features'
-import { accentOnDark, hexToRgba } from '@/lib/colors'
+import { hexToRgba } from '@/lib/colors'
 import { ROBOTS_PRIVATE } from '@/lib/seo'
 import { resolveMeStatKeys, type MeStatKey } from '@/lib/participant-me'
 import { MeProfileForm } from './me-profile-form'
@@ -67,7 +67,6 @@ export default async function OrgMePage({ params }: Props) {
 
   const features = orgFeatures(org)
   const accent = org.branding.accent_color
-  const accentSoft = accentOnDark(accent)
 
   const [engagementMap, career] = await Promise.all([
     getParticipantEngagementStats(org.id, [participant.participant_id]),
@@ -149,9 +148,6 @@ export default async function OrgMePage({ params }: Props) {
           Sign out
         </h2>
         <MeSignOutButton accent={accent} />
-        <p className="mt-4 text-center text-xs text-zinc-600" style={{ color: `${accentSoft}99` }}>
-          You&apos;ll need your verified email next time you join on a new device.
-        </p>
       </section>
     </div>
   )

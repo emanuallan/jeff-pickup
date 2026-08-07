@@ -19,7 +19,7 @@ import {
   verifyParticipantEmailOtp,
 } from '@/lib/participant-email-otp-client'
 
-type Step = 'you' | 'email' | 'verify' | 'contact' | 'legacy_phone'
+type Step = 'email' | 'verify' | 'contact' | 'legacy_phone'
 
 type Props = {
   open: boolean
@@ -54,7 +54,7 @@ export function ParticipantEmailClaimSheet({
 }: Props) {
   const router = useRouter()
   const [, startTransition] = useTransition()
-  const [step, setStep] = useState<Step>(mode === 'recover' ? 'email' : 'you')
+  const [step, setStep] = useState<Step>('email')
   const [firstName, setFirstName] = useState(initialFirstName)
   const [lastName, setLastName] = useState(initialLastName)
   const [email, setEmail] = useState(initialEmail)
@@ -75,7 +75,7 @@ export function ParticipantEmailClaimSheet({
       setError(null)
       setCode('')
       setResendIn(0)
-      setStep(mode === 'recover' ? 'email' : 'you')
+      setStep('email')
       setPurpose(mode === 'recover' ? 'recover' : bindParticipantId ? 'bind' : 'claim')
       setBindId(bindParticipantId)
       setFirstName(initialFirstName)
@@ -83,7 +83,14 @@ export function ParticipantEmailClaimSheet({
       setEmail(initialEmail)
       setPhone('')
       setLegacyPhone('')
+      return
     }
+    setFirstName(initialFirstName)
+    setLastName(initialLastName)
+    setEmail(initialEmail)
+    setStep('email')
+    setPurpose(mode === 'recover' ? 'recover' : bindParticipantId ? 'bind' : 'claim')
+    setBindId(bindParticipantId)
   }, [open, mode, bindParticipantId, initialFirstName, initialLastName, initialEmail])
 
   useEffect(() => {
@@ -115,15 +122,6 @@ export function ParticipantEmailClaimSheet({
     return true
   }
 
-  async function handleYouContinue() {
-    setError(null)
-    if (!firstName.trim() || !lastName.trim()) {
-      setError('Enter your first and last name.')
-      return
-    }
-    setStep('email')
-  }
-
   async function handleEmailContinue() {
     setError(null)
     const normalized = normalizeLoginEmail(email)
@@ -133,7 +131,7 @@ export function ParticipantEmailClaimSheet({
     }
     setEmail(normalized)
     const nextPurpose =
-      mode === 'recover' ? 'recover' : bindId ? (mode === 'upgrade' ? 'claim' : 'bind') : 'claim'
+      bindId && mode !== 'upgrade' ? 'bind' : mode === 'recover' ? 'recover' : 'claim'
     const ok = await sendCode(nextPurpose)
     if (ok) setStep('verify')
   }
@@ -163,14 +161,14 @@ export function ParticipantEmailClaimSheet({
     setStep('contact')
   }
 
-  async function finishAfterContact(skipPhone: boolean) {
+  async function finishAfterContact() {
     setError(null)
-    if (!skipPhone && phone && !isValidPhoneDigits(phone)) {
-      setError('Enter a valid phone number, or skip for now.')
+    const trimmedPhone = phone.trim()
+    if (trimmedPhone && !isValidPhoneDigits(trimmedPhone)) {
+      setError('Enter a valid phone number, or leave it blank.')
       return
     }
-    // Phone is optional contact; if provided after verify, patch profile.
-    if (!skipPhone && phone && isValidPhoneDigits(phone)) {
+    if (trimmedPhone && isValidPhoneDigits(trimmedPhone)) {
       setLoading(true)
       const response = await fetch('/api/participant/profile', {
         method: 'PATCH',
@@ -180,7 +178,7 @@ export function ParticipantEmailClaimSheet({
           slug: orgSlug,
           firstName: firstName.trim(),
           lastName: lastName.trim(),
-          phone,
+          phone: trimmedPhone,
         }),
       })
       setLoading(false)
@@ -226,20 +224,18 @@ export function ParticipantEmailClaimSheet({
           ? 'Find your account'
           : mode === 'recover'
             ? 'Welcome back'
-            : 'Join this group'
+            : 'Your email'
 
   const subtitle =
     step === 'verify'
       ? `We sent a ${OTP_LENGTH}-digit code to ${email}.`
       : step === 'contact'
-        ? 'Optional — organizers can reach you here. You can skip.'
+        ? 'Optionally, so organizers can reach you.'
         : step === 'legacy_phone'
           ? 'If you joined before with a phone number, enter it to link email.'
           : mode === 'recover'
-            ? 'Enter the email you verified to sign back in on this device.'
-            : step === 'email'
-              ? 'We’ll email a code so you can get back in on any device.'
-              : 'Tell us who you are.'
+            ? 'Enter your email and we’ll send a code to confirm it’s you.'
+            : 'Enter your email and we’ll send a code to confirm it.'
 
   return (
     <BottomSheet
@@ -259,31 +255,6 @@ export function ParticipantEmailClaimSheet({
       <p className="mt-1 text-sm text-zinc-400">{subtitle}</p>
 
       <div className="mt-5 space-y-4">
-        {step === 'you' ? (
-          <div className="grid gap-3 sm:grid-cols-2">
-            <label className="block">
-              <span className="text-xs text-zinc-500">First name</span>
-              <input
-                autoComplete="given-name"
-                value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
-                className={inputClass}
-                style={{ '--tw-ring-color': accent } as React.CSSProperties}
-              />
-            </label>
-            <label className="block">
-              <span className="text-xs text-zinc-500">Last name</span>
-              <input
-                autoComplete="family-name"
-                value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
-                className={inputClass}
-                style={{ '--tw-ring-color': accent } as React.CSSProperties}
-              />
-            </label>
-          </div>
-        ) : null}
-
         {step === 'email' ? (
           <label className="block">
             <span className="text-xs text-zinc-500">Email</span>
@@ -359,18 +330,6 @@ export function ParticipantEmailClaimSheet({
         {error ? <p className="text-sm text-red-300">{error}</p> : null}
 
         <div className="flex flex-col gap-2 pt-1">
-          {step === 'you' ? (
-            <button
-              type="button"
-              disabled={loading}
-              onClick={() => void handleYouContinue()}
-              className="rounded-xl px-4 py-3 text-sm font-semibold transition hover:opacity-90 disabled:opacity-50"
-              style={{ backgroundColor: accent, color: accentText }}
-            >
-              Continue
-            </button>
-          ) : null}
-
           {step === 'email' ? (
             <>
               <button
@@ -382,7 +341,7 @@ export function ParticipantEmailClaimSheet({
               >
                 {loading ? 'Sending…' : 'Send code'}
               </button>
-              {mode === 'claim' && !bindId ? (
+              {mode === 'recover' && !bindId ? (
                 <button
                   type="button"
                   disabled={loading}
@@ -390,19 +349,9 @@ export function ParticipantEmailClaimSheet({
                     setError(null)
                     setStep('legacy_phone')
                   }}
-                  className="text-xs text-zinc-500 underline underline-offset-2 hover:text-zinc-300"
+                  className="pt-1 text-xs text-zinc-500 underline underline-offset-2 hover:text-zinc-300"
                 >
                   Joined before with a phone number?
-                </button>
-              ) : null}
-              {mode !== 'recover' && step === 'email' ? (
-                <button
-                  type="button"
-                  disabled={loading}
-                  onClick={() => setStep(bindId && mode === 'claim' ? 'you' : 'you')}
-                  className="text-xs text-zinc-600 hover:text-zinc-400"
-                >
-                  Back
                 </button>
               ) : null}
             </>
@@ -421,25 +370,15 @@ export function ParticipantEmailClaimSheet({
           ) : null}
 
           {step === 'contact' ? (
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                type="button"
-                disabled={loading}
-                onClick={() => void finishAfterContact(true)}
-                className="rounded-xl border border-white/10 px-4 py-3 text-sm font-medium text-zinc-300 transition hover:bg-zinc-900 disabled:opacity-50"
-              >
-                Skip
-              </button>
-              <button
-                type="button"
-                disabled={loading}
-                onClick={() => void finishAfterContact(false)}
-                className="rounded-xl px-4 py-3 text-sm font-semibold transition hover:opacity-90 disabled:opacity-50"
-                style={{ backgroundColor: accent, color: accentText }}
-              >
-                {loading ? 'Saving…' : 'Continue'}
-              </button>
-            </div>
+            <button
+              type="button"
+              disabled={loading}
+              onClick={() => void finishAfterContact()}
+              className="rounded-xl px-4 py-3 text-sm font-semibold transition hover:opacity-90 disabled:opacity-50"
+              style={{ backgroundColor: accent, color: accentText }}
+            >
+              {loading ? 'Saving…' : 'Continue'}
+            </button>
           ) : null}
 
           {step === 'legacy_phone' ? (
@@ -457,7 +396,7 @@ export function ParticipantEmailClaimSheet({
                 type="button"
                 disabled={loading}
                 onClick={() => {
-                  setStep('you')
+                  setStep('email')
                   setError(null)
                 }}
                 className="text-xs text-zinc-600 hover:text-zinc-400"

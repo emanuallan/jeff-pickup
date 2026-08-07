@@ -144,27 +144,38 @@ describe('JoinSection', () => {
   it('routes unpaid new users to email claim CTA', () => {
     renderJoinSection({ participant: null })
     expect(screen.getByRole('heading', { name: /save your spot/i })).toBeInTheDocument()
+    expect(screen.getByLabelText(/first name/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/last name/i)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /count me in/i })).toBeInTheDocument()
     expect(
-      screen.getByRole('button', { name: /already signed up\? sign in with email/i }),
+      screen.getByRole('button', { name: /already previously signed up\?/i }),
     ).toBeInTheDocument()
   })
 
-  it('opens the email claim sheet for new free joiners', async () => {
+  it('opens the email claim sheet for new free joiners after names are entered', async () => {
     const user = userEvent.setup()
     renderJoinSection({ participant: null })
 
+    await user.type(screen.getByLabelText(/first name/i), 'Ada')
+    await user.type(screen.getByLabelText(/last name/i), 'Lovelace')
     await user.click(screen.getByRole('button', { name: /count me in/i }))
     expect(screen.getByTestId('email-claim-sheet')).toHaveTextContent(/claim/i)
   })
 
-  it('opens recover claim sheet from sign-in link', async () => {
+  it('requires names before opening the claim sheet', async () => {
     const user = userEvent.setup()
     renderJoinSection({ participant: null })
 
-    await user.click(
-      screen.getByRole('button', { name: /already signed up\? sign in with email/i }),
-    )
+    await user.click(screen.getByRole('button', { name: /count me in/i }))
+    expect(screen.queryByTestId('email-claim-sheet')).not.toBeInTheDocument()
+    expect(screen.getByText(/enter your first and last name/i)).toBeInTheDocument()
+  })
+
+  it('opens recover claim sheet from sign-in link without requiring names', async () => {
+    const user = userEvent.setup()
+    renderJoinSection({ participant: null })
+
+    await user.click(screen.getByRole('button', { name: /already previously signed up\?/i }))
     expect(screen.getByTestId('email-claim-sheet')).toHaveTextContent(/recover/i)
   })
 
@@ -176,10 +187,10 @@ describe('JoinSection', () => {
     })
     expect(screen.getByRole('heading', { name: /save your spot/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /continue · \$15\.00/i })).toBeInTheDocument()
-    expect(screen.queryByLabelText(/first name/i)).not.toBeInTheDocument()
+    expect(screen.getByLabelText(/first name/i)).toBeInTheDocument()
   })
 
-  it('opens claim sheet from paid continue CTA', async () => {
+  it('opens claim sheet from paid continue CTA after names are entered', async () => {
     const user = userEvent.setup()
     renderJoinSection({
       participant: null,
@@ -187,6 +198,8 @@ describe('JoinSection', () => {
       priceCents: 1500,
     })
 
+    await user.type(screen.getByLabelText(/first name/i), 'Ada')
+    await user.type(screen.getByLabelText(/last name/i), 'Lovelace')
     await user.click(screen.getByRole('button', { name: /continue · \$15\.00/i }))
     expect(screen.getByTestId('email-claim-sheet')).toBeInTheDocument()
     expect(screen.queryByTestId('paid-join-sheet')).not.toBeInTheDocument()

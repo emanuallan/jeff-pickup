@@ -21,6 +21,64 @@ import {
 } from '@/lib/participant-session-client'
 import { formatPriceCents, isPaidSession, sessionPaymentTotalCents } from '@/lib/session-payment'
 import { PaidJoinSheet, type KnownParticipantProfile } from './paid-join-sheet'
+import { validateDemoParticipantNames } from '@/lib/participant-name-moderation'
+
+const joinNameInputClass =
+  'mt-1 w-full rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2.5 text-base outline-none transition-colors focus:border-transparent focus:ring-2 sm:text-sm'
+
+function JoinNameFields({
+  firstName,
+  lastName,
+  onFirstNameChange,
+  onLastNameChange,
+  accent,
+}: {
+  firstName: string
+  lastName: string
+  onFirstNameChange: (value: string) => void
+  onLastNameChange: (value: string) => void
+  accent: string
+}) {
+  return (
+    <div className="grid grid-cols-2 gap-3">
+      <label className="block">
+        <span className="text-xs text-zinc-500">First name</span>
+        <input
+          autoComplete="given-name"
+          value={firstName}
+          onChange={(e) => onFirstNameChange(e.target.value)}
+          className={joinNameInputClass}
+          style={{ '--tw-ring-color': accent } as React.CSSProperties}
+        />
+      </label>
+      <label className="block">
+        <span className="text-xs text-zinc-500">Last name</span>
+        <input
+          autoComplete="family-name"
+          value={lastName}
+          onChange={(e) => onLastNameChange(e.target.value)}
+          className={joinNameInputClass}
+          style={{ '--tw-ring-color': accent } as React.CSSProperties}
+        />
+      </label>
+    </div>
+  )
+}
+
+function validateJoinNames(
+  orgSlug: string,
+  firstName: string,
+  lastName: string,
+): string | null {
+  if (!firstName.trim() || !lastName.trim()) {
+    return 'Enter your first and last name.'
+  }
+  return validateDemoParticipantNames(orgSlug, {
+    firstName: firstName.trim(),
+    lastName: lastName.trim(),
+    displayName: null,
+  })
+}
 
 export type { Participant, MySignup }
 
@@ -87,6 +145,9 @@ function PaidJoinSection({
   const [claimOpen, setClaimOpen] = useState(false)
   const [claimMode, setClaimMode] = useState<'claim' | 'recover'>('claim')
   const [guestCount, setGuestCount] = useState(0)
+  const [firstName, setFirstName] = useState('')
+  const [lastName, setLastName] = useState('')
+  const [formError, setFormError] = useState<string | null>(null)
   const [localProfile, setLocalProfile] = useState<KnownParticipantProfile | null>(knownProfile)
   const [rulesSheetOpen, setRulesSheetOpen] = useState(false)
   const [rulesAcceptedLocally, setRulesAcceptedLocally] = useState(false)
@@ -189,16 +250,29 @@ function PaidJoinSection({
             {joiningWaitlist ? 'Join the waitlist' : 'Save your spot'}
           </h2>
           <p className="mt-0.5 text-sm text-zinc-400">
-            Verify your email, then pay {priceLabel} per person
-            {joiningWaitlist ? ' to join the waitlist' : ''}.
+            You only have to fill these out once.
           </p>
         </div>
+        <JoinNameFields
+          firstName={firstName}
+          lastName={lastName}
+          onFirstNameChange={setFirstName}
+          onLastNameChange={setLastName}
+          accent={accent}
+        />
         {guestsEnabled ? (
           <GuestCountField value={guestCount} onChange={setGuestCount} accent={accent} />
         ) : null}
+        {formError ? <p className="text-sm text-red-300">{formError}</p> : null}
         <button
           type="button"
           onClick={() => {
+            const nameError = validateJoinNames(orgSlug, firstName, lastName)
+            if (nameError) {
+              setFormError(nameError)
+              return
+            }
+            setFormError(null)
             setClaimMode('claim')
             setClaimOpen(true)
           }}
@@ -216,12 +290,13 @@ function PaidJoinSection({
         <button
           type="button"
           onClick={() => {
+            setFormError(null)
             setClaimMode('recover')
             setClaimOpen(true)
           }}
           className="text-xs text-zinc-400 underline underline-offset-2 hover:text-zinc-300"
         >
-          Already verified? Sign in with email
+          Already previously signed up?
         </button>
       </div>
       <ParticipantEmailClaimSheet
@@ -231,6 +306,8 @@ function PaidJoinSection({
         accent={accent}
         accentText={accentText}
         mode={claimMode}
+        initialFirstName={firstName.trim()}
+        initialLastName={lastName.trim()}
         onVerified={() => void afterVerified()}
       />
       <GroupRulesSheet
@@ -276,6 +353,8 @@ export function JoinSection(props: Props) {
   const [claimSheetOpen, setClaimSheetOpen] = useState(false)
   const [claimMode, setClaimMode] = useState<'claim' | 'recover' | 'upgrade'>('claim')
   const [upgradePromptDismissed, setUpgradePromptDismissed] = useState(false)
+  const [firstName, setFirstName] = useState('')
+  const [lastName, setLastName] = useState('')
 
   // One-shot cancel banner: show once, then strip paid/session_id so date chips
   // (which preserve other query params) don't keep resurfacing it.
@@ -663,11 +742,17 @@ export function JoinSection(props: Props) {
           <p className="mt-0.5 text-sm text-zinc-400">
             {joiningWaitlist
               ? 'This session is full. You’ll be added in signup order and promoted automatically if a spot opens.'
-              : props.spotsLeft != null && props.spotsLeft <= 5
-                ? `Only ${props.spotsLeft} spot${props.spotsLeft === 1 ? '' : 's'} left. Verify your email once — then you’re set on this device.`
-                : 'Verify your email once so you can manage sign-ups on any device.'}
+              : 'You only have to fill these out once.'}
           </p>
         </div>
+
+        <JoinNameFields
+          firstName={firstName}
+          lastName={lastName}
+          onFirstNameChange={setFirstName}
+          onLastNameChange={setLastName}
+          accent={props.accent}
+        />
 
         {guestsEnabled ? (
           <GuestCountField value={guestCount} onChange={setGuestCount} accent={props.accent} />
@@ -679,6 +764,12 @@ export function JoinSection(props: Props) {
           type="button"
           disabled={loading}
           onClick={() => {
+            const nameError = validateJoinNames(props.orgSlug, firstName, lastName)
+            if (nameError) {
+              setError(nameError)
+              return
+            }
+            setError(null)
             setClaimMode('claim')
             setClaimSheetOpen(true)
           }}
@@ -698,12 +789,13 @@ export function JoinSection(props: Props) {
           <button
             type="button"
             onClick={() => {
+              setError(null)
               setClaimMode('recover')
               setClaimSheetOpen(true)
             }}
             className="text-xs text-zinc-400 underline underline-offset-2 transition-colors hover:text-zinc-300"
           >
-            Already signed up? Sign in with email
+            Already previously signed up?
           </button>
         </div>
       </div>
@@ -715,6 +807,8 @@ export function JoinSection(props: Props) {
         accent={props.accent}
         accentText={props.accentText}
         mode={claimMode}
+        initialFirstName={firstName.trim()}
+        initialLastName={lastName.trim()}
         onVerified={() => void handleClaimVerified()}
       />
 
