@@ -137,13 +137,13 @@ Two distinct actor types, two friction levels.
 ### 7.1 Participants
 
 - **Durable identity:** `participants.id` only. Device cookie `hc_session` → `participant_sessions.participant_id`.
+- **Verified email:** claim/recover via 6-digit email OTP (Resend). Unique per org when `email_verified_at` is set.
 - **Phone:** optional mutable contact; non-unique lookup `(org_id, phone)`. Never `ON CONFLICT` merge of two people.
 - **Profile fields:** `first_name`, `last_name`, optional `display_name` (defaults to `First L.`).
 - **Verification (SMS, dormant):** `phone_verified` + `require_phone_verification` remain scaffolded
   but unwired. No SMS provider.
-- **Email OTP claim (next):** verify email → find/create by email on same `participant_id` model (stashed WIP).
 - **Privacy:** public roster shows `display_name` only. Phone/last name are visible only to org admins.
-- **Telegram:** `telegram_participant_links` is id-based; RSVP mints sessions via `mint_participant_session`.
+- **Telegram:** `telegram_participant_links` is id-based; RSVP uses `join_event_with_session` / `mint_participant_session`.
 - **Group rules:** keyed by `(org_id, participant_id, rules_version)`.
 - **`participants.user_id`:** nullable legacy; not written by product flows. Organizer↔participant link later.
 

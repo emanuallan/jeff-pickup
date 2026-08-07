@@ -338,7 +338,7 @@ export async function handleTelegramRsvp(opts: {
     }
 
     const arrivalStatus = opts.action === 'maybe' ? 'maybe' : 'confirmed'
-    const existing = await getSignupForParticipant(event.id, participantId)
+    let existing = await getSignupForParticipant(event.id, participantId)
 
     if (existing) {
       const sessionToken = await mintSessionToken(linked.org_id, participantId)
@@ -377,20 +377,10 @@ export async function handleTelegramRsvp(opts: {
       }
     }
 
-    if (!participant.phone) {
-      return {
-        ok: false,
-        message:
-          'Add a phone number on the group website (/me), then try /in again.',
-      }
-    }
-
-    const { data, error } = await admin.rpc('join_event', {
+    const sessionToken = await mintSessionToken(linked.org_id, participantId)
+    const { data, error } = await admin.rpc('join_event_with_session', {
       p_event_id: event.id,
-      p_phone: participant.phone,
-      p_first_name: participant.first_name,
-      p_last_name: participant.last_name,
-      p_display_name: participant.display_name,
+      p_session_token: sessionToken,
       p_guest_count: applyGuestCount && guestCount != null ? guestCount : 0,
     })
 
@@ -404,16 +394,31 @@ export async function handleTelegramRsvp(opts: {
       if (error.message.toLowerCase().includes('requires payment')) {
         return { ok: false, message: formatPaidSessionMessage(eventUrl) }
       }
-      return { ok: false, message: error.message }
+      if (participant.phone) {
+        const phoneJoin = await admin.rpc('join_event', {
+          p_event_id: event.id,
+          p_phone: participant.phone,
+          p_first_name: participant.first_name,
+          p_last_name: participant.last_name,
+          p_display_name: participant.display_name,
+          p_guest_count: applyGuestCount && guestCount != null ? guestCount : 0,
+        })
+        if (phoneJoin.error) {
+          return { ok: false, message: phoneJoin.error.message }
+        }
+      } else {
+        return { ok: false, message: error.message }
+      }
     }
 
     const result = data as { signup_id?: string; session_token?: string; list_status?: string } | null
     let listStatus = result?.list_status ?? 'confirmed'
+    const joinSession = result?.session_token ?? sessionToken
 
-    if (arrivalStatus !== 'confirmed' && result?.signup_id && result.session_token) {
+    if (arrivalStatus !== 'confirmed' && result?.signup_id) {
       const { error: statusError } = await admin.rpc('update_arrival_status', {
         p_signup_id: result.signup_id,
-        p_session_token: result.session_token,
+        p_session_token: joinSession,
         p_status: arrivalStatus,
       })
       if (statusError) {
@@ -421,10 +426,8 @@ export async function handleTelegramRsvp(opts: {
       }
     }
 
-    if (result?.signup_id) {
-      const signup = await getSignupForParticipant(event.id, participantId)
-      if (signup) listStatus = signup.list_status
-    }
+    existing = await getSignupForParticipant(event.id, participantId)
+    if (existing) listStatus = existing.list_status
 
     return {
       ok: true,
@@ -599,25 +602,15 @@ export async function handleTelegramJoinTeam(opts: {
   try {
     let existing = await getSignupForParticipant(event.id, participantId)
 
-    if (!existing) {
+      if (!existing) {
       if (isPaidSession(event.price_cents)) {
         return { ok: false, message: formatPaidSessionMessage(eventUrl) }
       }
 
-      if (!participant.phone) {
-        return {
-          ok: false,
-          message:
-            'Add a phone number on the group website (/me), then try again.',
-        }
-      }
-
-      const { data, error } = await admin.rpc('join_event', {
+      const joinToken = await mintSessionToken(linked.org_id, participantId)
+      const { data, error } = await admin.rpc('join_event_with_session', {
         p_event_id: event.id,
-        p_phone: participant.phone,
-        p_first_name: participant.first_name,
-        p_last_name: participant.last_name,
-        p_display_name: participant.display_name,
+        p_session_token: joinToken,
         p_guest_count: 0,
       })
 

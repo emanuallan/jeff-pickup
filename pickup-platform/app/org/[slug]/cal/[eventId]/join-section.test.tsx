@@ -3,11 +3,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { JoinSection } from './join-section'
-import { clearParticipantSession, recoverSession } from './actions'
-import {
-  clearParticipantDeviceSession,
-  saveParticipantProfile,
-} from '@/lib/participant-session-client'
+import { clearParticipantSession, joinEventWithSession } from './actions'
+import { clearParticipantDeviceSession } from '@/lib/participant-session-client'
 
 const refreshMock = vi.fn()
 const reloadMock = vi.fn()
@@ -30,6 +27,7 @@ vi.mock('next/navigation', () => ({
 
 vi.mock('./actions', () => ({
   joinEvent: vi.fn(),
+  joinEventWithSession: vi.fn(),
   quickJoinEvent: vi.fn(),
   recoverSession: vi.fn(),
   clearParticipantSession: vi.fn(),
@@ -45,6 +43,16 @@ vi.mock('./paid-join-sheet', () => ({
     open ? <div data-testid="paid-join-sheet">Paid join sheet</div> : null,
 }))
 
+vi.mock('./participant-email-claim-sheet', () => ({
+  ParticipantEmailClaimSheet: ({
+    open,
+    mode,
+  }: {
+    open: boolean
+    mode?: string
+  }) => (open ? <div data-testid="email-claim-sheet">Email claim ({mode})</div> : null),
+}))
+
 vi.mock('./participation-motion', () => ({
   useParticipationMotion: () => ({
     reopenJoinPanel: reopenJoinPanelMock,
@@ -53,15 +61,17 @@ vi.mock('./participation-motion', () => ({
 }))
 
 const clearParticipantSessionMock = vi.mocked(clearParticipantSession)
-const recoverSessionMock = vi.mocked(recoverSession)
 const clearParticipantDeviceSessionMock = vi.mocked(clearParticipantDeviceSession)
-const saveParticipantProfileMock = vi.mocked(saveParticipantProfile)
+const joinEventWithSessionMock = vi.mocked(joinEventWithSession)
 
 const participant = {
+  participant_id: 'part-1',
   first_name: 'Jeff',
   last_name: 'Pickup',
   display_name: 'Jeff P.',
   phone: '12025550101',
+  email: 'jeff@example.com',
+  email_verified_at: '2026-01-01T00:00:00.000Z',
 }
 
 function renderJoinSection(overrides: Partial<ComponentProps<typeof JoinSection>> = {}) {
@@ -79,28 +89,30 @@ function renderJoinSection(overrides: Partial<ComponentProps<typeof JoinSection>
       participant={participant}
       mySignup={null}
       eventTitle="Tuesday Pickup"
-      eventWhen="Tue Jul 7"
-      locationLabel="Main Field"
+      eventWhen="Tue 6pm"
+      locationLabel="Park"
       locationMapsUrl={null}
       returningSignupModalEnabled={false}
+      guestsEnabled
       {...overrides}
     />,
   )
 }
 
-describe('JoinSection "Not you?" flow', () => {
+describe('JoinSection', () => {
   beforeEach(() => {
     refreshMock.mockReset()
     reloadMock.mockReset()
     replaceMock.mockReset()
     reopenJoinPanelMock.mockReset()
+    runSignupCelebrationMock.mockReset()
+    runSignupCelebrationMock.mockImplementation(async (fn: () => Promise<unknown>) => fn())
     clearParticipantSessionMock.mockReset()
-    recoverSessionMock.mockReset()
     clearParticipantDeviceSessionMock.mockReset()
     clearParticipantDeviceSessionMock.mockResolvedValue({ ok: true })
     clearParticipantSessionMock.mockResolvedValue({})
-    saveParticipantProfileMock.mockReset()
-    saveParticipantProfileMock.mockResolvedValue({ ok: true })
+    joinEventWithSessionMock.mockReset()
+    joinEventWithSessionMock.mockResolvedValue({})
     useSearchParamsMock.mockReset()
     useSearchParamsMock.mockReturnValue(new URLSearchParams())
     localStorage.clear()
@@ -126,12 +138,37 @@ describe('JoinSection "Not you?" flow', () => {
     renderJoinSection()
 
     expect(screen.getByRole('heading', { name: /welcome back, jeff p\./i })).toBeInTheDocument()
-    // expect(screen.getByRole('button', { name: /not you\?/i })).toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: /save your spot/i })).not.toBeInTheDocument()
-    expect(screen.queryByTestId('save-account-card')).not.toBeInTheDocument()
   })
 
-  it('routes paid sessions to the detail form then pay sheet', () => {
+  it('routes unpaid new users to email claim CTA', () => {
+    renderJoinSection({ participant: null })
+    expect(screen.getByRole('heading', { name: /save your spot/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /count me in/i })).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: /already signed up\? sign in with email/i }),
+    ).toBeInTheDocument()
+  })
+
+  it('opens the email claim sheet for new free joiners', async () => {
+    const user = userEvent.setup()
+    renderJoinSection({ participant: null })
+
+    await user.click(screen.getByRole('button', { name: /count me in/i }))
+    expect(screen.getByTestId('email-claim-sheet')).toHaveTextContent(/claim/i)
+  })
+
+  it('opens recover claim sheet from sign-in link', async () => {
+    const user = userEvent.setup()
+    renderJoinSection({ participant: null })
+
+    await user.click(
+      screen.getByRole('button', { name: /already signed up\? sign in with email/i }),
+    )
+    expect(screen.getByTestId('email-claim-sheet')).toHaveTextContent(/recover/i)
+  })
+
+  it('routes paid sessions to email verify then pay', () => {
     renderJoinSection({
       participant: null,
       paidSession: true,
@@ -139,7 +176,20 @@ describe('JoinSection "Not you?" flow', () => {
     })
     expect(screen.getByRole('heading', { name: /save your spot/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /continue · \$15\.00/i })).toBeInTheDocument()
-    expect(screen.getByLabelText(/first name/i)).toBeInTheDocument()
+    expect(screen.queryByLabelText(/first name/i)).not.toBeInTheDocument()
+  })
+
+  it('opens claim sheet from paid continue CTA', async () => {
+    const user = userEvent.setup()
+    renderJoinSection({
+      participant: null,
+      paidSession: true,
+      priceCents: 1500,
+    })
+
+    await user.click(screen.getByRole('button', { name: /continue · \$15\.00/i }))
+    expect(screen.getByTestId('email-claim-sheet')).toBeInTheDocument()
+    expect(screen.queryByTestId('paid-join-sheet')).not.toBeInTheDocument()
   })
 
   it('does not offer a waitlist when a paid session is full', () => {
@@ -173,49 +223,7 @@ describe('JoinSection "Not you?" flow', () => {
     })
   })
 
-  it('opens the paid join sheet after new users submit details', async () => {
-    const user = userEvent.setup()
-    renderJoinSection({
-      participant: null,
-      paidSession: true,
-      priceCents: 1500,
-    })
-
-    expect(screen.queryByTestId('paid-join-sheet')).not.toBeInTheDocument()
-    await user.type(screen.getByLabelText(/first name/i), 'Ada')
-    await user.type(screen.getByLabelText(/last name/i), 'Lovelace')
-    await user.type(screen.getByRole('textbox', { name: /phone number/i }), '2025550101')
-    await user.click(screen.getByRole('button', { name: /continue · \$15\.00/i }))
-    expect(screen.getByTestId('paid-join-sheet')).toBeInTheDocument()
-    expect(saveParticipantProfileMock).toHaveBeenCalledWith({
-      slug: 'demo',
-      firstName: 'Ada',
-      lastName: 'Lovelace',
-      phone: expect.stringMatching(/12025550101|2025550101/),
-    })
-    expect(refreshMock).not.toHaveBeenCalled()
-  })
-
-  it('blocks paid continue when soft participant save fails', async () => {
-    const user = userEvent.setup()
-    saveParticipantProfileMock.mockResolvedValue({ error: 'Could not save your profile.' })
-
-    renderJoinSection({
-      participant: null,
-      paidSession: true,
-      priceCents: 1500,
-    })
-
-    await user.type(screen.getByLabelText(/first name/i), 'Ada')
-    await user.type(screen.getByLabelText(/last name/i), 'Lovelace')
-    await user.type(screen.getByRole('textbox', { name: /phone number/i }), '2025550101')
-    await user.click(screen.getByRole('button', { name: /continue · \$15\.00/i }))
-
-    expect(await screen.findByText(/could not save your profile/i)).toBeInTheDocument()
-    expect(screen.queryByTestId('paid-join-sheet')).not.toBeInTheDocument()
-  })
-
-  it('shows welcome-back paid UI for returning participants', () => {
+  it('shows welcome-back paid UI for verified returning participants', () => {
     renderJoinSection({
       paidSession: true,
       priceCents: 1500,
@@ -223,7 +231,6 @@ describe('JoinSection "Not you?" flow', () => {
 
     expect(screen.getByRole('heading', { name: /welcome back, jeff p\./i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /join · \$15\.00/i })).toBeInTheDocument()
-    // expect(screen.getByRole('button', { name: /not you\?/i })).toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: /save your spot/i })).not.toBeInTheDocument()
   })
 
@@ -268,146 +275,17 @@ describe('JoinSection "Not you?" flow', () => {
       expect(screen.getByRole('button', { name: /join · \$20\.00/i })).toBeInTheDocument()
     })
     expect(screen.getByRole('heading', { name: /welcome back, jeff p\./i })).toBeInTheDocument()
-    expect(screen.getByTestId('paid-join-sheet')).toBeInTheDocument()
   })
 
-  // TODO: restore with "Not you?" UI
-  it.skip('clears the device session and refreshes without a full reload', async () => {
-    const user = userEvent.setup()
-    localStorage.setItem('returning-signup-seen:demo:event-1', '1')
-
-    renderJoinSection()
-
-    await user.click(screen.getByRole('button', { name: /not you\?/i }))
-
-    await waitFor(() => {
-      expect(clearParticipantDeviceSessionMock).toHaveBeenCalledOnce()
-    })
-    expect(clearParticipantSessionMock).toHaveBeenCalledWith('demo', 'event-1')
-    expect(reopenJoinPanelMock).toHaveBeenCalledOnce()
-    expect(refreshMock).toHaveBeenCalledOnce()
-    expect(reloadMock).not.toHaveBeenCalled()
-    expect(localStorage.getItem('returning-signup-seen:demo:event-1')).toBeNull()
-    expect(screen.getByRole('heading', { name: /save your spot/i })).toBeInTheDocument()
-  })
-
-  // TODO: restore with "Not you?" UI
-  it.skip('stays on welcome back and shows an error when device session clear fails', async () => {
-    const user = userEvent.setup()
-    clearParticipantDeviceSessionMock.mockResolvedValue({
-      error: 'Could not clear your session. Please try again.',
-    })
-
-    renderJoinSection()
-
-    await user.click(screen.getByRole('button', { name: /not you\?/i }))
-
-    await waitFor(() => {
-      expect(screen.getByText(/could not clear your session/i)).toBeInTheDocument()
-    })
-    expect(clearParticipantSessionMock).not.toHaveBeenCalled()
-    expect(refreshMock).not.toHaveBeenCalled()
-    expect(reloadMock).not.toHaveBeenCalled()
-    expect(screen.getByRole('heading', { name: /welcome back, jeff p\./i })).toBeInTheDocument()
-    expect(screen.queryByRole('heading', { name: /save your spot/i })).not.toBeInTheDocument()
-  })
-
-  // TODO: restore with "Not you?" UI
-  it.skip('clears the device session from the returning-signup modal', async () => {
-    const user = userEvent.setup()
-
-    renderJoinSection({ returningSignupModalEnabled: true })
-
-    await waitFor(
-      () => {
-        expect(screen.getByRole('dialog')).toBeInTheDocument()
+  it('prompts unverified returning users to verify email', () => {
+    renderJoinSection({
+      participant: {
+        ...participant,
+        email_verified_at: null,
       },
-      { timeout: 2000 },
-    )
-
-    await user.click(screen.getByRole('button', { name: /not you\?/i }))
-
-    await waitFor(() => {
-      expect(clearParticipantDeviceSessionMock).toHaveBeenCalledOnce()
     })
-    expect(clearParticipantSessionMock).toHaveBeenCalledWith('demo', 'event-1')
-    expect(refreshMock).toHaveBeenCalledOnce()
-    expect(reloadMock).not.toHaveBeenCalled()
-  }, 10_000)
-})
 
-describe('JoinSection recover session', () => {
-  beforeEach(() => {
-    refreshMock.mockReset()
-    reopenJoinPanelMock.mockReset()
-    clearParticipantSessionMock.mockReset()
-    recoverSessionMock.mockReset()
-    clearParticipantDeviceSessionMock.mockReset()
-    clearParticipantDeviceSessionMock.mockResolvedValue({ ok: true })
-    localStorage.clear()
-    vi.stubGlobal(
-      'matchMedia',
-      vi.fn().mockImplementation(() => ({
-        matches: true,
-        addEventListener: vi.fn(),
-        removeEventListener: vi.fn(),
-      })),
-    )
-  })
-
-  afterEach(() => {
-    cleanup()
-  })
-
-  it('submits the hidden phone digits from PhoneInput', async () => {
-    const user = userEvent.setup()
-    recoverSessionMock.mockResolvedValue({})
-
-    renderJoinSection({ participant: null })
-
-    await user.click(
-      screen.getByRole('button', { name: /already signed up\? enter your phone/i }),
-    )
-
-    const phoneFields = screen.getAllByRole('textbox', { name: /phone number/i })
-    await user.type(phoneFields[phoneFields.length - 1]!, '2025550101')
-    await user.click(screen.getByRole('button', { name: /continue/i }))
-
-    await waitFor(() => {
-      expect(recoverSessionMock).toHaveBeenCalledOnce()
-    })
-    expect(recoverSessionMock.mock.calls[0]?.[2]).toBe('12025550101')
-  })
-})
-
-describe('JoinSection new user signup', () => {
-  beforeEach(() => {
-    runSignupCelebrationMock.mockReset()
-    vi.stubGlobal(
-      'matchMedia',
-      vi.fn().mockImplementation(() => ({
-        matches: true,
-        addEventListener: vi.fn(),
-        removeEventListener: vi.fn(),
-      })),
-    )
-  })
-
-  afterEach(() => {
-    cleanup()
-  })
-
-  it('validates phone before starting signup celebration', async () => {
-    const user = userEvent.setup()
-
-    renderJoinSection({ participant: null })
-
-    await user.type(screen.getByRole('textbox', { name: /first name/i }), 'Jeff')
-    await user.type(screen.getByRole('textbox', { name: /last name/i }), 'Pickup')
-    await user.type(screen.getByRole('textbox', { name: /phone number/i }), '123')
-    await user.click(screen.getByRole('button', { name: /count me in/i }))
-
-    expect(screen.getByText(/enter a valid phone number/i)).toBeInTheDocument()
-    expect(runSignupCelebrationMock).not.toHaveBeenCalled()
+    expect(screen.getByText(/add a verified email/i)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /verify email/i })).toBeInTheDocument()
   })
 })

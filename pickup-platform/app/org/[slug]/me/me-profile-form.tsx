@@ -17,12 +17,13 @@ type Props = {
     email: string
     phone: string
   }
+  emailVerified?: boolean
 }
 
 const inputClass =
   'mt-1 w-full rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2.5 text-base outline-none transition-colors focus:border-transparent focus:ring-2 sm:text-sm'
 
-export function MeProfileForm({ slug, accent, initial }: Props) {
+export function MeProfileForm({ slug, accent, initial, emailVerified = false }: Props) {
   const router = useRouter()
   const [pending, startTransition] = useTransition()
   const [firstName, setFirstName] = useState(initial.firstName)
@@ -50,9 +51,10 @@ export function MeProfileForm({ slug, accent, initial }: Props) {
       firstName: firstName.trim(),
       lastName: lastName.trim(),
       displayName: displayName.trim() || null,
-      email: email.trim() || null,
+      email: emailVerified ? undefined : email.trim() || null,
       phone: phone.length > 0 ? phone : '',
     })
+
 
     if ('error' in result) {
       setError(result.error)
@@ -115,10 +117,16 @@ export function MeProfileForm({ slug, accent, initial }: Props) {
           autoComplete="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          placeholder="Optional"
+          readOnly={emailVerified}
+          placeholder={emailVerified ? undefined : 'Optional until verified'}
           className={inputClass}
           style={{ '--tw-ring-color': accent } as React.CSSProperties}
         />
+        <p className="mt-1.5 text-xs leading-relaxed text-zinc-500">
+          {emailVerified
+            ? 'Verified — used to sign back in on any device.'
+            : 'Verify an email from a session page to recover this account later.'}
+        </p>
       </label>
 
       <label className="block">

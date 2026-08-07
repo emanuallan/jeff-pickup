@@ -12,6 +12,7 @@ export type Participant = {
   display_name: string
   phone: string | null
   email?: string | null
+  email_verified_at?: string | null
 }
 
 export type MySignup = {

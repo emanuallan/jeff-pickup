@@ -227,12 +227,9 @@ export async function quickJoinEvent(
 
   const resolvedGuests = resolveGuestCount(guests, orgFeatures(org).guest_signups)
 
-  const { data, error } = await supabase.rpc('join_event', {
+  const { data, error } = await supabase.rpc('join_event_with_session', {
     p_event_id: open.event.id,
-    p_phone: p.phone,
-    p_first_name: p.first_name,
-    p_last_name: p.last_name,
-    p_display_name: p.display_name,
+    p_session_token: token,
     p_guest_count: resolvedGuests,
   })
 
@@ -269,6 +266,15 @@ export async function quickJoinEvent(
 
   revalidatePublicEvent(orgSlug, eventId, open.event.id, open.orgId)
   return {}
+}
+
+/** Free join using the current hc_session (after email OTP or returning cookie). */
+export async function joinEventWithSession(
+  orgSlug: string,
+  eventId: string,
+  guestCount = 0,
+): Promise<{ error?: string; code?: string; priceCents?: number }> {
+  return quickJoinEvent(orgSlug, eventId, guestCount, 'confirmed')
 }
 
 export async function updateGuestCount(

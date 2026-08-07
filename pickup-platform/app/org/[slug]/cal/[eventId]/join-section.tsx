@@ -1,28 +1,25 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useState, useTransition, type FormEvent } from 'react'
+import { useCallback, useEffect, useMemo, useState, useTransition } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import {
-  joinEvent,
+  joinEventWithSession,
   quickJoinEvent,
-  recoverSession,
   clearParticipantSession,
 } from './actions'
 import { arrowRight } from '@/lib/text-arrows'
-import { PhoneInput } from '@/app/_components/phone-input'
 import type { Participant, MySignup } from '@/lib/participant'
 import { ReturningSignupModal, clearReturningSignupSeen, markReturningSignupPromptSeen } from './returning-signup-modal'
 import { GroupRulesSheet } from './group-rules-sheet'
+import { ParticipantEmailClaimSheet } from './participant-email-claim-sheet'
 import { getGroupRulesJoinStatus } from './group-rules-actions'
 import { useParticipationMotion } from './participation-motion'
 import { GuestCountField } from './guest-count-select'
 import { clampGuestCount } from '@/lib/guest-signups'
 import {
   clearParticipantDeviceSession,
-  saveParticipantProfile,
 } from '@/lib/participant-session-client'
 import { formatPriceCents, isPaidSession, sessionPaymentTotalCents } from '@/lib/session-payment'
-import { isValidPhoneDigits } from '@/lib/phone'
 import { PaidJoinSheet, type KnownParticipantProfile } from './paid-join-sheet'
 
 export type { Participant, MySignup }
@@ -53,122 +50,6 @@ type Props = {
   paidSession?: boolean
 }
 
-const inputClass =
-  'mt-1 w-full rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2.5 text-base outline-none transition-colors focus:border-transparent focus:ring-2 sm:text-sm'
-
-const recoverInputClass =
-  'mt-1 w-full rounded-lg border border-zinc-800 bg-zinc-900/50 px-3 py-2 text-base text-zinc-400 outline-none transition-colors focus:border-zinc-700 focus:ring-1 focus:ring-zinc-700 sm:text-sm'
-
-const phoneWhyText =
-  'We use your phone number to identify you within a group so you can manage your own sign-ups across visits.'
-
-function PhoneNumberWhy() {
-  const [show, setShow] = useState(false)
-
-  return (
-    <>
-      <span className="flex items-baseline justify-between gap-2">
-        <span className="text-xs text-zinc-500">Phone</span>
-        <button
-          type="button"
-          onClick={() => setShow((open) => !open)}
-          aria-expanded={show}
-          className="text-xs text-zinc-600 transition-colors hover:text-zinc-500"
-        >
-          Why do we need your number?
-        </button>
-      </span>
-      {show ? (
-        <p className="mt-1 text-xs leading-relaxed text-zinc-500">{phoneWhyText}</p>
-      ) : null}
-    </>
-  )
-}
-
-function RecoverSession({
-  orgSlug,
-  eventId,
-  accent,
-  onRecovered,
-}: {
-  orgSlug: string
-  eventId: string
-  accent: string
-  onRecovered: () => void
-}) {
-  const router = useRouter()
-  const [, startTransition] = useTransition()
-  const [open, setOpen] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [loading, setLoading] = useState(false)
-
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    setLoading(true)
-    setError(null)
-    const formData = new FormData(event.currentTarget)
-    const phoneDigits = String(formData.get('phone') ?? '')
-    const result = await recoverSession(orgSlug, eventId, phoneDigits)
-    if (result.error) {
-      setLoading(false)
-      setError(result.error)
-      return
-    }
-    setOpen(false)
-    onRecovered()
-    startTransition(() => {
-      router.refresh()
-    })
-  }
-
-  if (!open) {
-    return (
-      <div className="border-t border-white/5 pt-4">
-        <button
-          type="button"
-          onClick={() => setOpen(true)}
-          className="text-xs text-zinc-400 underline underline-offset-2 transition-colors hover:text-zinc-300"
-        >
-          Already signed up? Enter your phone
-        </button>
-      </div>
-    )
-  }
-
-  return (
-    <div className="border-t border-white/5 pt-4">
-      <p className="text-xs text-zinc-600">Pick up where you left off on this device</p>
-      <form onSubmit={(event) => void handleSubmit(event)} className="mt-2 flex items-end gap-2">
-        <label className="block min-w-0 flex-1">
-          <span className="text-xs text-zinc-600">Phone</span>
-          <PhoneInput
-            className={recoverInputClass}
-            style={{ '--tw-ring-color': accent } as React.CSSProperties}
-          />
-        </label>
-        <button
-          type="submit"
-          disabled={loading}
-          className="mb-0.5 shrink-0 rounded-lg px-2 py-2 text-xs text-zinc-500 transition-colors hover:text-zinc-400 disabled:opacity-50"
-        >
-          {loading ? '…' : 'Continue'}
-        </button>
-      </form>
-      {error ? <p className="mt-1.5 text-xs text-red-400/90">{error}</p> : null}
-      <button
-        type="button"
-        onClick={() => {
-          setOpen(false)
-          setError(null)
-        }}
-        className="mt-2 text-xs text-zinc-700 transition-colors hover:text-zinc-600"
-      >
-        Cancel
-      </button>
-    </div>
-  )
-}
-
 function PaidJoinSection({
   orgSlug,
   eventId,
@@ -186,7 +67,6 @@ function PaidJoinSection({
   autoOpenSheet = false,
   knownProfile = null,
   showReturning = false,
-  onNotYou,
   onSessionRecovered,
   groupRulesEnabled,
   groupRulesText,
@@ -201,13 +81,13 @@ function PaidJoinSection({
   onNotYou?: () => void
   onSessionRecovered?: () => void
 }) {
+  const router = useRouter()
+  const [, startTransition] = useTransition()
   const [sheetOpen, setSheetOpen] = useState(autoOpenSheet)
+  const [claimOpen, setClaimOpen] = useState(false)
+  const [claimMode, setClaimMode] = useState<'claim' | 'recover'>('claim')
   const [guestCount, setGuestCount] = useState(0)
-  const [firstName, setFirstName] = useState(knownProfile?.firstName ?? '')
-  const [lastName, setLastName] = useState(knownProfile?.lastName ?? '')
-  const [phone, setPhone] = useState(knownProfile?.phone ?? '')
   const [localProfile, setLocalProfile] = useState<KnownParticipantProfile | null>(knownProfile)
-  const [formError, setFormError] = useState<string | null>(null)
   const [rulesSheetOpen, setRulesSheetOpen] = useState(false)
   const [rulesAcceptedLocally, setRulesAcceptedLocally] = useState(false)
   const [pendingOpenSheet, setPendingOpenSheet] = useState(false)
@@ -218,25 +98,15 @@ function PaidJoinSection({
   )
   const totalLabel = formatPriceCents(totalCents)
   const sheetProfile = localProfile ?? knownProfile
+  const verifiedReturning =
+    showReturning && participant && Boolean(participant.email_verified_at)
 
   useEffect(() => {
-    if (autoOpenSheet) {
-      setSheetOpen(true)
-    }
-  }, [autoOpenSheet])
+    if (autoOpenSheet && sheetProfile) setSheetOpen(true)
+  }, [autoOpenSheet, sheetProfile])
 
   useEffect(() => {
-    if (!knownProfile) {
-      setLocalProfile(null)
-      setFirstName('')
-      setLastName('')
-      setPhone('')
-      return
-    }
     setLocalProfile(knownProfile)
-    setFirstName(knownProfile.firstName)
-    setLastName(knownProfile.lastName)
-    setPhone(knownProfile.phone ?? '')
   }, [knownProfile])
 
   if (isFull && !waitlistEnabled) {
@@ -245,6 +115,12 @@ function PaidJoinSection({
         <h2 className="text-lg font-semibold text-zinc-100">This session is full</h2>
       </div>
     )
+  }
+
+  async function afterVerified() {
+    setClaimOpen(false)
+    onSessionRecovered?.()
+    startTransition(() => router.refresh())
   }
 
   const sheet =
@@ -268,59 +144,7 @@ function PaidJoinSection({
       />
     ) : null
 
-  async function handleNewUserContinue(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    const trimmedFirst = firstName.trim()
-    const trimmedLast = lastName.trim()
-
-    if (!trimmedFirst || !trimmedLast) {
-      setFormError('Enter your first and last name.')
-      return
-    }
-    if (!isValidPhoneDigits(phone)) {
-      setFormError('Enter a valid phone number.')
-      return
-    }
-
-    setFormError(null)
-
-    const saved = await saveParticipantProfile({
-      slug: orgSlug,
-      firstName: trimmedFirst,
-      lastName: trimmedLast,
-      phone,
-    })
-    if ('error' in saved) {
-      setFormError(saved.error)
-      return
-    }
-
-    setLocalProfile({
-      firstName: trimmedFirst,
-      lastName: trimmedLast,
-      phone,
-    })
-
-    const needsRules =
-      groupRulesEnabled === true &&
-      needsGroupRulesAcceptance === true &&
-      !rulesAcceptedLocally &&
-      !!groupRulesText &&
-      (groupRulesVersion ?? 0) > 0
-
-    if (needsRules) {
-      const status = await getGroupRulesJoinStatus(orgSlug, phone)
-      if (status.needs_acceptance === true) {
-        setPendingOpenSheet(true)
-        setRulesSheetOpen(true)
-        return
-      }
-    }
-
-    setSheetOpen(true)
-  }
-
-  if (showReturning && participant) {
+  if (verifiedReturning && participant) {
     return (
       <div className="space-y-3">
         <div>
@@ -335,15 +159,9 @@ function PaidJoinSection({
                 : `Tap below to lock in your spot · ${priceLabel} per person.`}
           </p>
         </div>
-
         {guestsEnabled ? (
-          <GuestCountField
-            value={guestCount}
-            onChange={setGuestCount}
-            accent={accent}
-          />
+          <GuestCountField value={guestCount} onChange={setGuestCount} accent={accent} />
         ) : null}
-
         <button
           type="button"
           onClick={() => setSheetOpen(true)}
@@ -358,17 +176,6 @@ function PaidJoinSection({
             {joiningWaitlist ? `Join waitlist · ${totalLabel}` : `Join · ${totalLabel}`}
           </span>
         </button>
-        {/* TODO: restore "Not you?" to clear soft session from welcome-back paid join
-        <div className="text-right">
-          <button
-            type="button"
-            onClick={() => onNotYou?.()}
-            className="text-xs text-zinc-600 transition-colors hover:text-zinc-500"
-          >
-            Not you?
-          </button>
-        </div>
-        */}
         {sheet}
       </div>
     )
@@ -377,103 +184,61 @@ function PaidJoinSection({
   return (
     <>
       <div className="space-y-4">
-        <form
-          onSubmit={(event) => void handleNewUserContinue(event)}
-          className="space-y-4"
+        <div>
+          <h2 className="text-lg font-semibold text-zinc-100">
+            {joiningWaitlist ? 'Join the waitlist' : 'Save your spot'}
+          </h2>
+          <p className="mt-0.5 text-sm text-zinc-400">
+            Verify your email, then pay {priceLabel} per person
+            {joiningWaitlist ? ' to join the waitlist' : ''}.
+          </p>
+        </div>
+        {guestsEnabled ? (
+          <GuestCountField value={guestCount} onChange={setGuestCount} accent={accent} />
+        ) : null}
+        <button
+          type="button"
+          onClick={() => {
+            setClaimMode('claim')
+            setClaimOpen(true)
+          }}
+          className="join-cta-glow-active relative w-full overflow-hidden rounded-xl px-4 py-3.5 text-sm font-semibold shadow-lg transition-opacity hover:opacity-90"
+          style={{
+            backgroundColor: accent,
+            color: accentText,
+            boxShadow: `0 10px 30px -12px ${accent}`,
+          }}
         >
-          <div>
-            <h2 className="text-lg font-semibold text-zinc-100">
-              {joiningWaitlist ? 'Join the waitlist' : 'Save your spot'}
-            </h2>
-            <p className="mt-0.5 text-sm text-zinc-400">
-              {joiningWaitlist
-                ? `This session is full. Pay ${priceLabel} per person to join the waitlist.`
-                : spotsLeft != null && spotsLeft <= 5
-                  ? `Only ${spotsLeft} spot${spotsLeft === 1 ? '' : 's'} left. Add your name — ${priceLabel} per person.`
-                  : `Add your name so everyone knows you’re coming. ${priceLabel} per person.`}
-            </p>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <label className="block">
-              <span className="text-xs text-zinc-500">First name</span>
-              <input
-                name="first_name"
-                required
-                autoComplete="given-name"
-                value={firstName}
-                onChange={(event) => setFirstName(event.target.value)}
-                className={inputClass}
-                style={{ '--tw-ring-color': accent } as React.CSSProperties}
-              />
-            </label>
-            <label className="block">
-              <span className="text-xs text-zinc-500">Last name</span>
-              <input
-                name="last_name"
-                required
-                autoComplete="family-name"
-                value={lastName}
-                onChange={(event) => setLastName(event.target.value)}
-                className={inputClass}
-                style={{ '--tw-ring-color': accent } as React.CSSProperties}
-              />
-            </label>
-          </div>
-
-          <label className="block">
-            <PhoneNumberWhy />
-            <PhoneInput
-              value={phone}
-              onChange={setPhone}
-              className={inputClass}
-              style={{ '--tw-ring-color': accent } as React.CSSProperties}
-            />
-          </label>
-
-          {guestsEnabled ? (
-            <GuestCountField
-              value={guestCount}
-              onChange={setGuestCount}
-              accent={accent}
-            />
-          ) : null}
-
-          {formError ? <p className="text-sm text-red-300">{formError}</p> : null}
-
-          <button
-            type="submit"
-            className="join-cta-glow-active relative w-full overflow-hidden rounded-xl px-4 py-3.5 text-sm font-semibold shadow-lg transition-opacity hover:opacity-90"
-            style={{
-              backgroundColor: accent,
-              color: accentText,
-              boxShadow: `0 10px 30px -12px ${accent}`,
-            }}
-          >
-            <span className="relative z-10">{`Continue · ${totalLabel}`}</span>
-          </button>
-        </form>
-
-        <RecoverSession
-          orgSlug={orgSlug}
-          eventId={eventId}
-          accent={accent}
-          onRecovered={() => onSessionRecovered?.()}
-        />
+          <span className="relative z-10">
+            {joiningWaitlist ? `Join waitlist · ${totalLabel}` : `Continue · ${totalLabel}`}
+          </span>
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            setClaimMode('recover')
+            setClaimOpen(true)
+          }}
+          className="text-xs text-zinc-400 underline underline-offset-2 hover:text-zinc-300"
+        >
+          Already verified? Sign in with email
+        </button>
       </div>
-
-      {sheet}
-
+      <ParticipantEmailClaimSheet
+        open={claimOpen}
+        onClose={() => setClaimOpen(false)}
+        orgSlug={orgSlug}
+        accent={accent}
+        accentText={accentText}
+        mode={claimMode}
+        onVerified={() => void afterVerified()}
+      />
       <GroupRulesSheet
         open={rulesSheetOpen}
-        onClose={() => {
-          setRulesSheetOpen(false)
-          setPendingOpenSheet(false)
-        }}
+        onClose={() => setRulesSheetOpen(false)}
         orgSlug={orgSlug}
         rulesText={groupRulesText ?? ''}
         rulesVersion={groupRulesVersion ?? 0}
-        phone={phone}
         accent={accent}
         accentText={accentText}
         onAccepted={() => {
@@ -485,6 +250,7 @@ function PaidJoinSection({
           }
         }}
       />
+      {sheet}
     </>
   )
 }
@@ -507,6 +273,9 @@ export function JoinSection(props: Props) {
   const [forcedPriceCents, setForcedPriceCents] = useState<number | null>(null)
   const [capturedProfile, setCapturedProfile] = useState<KnownParticipantProfile | null>(null)
   const [paymentCancelled, setPaymentCancelled] = useState(false)
+  const [claimSheetOpen, setClaimSheetOpen] = useState(false)
+  const [claimMode, setClaimMode] = useState<'claim' | 'recover' | 'upgrade'>('claim')
+  const [upgradePromptDismissed, setUpgradePromptDismissed] = useState(false)
 
   // One-shot cancel banner: show once, then strip paid/session_id so date chips
   // (which preserve other query params) don't keep resurfacing it.
@@ -642,73 +411,64 @@ export function JoinSection(props: Props) {
   const joiningWaitlist = props.isFull && props.waitlistEnabled
   const guestsEnabled = props.guestsEnabled !== false
   const isNewUserJoinPath = !props.participant || optedOutOfReturningSession
+  const needsEmailUpgrade =
+    Boolean(props.participant) &&
+    !optedOutOfReturningSession &&
+    !props.participant?.email_verified_at &&
+    !upgradePromptDismissed
 
-  async function phoneNeedsGroupRulesAcceptance(phone: string): Promise<boolean> {
+  async function sessionNeedsGroupRulesAcceptance(): Promise<boolean> {
     if (!props.groupRulesEnabled || !props.groupRulesText || (props.groupRulesVersion ?? 0) <= 0) {
       return false
     }
     if (rulesAcceptedLocally) {
       return false
     }
-    const status = await getGroupRulesJoinStatus(props.orgSlug, phone)
+    const status = await getGroupRulesJoinStatus(props.orgSlug)
     return status.needs_acceptance === true
   }
 
-  async function handleNewUserJoin(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
+  async function runSessionJoin(guests: number) {
     if (!motion?.runSignupCelebration) return
-
-    const form = event.currentTarget
-    const formData = new FormData(form)
-    const phone = String(formData.get('phone') ?? '')
-    const firstName = String(formData.get('first_name') ?? '').trim()
-    const lastName = String(formData.get('last_name') ?? '').trim()
-
-    if (!isValidPhoneDigits(phone)) {
-      setError('Enter a valid phone number.')
+    setLoading(true)
+    setError(null)
+    const result = await motion.runSignupCelebration(
+      () => joinEventWithSession(props.orgSlug, props.eventId, guests),
+      props.accent,
+      { guestCount: guests },
+    )
+    setLoading(false)
+    if (!result.error) {
+      markReturningSignupPromptSeen(props.orgSlug, props.eventId)
+      startTransition(() => {
+        router.refresh()
+      })
       return
     }
-
-    const runJoin = async () => {
-      setLoading(true)
-      setError(null)
-      const rawGuests = Number.parseInt(String(formData.get('guest_count') ?? '0'), 10)
-      const guests = guestsEnabled ? clampGuestCount(rawGuests) : 0
-      const result = await motion.runSignupCelebration(
-        () => joinEvent(props.orgSlug, props.eventId, formData),
-        props.accent,
-        { guestCount: guests },
-      )
-      setLoading(false)
-      if (!result.error) {
-        markReturningSignupPromptSeen(props.orgSlug, props.eventId)
-        startTransition(() => {
-          router.refresh()
-        })
-      } else if (
-        result.code === 'payment_required' ||
-        result.error.toLowerCase().includes('requires payment')
-      ) {
-        setCapturedProfile({ firstName, lastName, phone })
-        switchToPaidJoin(result.priceCents)
-      } else if (
-        isNewUserJoinPath &&
-        result.error.includes('group rules') &&
-        !rulesSheetOpen
-      ) {
-        openRulesGate(phone, runJoin)
-        return
-      } else {
-        setError(result.error)
-      }
-    }
-
-    if (isNewUserJoinPath && (await phoneNeedsGroupRulesAcceptance(phone))) {
-      openRulesGate(phone, runJoin)
+    if (
+      result.code === 'payment_required' ||
+      result.error.toLowerCase().includes('requires payment')
+    ) {
+      switchToPaidJoin(result.priceCents)
       return
     }
+    setError(result.error)
+  }
 
-    await runJoin()
+  async function handleClaimVerified() {
+    setClaimSheetOpen(false)
+    setOptedOutOfReturningSession(false)
+    const guests = guestsEnabled ? clampGuestCount(guestCount) : 0
+
+    const finish = async () => {
+      await runSessionJoin(guests)
+    }
+
+    if (await sessionNeedsGroupRulesAcceptance()) {
+      openRulesGate(null, finish)
+      return
+    }
+    await finish()
   }
 
   if (props.participant && !optedOutOfReturningSession) {
@@ -727,6 +487,34 @@ export function JoinSection(props: Props) {
           </p>
         </div>
 
+        {needsEmailUpgrade ? (
+          <div className="rounded-xl border border-white/10 bg-zinc-950/50 px-3 py-3">
+            <p className="text-sm text-zinc-300">
+              Add a verified email so you can sign back in on any device.
+            </p>
+            <div className="mt-2 flex flex-wrap gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setClaimMode('upgrade')
+                  setClaimSheetOpen(true)
+                }}
+                className="text-xs font-medium underline underline-offset-2"
+                style={{ color: props.accent }}
+              >
+                Verify email
+              </button>
+              <button
+                type="button"
+                onClick={() => setUpgradePromptDismissed(true)}
+                className="text-xs text-zinc-600 hover:text-zinc-400"
+              >
+                Not now
+              </button>
+            </div>
+          </div>
+        ) : null}
+
         {guestsEnabled ? (
           <GuestCountField
             value={guestCount}
@@ -739,30 +527,8 @@ export function JoinSection(props: Props) {
           type="button"
           disabled={loading}
           onClick={async () => {
-            if (!motion?.runSignupCelebration) return
-
             const runQuickJoin = async () => {
-              setLoading(true)
-              setError(null)
-              const result = await motion.runSignupCelebration(
-                () => quickJoinEvent(props.orgSlug, props.eventId, guestCount),
-                props.accent,
-                { guestCount },
-              )
-              setLoading(false)
-              if (!result.error) {
-                markReturningSignupPromptSeen(props.orgSlug, props.eventId)
-                startTransition(() => {
-                  router.refresh()
-                })
-              } else if (
-                result.code === 'payment_required' ||
-                result.error.toLowerCase().includes('requires payment')
-              ) {
-                switchToPaidJoin(result.priceCents)
-              } else {
-                setError(result.error)
-              }
+              await runSessionJoin(guestCount)
             }
 
             if (requiresGroupRules) {
@@ -783,17 +549,6 @@ export function JoinSection(props: Props) {
             {loading ? 'Counting you in…' : joiningWaitlist ? 'Join waitlist' : `Count me in ${arrowRight}`}
           </span>
         </button>
-        {/* TODO: restore "Not you?" to clear soft session from welcome-back quick join
-        <div className="text-right">
-          <button
-            type="button"
-            onClick={() => void handleNotYou()}
-            className="text-xs text-zinc-600 transition-colors hover:text-zinc-500"
-          >
-            Not you?
-          </button>
-        </div>
-        */}
         {error ? <p className="text-sm text-red-300">{error}</p> : null}
       </div>
     )
@@ -835,6 +590,25 @@ export function JoinSection(props: Props) {
             accentText={props.accentText}
             onAccepted={() => void completeRulesAcceptance()}
           />
+          <ParticipantEmailClaimSheet
+            open={claimSheetOpen}
+            onClose={() => setClaimSheetOpen(false)}
+            orgSlug={props.orgSlug}
+            accent={props.accent}
+            accentText={props.accentText}
+            mode={claimMode}
+            bindParticipantId={
+              claimMode === 'upgrade' ? props.participant.participant_id ?? null : null
+            }
+            initialFirstName={props.participant.first_name}
+            initialLastName={props.participant.last_name}
+            initialEmail={props.participant.email ?? ''}
+            onVerified={async () => {
+              setClaimSheetOpen(false)
+              setUpgradePromptDismissed(true)
+              startTransition(() => router.refresh())
+            }}
+          />
         </>
       )
     }
@@ -856,110 +630,108 @@ export function JoinSection(props: Props) {
           accentText={props.accentText}
           onAccepted={() => void completeRulesAcceptance()}
         />
+        <ParticipantEmailClaimSheet
+          open={claimSheetOpen}
+          onClose={() => setClaimSheetOpen(false)}
+          orgSlug={props.orgSlug}
+          accent={props.accent}
+          accentText={props.accentText}
+          mode={claimMode}
+          bindParticipantId={
+            claimMode === 'upgrade' ? props.participant.participant_id ?? null : null
+          }
+          initialFirstName={props.participant.first_name}
+          initialLastName={props.participant.last_name}
+          initialEmail={props.participant.email ?? ''}
+          onVerified={async () => {
+            setClaimSheetOpen(false)
+            setUpgradePromptDismissed(true)
+            startTransition(() => router.refresh())
+          }}
+        />
       </>
     )
   }
 
   return (
     <>
-    <div className="space-y-4">
-      <form
-        onSubmit={(event) => void handleNewUserJoin(event)}
-        className="space-y-4"
-      >
-      <div>
-        <h2 className="text-lg font-semibold text-zinc-100">
-          {joiningWaitlist ? 'Join the waitlist' : 'Save your spot'}
-        </h2>
-        <p className="mt-0.5 text-sm text-zinc-400">
-          {joiningWaitlist
-            ? 'This session is full. You’ll be added in signup order and promoted automatically if a spot opens.'
-            : props.spotsLeft != null && props.spotsLeft <= 5
-              ? `Only ${props.spotsLeft} spot${props.spotsLeft === 1 ? '' : 's'} left. Add your name — you only have to do this once.`
-              : 'Add your name so everyone knows you\u2019re coming. You only have to do this once.'}
-        </p>
+      <div className="space-y-4">
+        <div>
+          <h2 className="text-lg font-semibold text-zinc-100">
+            {joiningWaitlist ? 'Join the waitlist' : 'Save your spot'}
+          </h2>
+          <p className="mt-0.5 text-sm text-zinc-400">
+            {joiningWaitlist
+              ? 'This session is full. You’ll be added in signup order and promoted automatically if a spot opens.'
+              : props.spotsLeft != null && props.spotsLeft <= 5
+                ? `Only ${props.spotsLeft} spot${props.spotsLeft === 1 ? '' : 's'} left. Verify your email once — then you’re set on this device.`
+                : 'Verify your email once so you can manage sign-ups on any device.'}
+          </p>
+        </div>
+
+        {guestsEnabled ? (
+          <GuestCountField value={guestCount} onChange={setGuestCount} accent={props.accent} />
+        ) : null}
+
+        {error ? <p className="text-sm text-red-300">{error}</p> : null}
+
+        <button
+          type="button"
+          disabled={loading}
+          onClick={() => {
+            setClaimMode('claim')
+            setClaimSheetOpen(true)
+          }}
+          className="join-cta-glow-active relative w-full overflow-hidden rounded-xl px-4 py-3.5 text-sm font-semibold shadow-lg transition-opacity hover:opacity-90 disabled:opacity-50"
+          style={{
+            backgroundColor: props.accent,
+            color: props.accentText,
+            boxShadow: `0 10px 30px -12px ${props.accent}`,
+          }}
+        >
+          <span className="relative z-10">
+            {joiningWaitlist ? 'Join waitlist' : `Count me in ${arrowRight}`}
+          </span>
+        </button>
+
+        <div className="border-t border-white/5 pt-4">
+          <button
+            type="button"
+            onClick={() => {
+              setClaimMode('recover')
+              setClaimSheetOpen(true)
+            }}
+            className="text-xs text-zinc-400 underline underline-offset-2 transition-colors hover:text-zinc-300"
+          >
+            Already signed up? Sign in with email
+          </button>
+        </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
-        <label className="block">
-          <span className="text-xs text-zinc-500">First name</span>
-          <input
-            name="first_name"
-            required
-            autoComplete="given-name"
-            className={inputClass}
-            style={{ '--tw-ring-color': props.accent } as React.CSSProperties}
-          />
-        </label>
-        <label className="block">
-          <span className="text-xs text-zinc-500">Last name</span>
-          <input
-            name="last_name"
-            required
-            autoComplete="family-name"
-            className={inputClass}
-            style={{ '--tw-ring-color': props.accent } as React.CSSProperties}
-          />
-        </label>
-      </div>
-
-      <label className="block">
-        <PhoneNumberWhy />
-        <PhoneInput
-          className={inputClass}
-          style={{ '--tw-ring-color': props.accent } as React.CSSProperties}
-        />
-      </label>
-
-      {guestsEnabled ? (
-        <GuestCountField name="guest_count" defaultValue={0} accent={props.accent} />
-      ) : (
-        <input type="hidden" name="guest_count" value={0} />
-      )}
-
-      {error ? <p className="text-sm text-red-300">{error}</p> : null}
-
-      <button
-        type="submit"
-        disabled={loading}
-        className="join-cta-glow-active relative w-full overflow-hidden rounded-xl px-4 py-3.5 text-sm font-semibold shadow-lg transition-opacity hover:opacity-90 disabled:opacity-50"
-        style={{
-          backgroundColor: props.accent,
-          color: props.accentText,
-          boxShadow: `0 10px 30px -12px ${props.accent}`,
-        }}
-      >
-        <span className="relative z-10">
-          {loading ? 'Counting you in…' : joiningWaitlist ? 'Join waitlist' : `Count me in ${arrowRight}`}
-        </span>
-      </button>
-      </form>
-
-      <RecoverSession
+      <ParticipantEmailClaimSheet
+        open={claimSheetOpen}
+        onClose={() => setClaimSheetOpen(false)}
         orgSlug={props.orgSlug}
-        eventId={props.eventId}
         accent={props.accent}
-        onRecovered={() => {
-          setOptedOutOfReturningSession(false)
-          motion?.reopenJoinPanel()
-        }}
+        accentText={props.accentText}
+        mode={claimMode}
+        onVerified={() => void handleClaimVerified()}
       />
-    </div>
 
-    <GroupRulesSheet
-      open={rulesSheetOpen}
-      onClose={() => {
-        setRulesSheetOpen(false)
-        setPendingJoin(null)
-      }}
-      orgSlug={props.orgSlug}
-      rulesText={props.groupRulesText ?? ''}
-      rulesVersion={props.groupRulesVersion ?? 0}
-      phone={rulesPhone}
-      accent={props.accent}
-      accentText={props.accentText}
-      onAccepted={() => void completeRulesAcceptance()}
-    />
+      <GroupRulesSheet
+        open={rulesSheetOpen}
+        onClose={() => {
+          setRulesSheetOpen(false)
+          setPendingJoin(null)
+        }}
+        orgSlug={props.orgSlug}
+        rulesText={props.groupRulesText ?? ''}
+        rulesVersion={props.groupRulesVersion ?? 0}
+        phone={rulesPhone}
+        accent={props.accent}
+        accentText={props.accentText}
+        onAccepted={() => void completeRulesAcceptance()}
+      />
     </>
   )
 }

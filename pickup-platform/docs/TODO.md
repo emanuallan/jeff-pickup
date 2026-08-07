@@ -35,7 +35,8 @@ Track deferred work and known simplifications. Prefer shipping simple, refine la
 - [x] Organizer roster with contact info (`/console/[orgSlug]/events/[eventId]`)
 - [ ] Run migration `004_participants_signups.sql` on Supabase
 - [ ] Run migration `099_participant_id_identity.sql` on Supabase
-- [ ] Participant email OTP claim (unstash WIP; claim-on-id, not parallel identity)
+- [x] Participant email OTP claim (migration `100_participant_email_otp_claim.sql`)
+- [ ] Run migration `100_participant_email_otp_claim.sql` on Supabase
 - [ ] OTP scaffold UI seam when `org.require_phone_verification` (dormant — no SMS)
 
 ## Phase 3 — Polish + self-serve onboarding

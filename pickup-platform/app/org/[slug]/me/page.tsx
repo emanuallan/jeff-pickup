@@ -126,12 +126,13 @@ export default async function OrgMePage({ params }: Props) {
           Profile
         </h2>
         <p className="mt-1 text-sm text-zinc-500">
-          How you show up in this group. Phone stays tied to your history.
+          How you show up in this group. Verified email is how you sign back in.
         </p>
         <div className="mt-4 rounded-2xl border border-zinc-800 bg-zinc-900/30 p-4 sm:p-5">
           <MeProfileForm
             slug={slug}
             accent={accent}
+            emailVerified={Boolean(participant.email_verified_at)}
             initial={{
               firstName: participant.first_name,
               lastName: participant.last_name,
@@ -149,7 +150,7 @@ export default async function OrgMePage({ params }: Props) {
         </h2>
         <MeSignOutButton accent={accent} />
         <p className="mt-4 text-center text-xs text-zinc-600" style={{ color: `${accentSoft}99` }}>
-          You&apos;ll need your phone number again next time you join.
+          You&apos;ll need your verified email next time you join on a new device.
         </p>
       </section>
     </div>
