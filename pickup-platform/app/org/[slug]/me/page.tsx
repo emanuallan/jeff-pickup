@@ -137,7 +137,7 @@ export default async function OrgMePage({ params }: Props) {
               lastName: participant.last_name,
               displayName: participant.display_name,
               email: participant.email ?? '',
-              phone: participant.phone,
+              phone: participant.phone ?? '',
             }}
           />
         </div>

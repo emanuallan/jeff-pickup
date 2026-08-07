@@ -25,7 +25,7 @@ Track deferred work and known simplifications. Prefer shipping simple, refine la
 
 ## Phase 2 — Participant identity + roster
 
-- [x] `participants` table (phone-keyed per org)
+- [x] `participants` table (`participant_id` durable identity; phone optional contact after migration 099)
 - [x] Device session token (httpOnly cookie `hc_session`)
 - [x] Frictionless join / unregister (RPCs + server actions)
 - [x] `signups` table + guest counts
@@ -34,6 +34,8 @@ Track deferred work and known simplifications. Prefer shipping simple, refine la
 - [x] Public event page with roster (`/org/[slug]/events/[eventId]`)
 - [x] Organizer roster with contact info (`/console/[orgSlug]/events/[eventId]`)
 - [ ] Run migration `004_participants_signups.sql` on Supabase
+- [ ] Run migration `099_participant_id_identity.sql` on Supabase
+- [ ] Participant email OTP claim (unstash WIP; claim-on-id, not parallel identity)
 - [ ] OTP scaffold UI seam when `org.require_phone_verification` (dormant — no SMS)
 
 ## Phase 3 — Polish + self-serve onboarding
@@ -68,9 +70,9 @@ Track deferred work and known simplifications. Prefer shipping simple, refine la
 ## Pay-per-session (soft identity)
 
 - [x] **Session fees** — `events.price_cents` + console fee field; Connect Checkout; webhook + return-URL sync; soft `join_event` rejects paid sessions
-- [x] **Soft-session checkout** — no participant email OTP; `prepare_paid_checkout_participant` + nullable `event_payments.user_id` (migration `079_drop_participant_auth_pairing.sql`)
+- [x] **Soft-session checkout** — `prepare_paid_checkout_participant` + nullable `event_payments.user_id` (migration `079_drop_participant_auth_pairing.sql`); identity is `participant_id` (migration 099)
 - [ ] **Credits / wallets / Customer Portal** — deferred
-- ~~Participant email OTP pairing + `/me` linked groups~~ — reverted (soft phone only)
+- [ ] **Participant email OTP claim** — verify email → find/create on same `participant_id` model (stashed WIP)
 
 ## Known simplifications (intentional)
 

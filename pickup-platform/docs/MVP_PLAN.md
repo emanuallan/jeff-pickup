@@ -44,7 +44,7 @@ These were decided up front and drive the rest of the plan:
 | **Stack** | Next.js (App Router) on Vercel + Supabase (Postgres, Auth, RLS) + Vercel Cron. Lighter alternative noted in §11. |
 | **Domain / tenancy** | `organizr.co`; subdomain per org (`<slug>.organizr.co`, e.g. `jeffsoccer.organizr.co`); every tenant-owned row carries `org_id`; isolation enforced by Postgres RLS. |
 | **Activity-agnostic** | No sport-specific logic or copy. Each org sets its own activity; the product speaks in generic terms (session, who's coming, headcount). |
-| **Participant identity** | Phone-as-identity, frictionless. `first_name` + `last_name` + optional `display_name`. Device-bound session token. SMS OTP verification is **scaffolded but dormant** — built into the schema/UI seams, not wired up, until an org actually needs it. |
+| **Participant identity** | `participants.id` is durable identity. Phone is optional contact/lookup (not unique). Device session cookie `hc_session`. SMS OTP dormant. Email OTP claim is next layer on this foundation. |
 | **Organizer onboarding** | Fully self-serve, gated by an `org.status` flag so we can still hand-seed/approve the first orgs. |
 | **Scheduling** | Organizer-defined recurring schedules that auto-materialize event instances on a rolling window; one-off events supported. |
 | **Arrival statuses** | The PoC's free-form emojis are replaced by a fixed, meaningful status set (e.g. "on my way", "running late", "stuck in traffic") shown on the roster. |
@@ -136,14 +136,16 @@ Two distinct actor types, two friction levels.
 
 ### 7.1 Participants
 
-- **Soft identity (all sessions):** phone number, normalized digits. Dedup key per org is
-  `(org_id, phone)`. Join issues a device session cookie (`hc_session` → `participant_sessions`).
+- **Durable identity:** `participants.id` only. Device cookie `hc_session` → `participant_sessions.participant_id`.
+- **Phone:** optional mutable contact; non-unique lookup `(org_id, phone)`. Never `ON CONFLICT` merge of two people.
 - **Profile fields:** `first_name`, `last_name`, optional `display_name` (defaults to `First L.`).
 - **Verification (SMS, dormant):** `phone_verified` + `require_phone_verification` remain scaffolded
-  but unwired. No SMS provider yet.
+  but unwired. No SMS provider.
+- **Email OTP claim (next):** verify email → find/create by email on same `participant_id` model (stashed WIP).
 - **Privacy:** public roster shows `display_name` only. Phone/last name are visible only to org admins.
-- **No participant email OTP / auth pairing.** Email auth is organizers-only. `participants.user_id`
-  remains nullable legacy and is not written by product flows.
+- **Telegram:** `telegram_participant_links` is id-based; RSVP mints sessions via `mint_participant_session`.
+- **Group rules:** keyed by `(org_id, participant_id, rules_version)`.
+- **`participants.user_id`:** nullable legacy; not written by product flows. Organizer↔participant link later.
 
 ### 7.2 Organizers / admins (real auth)
 
@@ -157,7 +159,7 @@ Two distinct actor types, two friction levels.
 
 ### 7.3 Pay-per-session (phase 1 billing)
 
-- `events.price_cents` — null/0 = free; `>0` requires Stripe Connect Checkout (soft phone identity).
+- `events.price_cents` — null/0 = free; `>0` requires Stripe Connect Checkout (soft `participant_id` + session).
 - Money path: soft persona + Checkout on the org’s Connect account + platform `application_fee_amount`;
   webhook (and return-URL sync backup) calls `complete_paid_event_join` → roster seat.
 - Mirror rows in `event_payments` (`user_id` nullable). Soft `join_event` rejects paid sessions.
@@ -225,16 +227,16 @@ events                            -- materialized instance OR one-off
   unique (schedule_id, starts_at)  -- idempotent materialization
 
 participants                      -- a person within an org
-  id              uuid pk
+  id              uuid pk         -- durable identity
   org_id          uuid fk -> orgs
-  phone           text    -- E.164
+  phone           text nullable   -- optional contact / lookup (non-unique index)
   first_name      text
   last_name       text
   display_name    text
   phone_verified  boolean default false  -- dormant; only set once OTP is wired up
-  user_id         uuid    -- optional link to auth.users
+  user_id         uuid    -- optional link to auth.users (unused in product flows)
   created_at      timestamptz
-  unique (org_id, phone)
+  -- no unique (org_id, phone); identity is id + session / future email claim
 
 signups                           -- one participant per event
   id              uuid pk
@@ -407,7 +409,7 @@ after the core loop works.
 
 - **Phase 0 — Foundation:** Next.js app, Supabase project, Tailwind, organizer auth (email OTP), base schema (`orgs`, `org_members`), subdomain (`*.organizr.co`) middleware + reserved slugs, RLS scaffolding.
 - **Phase 1 — Org + events core:** activity-agnostic org profile, locations, schedules, event materializer cron, organizer console to create them, public org page rendering upcoming events.
-- **Phase 2 — Participant identity + roster (the core loop):** phone-keyed participants, device sessions, frictionless join/unregister, guest counts, **arrival statuses** (§9.1), capacity + auto status promotion, announcements. OTP seams present but **dormant** (`require_phone_verification` flag, verify step stubbed, no SMS provider).
+- **Phase 2 — Participant identity + roster (the core loop):** `participant_id` identity, optional phone contact/lookup, device sessions, frictionless join/unregister, guest counts, **arrival statuses** (§9.1), capacity + auto status promotion, announcements. Email OTP claim next; SMS OTP seams dormant.
 - **Phase 3 — Lightweight polish:** weather, i18n (EN/ES), share text, branding, and the end-to-end self-serve org-creation wizard with slug availability UX. Create the Jeff org as the first real tenant.
 - **Phase 4 — Engagement (after fundamentals are solid):** per-org caps + weekly streaks + roster badges, CSV export.
 

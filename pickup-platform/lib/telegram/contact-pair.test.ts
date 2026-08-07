@@ -13,7 +13,11 @@ vi.mock('@/lib/supabase/admin', () => ({
       select: () => ({
         eq: () => ({
           eq: () => ({
-            maybeSingle,
+            order: () => ({
+              limit: () => ({
+                maybeSingle,
+              }),
+            }),
           }),
         }),
       }),

@@ -50,7 +50,7 @@ const ARRIVAL_STATUS_BY_ACTION: Record<TelegramArrivalAction, 'on_my_way' | 'run
 
 type ParticipantRow = {
   id: string
-  phone: string
+  phone: string | null
   first_name: string
   last_name: string
   display_name: string
@@ -137,11 +137,11 @@ async function getParticipant(participantId: string): Promise<ParticipantRow | n
   return data as ParticipantRow
 }
 
-async function mintSessionToken(orgId: string, phone: string): Promise<string> {
+async function mintSessionToken(orgId: string, participantId: string): Promise<string> {
   const admin = createAdminClient()
-  const { data, error } = await admin.rpc('recover_participant_session', {
+  const { data, error } = await admin.rpc('mint_participant_session', {
     p_org_id: orgId,
-    p_phone: phone,
+    p_participant_id: participantId,
   })
 
   if (error) {
@@ -315,7 +315,7 @@ export async function handleTelegramRsvp(opts: {
         }
       }
 
-      const sessionToken = await mintSessionToken(linked.org_id, participant.phone)
+      const sessionToken = await mintSessionToken(linked.org_id, participantId)
       const { error } = await admin.rpc('leave_event', {
         p_signup_id: existing.id,
         p_session_token: sessionToken,
@@ -341,7 +341,7 @@ export async function handleTelegramRsvp(opts: {
     const existing = await getSignupForParticipant(event.id, participantId)
 
     if (existing) {
-      const sessionToken = await mintSessionToken(linked.org_id, participant.phone)
+      const sessionToken = await mintSessionToken(linked.org_id, participantId)
       const { error } = await admin.rpc('update_arrival_status', {
         p_signup_id: existing.id,
         p_session_token: sessionToken,
@@ -374,6 +374,14 @@ export async function handleTelegramRsvp(opts: {
           isOnline: event.location_is_online,
           guestCount: applyGuestCount ? guestCount : null,
         }),
+      }
+    }
+
+    if (!participant.phone) {
+      return {
+        ok: false,
+        message:
+          'Add a phone number on the group website (/me), then try /in again.',
       }
     }
 
@@ -491,7 +499,7 @@ export async function handleTelegramArrivalStatus(opts: {
 
   try {
     const admin = createAdminClient()
-    const sessionToken = await mintSessionToken(linked.org_id, participant.phone)
+    const sessionToken = await mintSessionToken(linked.org_id, participantId)
     const { error } = await admin.rpc('update_arrival_status', {
       p_signup_id: existing.id,
       p_session_token: sessionToken,
@@ -596,6 +604,14 @@ export async function handleTelegramJoinTeam(opts: {
         return { ok: false, message: formatPaidSessionMessage(eventUrl) }
       }
 
+      if (!participant.phone) {
+        return {
+          ok: false,
+          message:
+            'Add a phone number on the group website (/me), then try again.',
+        }
+      }
+
       const { data, error } = await admin.rpc('join_event', {
         p_event_id: event.id,
         p_phone: participant.phone,
@@ -641,7 +657,7 @@ export async function handleTelegramJoinTeam(opts: {
       }
     }
 
-    const sessionToken = await mintSessionToken(linked.org_id, participant.phone)
+    const sessionToken = await mintSessionToken(linked.org_id, participantId)
     const { error: teamError } = await admin.rpc('update_signup_team', {
       p_signup_id: existing.id,
       p_session_token: sessionToken,

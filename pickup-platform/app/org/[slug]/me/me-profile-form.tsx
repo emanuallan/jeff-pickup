@@ -3,8 +3,9 @@
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { updateParticipantProfile } from '@/lib/participant-session-client'
-import { formatPhoneDisplay } from '@/lib/phone'
+import { PhoneInput } from '@/app/_components/phone-input'
 import { accentOnDark } from '@/lib/colors'
+import { isValidPhoneDigits } from '@/lib/phone'
 
 type Props = {
   slug: string
@@ -21,9 +22,6 @@ type Props = {
 const inputClass =
   'mt-1 w-full rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2.5 text-base outline-none transition-colors focus:border-transparent focus:ring-2 sm:text-sm'
 
-const readOnlyClass =
-  'mt-1 w-full rounded-xl border border-zinc-800 bg-zinc-900/40 px-3 py-2.5 text-base text-zinc-400 sm:text-sm'
-
 export function MeProfileForm({ slug, accent, initial }: Props) {
   const router = useRouter()
   const [pending, startTransition] = useTransition()
@@ -31,16 +29,21 @@ export function MeProfileForm({ slug, accent, initial }: Props) {
   const [lastName, setLastName] = useState(initial.lastName)
   const [displayName, setDisplayName] = useState(initial.displayName)
   const [email, setEmail] = useState(initial.email)
+  const [phone, setPhone] = useState(initial.phone || '')
   const [error, setError] = useState<string | null>(null)
   const [saved, setSaved] = useState(false)
 
   const accentSoft = accentOnDark(accent)
-  const phoneDisplay = formatPhoneDisplay(initial.phone) || initial.phone
 
   async function onSubmit(event: React.FormEvent) {
     event.preventDefault()
     setError(null)
     setSaved(false)
+
+    if (phone.length > 0 && !isValidPhoneDigits(phone)) {
+      setError('Enter a valid phone number, or leave it blank.')
+      return
+    }
 
     const result = await updateParticipantProfile({
       slug,
@@ -48,6 +51,7 @@ export function MeProfileForm({ slug, accent, initial }: Props) {
       lastName: lastName.trim(),
       displayName: displayName.trim() || null,
       email: email.trim() || null,
+      phone: phone.length > 0 ? phone : '',
     })
 
     if ('error' in result) {
@@ -119,17 +123,15 @@ export function MeProfileForm({ slug, accent, initial }: Props) {
 
       <label className="block">
         <span className="text-xs text-zinc-500">Phone</span>
-        <input
-          type="text"
-          name="phone"
-          readOnly
-          value={phoneDisplay}
-          className={readOnlyClass}
-          aria-describedby="me-phone-hint"
+        <PhoneInput
+          value={phone}
+          onChange={setPhone}
+          required={false}
+          className={inputClass}
+          style={{ '--tw-ring-color': accent } as React.CSSProperties}
         />
-        {/* TODO: same-participant_id phone correction (reject if number already taken in org; no merge). */}
-        <p id="me-phone-hint" className="mt-1.5 text-xs leading-relaxed text-zinc-500">
-          Your phone identifies you in this group. Changing it isn&apos;t available yet.
+        <p className="mt-1.5 text-xs leading-relaxed text-zinc-500">
+          Optional contact for organizers. You can update or clear it anytime.
         </p>
       </label>
 

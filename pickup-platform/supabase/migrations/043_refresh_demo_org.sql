@@ -4,6 +4,12 @@
 --
 -- Console access: grants owner to emanuallan@gmail.com when that auth user exists.
 
+-- 044 formally adds these columns; fresh resets hit 043 first and need them present.
+alter table public.events
+  add column if not exists additional_information text not null default '';
+alter table public.schedules
+  add column if not exists additional_information text not null default '';
+
 do $$
 declare
   v_operator_id constant uuid := '23f1a201-aafe-4fd6-826d-3f753f092d33';

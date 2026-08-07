@@ -120,6 +120,11 @@ describe('phone', () => {
     it('returns empty string for empty input', () => {
       expect(formatPhoneDisplay('')).toBe('')
     })
+
+    it('returns empty string for null or undefined contact', () => {
+      expect(formatPhoneDisplay(null)).toBe('')
+      expect(formatPhoneDisplay(undefined)).toBe('')
+    })
   })
 
   describe('formatNationalInput', () => {

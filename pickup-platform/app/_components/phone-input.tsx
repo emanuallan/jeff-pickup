@@ -23,6 +23,8 @@ type Props = {
   /** Full E.164 digits without '+'. */
   value?: string
   onChange?: (e164: string) => void
+  /** When false, national input is not HTML-required (optional contact). Default true. */
+  required?: boolean
 }
 
 /** Extra pixels for the native select dropdown affordance. */
@@ -75,7 +77,14 @@ export function splitPhoneFieldClasses(baseClass?: string) {
   return { wrapper, national, select }
 }
 
-export function PhoneInput({ className, selectClassName, style, value, onChange }: Props) {
+export function PhoneInput({
+  className,
+  selectClassName,
+  style,
+  value,
+  onChange,
+  required = true,
+}: Props) {
   const [internalCountry, setInternalCountry] = useState<PhoneCountry>(DEFAULT_PHONE_COUNTRY)
   const [internalNational, setInternalNational] = useState('')
   const editSelectionRef = useRef<number | null>(null)
@@ -84,9 +93,11 @@ export function PhoneInput({ className, selectClassName, style, value, onChange 
   const [selectWidthPx, setSelectWidthPx] = useState<number | null>(null)
   const isControlled = value !== undefined
 
-  const parsedControlled = isControlled ? parseStoredPhone(value) : null
-  const country = isControlled ? parsedControlled!.country : internalCountry
-  const national = isControlled ? parsedControlled!.national : internalNational
+  const parsedControlled = isControlled ? parseStoredPhone(value || '') : null
+  const country = isControlled
+    ? (parsedControlled?.country ?? DEFAULT_PHONE_COUNTRY)
+    : internalCountry
+  const national = isControlled ? (parsedControlled?.national ?? '') : internalNational
 
   const e164 = normalizePhoneInput(country, national)
   const { wrapper, national: nationalClass, select: selectClass } = splitPhoneFieldClasses(className)
@@ -175,7 +186,7 @@ export function PhoneInput({ className, selectClassName, style, value, onChange 
         type="tel"
         inputMode="tel"
         autoComplete="tel-national"
-        required
+        required={required}
         maxLength={maxNationalDigits(country) + 8}
         value={formatNationalDisplay(country, national)}
         onKeyDown={rememberEditSelection}

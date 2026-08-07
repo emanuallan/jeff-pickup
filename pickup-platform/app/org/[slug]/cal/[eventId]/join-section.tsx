@@ -236,7 +236,7 @@ function PaidJoinSection({
     setLocalProfile(knownProfile)
     setFirstName(knownProfile.firstName)
     setLastName(knownProfile.lastName)
-    setPhone(knownProfile.phone)
+    setPhone(knownProfile.phone ?? '')
   }, [knownProfile])
 
   if (isFull && !waitlistEnabled) {

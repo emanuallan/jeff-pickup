@@ -137,7 +137,10 @@ export function isValidPhoneDigits(e164: string): boolean {
 }
 
 /** Format a stored E.164 value for display (console, roster). */
-export function formatPhoneDisplay(e164: string): string {
+export function formatPhoneDisplay(e164: string | null | undefined): string {
+  if (e164 == null || e164 === '') {
+    return ''
+  }
   const normalized = normalizePhoneDigits(e164)
   if (!normalized) {
     return ''

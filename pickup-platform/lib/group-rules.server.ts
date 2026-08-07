@@ -73,7 +73,7 @@ export async function getGroupRulesAgreementSummary(
     const participant = row.participants as { display_name?: string } | null
     return {
       participant_id: row.participant_id ? String(row.participant_id) : null,
-      phone: String(row.phone),
+      phone: row.phone != null ? String(row.phone) : '',
       display_name: participant?.display_name?.trim() || 'Unknown',
       accepted_at: String(row.accepted_at),
     }

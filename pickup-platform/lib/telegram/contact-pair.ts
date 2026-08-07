@@ -44,7 +44,7 @@ export function resolveTelegramPairNames(opts: {
   return { firstName, lastName }
 }
 
-async function findParticipantIdByOrgPhone(
+export async function findParticipantIdByOrgPhone(
   orgId: string,
   phone: string,
 ): Promise<string | null> {
@@ -54,6 +54,8 @@ async function findParticipantIdByOrgPhone(
     .select('id')
     .eq('org_id', orgId)
     .eq('phone', phone)
+    .order('created_at', { ascending: true })
+    .limit(1)
     .maybeSingle()
 
   if (error) {

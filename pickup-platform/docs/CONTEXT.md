@@ -64,8 +64,10 @@ its own subdomain (e.g. jeffsoccer.organizr.co).
 orgs → org_members (owner/admin) → locations → schedules → events → participants/signups/
 participant_sessions. Events are materialized from recurring schedules into a rolling 30-day window
 by a security-definer RPC (materialize_events) called via the service-role key. Participants are
-phone-keyed per org with device session tokens (httpOnly cookie `hc_session`) for free and paid
-joins. Paid sessions use events.price_cents + event_payments + Connect Checkout (soft persona via
+keyed by `participants.id` (durable identity). Phone is optional mutable contact / lookup only
+(migration 099); soft device sessions use httpOnly cookie `hc_session` → `participant_sessions`.
+Telegram RSVP mints sessions by participant_id. Email OTP claim is a planned follow-up on this
+foundation. Paid sessions use events.price_cents + event_payments + Connect Checkout (soft persona via
 prepare_paid_checkout_participant); soft join_event rejects price_cents > 0. Post-session feedback
 uses participant_notifications + session_feedback (migration 047). Leaderboards (caps +
 weekly streaks) and badges are computed from signups/events.

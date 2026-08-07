@@ -34,7 +34,7 @@ describe('MeProfileForm', () => {
     updateMock.mockResolvedValue({ ok: true })
   })
 
-  it('saves editable fields and keeps phone read-only', async () => {
+  it('saves editable fields including optional phone contact', async () => {
     const user = userEvent.setup()
     render(
       <MeProfileForm
@@ -50,8 +50,7 @@ describe('MeProfileForm', () => {
       />,
     )
 
-    const phone = screen.getByDisplayValue(/202/)
-    expect(phone).toHaveAttribute('readonly')
+    expect(screen.getByRole('textbox', { name: /phone number/i })).not.toBeRequired()
 
     await user.clear(screen.getByLabelText(/first name/i))
     await user.type(screen.getByLabelText(/first name/i), 'Augusta')
@@ -64,6 +63,7 @@ describe('MeProfileForm', () => {
         lastName: 'Lovelace',
         displayName: 'Ada L.',
         email: 'ada@example.com',
+        phone: '12025550101',
       })
     })
     expect(refresh).toHaveBeenCalled()

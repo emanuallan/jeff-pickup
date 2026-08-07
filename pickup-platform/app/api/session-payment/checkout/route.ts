@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { cookies } from 'next/headers'
 import { getPublicOrgBySlug } from '@/lib/public-data'
 import { getEventByRef, canUpdateArrivalStatus, isEventCancelled } from '@/lib/events'
 import { createClient } from '@/lib/supabase/server'
@@ -34,18 +35,35 @@ export async function POST(request: Request) {
   const slug = String(body.slug ?? '').trim()
   const eventRef = String(body.eventId ?? '').trim()
   const guestCountRaw = Number.parseInt(String(body.guestCount ?? '0'), 10)
-  const phone = normalizePhoneDigits(String(body.phone ?? ''))
+  const phoneRaw = String(body.phone ?? '').trim()
+  const phone = phoneRaw ? normalizePhoneDigits(phoneRaw) : ''
   const firstName = String(body.firstName ?? '').trim()
   const lastName = String(body.lastName ?? '').trim()
   const email = normalizeLoginEmail(String(body.email ?? ''))
+  const cookieStore = await cookies()
+  const existingSession = cookieStore.get(SESSION_COOKIE)?.value?.trim() || null
 
   if (!slug || !eventRef) {
     return NextResponse.json({ error: 'Missing session details.' }, { status: 400 })
   }
 
-  if (!isValidPhoneDigits(phone) || !firstName || !lastName) {
+  if (!firstName || !lastName) {
+    return NextResponse.json(
+      { error: 'Enter your name to continue.', code: 'profile_required' },
+      { status: 400 },
+    )
+  }
+
+  if (!existingSession && !isValidPhoneDigits(phone)) {
     return NextResponse.json(
       { error: 'Enter your name and phone to continue.', code: 'profile_required' },
+      { status: 400 },
+    )
+  }
+
+  if (phone && !isValidPhoneDigits(phone)) {
+    return NextResponse.json(
+      { error: 'Enter a valid phone number.', code: 'profile_required' },
       { status: 400 },
     )
   }
@@ -114,10 +132,11 @@ export async function POST(request: Request) {
     'prepare_paid_checkout_participant',
     {
       p_org_id: org.id,
-      p_phone: phone,
+      p_phone: phone || null,
       p_first_name: firstName,
       p_last_name: lastName,
       p_email: email,
+      p_session_token: existingSession,
     },
   )
 

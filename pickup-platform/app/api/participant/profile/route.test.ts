@@ -68,6 +68,41 @@ describe('PATCH /api/participant/profile', () => {
     expect(args).not.toHaveProperty('p_phone')
   })
 
+  it('passes optional phone as contact update on the same participant id', async () => {
+    const response = await PATCH(
+      patchRequest({
+        slug: 'demo',
+        firstName: 'Ada',
+        lastName: 'Lovelace',
+        phone: '+1 (202) 555-0101',
+      }),
+    )
+
+    expect(response.status).toBe(200)
+    expect(rpcMock).toHaveBeenCalledWith(
+      'update_soft_participant_profile',
+      expect.objectContaining({
+        p_phone: '12025550101',
+      }),
+    )
+  })
+
+  it('clears phone contact when phone is empty string', async () => {
+    await PATCH(
+      patchRequest({
+        slug: 'demo',
+        firstName: 'Ada',
+        lastName: 'Lovelace',
+        phone: '',
+      }),
+    )
+
+    expect(rpcMock).toHaveBeenCalledWith(
+      'update_soft_participant_profile',
+      expect.objectContaining({ p_phone: '' }),
+    )
+  })
+
   it('rejects missing session', async () => {
     const response = await PATCH(
       patchRequest(

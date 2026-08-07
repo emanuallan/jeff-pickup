@@ -141,4 +141,10 @@ describe('PhoneInput', () => {
       '18095551234',
     )
   })
+
+  it('allows optional contact when required is false', () => {
+    render(<PhoneInput required={false} />)
+
+    expect(screen.getByRole('textbox', { name: /phone number/i })).not.toBeRequired()
+  })
 })

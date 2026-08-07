@@ -21,11 +21,11 @@ export async function getGroupRulesJoinStatus(
 
   const normalizedPhone = phone ? normalizePhoneDigits(phone) : null
   const hasValidPhone = normalizedPhone != null && isValidPhoneDigits(normalizedPhone)
-  const sessionToken = hasValidPhone ? null : await getSessionToken()
+  const sessionToken = await getSessionToken()
 
   return getGroupRulesStatusForJoin(org.id, {
     sessionToken,
-    phone: hasValidPhone ? normalizedPhone : null,
+    phone: sessionToken || !hasValidPhone ? null : normalizedPhone,
   })
 }
 
@@ -53,15 +53,15 @@ export async function acceptGroupRules(
   const normalizedPhone = phone ? normalizePhoneDigits(phone) : null
   const hasValidPhone = normalizedPhone != null && isValidPhoneDigits(normalizedPhone)
 
-  if (!hasValidPhone && !sessionToken) {
-    return { error: 'Enter a valid phone number before accepting.' }
+  if (!sessionToken && !hasValidPhone) {
+    return { error: 'Sign in from a session or enter a phone number before accepting.' }
   }
 
   const { error } = await supabase.rpc('accept_group_rules', {
     p_org_id: org.id,
     p_rules_version: rulesVersion,
-    p_session_token: hasValidPhone ? null : sessionToken,
-    p_phone: hasValidPhone ? normalizedPhone : null,
+    p_session_token: sessionToken,
+    p_phone: sessionToken ? null : hasValidPhone ? normalizedPhone : null,
   })
 
   if (error) {

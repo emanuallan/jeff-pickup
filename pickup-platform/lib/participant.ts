@@ -10,7 +10,7 @@ export type Participant = {
   first_name: string
   last_name: string
   display_name: string
-  phone: string
+  phone: string | null
   email?: string | null
 }
 

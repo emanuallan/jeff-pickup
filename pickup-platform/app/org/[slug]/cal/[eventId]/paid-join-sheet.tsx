@@ -11,7 +11,8 @@ import { formatPriceCents, sessionPaymentTotalCents } from '@/lib/session-paymen
 export type KnownParticipantProfile = {
   firstName: string
   lastName: string
-  phone: string
+  /** Optional contact; session/id is identity for returning players. */
+  phone: string | null
   email?: string | null
 }
 
@@ -53,7 +54,7 @@ function LockIcon({ className }: { className?: string }) {
 }
 
 /**
- * Confirm + pay for a paid session using soft phone identity.
+ * Confirm + pay for a paid session using soft participant identity (session / id).
  * Collects email only when the soft profile does not already have one
  * (otherwise edit on /me).
  */
@@ -100,12 +101,17 @@ export function PaidJoinSheet({
   const displayEmail = hasStoredEmail ? storedEmail : null
 
   async function startCheckout() {
+    if (!knownProfile.firstName.trim() || !knownProfile.lastName.trim()) {
+      setMessage('Enter your name to continue.')
+      return
+    }
+
     if (
-      !knownProfile.firstName.trim() ||
-      !knownProfile.lastName.trim() ||
+      knownProfile.phone != null &&
+      knownProfile.phone.length > 0 &&
       !isValidPhoneDigits(knownProfile.phone)
     ) {
-      setMessage('Enter your name and phone to continue.')
+      setMessage('Update your phone on /me, then try again.')
       return
     }
 

@@ -28,13 +28,15 @@ export async function saveParticipantProfile(profile: {
   }
 }
 
-/** Update name/display/email for the soft session (does not change phone). */
+/** Update name/display/email/phone for the soft session (phone is optional contact). */
 export async function updateParticipantProfile(profile: {
   slug: string
   firstName: string
   lastName: string
   displayName?: string | null
   email?: string | null
+  /** Omit to leave unchanged; empty string clears. */
+  phone?: string | null
 }): Promise<{ ok: true } | { error: string }> {
   try {
     const response = await fetch('/api/participant/profile', {
