@@ -262,10 +262,7 @@ begin
     where ps.token = p_session_token
       and ps.org_id = p_org_id
       and ps.expires_at > now();
-  end if;
-
-  -- Stale cookie after db reset: fall back to phone lookup.
-  if v_participant_id is null and p_phone is not null then
+  elsif p_phone is not null then
     v_participant_id := public.find_participant_by_org_phone(p_org_id, p_phone);
   end if;
 
@@ -317,10 +314,11 @@ begin
     where ps.token = p_session_token
       and ps.org_id = p_org_id
       and ps.expires_at > now();
-  end if;
 
-  -- Prefer session; if cookie is stale (common after local db reset), use phone.
-  if v_participant_id is null and p_phone is not null then
+    if v_participant_id is null then
+      raise exception 'Session expired — please sign up again';
+    end if;
+  elsif p_phone is not null then
     v_phone := public.normalize_phone(p_phone);
     if v_phone is null or length(v_phone) < 10 then
       raise exception 'Invalid phone number';
@@ -337,12 +335,7 @@ begin
         null
       );
     end if;
-  end if;
-
-  if v_participant_id is null then
-    if p_session_token is not null then
-      raise exception 'Session expired — please sign up again';
-    end if;
+  else
     raise exception 'Phone or session required';
   end if;
 
