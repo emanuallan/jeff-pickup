@@ -23,10 +23,65 @@ Current code in [`pickup-platform/`](../) is **reference only** — port jobs an
 | Paid (later) | **Stripe Connect** (lazy onboarding when enabling paid) |
 | Wallet / name-only join | Later; schema allows nullable `user_id` on signups for guest seats |
 | Bots | Later, same API (Telegram first) |
+| **Platform branding** | Keep **Organizr** (name, domain, logo asset). Centralize in one constants module so name/logo/colors/tagline are trivial to swap. Per-org accent/logo remain tenant branding and are separate. |
 
 ---
 
-## 2. Product north star
+## 2. Platform brand tokens (keep Organizr; make swappable)
+
+Current app already has a thin [`lib/organizr-brand.ts`](../lib/organizr-brand.ts) (`ORGANIZR_LOGO_PATH`, `ORGANIZR_BRAND_COLOR`) but hardcodes the wordmark in UI and splits accents (`#6366f1` in brand file vs `#2563eb` in `globals.css`).
+
+**Rebuild rule:** one module in `packages/core` (e.g. `brand.ts`) consumed by web + mobile:
+
+```ts
+export const BRAND = {
+  name: 'Organizr',
+  nameLegal: 'Organizr',
+  domain: 'organizr.co',
+  tagline: 'Know who’s coming', // or current marketing line
+  logo: {
+    mark: '/brand/organizr-logo.png',       // symbol
+    // wordmarkMark optional if you add a lockup asset later
+  },
+  color: {
+    accent: '#6366f1',      // single source of truth
+    background: '#0a0a0a',
+    foreground: '#fafafa',
+    muted: '#a1a1aa',
+  },
+} as const
+```
+
+- UI never hardcodes `"Organizr"` or hex accents — import `BRAND.name` / `BRAND.color.accent`
+- OG images, emails, Expo splash/icon, and marketing all read the same constants
+- Changing brand later = edit constants + replace assets under `/brand/`
+
+**Tenant branding** (`orgs.branding.logo_url`, `accent_color`) stays orthogonal: platform chrome uses `BRAND`; public group pages use org accent.
+
+### Identity notes (suggestions — not blocking)
+
+Keep **Organizr** for the rewrite unless you deliberately rename. It already owns `organizr.co` and matches “create/run a group.”
+
+If you ever revisit naming, the tension is:
+
+| Direction | Pros | Cons |
+| --- | --- | --- |
+| **Organizr** (current) | Known domain; broad enough for any activity | Generic “organizer” misspelling; weak wedge signal (“headcount”) |
+| **Headcount** (old codename) | Owns the core job: who’s coming | Narrower; rename/domain cost |
+| **Organizr** product + sharper line | Keep brand; sell the job in the tagline | Needs consistent visual + copy |
+
+**Practical recommendation:** stay **Organizr**, but tighten identity in Phase 0/1:
+
+1. **One accent** (pick indigo `#6366f1` *or* blue `#2563eb` — not both).
+2. **One tagline** tied to the wedge (e.g. who’s coming / session headcount), used on marketing + OG.
+3. **Constants module** so a future rename/rebrand is a config + asset change, not a rewrite.
+4. Optional later: slightly more distinctive wordmark/mark (current mark is fine to keep for v1).
+
+No rename in Phases 0–1 unless you explicitly decide otherwise.
+
+---
+
+## 3. Product north star
 
 Make **creating sessions**, **sharing sessions**, and **signing up** as frictionless as possible.
 
@@ -38,9 +93,9 @@ Returning user (app): see all groups + next sessions; admin where roles allow
 
 ---
 
-## 3. What the current app got wrong
+## 4. What the current app got wrong
 
-### 3.1 Product / architecture
+### 4.1 Product / architecture
 
 | Smell | Evidence (current) | Rebuild rule |
 | --- | --- | --- |
@@ -51,7 +106,7 @@ Returning user (app): see all groups + next sessions; admin where roles allow
 | Dishonest routing | `/cal/[eventId]` redirects; UI under `/?cal=` | Honest `/s/[sessionId]` (or equivalent) under tenant host |
 | Feature accretion | Feed, MVP, sponsorships, Telegram while join/console sprawl | Phases 0–1 = create / share / join only |
 
-### 3.2 Data efficiency — Vercel Fluid Active CPU with one org
+### 4.2 Data efficiency — Vercel Fluid Active CPU with one org
 
 The Vercel warning is **Fluid Active CPU** (free tier included hours), not tenant scale. With one org this is **self-inflicted continuous compute**.
 
@@ -72,7 +127,7 @@ Share / OG ───────────► Satori image gen ──► Fluid
 Join/leave ───────────► router.refresh() full tree ──► Fluid CPU
 ```
 
-### 3.3 Live roster — target model
+### 4.3 Live roster — target model
 
 Do **not** port the 20s full-roster poll.
 
@@ -84,7 +139,7 @@ Do **not** port the 20s full-roster poll.
 
 ---
 
-## 4. Target system (Phases 0–1)
+## 5. Target system (Phases 0–1)
 
 ### Monorepo (future private repo)
 
@@ -125,7 +180,7 @@ Write these into `docs/EFFICIENCY.md` when the repo is created:
 
 ---
 
-## 5. Phase 0 — Foundations
+## 6. Phase 0 — Foundations
 
 **Goal:** One account; create/belong to groups; roles work; both clients boot against one API.
 
@@ -137,7 +192,7 @@ Write these into `docs/EFFICIENCY.md` when the repo is created:
 - Next.js: login, minimal marketing shell, auth callback
 - Expo: login, Your groups (empty states), create group
 - Middleware: host → org rewrite only; **no `getUser` on anonymous public routes**
-- `packages/core` types + API client
+- `packages/core` types + API client + **`brand.ts` constants** (Organizr name/logo/colors/tagline); wire web + Expo chrome to it
 - `docs/EFFICIENCY.md` + roadmap stub
 
 **Out:** sessions, join, roster, payments, bots, recurrence
@@ -146,7 +201,7 @@ Write these into `docs/EFFICIENCY.md` when the repo is created:
 
 ---
 
-## 6. Phase 1 — Create / share / join
+## 7. Phase 1 — Create / share / join
 
 **Goal:** Create a session, share a link with preview; stranger joins on web in ~30s without installing the app.
 
@@ -168,7 +223,7 @@ Write these into `docs/EFFICIENCY.md` when the repo is created:
 
 ---
 
-## 7. Full roadmap (later two-phase slices)
+## 8. Full roadmap (later two-phase slices)
 
 | Slice | Phases | Focus |
 | --- | --- | --- |
@@ -180,7 +235,7 @@ Write these into `docs/EFFICIENCY.md` when the repo is created:
 
 ---
 
-## 8. Deliberately do not port
+## 9. Deliberately do not port
 
 - Soft-only `hc_session` per org as product identity
 - `/cal` + query-param shell + legacy redirect matrix
@@ -193,7 +248,7 @@ Write these into `docs/EFFICIENCY.md` when the repo is created:
 
 ---
 
-## 9. When build starts (checklist)
+## 10. When build starts (checklist)
 
 1. Create **private** repo + pnpm/turbo monorepo skeleton  
 2. New Supabase project + Phase 0 migrations  
