@@ -101,29 +101,50 @@ If you ever revisit naming, the tension is:
 
 No rename in Phases 0–1 unless you explicitly decide otherwise.
 
-### Auth — email OTP first, SMS later (toggleable)
+### Auth — OTP long-term model (email first → both with preference)
 
-**Why this fits:** SMS costs money per message; email OTP on Supabase + a free/cheap SMTP provider (Resend/Brevo/SendGrid free tier) is enough while raising capital. Paying users / paid sessions are when SMS (or phone verify) earns its keep.
+**Why this fits:** SMS costs money per message; email OTP on Supabase + a free/cheap SMTP provider (Resend/Brevo/SendGrid free tier) is enough while raising capital. Long-term, users can prefer email or SMS; platform config still gates which channels are enabled (so you can keep SMS off until you can afford it).
 
-**Design**
+**Platform gate + user preference**
 
 ```ts
-// packages/core — platform config (env-driven)
+// packages/core — env-driven platform gate
 export type OtpChannel = 'email' | 'sms'
-export type OtpMode = 'email' | 'sms' | 'both'  // both = user picks, or email default + optional phone
+export type OtpMode = 'email' | 'sms' | 'both'
 
-// v1 default
+// v1: email only (SMS disabled at platform level — $0 SMS)
 export const AUTH_OTP_MODE: OtpMode = 'email'
+
+// later (paying users / capital): AUTH_OTP_MODE = 'both'
+// user.preferred_otp_channel?: 'email' | 'sms'  // remembered preference
 ```
 
-- Supabase Auth supports both; app reads `AUTH_OTP_MODE` (or `NEXT_PUBLIC_AUTH_OTP_MODE`)
-- **v1 UI:** email only — one field, send code, verify
-- **Later:** flip to `sms` or `both` without changing membership/session model
-- Store **both** `email` and `phone` on `users` as nullable; at least one verified identifier required
-- Linking path later: “Add phone” for users who started on email (needed before hard SMS or paid trust)
-- Custom SMTP early if built-in Supabase email rate limits bite (still far cheaper than SMS)
+**Long-term validation flow (same on web + app)**
 
-**Don’t:** build two fully separate auth products. One OTP flow, channel selected by config (+ optional user choice when `both`).
+1. User opens login / join gate → “Continue with email or phone”
+2. Enters **email or phone** (whichever channels `AUTH_OTP_MODE` allows)
+3. App normalizes contact → Supabase `signInWithOtp` on that channel
+4. User enters 6-digit code → `verifyOtp` → session cookie/JWT
+5. Upsert `users` row; mark that channel verified (`email_verified_at` / `phone_verified_at`)
+6. Remember `preferred_otp_channel` for next time (pre-select email vs phone)
+7. Optional: in Settings, “Add email” / “Add phone” to link the other identifier to the **same** user
+
+**Account identity rule:** one `users` row can hold both email and phone. Signing in with either verified channel returns the same account (Supabase Auth user linking / careful identity merge — design for link, avoid duplicate accounts).
+
+**v1 (capital-efficient)**
+- `AUTH_OTP_MODE=email` → UI shows email only
+- Schema already has nullable phone + preference field
+- No SMS provider required yet
+
+**When enabling `both`**
+- Login shows segmented control or two clear options: Email / Phone
+- Default highlight = last used / `preferred_otp_channel` / else email (cheaper default)
+- Join and organizer login use the **same** OTP component
+- Rate-limit both channels; SMS especially
+
+**Paid / trust later (Phases 4–5):** may *require* a verified phone for paid sessions even if login preference is email — that’s a step-up verify, not a second account.
+
+**Don’t:** build two auth products, or force SMS while bootstrapping. One OTP UX; platform enables channels; user picks among enabled ones.
 
 ### Soccer-first public, multi-sport data
 
@@ -273,7 +294,7 @@ Write these into `docs/EFFICIENCY.md` when the repo is created:
 - One-off session create (app-first)
 - Honest public URL, e.g. `https://{slug}.organizr.co/s/{sessionId}` (SSR)
 - OG image route with **CDN cache headers**
-- Web join / leave / roster / headcount (real user; lazy OTP OK)
+- Web join / leave / roster / headcount (real user; email OTP in v1; channel from config)
 - App: create session + join for signed-in members
 - Post-join “Get the app” nudge only after success
 - Live updates: Realtime **or** tiny versioned poll; single client store; optimistic join/leave
