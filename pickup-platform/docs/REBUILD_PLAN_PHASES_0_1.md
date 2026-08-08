@@ -26,6 +26,7 @@ Current code in [`pickup-platform/`](../) is **reference only** — port jobs an
 | **Platform branding** | Keep **Organizr** (name, domain, logo asset). Centralize in one constants module so name/logo/colors/tagline are trivial to swap. Per-org accent/logo remain tenant branding and are separate. |
 | **Platform accent** | **`#615fff`** — single source of truth in `BRAND.color.accent` (web CSS vars + Expo theme). |
 | **UX bar** | **Premium, Robinhood-like** for organized pickup sports: intuitive, simple, clean. Calm dark UI, decisive hierarchy, minimal chrome, purposeful motion — never cluttered “admin dashboard” energy on core flows. |
+| **Auth OTP channel** | **Email OTP first** (cheap/free tiers). Platform config toggles **email \| sms \| both** so SMS can turn on later without a rewrite. Same “enter contact → 6-digit code” UX; only the contact field changes. |
 | **Public positioning** | **Soccer-only** in marketing / apex copy for now (“pickup soccer”, pitches, kick-off). Product data stays multi-sport-ready. |
 | **Group sport type** | Every org has a `sport` (or `activity_type`) enum/text field; **default `soccer`**. Used later for copy, defaults, and features per sport. In-app chrome can stay mostly generic (“session”, “who’s coming”) unless sport-specific UI is intentional. |
 
@@ -33,7 +34,7 @@ Current code in [`pickup-platform/`](../) is **reference only** — port jobs an
 
 ## 2. Platform brand tokens (keep Organizr; make swappable)
 
-Current app already has a thin [`lib/organizr-brand.ts`](../lib/organizr-brand.ts) (`ORGANIZR_LOGO_PATH`, `ORGANIZR_BRAND_COLOR`) but hardcodes the wordmark in UI and splits accents (`#6366f1` in brand file vs `#2563eb` in `globals.css`).
+Current app already has a thin [`lib/organizr-brand.ts`](../lib/organizr-brand.ts) but hardcodes the wordmark in UI and splits accents. Rebuild locks platform accent to **`#615fff`** and puts all brand tokens in one module.
 
 **Rebuild rule:** one module in `packages/core` (e.g. `brand.ts`) consumed by web + mobile:
 
@@ -99,6 +100,30 @@ If you ever revisit naming, the tension is:
 4. Premium UX principles above as the design bar for every flow.
 
 No rename in Phases 0–1 unless you explicitly decide otherwise.
+
+### Auth — email OTP first, SMS later (toggleable)
+
+**Why this fits:** SMS costs money per message; email OTP on Supabase + a free/cheap SMTP provider (Resend/Brevo/SendGrid free tier) is enough while raising capital. Paying users / paid sessions are when SMS (or phone verify) earns its keep.
+
+**Design**
+
+```ts
+// packages/core — platform config (env-driven)
+export type OtpChannel = 'email' | 'sms'
+export type OtpMode = 'email' | 'sms' | 'both'  // both = user picks, or email default + optional phone
+
+// v1 default
+export const AUTH_OTP_MODE: OtpMode = 'email'
+```
+
+- Supabase Auth supports both; app reads `AUTH_OTP_MODE` (or `NEXT_PUBLIC_AUTH_OTP_MODE`)
+- **v1 UI:** email only — one field, send code, verify
+- **Later:** flip to `sms` or `both` without changing membership/session model
+- Store **both** `email` and `phone` on `users` as nullable; at least one verified identifier required
+- Linking path later: “Add phone” for users who started on email (needed before hard SMS or paid trust)
+- Custom SMTP early if built-in Supabase email rate limits bite (still far cheaper than SMS)
+
+**Don’t:** build two fully separate auth products. One OTP flow, channel selected by config (+ optional user choice when `both`).
 
 ### Soccer-first public, multi-sport data
 
@@ -223,11 +248,11 @@ Write these into `docs/EFFICIENCY.md` when the repo is created:
 
 **Build**
 
-- Supabase project + migrations: users / orgs / memberships (`orgs.sport` default `soccer`)
-- Phone OTP auth
+- Supabase project + migrations: users / orgs / memberships (`orgs.sport` default `soccer`; users.email + users.phone nullable)
+- **Email OTP auth** (mode config defaults to `email`; SMS wired as dormant/toggle)
 - Typed API: create org, list my orgs, get org, membership helpers
-- Next.js: login, **soccer-positioned** marketing shell, auth callback
-- Expo: login, Your groups (empty states), create group (sport defaults to soccer; picker optional/hidden)
+- Next.js: login (email OTP), **soccer-positioned** marketing shell, auth callback
+- Expo: login (email OTP), Your groups (empty states), create group (sport defaults to soccer; picker optional/hidden)
 - Middleware: host → org rewrite only; **no `getUser` on anonymous public routes**
 - `packages/core` types + API client + **`brand.ts`** + **`SPORT_TYPES` / `DEFAULT_SPORT`**
 - `docs/EFFICIENCY.md` + roadmap stub
@@ -256,7 +281,7 @@ Write these into `docs/EFFICIENCY.md` when the repo is created:
 
 **Out:** recurrence (2), push/multi-group home polish (3), Connect (4), Telegram (6)
 
-**Exit:** App create location + session → share → OG works → web join → roster updates for open viewers without refresh storms / full-roster polling.
+**Exit:** App create location + session → share → OG works → web join → roster updates for open viewers without refresh storms / full-roster polling. Create / share / join flows pass the premium UX bar (one job per screen, calm hierarchy, purposeful motion, `#615fff` accent only).
 
 ---
 
