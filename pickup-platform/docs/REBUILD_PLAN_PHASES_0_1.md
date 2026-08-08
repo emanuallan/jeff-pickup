@@ -24,6 +24,8 @@ Current code in [`pickup-platform/`](../) is **reference only** — port jobs an
 | Wallet / name-only join | Later; schema allows nullable `user_id` on signups for guest seats |
 | Bots | Later, same API (Telegram first) |
 | **Platform branding** | Keep **Organizr** (name, domain, logo asset). Centralize in one constants module so name/logo/colors/tagline are trivial to swap. Per-org accent/logo remain tenant branding and are separate. |
+| **Public positioning** | **Soccer-only** in marketing / apex copy for now (“pickup soccer”, pitches, kick-off). Product data stays multi-sport-ready. |
+| **Group sport type** | Every org has a `sport` (or `activity_type`) enum/text field; **default `soccer`**. Used later for copy, defaults, and features per sport. In-app chrome can stay mostly generic (“session”, “who’s coming”) unless sport-specific UI is intentional. |
 
 ---
 
@@ -78,6 +80,22 @@ If you ever revisit naming, the tension is:
 4. Optional later: slightly more distinctive wordmark/mark (current mark is fine to keep for v1).
 
 No rename in Phases 0–1 unless you explicitly decide otherwise.
+
+### Soccer-first public, multi-sport data
+
+- **Apex / marketing / OG for the platform:** speak pickup soccer only for now.
+- **Org model:** store sport type from day one so basketball, run club, etc. don’t require a schema rewrite later.
+
+```ts
+// packages/core — extend over time; DB stores the value
+export const SPORT_TYPES = ['soccer', 'basketball', 'volleyball', 'running', 'other'] as const
+export type SportType = (typeof SPORT_TYPES)[number]
+export const DEFAULT_SPORT: SportType = 'soccer'
+```
+
+- `orgs.sport` not null, default `'soccer'`
+- Create-group flow can hide the picker in v1 (always soccer) or show a disabled “more sports soon”
+- Future: sport-aware labels, default session length/capacity, and marketing surfaces per type — without changing tenancy
 
 ---
 
@@ -158,7 +176,7 @@ Tooling: **pnpm workspaces + Turborepo**, TypeScript everywhere.
 ### Core schema (Phase 0)
 
 - `users` — global person (auth id, phone, names)
-- `orgs` — slug, name, activity, branding, status
+- `orgs` — slug, name, **`sport` (default `soccer`)**, optional free-text activity label, branding, status
 - `memberships` — `(user_id, org_id)` + roles; admin can appear on rosters
 - `locations`, `sessions` (one-off in Phase 1; schedules in Phase 2)
 - `signups` — `session_id` + **nullable `user_id`** (guest/name-only later) + display fields, guests, arrival_status
@@ -186,18 +204,18 @@ Write these into `docs/EFFICIENCY.md` when the repo is created:
 
 **Build**
 
-- Supabase project + migrations: users / orgs / memberships
+- Supabase project + migrations: users / orgs / memberships (`orgs.sport` default `soccer`)
 - Phone OTP auth
 - Typed API: create org, list my orgs, get org, membership helpers
-- Next.js: login, minimal marketing shell, auth callback
-- Expo: login, Your groups (empty states), create group
+- Next.js: login, **soccer-positioned** marketing shell, auth callback
+- Expo: login, Your groups (empty states), create group (sport defaults to soccer; picker optional/hidden)
 - Middleware: host → org rewrite only; **no `getUser` on anonymous public routes**
-- `packages/core` types + API client + **`brand.ts` constants** (Organizr name/logo/colors/tagline); wire web + Expo chrome to it
+- `packages/core` types + API client + **`brand.ts`** + **`SPORT_TYPES` / `DEFAULT_SPORT`**
 - `docs/EFFICIENCY.md` + roadmap stub
 
-**Out:** sessions, join, roster, payments, bots, recurrence
+**Out:** sessions, join, roster, payments, bots, recurrence, multi-sport marketing
 
-**Exit:** Sign in on web or app → create a group → see it under Your groups → role = owner.
+**Exit:** Sign in on web or app → create a group (sport=`soccer`) → see it under Your groups → role = owner.
 
 ---
 
