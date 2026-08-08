@@ -20,7 +20,7 @@ Current code in [`pickup-platform/`](../) is **reference only** — port jobs an
 | Identity | One global **user**; per-org **memberships** + roles (`owner` / `admin` / `participant`) |
 | App home | Create groups **and** see all groups you belong to (admin or player) |
 | Participant funnel | Web-first join (no install); app is the upgrade |
-| Paid (later) | **Stripe Connect** (lazy onboarding when enabling paid) |
+| Paid (later) | **Stripe Connect** (lazy onboarding when enabling paid). **Session fees** first; **group membership fees** are a later phase — keep schema/API shaped so memberships can carry billing state without a rewrite. |
 | Wallet / name-only join | Later; schema allows nullable `user_id` on signups for guest seats |
 | Bots | Later, same API (Telegram first) |
 | **Platform branding** | Keep **Organizr** (name, domain, logo asset). Centralize in one constants module so name/logo/colors/tagline are trivial to swap. Per-org accent/logo remain tenant branding and are separate. |
@@ -312,9 +312,24 @@ Write these into `docs/EFFICIENCY.md` when the repo is created:
 | --- | --- | --- |
 | **This plan** | **0–1** | Foundations + create/share/web join |
 | Next | 2–3 | Recurrence + organizer speed; multi-group app + push |
-| Then | 4–5 | Stripe Connect paid sessions; identity hardening |
+| Then | 4–5 | Stripe Connect paid **sessions**; identity hardening |
 | Then | 6–7 | Telegram on same API; wedge polish |
 | Later | 8 | Guest/name-only join, wallet, engagement extras |
+| Later | TBD | **Group membership fees** (recurring or period pass via Connect) — see §8.1 |
+
+### 8.1 Future note — group membership fees (not in Phases 0–1 or 4)
+
+Some groups will charge to **belong** (monthly/season pass), not only per session. Keep this in mind while shaping memberships and Connect — do not build it yet.
+
+**Likely shape (when we get there)**
+
+- `orgs` (or billing settings): membership price, interval (month/season/one-time pass), grace period
+- `memberships`: status beyond role — e.g. `active` | `past_due` | `lapsed` | `comped`; `current_period_end`; Stripe customer/subscription ids on the **Connect** account
+- Gate: free sessions may allow join; member-only sessions or “members RSVP first” read `memberships` billing state
+- Still **Connect** (group is payee); platform fee on membership invoices same as session fees
+- Complements session fees: a group might use membership only, session fees only, or both (members free / non-members pay per session)
+
+**Phase 0–1 implication (minimal):** `memberships` is already the right join table — avoid assuming “member = forever free access” in product copy/API. Roles (`owner`/`admin`/`participant`) stay separate from **billing status** when that ships.
 
 ---
 
