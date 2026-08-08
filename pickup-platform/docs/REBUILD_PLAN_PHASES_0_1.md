@@ -24,6 +24,8 @@ Current code in [`pickup-platform/`](../) is **reference only** — port jobs an
 | Wallet / name-only join | Later; schema allows nullable `user_id` on signups for guest seats |
 | Bots | Later, same API (Telegram first) |
 | **Platform branding** | Keep **Organizr** (name, domain, logo asset). Centralize in one constants module so name/logo/colors/tagline are trivial to swap. Per-org accent/logo remain tenant branding and are separate. |
+| **Platform accent** | **`#615fff`** — single source of truth in `BRAND.color.accent` (web CSS vars + Expo theme). |
+| **UX bar** | **Premium, Robinhood-like** for organized pickup sports: intuitive, simple, clean. Calm dark UI, decisive hierarchy, minimal chrome, purposeful motion — never cluttered “admin dashboard” energy on core flows. |
 | **Public positioning** | **Soccer-only** in marketing / apex copy for now (“pickup soccer”, pitches, kick-off). Product data stays multi-sport-ready. |
 | **Group sport type** | Every org has a `sport` (or `activity_type`) enum/text field; **default `soccer`**. Used later for copy, defaults, and features per sport. In-app chrome can stay mostly generic (“session”, “who’s coming”) unless sport-specific UI is intentional. |
 
@@ -46,7 +48,7 @@ export const BRAND = {
     // wordmarkMark optional if you add a lockup asset later
   },
   color: {
-    accent: '#6366f1',      // single source of truth
+    accent: '#615fff',      // locked platform accent
     background: '#0a0a0a',
     foreground: '#fafafa',
     muted: '#a1a1aa',
@@ -58,7 +60,24 @@ export const BRAND = {
 - OG images, emails, Expo splash/icon, and marketing all read the same constants
 - Changing brand later = edit constants + replace assets under `/brand/`
 
-**Tenant branding** (`orgs.branding.logo_url`, `accent_color`) stays orthogonal: platform chrome uses `BRAND`; public group pages use org accent.
+**Tenant branding** (`orgs.branding.logo_url`, `accent_color`) stays orthogonal: platform chrome uses `BRAND`; public group pages use org accent (fallback to platform `#615fff` when unset).
+
+### UX principles — premium pickup (Robinhood-like)
+
+Borrow the *feel*, not the finance metaphors:
+
+| Principle | In practice |
+| --- | --- |
+| **One job per screen** | Create session, join, roster — no settings kitchen sinks on the happy path |
+| **Decisive hierarchy** | Big next session / headcount / primary CTA; secondary actions quiet |
+| **Clean density** | Prefer whitespace and typography over cards-in-cards, pill clusters, stat strips |
+| **Thumb-first** | Large tap targets; primary action reachable; sheets for short tasks |
+| **Purposeful motion** | 2–3 polished transitions (join confirm, roster enter, tab/page) — no noise |
+| **Instant feedback** | Optimistic join/leave; skeleton only when needed; never full-page thrash |
+| **Trust calm** | Dark zinc base + `#615fff` accent; high contrast type; avoid generic purple-glow SaaS clutter |
+| **Organizer speed** | Create → share in as few steps as possible; advanced options progressive |
+
+**Flow review bar (Phases 0–1):** if a step doesn’t help create, share, or join, cut it or bury it.
 
 ### Identity notes (suggestions — not blocking)
 
@@ -72,12 +91,12 @@ If you ever revisit naming, the tension is:
 | **Headcount** (old codename) | Owns the core job: who’s coming | Narrower; rename/domain cost |
 | **Organizr** product + sharper line | Keep brand; sell the job in the tagline | Needs consistent visual + copy |
 
-**Practical recommendation:** stay **Organizr**, but tighten identity in Phase 0/1:
+**Practical recommendation:** stay **Organizr**, tighten execution in Phase 0/1:
 
-1. **One accent** (pick indigo `#6366f1` *or* blue `#2563eb` — not both).
-2. **One tagline** tied to the wedge (e.g. who’s coming / session headcount), used on marketing + OG.
+1. **Accent locked:** `#615fff` everywhere platform chrome touches.
+2. **One tagline** tied to the wedge (who’s coming / session headcount), used on marketing + OG.
 3. **Constants module** so a future rename/rebrand is a config + asset change, not a rewrite.
-4. Optional later: slightly more distinctive wordmark/mark (current mark is fine to keep for v1).
+4. Premium UX principles above as the design bar for every flow.
 
 No rename in Phases 0–1 unless you explicitly decide otherwise.
 
