@@ -8,7 +8,7 @@ import {
 } from '@/lib/engagement'
 import { orgFeatures } from '@/lib/org-features'
 import { formatEventTime, isEventCancelled, isEventEnded, pickFeaturedUpcomingEvent } from '@/lib/events'
-import { buildOrgMetadata } from '@/lib/og-metadata'
+import { buildOrgMetadata, orgHomeOgImagePath } from '@/lib/og-metadata'
 import {
   orgHomeCanonicalPath,
   orgPublicEventHref,
@@ -93,7 +93,7 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
     return buildOrgMetadata({
       slug,
       path,
-      imagePath: `/cal/${previewEvent.short_id}/og-image`,
+      imagePath: orgHomeOgImagePath(eventRef ? previewEvent.short_id : null),
       title,
       description,
       siteName: org.name,

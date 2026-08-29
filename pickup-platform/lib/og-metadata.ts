@@ -25,6 +25,22 @@ export function clampDescription(text: string, max = 125): string {
   return `${base}…`
 }
 
+/**
+ * OG image for the org home shell.
+ *
+ * The bare home URL (`slug.organizr.co`) must use the stable `/cal/og-image`
+ * card, which always renders the next session. Pinning `og:image` to
+ * `/cal/{eventId}/og-image` makes iMessage/WhatsApp/Facebook keep last week's
+ * session after the featured event rolls over — crawlers cache the HTML, then
+ * keep fetching that event's still-valid image.
+ *
+ * Deep links (`?cal=`) keep the event-specific card.
+ */
+export function orgHomeOgImagePath(eventRef?: string | null): string {
+  if (eventRef) return `/cal/${eventRef}/og-image`
+  return '/cal/og-image'
+}
+
 export function buildRootMetadata(): Metadata {
   const baseUrl = rootBaseUrl()
   const title = 'Organizr — Know who\'s playing'
