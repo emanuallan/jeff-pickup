@@ -38,7 +38,10 @@ type Props = {
 }
 
 export async function SessionPanel({ slug, org, event, eventId }: Props) {
-  const { viewerKey, sessionToken } = await resolvePageViewTrackingKeys()
+  const [{ viewerKey, sessionToken }, livePriceCents] = await Promise.all([
+    resolvePageViewTrackingKeys(),
+    getLiveEventPriceCents(org.id, eventId),
+  ])
 
   after(async () => {
     if (!viewerKey) return
@@ -54,7 +57,6 @@ export async function SessionPanel({ slug, org, event, eventId }: Props) {
   const isLive = isEventInProgress(event) && event.status === 'on'
   const isEnded = isEventEnded(event)
   const accent = org.branding.accent_color
-  const livePriceCents = await getLiveEventPriceCents(org.id, eventId)
   const priceCents = livePriceCents ?? event.price_cents
   const paidSession = isPaidSession(priceCents)
   const teamsOnSession = sessionTeamsEnabled(orgFeatures(org).team_selection, event.team_count)

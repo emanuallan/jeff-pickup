@@ -1,11 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { NextRequest } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
-import {
-  fetchWithDeadline,
-  hasSupabaseAuthCookie,
-  updateSession,
-} from './middleware'
+import { fetchWithDeadline, updateSession } from './middleware'
 
 vi.mock('@supabase/ssr', () => ({
   createServerClient: vi.fn(),
@@ -18,33 +14,6 @@ function requestWithCookies(cookieHeader?: string) {
     headers: cookieHeader ? { cookie: cookieHeader } : {},
   })
 }
-
-describe('hasSupabaseAuthCookie', () => {
-  it('is false when there are no cookies', () => {
-    expect(hasSupabaseAuthCookie([])).toBe(false)
-  })
-
-  it('is false for participant and unrelated cookies', () => {
-    expect(
-      hasSupabaseAuthCookie([
-        { name: 'hc_session' },
-        { name: 'hc_visitor' },
-      ]),
-    ).toBe(false)
-  })
-
-  it('detects the session cookie and chunked shards', () => {
-    expect(hasSupabaseAuthCookie([{ name: 'sb-abcd-auth-token' }])).toBe(true)
-    expect(hasSupabaseAuthCookie([{ name: 'sb-abcd-auth-token.0' }])).toBe(true)
-    expect(hasSupabaseAuthCookie([{ name: 'sb-abcd-auth-token.1' }])).toBe(true)
-  })
-
-  it('ignores the PKCE verifier cookie so a leftover OTP start cannot stall middleware', () => {
-    expect(
-      hasSupabaseAuthCookie([{ name: 'sb-abcd-auth-token-code-verifier' }]),
-    ).toBe(false)
-  })
-})
 
 describe('fetchWithDeadline', () => {
   afterEach(() => {

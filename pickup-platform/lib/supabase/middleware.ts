@@ -1,7 +1,10 @@
 import { createServerClient } from '@supabase/ssr'
 import type { User } from '@supabase/supabase-js'
 import { NextResponse, type NextRequest } from 'next/server'
+import { hasSupabaseAuthCookie } from './auth-cookie'
 import { getSupabaseCookieOptions } from './cookie-options'
+
+export { hasSupabaseAuthCookie, middlewareShouldRefreshSession } from './auth-cookie'
 
 export type SessionUpdate = {
   response: NextResponse
@@ -10,18 +13,6 @@ export type SessionUpdate = {
 
 /** Keep well under Vercel's middleware wall-clock limit (Hobby is 5s). */
 export const SESSION_FETCH_TIMEOUT_MS = 3000
-
-/**
- * True when the request has a Supabase access/refresh cookie that would make
- * `getUser()` hit Auth over the network. PKCE verifier cookies do not count.
- */
-export function hasSupabaseAuthCookie(cookies: { name: string }[]): boolean {
-  return cookies.some((cookie) => {
-    const { name } = cookie
-    if (!name.startsWith('sb-')) return false
-    return /(^|-)auth-token(?:\.\d+)?$/.test(name)
-  })
-}
 
 /** Bind every Auth fetch in this middleware invocation to one shared deadline. */
 export function fetchWithDeadline(deadline: AbortSignal) {

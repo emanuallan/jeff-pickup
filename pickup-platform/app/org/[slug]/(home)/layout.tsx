@@ -3,7 +3,6 @@ import type { ReactNode } from 'react'
 import { notFound } from 'next/navigation'
 import { getPublicOrgBySlug, getPublicUpcomingEventsForOrg, getPublicOrgPastSessionCount } from '@/lib/public-data'
 import { pickFeaturedUpcomingEvent } from '@/lib/events'
-import { getOrgForMember } from '@/lib/orgs'
 import { orgFeatures } from '@/lib/org-features'
 import { isOrgSessionFeedEnabled } from '@/lib/org-session-feed'
 import { getPublicSponsors } from '@/lib/sponsorship.server'
@@ -19,8 +18,10 @@ import {
 import { OrgHeader } from '../_components/org-header'
 import { LinksButton } from '../links-button'
 import { OrgHomeShell } from './_components/org-home-shell'
-import { OrgHomeBottomNav, OrgHomeDesktopNav } from './_components/org-home-bottom-nav'
+import { OrgHomeDesktopNav } from './_components/org-home-bottom-nav'
+import { OrgHomeBottomNavSlot } from './_components/org-home-bottom-nav-slot'
 import { OrgHomeShareButton } from './_components/org-home-share-button'
+import { OrganizerDesktopToolbarSlot } from '../_components/organizer-console-bar'
 import { ParticipantNotificationBellSlot } from '../_components/participant-notification-bell-slot'
 import { ParticipantFeedbackDeepLinkSlot } from '../_components/participant-feedback-deep-link-slot'
 import { ParticipantMeButtonSlot } from '../_components/participant-me-button-slot'
@@ -38,9 +39,8 @@ export default async function OrgHomeLayout({ children, params }: Props) {
     notFound()
   }
 
-  const [events, membership, pastSessionCount, sponsors] = await Promise.all([
+  const [events, pastSessionCount, sponsors] = await Promise.all([
     getPublicUpcomingEventsForOrg(org.id, 20, true),
-    getOrgForMember(slug),
     getPublicOrgPastSessionCount(org.id),
     orgFeatures(org).group_sponsorships ? getPublicSponsors(org.id) : Promise.resolve([]),
   ])
@@ -60,7 +60,6 @@ export default async function OrgHomeLayout({ children, params }: Props) {
     text: buildEventShareText(org.name, event),
   }))
   const defaultEventShortId = featured?.short_id ?? events[0]?.short_id ?? null
-  const isOrganizer = !!membership
   const showSponsorshipCta = orgFeatures(org).group_sponsorships
   const feedEnabled = isOrgSessionFeedEnabled(org)
   const orgLogoUrl = org.branding.logo_url
@@ -68,31 +67,28 @@ export default async function OrgHomeLayout({ children, params }: Props) {
   const showSiteFooter = slug !== 'demo'
 
   return (
-    <OrgHomeShell
+    <>
+      <OrgHomeShell
       slug={slug}
       orgName={org.name}
       accent={accent}
       orgLogoUrl={orgLogoUrl}
       feedEnabled={feedEnabled}
       footerOnly={navItems.length <= 1}
-      isOrganizer={isOrganizer}
       showSiteFooter={showSiteFooter}
       sponsors={sponsors}
       showSponsorshipCta={showSponsorshipCta}
       bottomChrome={
-        <Suspense fallback={null}>
-          <OrgHomeBottomNav
-            items={navItems}
-            accent={accent}
-            basePath={ORG_PUBLIC_NAV_BASE}
-            slug={slug}
-            orgName={org.name}
-            orgLogoUrl={orgLogoUrl}
-            feedEnabled={feedEnabled}
-            sponsors={sponsors}
-            isOrganizer={isOrganizer}
-          />
-        </Suspense>
+        <OrgHomeBottomNavSlot
+          items={navItems}
+          accent={accent}
+          basePath={ORG_PUBLIC_NAV_BASE}
+          slug={slug}
+          orgName={org.name}
+          orgLogoUrl={orgLogoUrl}
+          feedEnabled={feedEnabled}
+          sponsors={sponsors}
+        />
       }
     >
       <div className="md:hidden">
@@ -181,5 +177,7 @@ export default async function OrgHomeLayout({ children, params }: Props) {
         {children}
       </div>
     </OrgHomeShell>
+      <OrganizerDesktopToolbarSlot slug={slug} />
+    </>
   )
 }

@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from 'next/server'
 import { updateSession } from '@/lib/supabase/middleware'
+import { middlewareShouldRefreshSession } from '@/lib/supabase/auth-cookie'
 import { safeNextPath } from '@/lib/safe-next'
 import { getLegacyOrgPathRedirect } from '@/lib/legacy-org-path-redirect'
 import { parseOrgSlugFromHost } from '@/lib/tenancy/parse-host'
@@ -97,11 +98,8 @@ export async function middleware(request: NextRequest) {
     const visitorKey = attachVisitorKey(request, requestHeaders)
     const isNewVisitor = visitorKey != null && !request.cookies.get(VISITOR_COOKIE)?.value
 
-    const sessionResponse = await updateSession(request)
-
     const response = NextResponse.rewrite(url, { request: { headers: requestHeaders } })
     response.headers.set('x-org-slug', orgSlug)
-    copyCookies(sessionResponse.response, response)
     applyVisitorCookie(response, isNewVisitor, visitorKey)
 
     return response
@@ -115,10 +113,7 @@ export async function middleware(request: NextRequest) {
     const visitorKey = attachVisitorKey(request, requestHeaders)
     const isNewVisitor = visitorKey != null && !request.cookies.get(VISITOR_COOKIE)?.value
 
-    const sessionResponse = await updateSession(request)
-
     const response = NextResponse.next({ request: { headers: requestHeaders } })
-    copyCookies(sessionResponse.response, response)
     applyVisitorCookie(response, isNewVisitor, visitorKey)
 
     return response
@@ -131,6 +126,12 @@ export async function middleware(request: NextRequest) {
   const requestHeaders = new Headers(request.headers)
   const visitorKey = attachVisitorKey(request, requestHeaders)
   const isNewVisitor = visitorKey != null && !request.cookies.get(VISITOR_COOKIE)?.value
+
+  if (!middlewareShouldRefreshSession(pathname, null)) {
+    const response = NextResponse.next({ request: { headers: requestHeaders } })
+    applyVisitorCookie(response, isNewVisitor, visitorKey)
+    return response
+  }
 
   const sessionResponse = await updateSession(request)
 
