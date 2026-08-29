@@ -1,9 +1,8 @@
 import { type NextRequest, NextResponse } from 'next/server'
-import { updateSession } from '@/lib/supabase/middleware'
 import { middlewareShouldRefreshSession } from '@/lib/supabase/auth-cookie'
 import { safeNextPath } from '@/lib/safe-next'
 import { getLegacyOrgPathRedirect } from '@/lib/legacy-org-path-redirect'
-import { parseOrgSlugFromHost } from '@/lib/tenancy/parse-host'
+import { orgSubdomainRewritePath, parseOrgSlugFromHost } from '@/lib/tenancy/parse-host'
 import { VISITOR_COOKIE } from '@/lib/visitor-cookie'
 
 const VISITOR_COOKIE_OPTIONS = {
@@ -89,9 +88,13 @@ export async function middleware(request: NextRequest) {
       return NextResponse.next()
     }
 
+    const rewrittenPath = orgSubdomainRewritePath(pathname, orgSlug)
+    if (!rewrittenPath) {
+      return NextResponse.next()
+    }
+
     const url = request.nextUrl.clone()
-    const path = pathname === '/' ? '' : pathname
-    url.pathname = `/org/${orgSlug}${path}`
+    url.pathname = rewrittenPath
 
     const requestHeaders = new Headers(request.headers)
     requestHeaders.set('x-org-slug', orgSlug)
@@ -133,6 +136,9 @@ export async function middleware(request: NextRequest) {
     return response
   }
 
+  // Load Auth only for login/console. A static @supabase/ssr import would
+  // ship in the Edge bundle and run on every jeff.organizr.co request.
+  const { updateSession } = await import('@/lib/supabase/middleware')
   const sessionResponse = await updateSession(request)
 
   if (pathname === '/login' && sessionResponse.user) {

@@ -40,3 +40,17 @@ export function parseOrgSlugFromHost(host: string): string | null {
 export function getRootDomain(): string {
   return ROOT_DOMAIN
 }
+
+/**
+ * Internal path for a tenant host rewrite.
+ * Returns null when the request is already on `/org/{slug}` so middleware
+ * cannot rewrite `/org/jeff` → `/org/jeff/org/jeff` in a loop (Vercel 504).
+ */
+export function orgSubdomainRewritePath(pathname: string, orgSlug: string): string | null {
+  const prefix = `/org/${orgSlug}`
+  if (pathname === prefix || pathname.startsWith(`${prefix}/`)) {
+    return null
+  }
+  const path = pathname === '/' ? '' : pathname
+  return `${prefix}${path}`
+}

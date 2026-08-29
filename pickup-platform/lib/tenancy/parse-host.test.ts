@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { getRootDomain, parseOrgSlugFromHost } from './parse-host'
+import { getRootDomain, orgSubdomainRewritePath, parseOrgSlugFromHost } from './parse-host'
 
 describe('parse-host', () => {
   beforeEach(() => {
@@ -34,5 +34,17 @@ describe('parse-host', () => {
 
   it('getRootDomain reads env', () => {
     expect(getRootDomain()).toBe('organizr.co')
+  })
+})
+
+describe('orgSubdomainRewritePath', () => {
+  it('rewrites the tenant home and nested public paths', () => {
+    expect(orgSubdomainRewritePath('/', 'jeff')).toBe('/org/jeff')
+    expect(orgSubdomainRewritePath('/cal/og-image', 'jeff')).toBe('/org/jeff/cal/og-image')
+  })
+
+  it('does not rewrite a path that is already tenant-prefixed', () => {
+    expect(orgSubdomainRewritePath('/org/jeff', 'jeff')).toBeNull()
+    expect(orgSubdomainRewritePath('/org/jeff/cal/abc', 'jeff')).toBeNull()
   })
 })

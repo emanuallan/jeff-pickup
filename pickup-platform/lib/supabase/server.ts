@@ -1,6 +1,7 @@
 import { cache } from 'react'
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
+import { fetchWithTimeout, PUBLIC_FETCH_TIMEOUT_MS } from '@/lib/fetch-with-deadline'
 import { getSupabaseCookieOptions } from './cookie-options'
 
 /**
@@ -19,6 +20,9 @@ export const createClient = cache(async () => {
 
   return createServerClient(url, key, {
     cookieOptions: getSupabaseCookieOptions(),
+    global: {
+      fetch: fetchWithTimeout(PUBLIC_FETCH_TIMEOUT_MS),
+    },
     cookies: {
       getAll() {
         return cookieStore.getAll()

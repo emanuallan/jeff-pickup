@@ -1,10 +1,12 @@
 import { createServerClient } from '@supabase/ssr'
 import type { User } from '@supabase/supabase-js'
 import { NextResponse, type NextRequest } from 'next/server'
+import { fetchWithDeadline, PUBLIC_FETCH_TIMEOUT_MS } from '@/lib/fetch-with-deadline'
 import { hasSupabaseAuthCookie } from './auth-cookie'
 import { getSupabaseCookieOptions } from './cookie-options'
 
 export { hasSupabaseAuthCookie, middlewareShouldRefreshSession } from './auth-cookie'
+export { fetchWithDeadline, PUBLIC_FETCH_TIMEOUT_MS }
 
 export type SessionUpdate = {
   response: NextResponse
@@ -12,18 +14,7 @@ export type SessionUpdate = {
 }
 
 /** Keep well under Vercel's middleware wall-clock limit (Hobby is 5s). */
-export const SESSION_FETCH_TIMEOUT_MS = 3000
-
-/** Bind every Auth fetch in this middleware invocation to one shared deadline. */
-export function fetchWithDeadline(deadline: AbortSignal) {
-  return (input: RequestInfo | URL, init?: RequestInit) => {
-    const signal =
-      init?.signal && typeof AbortSignal.any === 'function'
-        ? AbortSignal.any([init.signal, deadline])
-        : deadline
-    return fetch(input, { ...init, signal })
-  }
-}
+export const SESSION_FETCH_TIMEOUT_MS = PUBLIC_FETCH_TIMEOUT_MS
 
 export async function updateSession(request: NextRequest): Promise<SessionUpdate> {
   let supabaseResponse = NextResponse.next({ request })

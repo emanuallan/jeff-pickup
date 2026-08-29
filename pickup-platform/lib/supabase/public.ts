@@ -1,4 +1,5 @@
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
+import { fetchWithTimeout, PUBLIC_FETCH_TIMEOUT_MS } from '@/lib/fetch-with-deadline'
 
 /** Cookie-less anon client for public reads (avoids forcing dynamic rendering via cookies()). */
 export function createPublicClient() {
@@ -14,6 +15,9 @@ export function createPublicClient() {
       persistSession: false,
       autoRefreshToken: false,
       detectSessionInUrl: false,
+    },
+    global: {
+      fetch: fetchWithTimeout(PUBLIC_FETCH_TIMEOUT_MS),
     },
   })
 }
