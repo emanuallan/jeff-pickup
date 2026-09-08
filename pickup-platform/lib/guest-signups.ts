@@ -10,6 +10,14 @@ export function resolveGuestCount(count: number, guestsEnabled: boolean): number
   return guestsEnabled ? clampGuestCount(count) : 0
 }
 
+/** Shown when a participant tries to change guests after paying. */
+export const PAID_SESSION_GUEST_LOCKED_ERROR =
+  'Guest count cannot be changed after you pay for this session.'
+
+export function canEditGuestsAfterSignup(paidSession: boolean, guestsEnabled: boolean): boolean {
+  return guestsEnabled && !paidSession
+}
+
 /**
  * Parse an optional guest count from a bot command arg (e.g. `/in 2`).
  * Returns null when omitted or not a non-negative integer.

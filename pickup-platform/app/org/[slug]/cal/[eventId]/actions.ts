@@ -10,7 +10,7 @@ import type { ArrivalStatus } from '@/lib/arrival-status'
 import { normalizePhoneDigits, isValidPhoneDigits } from '@/lib/phone'
 import { validateDemoParticipantNames } from '@/lib/participant-name-moderation'
 import { orgFeatures } from '@/lib/org-features'
-import { resolveGuestCount } from '@/lib/guest-signups'
+import { resolveGuestCount, PAID_SESSION_GUEST_LOCKED_ERROR } from '@/lib/guest-signups'
 import { getLiveEventPriceCents, paymentRequiredResult } from '@/lib/event-price'
 import { isPaidSession } from '@/lib/session-payment'
 import { isSessionTeamChoice, normalizeTeamChoice, type SessionTeamChoice } from '@/lib/session-team'
@@ -290,6 +290,12 @@ export async function updateGuestCount(
   const org = await getPublicOrgBySlug(orgSlug)
   if (!org || !orgFeatures(org).guest_signups) {
     return { error: 'Guest sign-ups are not enabled for this group.' }
+  }
+
+  const livePrice =
+    (await getLiveEventPriceCents(open.orgId, eventId)) ?? open.event.price_cents
+  if (isPaidSession(livePrice)) {
+    return { error: PAID_SESSION_GUEST_LOCKED_ERROR }
   }
 
   const guests = resolveGuestCount(guestCount, true)

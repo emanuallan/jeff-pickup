@@ -6,6 +6,7 @@ import type { ScheduleFormValues } from '@/lib/schedules'
 import {
   parseOptionalInt,
   parseOptionalMinParticipants,
+  parseOptionalPriceCents,
   validateCapacityVsMin,
 } from './form-fields'
 import { DEFAULT_EVENT_DURATION_MIN } from '@/lib/event-duration'
@@ -80,6 +81,11 @@ export function parseScheduleFormData(
     }
   }
 
+  const priceCents = parseOptionalPriceCents(formData.get('price_cents'))
+  if (priceCents.error) {
+    return { ok: false, error: priceCents.error }
+  }
+
   return {
     ok: true,
     values: {
@@ -90,6 +96,7 @@ export function parseScheduleFormData(
       capacity,
       minPlayers: minParticipants.value,
       teamCount,
+      priceCents: priceCents.value,
       durationMin,
       intervalWeeks,
       byweekday,

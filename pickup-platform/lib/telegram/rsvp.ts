@@ -4,7 +4,7 @@ import {
   type EventWithLocation,
 } from '@/lib/events'
 import { MAX_EVENT_DURATION_MIN } from '@/lib/event-duration'
-import { parseOptionalGuestCountArg, resolveGuestCount } from '@/lib/guest-signups'
+import { parseOptionalGuestCountArg, resolveGuestCount, PAID_SESSION_GUEST_LOCKED_ERROR } from '@/lib/guest-signups'
 import { isPaidSession } from '@/lib/session-payment'
 import {
   isSessionTeamNumber,
@@ -353,6 +353,23 @@ export async function handleTelegramRsvp(opts: {
       }
 
       if (applyGuestCount && guestCount != null) {
+        if (isPaidSession(event.price_cents)) {
+          return {
+            ok: true,
+            message: [
+              formatRsvpReply({
+                displayName,
+                status: arrivalStatus,
+                event,
+                headcount: await getConfirmedHeadcount(event.id),
+                listStatus: existing.list_status,
+                isOnline: event.location_is_online,
+              }),
+              PAID_SESSION_GUEST_LOCKED_ERROR,
+            ].join('\n\n'),
+          }
+        }
+
         const { error: guestError } = await admin.rpc('update_guest_count', {
           p_signup_id: existing.id,
           p_session_token: sessionToken,

@@ -170,6 +170,7 @@ function ParticipationPanelBody({
             listStatus={mySignup.list_status as SignupListStatus}
             guestsEnabled={guestsEnabled}
             teamSelectionEnabled={showTeamControls}
+            paidSession={joinProps.paidSession}
           />
         ) : null}
 
@@ -220,6 +221,7 @@ function ParticipationPanelBody({
               listStatus={controlsSignup.list_status as SignupListStatus}
               accent={joinProps.accent}
               guestsEnabled={guestsEnabled}
+              paidSession={joinProps.paidSession}
             />
           </AnimatedPresenceSection>
         ) : null}

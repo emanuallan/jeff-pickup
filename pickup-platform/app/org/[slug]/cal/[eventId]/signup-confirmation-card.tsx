@@ -28,6 +28,7 @@ type Props = {
   listStatus: SignupListStatus
   guestsEnabled?: boolean
   teamSelectionEnabled?: boolean
+  paidSession?: boolean
 }
 
 export function SignupConfirmationCard({
@@ -45,6 +46,7 @@ export function SignupConfirmationCard({
   listStatus,
   guestsEnabled = true,
   teamSelectionEnabled = false,
+  paidSession = false,
 }: Props) {
   const router = useRouter()
   const [, startTransition] = useTransition()
@@ -134,6 +136,7 @@ export function SignupConfirmationCard({
             listStatus={listStatus}
             accent={accent}
             guestsEnabled={guestsEnabled}
+            paidSession={paidSession}
             embedded
           />
 

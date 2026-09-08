@@ -16,6 +16,7 @@ type Props = {
     formData: FormData,
   ) => Promise<{ error?: string; ok?: boolean }>
   teamSelectionEnabled?: boolean
+  sessionFeesEnabled?: boolean
   onSuccess?: () => void
 }
 
@@ -24,6 +25,7 @@ export function ScheduleForm({
   locations,
   createSchedule,
   teamSelectionEnabled = false,
+  sessionFeesEnabled = false,
   onSuccess,
 }: Props) {
   const toast = useConsoleToast()
@@ -53,6 +55,7 @@ export function ScheduleForm({
         locations={locations}
         timezone={timezone}
         teamSelectionEnabled={teamSelectionEnabled}
+        sessionFeesEnabled={sessionFeesEnabled}
       />
 
       <ConsoleSubmitButton

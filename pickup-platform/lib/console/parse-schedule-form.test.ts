@@ -90,4 +90,31 @@ describe('parseScheduleFormData', () => {
     if (result.ok) return
     expect(result.error).toContain('Teams must be between')
   })
+
+  it('parses session fee dollars into cents', () => {
+    const result = parseScheduleFormData(scheduleFormData({ ...valid, price_cents: '12.50' }))
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+    expect(result.values.priceCents).toBe(1250)
+  })
+
+  it('treats a blank or zero fee as free', () => {
+    const blank = parseScheduleFormData(scheduleFormData(valid))
+    expect(blank.ok).toBe(true)
+    if (!blank.ok) return
+    expect(blank.values.priceCents).toBeNull()
+
+    const zero = parseScheduleFormData(scheduleFormData({ ...valid, price_cents: '0' }))
+    expect(zero.ok).toBe(true)
+    if (!zero.ok) return
+    expect(zero.values.priceCents).toBeNull()
+  })
+
+  it('rejects a negative session fee', () => {
+    const result = parseScheduleFormData(scheduleFormData({ ...valid, price_cents: '-1' }))
+    expect(result).toEqual({
+      ok: false,
+      error: 'Session price must be a valid amount (0 or more).',
+    })
+  })
 })

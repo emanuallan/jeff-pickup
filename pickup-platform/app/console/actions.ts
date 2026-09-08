@@ -293,6 +293,7 @@ export async function createSchedule(orgSlug: string, formData: FormData) {
     capacity,
     minPlayers,
     teamCount,
+    priceCents,
     durationMin,
     intervalWeeks,
     byweekday,
@@ -302,6 +303,13 @@ export async function createSchedule(orgSlug: string, formData: FormData) {
   const locationCheck = await assertLocationInOrg(supabase, org.id, locationId)
   if ('error' in locationCheck) {
     return { error: locationCheck.error }
+  }
+
+  const priceFieldPresent = formData.has('price_cents')
+  const nextPriceCents = priceFieldPresent ? priceCents : null
+  const feeError = await assertCanSetSessionFee(org.id, nextPriceCents)
+  if (feeError) {
+    return feeError
   }
 
   const nextTeamCount = orgFeatures(org).team_selection ? teamCount : null
@@ -321,6 +329,7 @@ export async function createSchedule(orgSlug: string, formData: FormData) {
     interval_weeks: intervalWeeks,
     anchor_date: anchorDate,
     additional_information: additionalInformation,
+    price_cents: nextPriceCents,
     ...(nextTeamCount != null ? { team_count: nextTeamCount } : {}),
   })
 
@@ -702,6 +711,14 @@ export async function updateSchedule(
     return { error: locationCheck.error }
   }
 
+  const priceFieldPresent = formData.has('price_cents')
+  if (priceFieldPresent) {
+    const feeError = await assertCanSetSessionFee(org.id, values.priceCents)
+    if (feeError) {
+      return feeError
+    }
+  }
+
   const anchorDate = new Date().toLocaleDateString('en-CA', {
     timeZone: values.timezone || 'UTC',
   })
@@ -720,6 +737,7 @@ export async function updateSchedule(
       interval_weeks: values.intervalWeeks,
       anchor_date: anchorDate,
       additional_information: values.additionalInformation,
+      ...(priceFieldPresent ? { price_cents: values.priceCents } : {}),
       ...(orgFeatures(org).team_selection || before.team_count != null
         ? { team_count: nextTeamCount }
         : {}),
@@ -761,6 +779,7 @@ export async function updateSchedule(
           min_players: values.minPlayers,
           timezone: values.timezone,
           additional_information: values.additionalInformation,
+          ...(priceFieldPresent ? { price_cents: values.priceCents } : {}),
           ...(orgFeatures(org).team_selection || before.team_count != null
             ? { team_count: nextTeamCount }
             : {}),

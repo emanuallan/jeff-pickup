@@ -16,6 +16,8 @@ import {
   EmptyState,
   btnPrimary,
 } from '../../_components/console-ui'
+import { getOrgStripeAccount } from '@/lib/sponsorship.server'
+import { formatPriceCents, isPaidSession } from '@/lib/session-payment'
 
 type Props = {
   params: Promise<{ orgSlug: string }>
@@ -30,10 +32,12 @@ export default async function SchedulesPage({ params }: Props) {
   }
 
   const teamSelectionEnabled = orgFeatures(org).team_selection
-  const [locations, schedules] = await Promise.all([
+  const [locations, schedules, stripeAccount] = await Promise.all([
     getLocationsForOrg(org.id),
     getSchedulesForOrg(org.id),
+    getOrgStripeAccount(org.id),
   ])
+  const sessionFeesEnabled = Boolean(stripeAccount?.charges_enabled)
 
   const deleteImpacts = await Promise.all(
     schedules.map(async (s) => ({
@@ -60,6 +64,7 @@ export default async function SchedulesPage({ params }: Props) {
               locations={locations}
               createSchedule={createSchedule}
               teamSelectionEnabled={teamSelectionEnabled}
+              sessionFeesEnabled={sessionFeesEnabled}
             />
           ) : null
         }
@@ -86,6 +91,9 @@ export default async function SchedulesPage({ params }: Props) {
                           {teamSelectionEnabled && s.team_count != null
                             ? ` · ${s.team_count} teams`
                             : ''}
+                          {sessionFeesEnabled && isPaidSession(s.price_cents)
+                            ? ` · ${formatPriceCents(s.price_cents ?? 0)} / person`
+                            : ''}
                         </div>
                       </div>
                       <div className="flex shrink-0 flex-wrap gap-1 sm:justify-end">
@@ -94,6 +102,7 @@ export default async function SchedulesPage({ params }: Props) {
                           schedule={s}
                           locations={locations}
                           teamSelectionEnabled={teamSelectionEnabled}
+                          sessionFeesEnabled={sessionFeesEnabled}
                         />
                         <DeleteScheduleButton
                           orgSlug={orgSlug}
@@ -117,6 +126,7 @@ export default async function SchedulesPage({ params }: Props) {
                 locations={locations}
                 createSchedule={createSchedule}
                 teamSelectionEnabled={teamSelectionEnabled}
+                sessionFeesEnabled={sessionFeesEnabled}
               />
             </EmptyState>
           ) : (

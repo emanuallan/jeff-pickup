@@ -5,6 +5,7 @@ import {
 import {
   parseOptionalInt,
   parseOptionalMinParticipants,
+  parseOptionalPriceCents,
   validateCapacityVsMin,
 } from './form-fields'
 import { localDateTimeInZoneToUtcIso } from '@/lib/datetime'
@@ -58,16 +59,11 @@ export function parseSessionFormData(
     }
     teamCount = parsedTeams
   }
-  const priceCentsRaw = String(formData.get('price_cents') ?? '').trim()
-  let priceCents: number | null = null
-  if (priceCentsRaw) {
-    const dollars = Number.parseFloat(priceCentsRaw)
-    if (!Number.isFinite(dollars) || dollars < 0) {
-      return { ok: false, error: 'Session price must be a valid amount (0 or more).' }
-    }
-    priceCents = Math.round(dollars * 100)
-    if (priceCents === 0) priceCents = null
+  const parsedPrice = parseOptionalPriceCents(formData.get('price_cents'))
+  if (parsedPrice.error) {
+    return { ok: false, error: parsedPrice.error }
   }
+  const priceCents = parsedPrice.value
 
   const additionalInformation = normalizeAdditionalInformation(
     formData.get('additional_information'),

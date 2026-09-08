@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   parseOptionalInt,
   parseOptionalMinParticipants,
+  parseOptionalPriceCents,
   validateCapacityVsMin,
 } from './form-fields'
 
@@ -50,6 +51,28 @@ describe('console form-fields', () => {
     it('allows open-ended capacity or min', () => {
       expect(validateCapacityVsMin(null, 8)).toBeNull()
       expect(validateCapacityVsMin(20, null)).toBeNull()
+    })
+  })
+
+  describe('parseOptionalPriceCents', () => {
+    it('returns null for blank input', () => {
+      expect(parseOptionalPriceCents(null)).toEqual({ value: null })
+      expect(parseOptionalPriceCents('')).toEqual({ value: null })
+    })
+
+    it('parses dollars into cents', () => {
+      expect(parseOptionalPriceCents('12.50')).toEqual({ value: 1250 })
+    })
+
+    it('treats zero as free', () => {
+      expect(parseOptionalPriceCents('0')).toEqual({ value: null })
+    })
+
+    it('rejects negative amounts', () => {
+      expect(parseOptionalPriceCents('-1')).toEqual({
+        value: null,
+        error: 'Session price must be a valid amount (0 or more).',
+      })
     })
   })
 })

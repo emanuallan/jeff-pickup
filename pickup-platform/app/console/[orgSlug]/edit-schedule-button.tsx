@@ -14,6 +14,7 @@ type Props = {
   schedule: Schedule
   locations: Location[]
   teamSelectionEnabled?: boolean
+  sessionFeesEnabled?: boolean
 }
 
 export function EditScheduleButton({
@@ -21,6 +22,7 @@ export function EditScheduleButton({
   schedule,
   locations,
   teamSelectionEnabled = false,
+  sessionFeesEnabled = false,
 }: Props) {
   const toast = useConsoleToast()
   const [open, setOpen] = useState(false)
@@ -79,6 +81,7 @@ export function EditScheduleButton({
                 schedule={schedule}
                 timezone={schedule.timezone}
                 teamSelectionEnabled={teamSelectionEnabled}
+                sessionFeesEnabled={sessionFeesEnabled}
               />
 
               <fieldset className="space-y-3 border-t border-white/5 pt-4">

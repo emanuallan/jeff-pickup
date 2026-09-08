@@ -6,6 +6,7 @@ import {
 } from "@/lib/session-team";
 import { CollapsibleAdditionalInformationField } from "../_components/collapsible-additional-information-field";
 import { consoleInput } from "../_components/console-ui";
+import { SessionFeeField } from "./session-fee-field";
 
 const WEEKDAYS = [
 	{ value: 0, label: "Sun" },
@@ -26,6 +27,7 @@ type Props = {
 	schedule?: Schedule;
 	timezone: string;
 	teamSelectionEnabled?: boolean;
+	sessionFeesEnabled?: boolean;
 };
 
 export function ScheduleFormFields({
@@ -33,6 +35,7 @@ export function ScheduleFormFields({
 	schedule,
 	timezone,
 	teamSelectionEnabled = false,
+	sessionFeesEnabled = false,
 }: Props) {
 	const selectedDays = schedule?.byweekday ?? [];
 
@@ -135,6 +138,11 @@ export function ScheduleFormFields({
 						placeholder="No limit"
 						defaultValue={schedule?.capacity ?? undefined}
 						className={`mt-1 ${consoleInput}`}
+						aria-describedby={
+							sessionFeesEnabled
+								? "schedule-capacity-waitlist-hint"
+								: undefined
+						}
 					/>
 				</label>
 				<label className="block">
@@ -152,6 +160,16 @@ export function ScheduleFormFields({
 					/>
 				</label>
 			</div>
+
+			{sessionFeesEnabled ? (
+				<p
+					id="schedule-capacity-waitlist-hint"
+					className="-mt-1 text-xs leading-relaxed text-zinc-500"
+				>
+					Free sessions can use a waitlist when full. Paid sessions cannot — once
+					capacity is reached, players wait until a spot opens.
+				</p>
+			) : null}
 
 			{teamSelectionEnabled ? (
 				<label className="block">
@@ -181,6 +199,10 @@ export function ScheduleFormFields({
 						When set, players are assigned to a balanced team when they join.
 					</p>
 				</label>
+			) : null}
+
+			{sessionFeesEnabled ? (
+				<SessionFeeField defaultPriceCents={schedule?.price_cents} />
 			) : null}
 
 			<CollapsibleAdditionalInformationField

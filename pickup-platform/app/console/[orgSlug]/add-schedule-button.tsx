@@ -12,6 +12,7 @@ export function AddScheduleButton({
   locations,
   createSchedule,
   teamSelectionEnabled = false,
+  sessionFeesEnabled = false,
 }: {
   orgSlug: string
   locations: Location[]
@@ -20,6 +21,7 @@ export function AddScheduleButton({
     formData: FormData,
   ) => Promise<{ error?: string; ok?: boolean }>
   teamSelectionEnabled?: boolean
+  sessionFeesEnabled?: boolean
 }) {
   const [open, setOpen] = useState(false)
   const router = useRouter()
@@ -51,6 +53,7 @@ export function AddScheduleButton({
             locations={locations}
             createSchedule={createSchedule}
             teamSelectionEnabled={teamSelectionEnabled}
+            sessionFeesEnabled={sessionFeesEnabled}
             onSuccess={() => {
               setOpen(false)
               router.refresh()

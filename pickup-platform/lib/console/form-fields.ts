@@ -28,3 +28,17 @@ export function validateCapacityVsMin(
   }
   return null
 }
+
+/** Dollars input → cents. Blank or 0 = free (null). */
+export function parseOptionalPriceCents(
+  value: FormDataEntryValue | null,
+): { value: number | null; error?: string } {
+  const raw = String(value ?? '').trim()
+  if (!raw) return { value: null }
+  const dollars = Number.parseFloat(raw)
+  if (!Number.isFinite(dollars) || dollars < 0) {
+    return { value: null, error: 'Session price must be a valid amount (0 or more).' }
+  }
+  const cents = Math.round(dollars * 100)
+  return { value: cents === 0 ? null : cents }
+}

@@ -6,6 +6,7 @@ import {
   MAX_GUEST_COUNT,
   parseOptionalGuestCountArg,
   resolveGuestCount,
+  canEditGuestsAfterSignup,
 } from './guest-signups'
 
 describe('guest-signups', () => {
@@ -33,6 +34,21 @@ describe('guest-signups', () => {
 
     it('returns 0 when guests disabled', () => {
       expect(resolveGuestCount(5, false)).toBe(0)
+    })
+  })
+
+  describe('canEditGuestsAfterSignup', () => {
+    it('allows edits on free sessions when guests are enabled', () => {
+      expect(canEditGuestsAfterSignup(false, true)).toBe(true)
+    })
+
+    it('locks guest edits on paid sessions', () => {
+      expect(canEditGuestsAfterSignup(true, true)).toBe(false)
+      expect(canEditGuestsAfterSignup(true, false)).toBe(false)
+    })
+
+    it('hides guest editing when the org has guests off', () => {
+      expect(canEditGuestsAfterSignup(false, false)).toBe(false)
     })
   })
 
