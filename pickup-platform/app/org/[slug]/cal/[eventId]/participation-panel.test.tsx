@@ -67,10 +67,15 @@ vi.mock('./join-section-lazy', () => ({
 vi.mock('./roster-list-lazy', () => ({
   RosterListLazy: ({
     entries,
+    teamColors,
   }: {
     entries: Array<{ id: string; display_name: string }>
+    teamColors?: string[] | null
   }) => (
     <ul data-testid="roster-list">
+      {teamColors?.length ? (
+        <li data-testid="team-colors">{teamColors.join(',')}</li>
+      ) : null}
       {entries.map((entry) => (
         <li key={entry.id}>{entry.display_name}</li>
       ))}
@@ -208,5 +213,29 @@ describe('ParticipationPanel signup confirmation', () => {
     expect(screen.getByText('Alex')).toBeInTheDocument()
     expect(screen.getByText('Sam')).toBeInTheDocument()
     expect(screen.getByText('(2)')).toBeInTheDocument()
+  })
+
+  it('keeps shirt colors when the live poll omits team fields', () => {
+    renderPanel({
+      publicRosterEnabled: true,
+      teamSelectionEnabled: true,
+      teamCount: 2,
+      teamColors: ['red', 'blue'],
+      roster: [makeRosterEntry({ id: 's1', display_name: 'Alex', team: 1 })],
+      headcount: 1,
+    })
+
+    expect(screen.getByTestId('team-colors')).toHaveTextContent('red,blue')
+
+    act(() => {
+      liveSessionListener?.({
+        headcount: 1,
+        roster: [makeRosterEntry({ id: 's1', display_name: 'Alex', team: 1 })],
+        waitlist: [],
+        team_colors: undefined,
+      })
+    })
+
+    expect(screen.getByTestId('team-colors')).toHaveTextContent('red,blue')
   })
 })

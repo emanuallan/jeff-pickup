@@ -191,7 +191,8 @@ export function RosterList(props: {
   const canSwitchTeams = Boolean(
     showTeams && props.canPickTeam && props.mySignupId && props.orgSlug && props.eventId,
   )
-  const teamColors = parseTeamColors(props.teamColors ?? null, props.teamColors ? teamCount : null) ?? []
+  const teamColors =
+    parseTeamColors(props.teamColors ?? null, showTeams ? teamCount : null) ?? []
 
   async function switchTeam(team: number) {
     if (!props.orgSlug || !props.eventId || !props.mySignupId) return

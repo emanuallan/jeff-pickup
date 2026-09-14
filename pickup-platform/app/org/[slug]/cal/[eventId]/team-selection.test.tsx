@@ -63,9 +63,9 @@ describe('team selection UI', () => {
       />,
     )
 
-    expect(screen.getByText('Team 1')).toBeInTheDocument()
-    expect(screen.getByText('Team 2')).toBeInTheDocument()
-    expect(screen.getByText('Team 3')).toBeInTheDocument()
+    expect(screen.getByText(/Team 1/)).toBeInTheDocument()
+    expect(screen.getByText(/Team 2/)).toBeInTheDocument()
+    expect(screen.getByText(/Team 3/)).toBeInTheDocument()
     expect(screen.getByText('Unassigned')).toBeInTheDocument()
     expect(screen.getByText('Ada')).toBeInTheDocument()
     expect(screen.getByText('Bea')).toBeInTheDocument()

@@ -294,7 +294,7 @@ export function ParticipationPanel(props: Props) {
       setLiveRoster(payload.roster)
       setLiveWaitlist(payload.waitlist)
       setLiveHeadcount(payload.headcount)
-      if (payload.team_colors !== undefined) {
+      if (payload.team_colors != null) {
         setLiveTeamColors(payload.team_colors)
       }
     })

@@ -81,9 +81,7 @@ export function parseLiveSessionPayload(data: unknown): LiveSessionPayload | nul
     roster,
     waitlist,
     team_colors:
-      'team_colors' in data || teamCount != null
-        ? parseTeamColors(data.team_colors, teamCount)
-        : undefined,
+      parseTeamColors(data.team_colors, teamCount) ?? undefined,
   }
 }
 
