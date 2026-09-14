@@ -27,6 +27,10 @@ const updateSignupTeam = vi.fn(
   async (_orgSlug: string, _eventId: string, _signupId: string, _team: unknown) => ({}),
 )
 
+const updateEventTeamColor = vi.fn(
+  async (_orgSlug: string, _eventId: string, _team: unknown, _color: unknown) => ({}),
+)
+
 vi.mock('./actions', () => ({
   leaveEvent: vi.fn(),
   updateArrivalStatus: vi.fn(),
@@ -37,6 +41,12 @@ vi.mock('./actions', () => ({
     signupId: string,
     team: unknown,
   ) => updateSignupTeam(orgSlug, eventId, signupId, team),
+  updateEventTeamColor: (
+    orgSlug: string,
+    eventId: string,
+    team: unknown,
+    color: unknown,
+  ) => updateEventTeamColor(orgSlug, eventId, team, color),
 }))
 
 describe('team selection UI', () => {
@@ -128,5 +138,31 @@ describe('team selection UI', () => {
     )
 
     expect(screen.queryByRole('button', { name: 'Join Team 2' })).not.toBeInTheDocument()
+  })
+
+  it('lets you pick an unused shirt color for your team', async () => {
+    const user = userEvent.setup()
+    updateEventTeamColor.mockClear()
+
+    render(
+      <RosterList
+        entries={[makeRosterEntry({ id: 'a', display_name: 'Ada', team: 1 })]}
+        mySignupId="a"
+        canPickTeam
+        orgSlug="demo"
+        eventId="evt"
+        teamSelection
+        teamCount={2}
+        teamColors={['white', 'black']}
+      />,
+    )
+
+    expect(screen.getByText(/Team 1 · White/)).toBeInTheDocument()
+    expect(screen.getByText('Bring a white shirt')).toBeInTheDocument()
+    expect(screen.getByRole('radio', { name: 'Red' })).toBeEnabled()
+    expect(screen.getByRole('radio', { name: 'Black (taken)' })).toBeDisabled()
+
+    await user.click(screen.getByRole('radio', { name: 'Red' }))
+    expect(updateEventTeamColor).toHaveBeenCalledWith('demo', 'evt', 1, 'red')
   })
 })

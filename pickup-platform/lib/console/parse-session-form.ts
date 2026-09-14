@@ -19,6 +19,10 @@ import {
   MIN_SESSION_TEAM_COUNT,
   parseSessionTeamCount,
 } from '@/lib/session-team'
+import {
+  parseSubmittedTeamColors,
+  type SessionTeamColorSlug,
+} from '@/lib/session-team-color'
 
 export type ParsedSessionFields = {
   title: string
@@ -32,6 +36,7 @@ export type ParsedSessionFields = {
   priceCents: number | null
   /** Null = no teams for this session. Only meaningful when org team_selection is on. */
   teamCount: number | null
+  teamColors: SessionTeamColorSlug[] | null
 }
 
 export function parseSessionFormData(
@@ -58,6 +63,10 @@ export function parseSessionFormData(
       }
     }
     teamCount = parsedTeams
+  }
+  const parsedColors = parseSubmittedTeamColors(formData.getAll('team_color'), teamCount)
+  if (!parsedColors.ok) {
+    return { ok: false, error: parsedColors.error }
   }
   const parsedPrice = parseOptionalPriceCents(formData.get('price_cents'))
   if (parsedPrice.error) {
@@ -116,6 +125,7 @@ export function parseSessionFormData(
       additionalInformation,
       priceCents,
       teamCount,
+      teamColors: parsedColors.colors,
     },
   }
 }

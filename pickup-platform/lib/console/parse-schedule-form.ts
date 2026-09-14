@@ -15,6 +15,7 @@ import {
   MIN_SESSION_TEAM_COUNT,
   parseSessionTeamCount,
 } from '@/lib/session-team'
+import { parseSubmittedTeamColors } from '@/lib/session-team-color'
 
 export function parseScheduleFormData(
   formData: FormData,
@@ -70,6 +71,10 @@ export function parseScheduleFormData(
     }
     teamCount = parsedTeams
   }
+  const parsedColors = parseSubmittedTeamColors(formData.getAll('team_color'), teamCount)
+  if (!parsedColors.ok) {
+    return { ok: false, error: parsedColors.error }
+  }
 
   const additionalInformation = normalizeAdditionalInformation(
     formData.get('additional_information'),
@@ -96,6 +101,7 @@ export function parseScheduleFormData(
       capacity,
       minPlayers: minParticipants.value,
       teamCount,
+      teamColors: parsedColors.colors,
       priceCents: priceCents.value,
       durationMin,
       intervalWeeks,

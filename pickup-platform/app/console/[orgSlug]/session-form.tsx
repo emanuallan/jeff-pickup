@@ -19,13 +19,14 @@ import {
   STRIPE_PROCESSING_FEES_URL,
 } from '@/lib/session-payment'
 import {
-  MAX_SESSION_TEAM_COUNT,
-  MIN_SESSION_TEAM_COUNT,
-} from '@/lib/session-team'
+  parseTeamColors,
+  type SessionTeamColorSlug,
+} from '@/lib/session-team-color'
 import { consoleInput, consoleLabel, btnSecondary } from '../_components/console-ui'
 import { CollapsibleAdditionalInformationField } from '../_components/collapsible-additional-information-field'
 import { ConsoleSubmitButton } from '../_components/console-submit-button'
 import { useConsoleToast } from '../_components/console-toast'
+import { TeamSetupFields } from './team-setup-fields'
 
 export type { SessionFormInitial } from '@/lib/session-form-values'
 
@@ -85,6 +86,9 @@ export function SessionForm({
   const [teamCount, setTeamCount] = useState(
     initial?.teamCount != null ? String(initial.teamCount) : '',
   )
+  const [teamColors, setTeamColors] = useState<SessionTeamColorSlug[]>(
+    () => parseTeamColors(initial?.teamColors, initial?.teamCount ?? null) ?? [],
+  )
   const [priceDollars, setPriceDollars] = useState(
     initial?.priceCents != null ? (initial.priceCents / 100).toFixed(2) : '',
   )
@@ -107,6 +111,7 @@ export function SessionForm({
       setCapacity(initial.capacity != null ? String(initial.capacity) : '')
       setMinPlayers(initial.minPlayers != null ? String(initial.minPlayers) : '')
       setTeamCount(initial.teamCount != null ? String(initial.teamCount) : '')
+      setTeamColors(parseTeamColors(initial.teamColors, initial.teamCount) ?? [])
       setPriceDollars(initial.priceCents != null ? (initial.priceCents / 100).toFixed(2) : '')
       setAdditionalInformation(initial.additionalInformation ?? '')
       setTimezone(initial.timezone)
@@ -149,6 +154,9 @@ export function SessionForm({
     if (minPlayers.trim()) formData.set('min_players', minPlayers.trim())
     if (teamSelectionEnabled) {
       formData.set('team_count', teamCount.trim())
+      for (const color of teamColors) {
+        formData.append('team_color', color)
+      }
     }
     if (sessionFeesEnabled) {
       formData.set('price_cents', priceDollars.trim())
@@ -272,29 +280,17 @@ export function SessionForm({
       </div>
 
       {teamSelectionEnabled ? (
-        <label className="block">
-          <span className={consoleLabel}>Teams (optional)</span>
-          <select
-            name="team_count"
-            value={teamCount}
-            onChange={(event) => setTeamCount(event.target.value)}
-            className={`mt-1 ${consoleInput}`}
-            aria-describedby="session-team-count-hint"
-          >
-            <option value="">No teams</option>
-            {Array.from(
-              { length: MAX_SESSION_TEAM_COUNT - MIN_SESSION_TEAM_COUNT + 1 },
-              (_, i) => MIN_SESSION_TEAM_COUNT + i,
-            ).map((n) => (
-              <option key={n} value={n}>
-                {n} teams
-              </option>
-            ))}
-          </select>
-          <p id="session-team-count-hint" className="mt-1.5 text-xs leading-relaxed text-zinc-500">
-            When set, players pick a team (or Random) after joining.
-          </p>
-        </label>
+        <TeamSetupFields
+          teamCount={teamCount}
+          teamColors={teamColors}
+          onTeamCountChange={(count, colors) => {
+            setTeamCount(count)
+            setTeamColors(colors)
+          }}
+          onTeamColorsChange={setTeamColors}
+          hintId="session-team-count-hint"
+          includeHiddenInputs={false}
+        />
       ) : null}
 
       {sessionFeesEnabled ? (

@@ -9,6 +9,7 @@ import {
   teamHeadcount,
   type SessionTeamOrUnassigned,
 } from '@/lib/session-team'
+import { sessionTeamHeading, type SessionTeamColorSlug } from '@/lib/session-team-color'
 
 export function publicEventUrl(orgSlug: string, shortId: string): string {
   return `${orgBaseUrl(orgSlug)}${orgPublicEventHref(shortId)}`
@@ -186,8 +187,9 @@ export function formatRosterMessage(opts: {
   headcount: number
   /** When set, group confirmed roster by team (session teams are on). */
   teamCount?: number | null
+  teamColors?: SessionTeamColorSlug[] | null
 }): string {
-  const { event, roster, waitlist, headcount, teamCount } = opts
+  const { event, roster, waitlist, headcount, teamCount, teamColors } = opts
   const session = eventDisplayName(event.title)
   const when = formatEventWhenLine(event)
   const isOnline = Boolean(event.location_is_online)
@@ -209,7 +211,7 @@ export function formatRosterMessage(opts: {
     for (let i = 0; i < teams.length; i++) {
       const members = teams[i]!
       const n = teamHeadcount(members)
-      lines.push(`${sessionTeamLabel(i + 1)} (${n}):`)
+      lines.push(`${sessionTeamHeading(i + 1, teamColors?.[i] ?? null)} (${n}):`)
       if (members.length === 0) {
         lines.push('• —')
       } else {

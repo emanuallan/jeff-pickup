@@ -113,6 +113,7 @@ export async function EventParticipation({ slug, eventId, org, event }: Props) {
       guestsEnabled={features.guest_signups}
       teamSelectionEnabled={sessionTeamsEnabled(features.team_selection, event.team_count)}
       teamCount={event.team_count}
+      teamColors={event.team_colors}
       groupRulesEnabled={groupRulesEnabled}
       groupRulesText={groupRulesStatus.rules_text ?? groupRules?.text ?? ''}
       groupRulesVersion={groupRulesStatus.rules_version ?? groupRules?.version ?? 0}

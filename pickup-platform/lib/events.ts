@@ -4,6 +4,10 @@ import {
 	DEFAULT_EVENT_DURATION_MIN,
 	MAX_EVENT_DURATION_MIN,
 } from "@/lib/event-duration";
+import {
+	parseTeamColors,
+	type SessionTeamColorSlug,
+} from "@/lib/session-team-color";
 
 export {
 	DEFAULT_EVENT_DURATION_MIN,
@@ -38,6 +42,8 @@ export type Event = {
 	price_cents: number | null;
 	/** Null = no teams. 2–8 = players pick a team after joining (when org feature on). */
 	team_count: number | null;
+	/** Unique shirt colors for teams 1..team_count. Null when teams are off. */
+	team_colors: SessionTeamColorSlug[] | null;
 };
 
 export type EventWithLocation = Event & {
@@ -126,6 +132,14 @@ export function mapEventRow(row: Record<string, unknown>): EventWithLocation {
 				: event.team_count != null && Number.isFinite(Number(event.team_count))
 					? Number(event.team_count)
 					: null,
+		team_colors: parseTeamColors(
+			event.team_colors,
+			typeof event.team_count === "number"
+				? event.team_count
+				: event.team_count != null && Number.isFinite(Number(event.team_count))
+					? Number(event.team_count)
+					: null,
+		),
 		title: overrides.title ?? schedule.title,
 		duration_min: overrides.duration_min ?? schedule.duration_min,
 		location_label: loc?.label ?? "Location",

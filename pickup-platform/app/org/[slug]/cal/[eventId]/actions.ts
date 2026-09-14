@@ -13,7 +13,8 @@ import { orgFeatures } from '@/lib/org-features'
 import { resolveGuestCount, PAID_SESSION_GUEST_LOCKED_ERROR } from '@/lib/guest-signups'
 import { getLiveEventPriceCents, paymentRequiredResult } from '@/lib/event-price'
 import { isPaidSession } from '@/lib/session-payment'
-import { isSessionTeamChoice, normalizeTeamChoice, type SessionTeamChoice } from '@/lib/session-team'
+import { isSessionTeamChoice, isSessionTeamNumber, normalizeTeamChoice, type SessionTeamChoice } from '@/lib/session-team'
+import { isSessionTeamColorSlug, type SessionTeamColorSlug } from '@/lib/session-team-color'
 
 async function getOpenEvent(
   orgSlug: string,
@@ -411,6 +412,55 @@ export async function updateSignupTeam(
     p_signup_id: signupId,
     p_session_token: token,
     p_team: choice === 'random' ? 'random' : String(choice),
+  })
+
+  if (error) {
+    return { error: error.message }
+  }
+
+  revalidatePublicEvent(orgSlug, eventId, open.event.id, open.orgId)
+  return {}
+}
+
+export async function updateEventTeamColor(
+  orgSlug: string,
+  eventId: string,
+  team: number,
+  color: SessionTeamColorSlug,
+): Promise<{ error?: string }> {
+  const token = await getSessionToken()
+  if (!token) {
+    return { error: 'Not signed in' }
+  }
+
+  const open = await getOpenEvent(orgSlug, eventId)
+  if ('error' in open) {
+    return { error: open.error }
+  }
+
+  const org = await getPublicOrgBySlug(orgSlug)
+  if (!org || !orgFeatures(org).team_selection) {
+    return { error: 'Teams are not enabled for this group.' }
+  }
+
+  const teamCount = open.event.team_count
+  if (teamCount == null) {
+    return { error: 'Teams are not enabled for this session.' }
+  }
+
+  if (!isSessionTeamNumber(team, teamCount)) {
+    return { error: 'Invalid team' }
+  }
+  if (!isSessionTeamColorSlug(color)) {
+    return { error: 'Invalid shirt color' }
+  }
+
+  const supabase = await createClient()
+  const { error } = await supabase.rpc('update_event_team_color', {
+    p_event_id: open.event.id,
+    p_session_token: token,
+    p_team: team,
+    p_color: color,
   })
 
   if (error) {

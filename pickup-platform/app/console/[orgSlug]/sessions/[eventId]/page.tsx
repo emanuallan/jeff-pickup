@@ -6,7 +6,8 @@ import { getEventByRef, formatEventTime, formatInstantInZone, statusLabel, isEve
 import { orgFeatures } from '@/lib/org-features'
 import { getRosterWithContact, splitRosterByStatus } from '@/lib/signups'
 import { formatGuestSuffix } from '@/lib/format-guest-suffix'
-import { sessionTeamLabel, sessionTeamsEnabled, splitRosterByTeam } from '@/lib/session-team'
+import { sessionTeamsEnabled, splitRosterByTeam } from '@/lib/session-team'
+import { sessionTeamHeading } from '@/lib/session-team-color'
 import { buildRosterAnalytics, fetchEventAnalyticsDb } from '@/lib/event-analytics'
 import { arrivalStatusEmoji } from '@/lib/arrival-status'
 import { orgBaseUrl } from '@/lib/og-metadata'
@@ -141,7 +142,7 @@ export default async function ConsoleEventAnalyticsPage({ params }: Props) {
               {teamSplit.teams.map((teamEntries, index) => (
                 <div key={index + 1}>
                   <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-500">
-                    {sessionTeamLabel(index + 1)} ({teamEntries.length})
+                    {sessionTeamHeading(index + 1, event.team_colors?.[index] ?? null)} ({teamEntries.length})
                   </p>
                   {teamEntries.length === 0 ? (
                     <p className="text-sm text-zinc-600">Empty</p>

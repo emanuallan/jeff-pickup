@@ -89,13 +89,42 @@ describe('parseSessionFormData', () => {
     expect(ok.ok).toBe(true)
     if (!ok.ok) return
     expect(ok.values.teamCount).toBe(4)
+    expect(ok.values.teamColors).toEqual(['white', 'black', 'red', 'blue'])
 
     const empty = parseSessionFormData(sessionFormData(valid))
     expect(empty.ok).toBe(true)
     if (!empty.ok) return
     expect(empty.values.teamCount).toBeNull()
+    expect(empty.values.teamColors).toBeNull()
 
     const bad = parseSessionFormData(sessionFormData({ ...valid, team_count: '1' }))
     expect(bad.ok).toBe(false)
+  })
+
+  it('rejects duplicate team shirt colors', () => {
+    const result = parseSessionFormData(
+      sessionFormData({
+        ...valid,
+        team_count: '2',
+        team_color: ['white', 'white'],
+      }),
+    )
+    expect(result).toEqual({
+      ok: false,
+      error: 'Each team needs a different shirt color.',
+    })
+  })
+
+  it('parses unique team shirt colors', () => {
+    const result = parseSessionFormData(
+      sessionFormData({
+        ...valid,
+        team_count: '2',
+        team_color: ['red', 'blue'],
+      }),
+    )
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+    expect(result.values.teamColors).toEqual(['red', 'blue'])
   })
 })

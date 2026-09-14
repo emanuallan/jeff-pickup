@@ -2,7 +2,7 @@
 
 import { useRef, useState, useEffect, useTransition, type ReactNode } from 'react'
 import { useRouter } from 'next/navigation'
-import { leaveEvent, updateArrivalStatus, updateGuestCount, updateSignupTeam } from './actions'
+import { leaveEvent, updateArrivalStatus, updateGuestCount, updateSignupTeam, updateEventTeamColor } from './actions'
 import { GuestCountField } from './guest-count-select'
 import {
   arrivalStatuses,
@@ -13,10 +13,18 @@ import {
 import { hexToRgba, accentOnDark } from '@/lib/colors'
 import { formatGuestSuffix } from '@/lib/format-guest-suffix'
 import type { RosterBadgeInfo } from '@/lib/badges'
+import { TeamColorSwatchPicker } from '@/app/_components/team-color-swatch-picker'
+import {
+  parseTeamColors,
+  sessionTeamColorHex,
+  sessionTeamHeading,
+  sessionTeamShirtHint,
+  takenTeamColors,
+  type SessionTeamColorSlug,
+} from '@/lib/session-team-color'
 import { useParticipationMotion } from './participation-motion'
 import { scrollToMyRosterRowAfterJoinCollapse } from './scroll-to-my-roster'
 import {
-  sessionTeamLabel,
   splitRosterByTeam,
   teamHeadcount,
   type SessionTeamOrUnassigned,
@@ -161,6 +169,7 @@ export function RosterList(props: {
   variant?: 'confirmed' | 'waitlist'
   teamSelection?: boolean
   teamCount?: number
+  teamColors?: SessionTeamColorSlug[] | null
   /** Lets you move yourself between teams straight from the column headers. */
   canPickTeam?: boolean
   onOpenStatusSheet?: () => void
@@ -177,10 +186,12 @@ export function RosterList(props: {
   const teamCount = props.teamCount ?? 0
   const showTeams = Boolean(props.teamSelection) && teamCount >= 2 && !isWaitlist
   const [switchingTeam, setSwitchingTeam] = useState<number | null>(null)
+  const [pickingColor, setPickingColor] = useState<number | null>(null)
   const myTeam = props.entries.find((e) => e.id === props.mySignupId)?.team ?? null
   const canSwitchTeams = Boolean(
     showTeams && props.canPickTeam && props.mySignupId && props.orgSlug && props.eventId,
   )
+  const teamColors = parseTeamColors(props.teamColors ?? null, props.teamColors ? teamCount : null) ?? []
 
   async function switchTeam(team: number) {
     if (!props.orgSlug || !props.eventId || !props.mySignupId) return
@@ -189,6 +200,23 @@ export function RosterList(props: {
     setError(null)
     const result = await updateSignupTeam(props.orgSlug, props.eventId, props.mySignupId, team)
     setSwitchingTeam(null)
+
+    if (result.error) {
+      setError(result.error)
+      return
+    }
+    startTransition(() => {
+      router.refresh()
+    })
+  }
+
+  async function switchTeamColor(team: number, slug: SessionTeamColorSlug) {
+    if (!props.orgSlug || !props.eventId) return
+
+    setPickingColor(team)
+    setError(null)
+    const result = await updateEventTeamColor(props.orgSlug, props.eventId, team, slug)
+    setPickingColor(null)
 
     if (result.error) {
       setError(result.error)
@@ -347,14 +375,26 @@ export function RosterList(props: {
     return (
       <div className="space-y-5">
         <div className="space-y-5">
-          {teams.map((teamEntries, index) => (
+          {teams.map((teamEntries, index) => {
+            const color = teamColors[index] ?? null
+            const canEditColor = canSwitchTeams && myTeam === index + 1 && color != null
+            const headingColor = color ? sessionTeamColorHex(color) : undefined
+
+            return (
             <div
               key={index + 1}
               className={index > 0 ? 'border-t border-zinc-800 pt-5' : undefined}
             >
               <div className="flex items-center justify-between gap-2">
-                <h3 className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
-                  Team {index + 1}{' '}
+                <h3 className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-zinc-500">
+                  {color ? (
+                    <span
+                      className="h-2.5 w-2.5 rounded-full ring-1 ring-white/20"
+                      style={{ backgroundColor: headingColor }}
+                      aria-hidden
+                    />
+                  ) : null}
+                  {sessionTeamHeading(index + 1, color)}{' '}
                   <span className="tabular-nums text-zinc-600">
                     ({teamHeadcount(teamEntries)})
                   </span>
@@ -372,6 +412,20 @@ export function RosterList(props: {
                   </button>
                 ) : null}
               </div>
+              {color ? (
+                <p className="mt-1 text-[11px] text-zinc-500">{sessionTeamShirtHint(color)}</p>
+              ) : null}
+              {canEditColor ? (
+                <div className="mt-2">
+                  <TeamColorSwatchPicker
+                    size="sm"
+                    value={color}
+                    taken={takenTeamColors(teamColors, index)}
+                    disabled={pickingColor != null}
+                    onChange={(slug) => switchTeamColor(index + 1, slug)}
+                  />
+                </div>
+              ) : null}
               <ul className="mt-2 space-y-2">
                 {teamEntries.length > 0 ? (
                   renderRows(teamEntries)
@@ -382,7 +436,8 @@ export function RosterList(props: {
                 )}
               </ul>
             </div>
-          ))}
+            )
+          })}
         </div>
         {unassigned.length > 0 ? (
           <div>

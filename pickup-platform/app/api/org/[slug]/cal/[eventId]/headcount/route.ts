@@ -25,6 +25,8 @@ export async function GET(_request: Request, { params }: Props) {
       status: result.event.status,
       roster,
       waitlist,
+      team_count: result.event.team_count,
+      team_colors: result.event.team_colors,
     },
     {
       headers: {

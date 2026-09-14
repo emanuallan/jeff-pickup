@@ -34,6 +34,7 @@ import {
 import { initialOrgBranding, normalizeAccentColor } from '@/lib/org-branding'
 import { parseSessionFormData } from '@/lib/console/parse-session-form'
 import { parseScheduleFormData } from '@/lib/console/parse-schedule-form'
+import { teamColorColumns } from '@/lib/session-team-color'
 import { parseLocationFormData } from '@/lib/console/parse-location-form'
 import { assertLocationInOrg } from '@/lib/console/location-ownership'
 import { syncOrgBrandingToStripeIfConnected } from '@/lib/stripe-connect'
@@ -139,6 +140,9 @@ export async function createOrg(formData: FormData) {
   }
 
   revalidatePath('/console')
+  revalidatePath(`/org/${slug}`)
+  revalidateTag(`org:${slug}`)
+  revalidateTag('orgs:active-slugs')
   redirect(`/console/${slug}/setup`)
 }
 
@@ -293,6 +297,7 @@ export async function createSchedule(orgSlug: string, formData: FormData) {
     capacity,
     minPlayers,
     teamCount,
+    teamColors,
     priceCents,
     durationMin,
     intervalWeeks,
@@ -313,6 +318,7 @@ export async function createSchedule(orgSlug: string, formData: FormData) {
   }
 
   const nextTeamCount = orgFeatures(org).team_selection ? teamCount : null
+  const nextTeamFields = teamColorColumns(nextTeamCount, teamColors)
 
   const anchorDate = new Date().toLocaleDateString('en-CA', { timeZone: timezone || 'UTC' })
 
@@ -330,7 +336,7 @@ export async function createSchedule(orgSlug: string, formData: FormData) {
     anchor_date: anchorDate,
     additional_information: additionalInformation,
     price_cents: nextPriceCents,
-    ...(nextTeamCount != null ? { team_count: nextTeamCount } : {}),
+    ...(nextTeamCount != null ? nextTeamFields : {}),
   })
 
   if (error) {
@@ -364,7 +370,7 @@ export async function createOneOffEvent(
   if (!parsed.ok) {
     return { error: parsed.error }
   }
-  const { title, locationId, startsAtIso, timezone, durationMin, capacity, minPlayers, additionalInformation, priceCents, teamCount } =
+  const { title, locationId, startsAtIso, timezone, durationMin, capacity, minPlayers, additionalInformation, priceCents, teamCount, teamColors } =
     parsed.values
 
   const locationCheck = await assertLocationInOrg(supabase, org.id, locationId)
@@ -380,6 +386,7 @@ export async function createOneOffEvent(
   }
 
   const nextTeamCount = orgFeatures(org).team_selection ? teamCount : null
+  const nextTeamFields = teamColorColumns(nextTeamCount, teamColors)
 
   const { error } = await supabase.from('events').insert({
     org_id: org.id,
@@ -393,7 +400,7 @@ export async function createOneOffEvent(
     min_players: minPlayers,
     additional_information: additionalInformation,
     price_cents: nextPriceCents,
-    ...(nextTeamCount != null ? { team_count: nextTeamCount } : {}),
+    ...(nextTeamCount != null ? nextTeamFields : {}),
     status: initialEventStatus(minPlayers),
   })
 
@@ -427,7 +434,7 @@ export async function updateEvent(
   if (!parsed.ok) {
     return { error: parsed.error }
   }
-  const { title, locationId, startsAtIso, timezone, durationMin, capacity, minPlayers, additionalInformation, priceCents, teamCount } =
+  const { title, locationId, startsAtIso, timezone, durationMin, capacity, minPlayers, additionalInformation, priceCents, teamCount, teamColors } =
     parsed.values
 
   const locationCheck = await assertLocationInOrg(supabase, org.id, locationId)
@@ -449,6 +456,10 @@ export async function updateEvent(
       ? teamCount
       : event.team_count
     : null
+  const nextTeamFields = teamColorColumns(
+    nextTeamCount,
+    teamFieldPresent ? teamColors : event.team_colors,
+  )
 
   if (event.schedule_id && event.starts_at !== startsAtIso) {
     const { error: skipError } = await supabase.from('schedule_event_skips').upsert(
@@ -478,7 +489,7 @@ export async function updateEvent(
       additional_information: additionalInformation,
       ...(priceFieldPresent ? { price_cents: priceCents } : {}),
       ...(orgFeatures(org).team_selection || event.team_count != null
-        ? { team_count: nextTeamCount }
+        ? nextTeamFields
         : {}),
     })
     .eq('id', event.id)
@@ -705,6 +716,7 @@ export async function updateSchedule(
   const before = existing as Schedule
   const values = parsed.values
   const nextTeamCount = orgFeatures(org).team_selection ? values.teamCount : null
+  const nextTeamFields = teamColorColumns(nextTeamCount, values.teamColors)
 
   const locationCheck = await assertLocationInOrg(supabase, org.id, values.locationId)
   if ('error' in locationCheck) {
@@ -739,7 +751,7 @@ export async function updateSchedule(
       additional_information: values.additionalInformation,
       ...(priceFieldPresent ? { price_cents: values.priceCents } : {}),
       ...(orgFeatures(org).team_selection || before.team_count != null
-        ? { team_count: nextTeamCount }
+        ? nextTeamFields
         : {}),
     })
     .eq('id', scheduleId)
@@ -781,7 +793,7 @@ export async function updateSchedule(
           additional_information: values.additionalInformation,
           ...(priceFieldPresent ? { price_cents: values.priceCents } : {}),
           ...(orgFeatures(org).team_selection || before.team_count != null
-            ? { team_count: nextTeamCount }
+            ? nextTeamFields
             : {}),
         })
         .eq('schedule_id', scheduleId)

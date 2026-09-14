@@ -6,7 +6,11 @@ import type { Participant, MySignup } from '@/lib/participant'
 import { hexToRgba, readableTextColor, accentOnDark } from '@/lib/colors'
 import { signupConfirmationCopy, signupFirstName } from '@/lib/signup-confirmation-copy'
 import { arrivalStatusEmoji, arrivalStatusLabel } from '@/lib/arrival-status'
-import { sessionTeamLabel } from '@/lib/session-team'
+import {
+  sessionTeamHeading,
+  sessionTeamShirtHint,
+  type SessionTeamColorSlug,
+} from '@/lib/session-team-color'
 import { leaveEvent } from './actions'
 import { useParticipationMotion } from './participation-motion'
 import { SIGNUP_CONFIRMATION_ID } from './scroll-to-my-roster'
@@ -28,6 +32,7 @@ type Props = {
   listStatus: SignupListStatus
   guestsEnabled?: boolean
   teamSelectionEnabled?: boolean
+  teamColors?: SessionTeamColorSlug[] | null
   paidSession?: boolean
 }
 
@@ -46,6 +51,7 @@ export function SignupConfirmationCard({
   listStatus,
   guestsEnabled = true,
   teamSelectionEnabled = false,
+  teamColors = null,
   paidSession = false,
 }: Props) {
   const router = useRouter()
@@ -120,12 +126,19 @@ export function SignupConfirmationCard({
           ) : null}
 
           {showTeam && mySignup.team != null ? (
-            <p className="text-sm text-zinc-400">
-              You&rsquo;re on{' '}
-              <span className="font-semibold" style={{ color: accentOnDark(accent) }}>
-                {sessionTeamLabel(mySignup.team)}
-              </span>
-            </p>
+            <div className="text-sm text-zinc-400">
+              <p>
+                You&rsquo;re on{' '}
+                <span className="font-semibold" style={{ color: accentOnDark(accent) }}>
+                  {sessionTeamHeading(mySignup.team, teamColors?.[mySignup.team - 1] ?? null)}
+                </span>
+              </p>
+              {teamColors?.[mySignup.team - 1] ? (
+                <p className="mt-1 text-xs text-zinc-500">
+                  {sessionTeamShirtHint(teamColors[mySignup.team - 1]!)}
+                </p>
+              ) : null}
+            </div>
           ) : null}
 
           <SignedInGuestSection

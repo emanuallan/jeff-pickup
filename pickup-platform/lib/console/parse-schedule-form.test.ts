@@ -73,6 +73,7 @@ describe('parseScheduleFormData', () => {
     expect(result.ok).toBe(true)
     if (!result.ok) return
     expect(result.values.teamCount).toBe(3)
+    expect(result.values.teamColors).toEqual(['white', 'black', 'red'])
   })
 
   it('treats empty team count as no teams', () => {
@@ -80,6 +81,7 @@ describe('parseScheduleFormData', () => {
     expect(result.ok).toBe(true)
     if (!result.ok) return
     expect(result.values.teamCount).toBeNull()
+    expect(result.values.teamColors).toBeNull()
   })
 
   it('rejects an out-of-range team count', () => {

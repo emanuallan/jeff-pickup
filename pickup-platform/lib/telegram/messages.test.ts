@@ -33,6 +33,7 @@ const event = {
   additional_information: '',
   price_cents: null,
   team_count: null,
+  team_colors: null,
   title: 'Tuesday pickup',
   location_label: 'Central Park',
   location_address: '',

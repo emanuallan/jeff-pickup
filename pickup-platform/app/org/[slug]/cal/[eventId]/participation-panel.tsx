@@ -6,6 +6,7 @@ import type { RosterEntry, SignupListStatus } from '@/lib/signups'
 import type { RosterBadgeInfo } from '@/lib/badges'
 import type { ArrivalStatus } from '@/lib/arrival-status'
 import { subscribeLiveSessionPoll } from '@/lib/live-session-poll'
+import type { SessionTeamColorSlug } from '@/lib/session-team-color'
 import { JoinSectionLazy } from './join-section-lazy'
 import { RosterListLazy } from './roster-list-lazy'
 import { WaitlistSection } from './waitlist-section'
@@ -63,6 +64,7 @@ type Props = JoinProps & {
   guestsEnabled?: boolean
   teamSelectionEnabled?: boolean
   teamCount?: number | null
+  teamColors?: SessionTeamColorSlug[] | null
 }
 
 function ParticipationPanelBody({
@@ -83,6 +85,7 @@ function ParticipationPanelBody({
   guestsEnabled = true,
   teamSelectionEnabled = false,
   teamCount = null,
+  teamColors = null,
   showJoin,
   joinProps,
 }: Props & { showJoin: boolean; joinProps: JoinProps }) {
@@ -170,6 +173,7 @@ function ParticipationPanelBody({
             listStatus={mySignup.list_status as SignupListStatus}
             guestsEnabled={guestsEnabled}
             teamSelectionEnabled={showTeamControls}
+            teamColors={teamColors}
             paidSession={joinProps.paidSession}
           />
         ) : null}
@@ -194,6 +198,7 @@ function ParticipationPanelBody({
             accent={joinProps.accent}
             teamSelection={teamSelectionEnabled}
             teamCount={effectiveTeamCount}
+            teamColors={teamColors}
             canPickTeam={showTeamControls && showControls}
             onOpenStatusSheet={statusSheetHandler}
           />
@@ -255,6 +260,7 @@ export function ParticipationPanel(props: Props) {
     waitlist,
     headcount,
     capacity = null,
+    teamColors = null,
     ...rest
   } = props
   const canJoin = !mySignup && !isEnded && !isCancelled
@@ -262,6 +268,7 @@ export function ParticipationPanel(props: Props) {
   const [liveRoster, setLiveRoster] = useState(roster)
   const [liveWaitlist, setLiveWaitlist] = useState(waitlist)
   const [liveHeadcount, setLiveHeadcount] = useState(headcount)
+  const [liveTeamColors, setLiveTeamColors] = useState(teamColors)
 
   useEffect(() => {
     if (mySignup || isCancelled) {
@@ -277,7 +284,8 @@ export function ParticipationPanel(props: Props) {
     setLiveRoster(roster)
     setLiveWaitlist(waitlist)
     setLiveHeadcount(headcount)
-  }, [roster, waitlist, headcount])
+    setLiveTeamColors(teamColors)
+  }, [roster, waitlist, headcount, teamColors])
 
   useEffect(() => {
     if (isCancelled || isEnded) return
@@ -286,6 +294,9 @@ export function ParticipationPanel(props: Props) {
       setLiveRoster(payload.roster)
       setLiveWaitlist(payload.waitlist)
       setLiveHeadcount(payload.headcount)
+      if (payload.team_colors !== undefined) {
+        setLiveTeamColors(payload.team_colors)
+      }
     })
   }, [isCancelled, isEnded, rest.orgSlug, rest.eventId])
 
@@ -356,6 +367,7 @@ export function ParticipationPanel(props: Props) {
         roster={liveRoster}
         waitlist={liveWaitlist}
         headcount={liveHeadcount}
+        teamColors={liveTeamColors}
         capacity={capacity}
         mySignup={mySignup}
         isEnded={isEnded}

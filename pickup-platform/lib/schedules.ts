@@ -1,5 +1,6 @@
 import { cache } from 'react'
 import { createClient } from '@/lib/supabase/server'
+import { parseTeamColors, type SessionTeamColorSlug } from '@/lib/session-team-color'
 
 export type Schedule = {
   id: string
@@ -13,6 +14,8 @@ export type Schedule = {
   min_players: number | null
   /** Null = no teams. 2–8 = players are assigned / can switch teams. */
   team_count: number | null
+  /** Unique shirt colors for teams 1..team_count. Null when teams are off. */
+  team_colors: SessionTeamColorSlug[] | null
   /** Null or 0 = free. >0 = per-person fee inherited by newly materialized sessions. */
   price_cents: number | null
   interval_weeks: number
@@ -59,6 +62,7 @@ export type ScheduleFormValues = {
   capacity: number | null
   minPlayers: number | null
   teamCount: number | null
+  teamColors: SessionTeamColorSlug[] | null
   priceCents: number | null
   durationMin: number
   intervalWeeks: number
@@ -96,6 +100,7 @@ export const getSchedulesForOrg = cache(async (orgId: string): Promise<Schedule[
   return (data as Schedule[]).map((row) => ({
     ...row,
     price_cents: typeof row.price_cents === 'number' ? row.price_cents : null,
+    team_colors: parseTeamColors(row.team_colors, row.team_count),
   }))
 })
 

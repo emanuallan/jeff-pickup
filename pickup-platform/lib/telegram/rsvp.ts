@@ -98,7 +98,7 @@ export async function getNextUpcomingEventForOrg(
       orgId,
     })
     ;({ data, error } = await fetchRows(
-      'id, short_id, org_id, schedule_id, location_id, starts_at, timezone, duration_min, capacity, min_players, status, announcement, additional_information, price_cents, team_count, title',
+      'id, short_id, org_id, schedule_id, location_id, starts_at, timezone, duration_min, capacity, min_players, status, announcement, additional_information, price_cents, team_count, team_colors, title',
     ))
   }
 
@@ -776,6 +776,7 @@ export async function handleTelegramRoster(chatId: number): Promise<TelegramRsvp
       waitlist,
       headcount: rosterHeadcount(roster),
       teamCount: teamsOn ? loaded.event.team_count : null,
+      teamColors: teamsOn ? loaded.event.team_colors : null,
     }),
   }
 }

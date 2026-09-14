@@ -1,5 +1,6 @@
 import type { ArrivalStatus } from '@/lib/arrival-status'
 import { parseSignupTeam } from '@/lib/session-team'
+import { parseTeamColors, type SessionTeamColorSlug } from '@/lib/session-team-color'
 import type { RosterEntry, SignupListStatus } from '@/lib/signups'
 
 export const LIVE_SESSION_POLL_MS = 20_000
@@ -9,6 +10,7 @@ export type LiveSessionPayload = {
   status?: string
   roster: RosterEntry[]
   waitlist: RosterEntry[]
+  team_colors?: SessionTeamColorSlug[] | null
 }
 
 const ARRIVAL_STATUSES = new Set<ArrivalStatus>([
@@ -66,11 +68,22 @@ export function parseLiveSessionPayload(data: unknown): LiveSessionPayload | nul
     .map((entry) => parseRosterEntry(entry, 'waitlisted'))
     .filter((entry): entry is RosterEntry => entry != null)
 
+  const teamCount =
+    typeof data.team_count === 'number'
+      ? data.team_count
+      : data.team_count != null && Number.isFinite(Number(data.team_count))
+        ? Number(data.team_count)
+        : null
+
   return {
     headcount: data.headcount,
     status: typeof data.status === 'string' ? data.status : undefined,
     roster,
     waitlist,
+    team_colors:
+      'team_colors' in data || teamCount != null
+        ? parseTeamColors(data.team_colors, teamCount)
+        : undefined,
   }
 }
 

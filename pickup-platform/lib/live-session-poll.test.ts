@@ -52,6 +52,17 @@ describe('live-session-poll', () => {
     expect(payload?.roster[1]?.team).toBeNull()
   })
 
+  it('parses unique shirt colors from the live payload', () => {
+    const payload = parseLiveSessionPayload({
+      headcount: 1,
+      team_count: 2,
+      team_colors: ['red', 'blue'],
+      roster: [makeRosterEntry({ id: 's1', display_name: 'Alex', team: 1 })],
+      waitlist: [],
+    })
+    expect(payload?.team_colors).toEqual(['red', 'blue'])
+  })
+
   it('rejects payloads without a numeric headcount', () => {
     expect(parseLiveSessionPayload({ roster: [] })).toBeNull()
   })

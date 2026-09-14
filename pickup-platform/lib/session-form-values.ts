@@ -1,5 +1,6 @@
 import { utcIsoToLocalDateTimeInput } from './datetime'
 import { addMinutesToLocalDateTime } from './one-off-datetime'
+import { parseTeamColors, type SessionTeamColorSlug } from './session-team-color'
 
 export type SessionFormInitial = {
   title: string
@@ -13,6 +14,7 @@ export type SessionFormInitial = {
   additionalInformation: string
   priceCents: number | null
   teamCount: number | null
+  teamColors: SessionTeamColorSlug[] | null
 }
 
 type SessionFormEvent = {
@@ -26,6 +28,7 @@ type SessionFormEvent = {
   additional_information: string
   price_cents?: number | null
   team_count?: number | null
+  team_colors?: SessionTeamColorSlug[] | null
 }
 
 export function sessionFormInitialFromEvent(event: SessionFormEvent): SessionFormInitial {
@@ -46,5 +49,6 @@ export function sessionFormInitialFromEvent(event: SessionFormEvent): SessionFor
     additionalInformation: event.additional_information,
     priceCents: event.price_cents ?? null,
     teamCount: event.team_count ?? null,
+    teamColors: parseTeamColors(event.team_colors, event.team_count ?? null),
   }
 }
