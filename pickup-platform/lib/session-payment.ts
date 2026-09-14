@@ -8,11 +8,22 @@ import {
   formatPlatformFeePercent,
 } from '@/lib/sponsorship'
 
+/** Checkout can be `complete` while Cash App Pay (and other delayed methods) are still unpaid. */
+export function isPaidCheckoutSession(
+  session: Pick<Stripe.Checkout.Session, 'payment_status'>,
+): boolean {
+  return session.payment_status === 'paid' || session.payment_status === 'no_payment_required'
+}
+
 export async function completePaidEventJoinFromCheckout(
   session: Stripe.Checkout.Session,
 ): Promise<{ ok: true } | { ok: false; reason: string }> {
   if (session.metadata?.checkout_kind !== 'session_payment') {
     return { ok: false, reason: 'not_session_payment' }
+  }
+
+  if (!isPaidCheckoutSession(session)) {
+    return { ok: false, reason: 'payment_not_paid' }
   }
 
   const checkoutSessionId = session.id
@@ -95,7 +106,7 @@ export async function syncSessionPaymentCheckoutForOrg(
     { stripeAccount: stripeAccount.stripe_account_id },
   )
 
-  if (session.status !== 'complete' && session.payment_status !== 'paid') {
+  if (!isPaidCheckoutSession(session)) {
     return { ok: false, reason: 'incomplete' }
   }
 

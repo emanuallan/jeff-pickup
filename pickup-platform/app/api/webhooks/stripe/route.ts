@@ -11,8 +11,8 @@ export const runtime = 'nodejs'
 async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   if (session.metadata?.checkout_kind === 'session_payment') {
     const paid = await completePaidEventJoinFromCheckout(session)
-    if (!paid.ok) {
-      console.warn('checkout.session.completed session payment failed', {
+    if (!paid.ok && paid.reason !== 'payment_not_paid') {
+      console.warn('checkout session payment fulfillment failed', {
         sessionId: session.id,
         reason: paid.reason,
       })
@@ -51,6 +51,21 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
 
   if (error) {
     throw new Error(`update_sponsorship_subscription_status failed: ${error.message}`)
+  }
+}
+
+async function handleCheckoutAsyncPaymentFailed(session: Stripe.Checkout.Session) {
+  if (session.metadata?.checkout_kind !== 'session_payment') return
+
+  const admin = createAdminClient()
+  const { error } = await admin
+    .from('event_payments')
+    .update({ status: 'failed' })
+    .eq('stripe_checkout_session_id', session.id)
+    .eq('status', 'pending')
+
+  if (error) {
+    throw new Error(`mark session payment failed: ${error.message}`)
   }
 }
 
@@ -99,7 +114,11 @@ export async function POST(request: Request) {
   try {
     switch (event.type) {
       case 'checkout.session.completed':
+      case 'checkout.session.async_payment_succeeded':
         await handleCheckoutCompleted(event.data.object as Stripe.Checkout.Session)
+        break
+      case 'checkout.session.async_payment_failed':
+        await handleCheckoutAsyncPaymentFailed(event.data.object as Stripe.Checkout.Session)
         break
       case 'customer.subscription.updated':
       case 'customer.subscription.deleted':

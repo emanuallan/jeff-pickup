@@ -3,6 +3,7 @@ import {
   buildAbandonedCheckouts,
   buildSessionPaymentOverview,
   formatPriceCents,
+  isPaidCheckoutSession,
   isPaidSession,
   paidCheckoutFitsCapacity,
   paidSessionHeadcount,
@@ -23,6 +24,14 @@ describe('isPaidSession', () => {
   it('treats positive cents as paid', () => {
     expect(isPaidSession(1)).toBe(true)
     expect(isPaidSession(1500)).toBe(true)
+  })
+})
+
+describe('isPaidCheckoutSession', () => {
+  it('requires Stripe payment_status paid (not merely checkout complete)', () => {
+    expect(isPaidCheckoutSession({ payment_status: 'paid' })).toBe(true)
+    expect(isPaidCheckoutSession({ payment_status: 'no_payment_required' })).toBe(true)
+    expect(isPaidCheckoutSession({ payment_status: 'unpaid' })).toBe(false)
   })
 })
 
